@@ -5,7 +5,7 @@ description: >
   Enforces small incremental changes with pragmatic testing. Use at start of features, to update progress, and at end to merge learnings.
 tools: Read, Write, Edit, Grep, Glob, Bash
 model: sonnet
-color: blue
+color: magenta
 ---
 
 # Plan Executor
