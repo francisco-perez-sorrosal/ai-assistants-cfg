@@ -1,4 +1,4 @@
-Create a commit for the current staged changes (or all changes if nothing is staged), then push to the remote repository.
+Create a commit for the current staged changes (or all changes if nothing is staged).
 
 ## Process
 
@@ -7,6 +7,5 @@ Create a commit for the current staged changes (or all changes if nothing is sta
 3. Stage files if needed (prefer specific files over `git add -A`)
 4. Craft the commit message following the conventions below
 5. Create the commit
-6. Push to the remote repository
 
 @.claude/commit-conventions.md

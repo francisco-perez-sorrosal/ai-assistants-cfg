@@ -1,12 +1,12 @@
 ---
-name: Claude Code Skills
-description: Creating and optimizing Claude Code Skills including activation patterns, content structure, and development workflows. Use when creating new skills, converting memory files to skills, debugging skill activation, or understanding skill architecture and best practices.
-allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, WebFetch(domain:docs.claude.com)]
+name: Agent Skills
+description: Creating and optimizing Agent Skills for Claude Desktop/Code, Cursor, etc., including activation patterns, content structure, and development workflows. Use when creating new skills, converting memory files to skills, debugging skill activation, or understanding skill architecture and best practices.
+allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, WebFetch(domain:agentskills.io), WebFetch(domain:platform.claude.com/docs/en/agents-and-tools/agent-skills)]
 ---
 
-# Claude Code Skills Development
+# Agent Skills Development
 
-Reference documentation for developing effective Claude Code Skills. The context window is a public good - only include information Claude doesn't already possess.
+Reference documentation for developing effective Agent Skills. The context window is a public good - only include information Claude doesn't already possess. The official guide for Agent Skills is in https://agentskills.io
 
 ## Core Principles
 
@@ -190,5 +190,6 @@ Before deploying a skill:
 
 ## Additional Resources
 
+- [Examples of Skills](https://github.com/anthropics/skills)
 - [Claude Code Skills](https://docs.claude.com/en/docs/claude-code/skills.md)
 - [Agent Skills Best Practices](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices.md)

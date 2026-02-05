@@ -1,3 +1,6 @@
 .claude/settings.local.json
 .claude/hooks/logs/
-node_modules/
+
+# The following skils belong to another project.
+.claude/skills/ticker
+.claude/skills/stock-clusters
