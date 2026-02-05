@@ -1,5 +1,5 @@
 ---
-name: Python Development
+name: python
 description: Modern Python development with best practices, type hints, testing patterns, and code quality tools. Use when writing Python code, implementing tests, discussing Python language features, or needing guidance on testing frameworks, code organization, and error handling.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
@@ -332,42 +332,6 @@ def load_config(path: str) -> Config:
     return Config(**data)
 ```
 
-**Handle expected failures** gracefully:
-```python
-from typing import TypeVar
-
-T = TypeVar("T")
-
-def safe_get(items: Sequence[T], index: int, default: T) -> T:
-    """Get item at index or return default."""
-    try:
-        return items[index]
-    except IndexError:
-        return default
-```
-
-## Performance
-
-**Profile before optimizing**:
-```python
-import cProfile
-import pstats
-
-with cProfile.Profile() as pr:
-    # Code to profile
-    process_large_dataset()
-
-stats = pstats.Stats(pr)
-stats.sort_stats('cumulative')
-stats.print_stats(10)
-```
-
-**Common optimizations**:
-- Use generators for large sequences
-- Cache expensive computations with `@functools.lru_cache`
-- Use `collections.defaultdict` and `collections.Counter`
-- Consider `set` for membership testing over `list`
-
 ## Development Workflow
 
 1. **Initialize project** (see [Python Project Management](../python-prj-mgmt/SKILL.md))
@@ -387,23 +351,11 @@ stats.print_stats(10)
 
 **For libraries**, support Python 3.9+ unless specific features required.
 
-## Common Anti-Patterns to Avoid
-
-- Mutable default arguments: Use `None` and initialize inside function
-- Bare `except:` clauses: Always specify exception types
-- String concatenation in loops: Use `"".join()` instead
-- Global state: Pass dependencies explicitly
-- Over-engineering: Start simple, refactor when needed
-
 ## Quick Commands
 
 For package management commands, see the [Python Project Management](../python-prj-mgmt/SKILL.md) skill.
 
 ```bash
-# Development
-<tool> run python -m module_name    # Run module
-<tool> run python -i script.py      # Interactive mode after script
-
 # Code quality
 <tool> run ruff check .             # Lint
 <tool> run ruff format .            # Format

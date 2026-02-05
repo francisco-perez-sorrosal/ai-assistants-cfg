@@ -85,6 +85,7 @@ Include: what the skill does, specific trigger terms, key use cases.
 ```
 skill-name/
 ├── SKILL.md              # Required: instructions + metadata
+├── README.md             # Recommended: overview, usage guide, skill contents
 ├── scripts/              # Optional: executable utilities
 ├── references/           # Optional: detailed docs loaded on-demand
 └── assets/               # Optional: templates, schemas, data files
@@ -257,6 +258,7 @@ Before deploying a skill:
 
 - [ ] Third-person description with specific trigger terms (what + when)
 - [ ] `name` matches directory name (lowercase, hyphens only)
+- [ ] `README.md` with overview, activation triggers, and skill contents table
 - [ ] `SKILL.md` is concise (aim for ~500 lines, use progressive disclosure for longer content)
 - [ ] One-level-deep file references
 - [ ] Consistent terminology throughout
