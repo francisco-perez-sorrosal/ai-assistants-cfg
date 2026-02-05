@@ -1,4 +1,4 @@
-# Claude Agents Skill
+# Agent Creator Skill
 
 Skill for creating and managing Claude Code agents (subagents) — specialized AI assistants that run in separate context windows to handle specific workflows.
 
@@ -7,7 +7,6 @@ Skill for creating and managing Claude Code agents (subagents) — specialized A
 When activated, this skill provides comprehensive guidance for:
 
 - **Creating agents** with proper frontmatter and system prompts
-- **Choosing** between agents, skills, and slash commands
 - **Configuring** tool access, model selection, and permission modes
 - **Writing effective prompts** with checklists, output formats, and constraints
 - **Avoiding common pitfalls** (overly broad agents, vague descriptions, etc.)
@@ -26,10 +25,10 @@ You can also trigger it explicitly by asking about creating agents or referencin
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Concise hub: file structure, field summary table, usage, patterns, constraints, quick reference |
-| `REFERENCE.md` | Detailed field docs, prompt writing guide, prompt template, troubleshooting |
-| `BEST-PRACTICES.md` | Design principles, anti-patterns, development workflow, integrations |
-| `EXAMPLES.md` | Complete agent definitions (code-reviewer, security-analyzer, db-reader with hooks, etc.) |
+| `SKILL.md` | Concise hub: file structure, field summary, constraints, quick reference |
+| `REFERENCE.md` | Detailed field docs, prompt writing guide, prompt template, CLI agents, troubleshooting |
+| `BEST-PRACTICES.md` | Design principles, anti-patterns, development workflow |
+| `EXAMPLES.md` | Four structurally distinct agent definitions (read-only, edit-capable, hooks, memory) |
 | `README.md` | This file — overview and testing guide |
 
 ## Current Agents in This Repository
@@ -52,7 +51,7 @@ claude
 > I want to create an agent for reviewing documentation quality
 
 # Or reference it explicitly
-> Using the claude-agents skill, help me build a linter agent
+> Using the agent-creator skill, help me build a linter agent
 ```
 
 **Test an existing agent:**

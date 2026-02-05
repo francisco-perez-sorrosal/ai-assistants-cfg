@@ -2,6 +2,13 @@
 
 Detailed documentation for all frontmatter fields, prompt writing, and troubleshooting.
 
+## Contents
+
+- [Configuration Fields](#configuration-fields) — required and optional frontmatter
+- [Writing Effective Agent Prompts](#writing-effective-agent-prompts) — principles, examples, template
+- [CLI-Defined Agents](#cli-defined-agents) — ephemeral session-only agents
+- [Troubleshooting](#troubleshooting) — activation, errors, performance, permissions
+
 ## Configuration Fields
 
 ### Required Fields
@@ -225,6 +232,21 @@ Provide [type of output] organized by [structure]:
 - [Constraint 1]
 - [Constraint 2]
 - [Constraint 3]
+```
+
+## CLI-Defined Agents
+
+Session-only agents defined via the `--agents` CLI flag (not saved to disk):
+
+```bash
+claude --agents '{
+  "code-reviewer": {
+    "description": "Expert code reviewer. Use proactively after code changes.",
+    "prompt": "You are a senior code reviewer...",
+    "tools": ["Read", "Grep", "Glob", "Bash"],
+    "model": "sonnet"
+  }
+}'
 ```
 
 ## Troubleshooting

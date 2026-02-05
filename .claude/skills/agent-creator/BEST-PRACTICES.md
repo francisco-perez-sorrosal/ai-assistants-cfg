@@ -2,6 +2,13 @@
 
 Design principles, anti-patterns, and development workflow for building effective agents.
 
+## Contents
+
+- [Design Principles](#design-principles) — single responsibility, naming, prompts, tools, output
+- [Anti-Patterns](#anti-patterns) — common mistakes and fixes
+- [Development Workflow](#development-workflow) — from generation to monitoring
+- [Integration with Other Features](#integration-with-other-features) — skills, commands, hooks
+
 ## Design Principles
 
 ### 1. Single Responsibility
@@ -52,15 +59,7 @@ Review the code for issues
 
 ### 4. Appropriate Tool Access
 
-Grant only necessary tools.
-
-```markdown
-# Good: Restricted for security review
-tools: Read, Grep, Glob, Bash
-
-# Bad: Unnecessary write access
-tools: Read, Write, Edit, Bash
-```
+Grant only necessary tools — see common tool sets in `SKILL.md` Quick Reference.
 
 ### 5. Output Structure
 

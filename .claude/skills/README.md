@@ -9,7 +9,7 @@ Reusable skill modules for Claude Code. Each skill is a self-contained directory
 | Skill | When to Use |
 |-------|-------------|
 | **[agent-skills](agent-skills/)** | Creating new skills, converting memory files to skills, debugging skill activation, or understanding skill architecture. |
-| **[claude-agents](claude-agents/)** | Building custom agents (subagents), designing agent architectures, or implementing agent-based workflows. |
+| **[agent-creator](agent-creator/)** | Building custom agents (subagents), designing agent workflows, spawning subagents, or delegating tasks to agents. |
 | **[slash-cmd](slash-cmd/)** | Creating custom slash commands, debugging command behavior, or converting prompts to reusable commands. |
 
 ### Software Development

@@ -1,30 +1,18 @@
 ---
-name: Claude Agents
-description: Creating effective Claude Code agents (subagents) with best practices for delegation, specialized workflows, and team collaboration. Use when building custom agents, designing agent architectures, or implementing agent-based workflows.
+name: agent-creator
+description: Guides creation of Claude Code agents (subagents) with best practices for prompt writing, tool configuration, and lifecycle management. Use when building custom agents, designing agent workflows, spawning subagents, delegating tasks to agents, or using the /agents command.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
-# Creating Effective Claude Agents
+# Agent Creator
 
-Guide for building specialized agents that handle specific workflows with separate context windows.
+Guide for building agents — specialized subprocesses with separate context windows, independent tool permissions, and focused system prompts.
 
 **Satellite files** (loaded on-demand):
 
-- `REFERENCE.md` — detailed field docs, prompt writing guide, prompt template, troubleshooting
-- `BEST-PRACTICES.md` — design principles, anti-patterns, development workflow, integrations
-- `EXAMPLES.md` — complete agent definitions (code-reviewer, security-analyzer, debugger, db-reader with hooks, etc.)
-
-## When to Use Agents
-
-| Feature | Agents | Skills | Slash Commands |
-|---------|--------|--------|----------------|
-| Separate context | Yes | No | No |
-| Complex workflows | Yes | Yes | No |
-| Automatic invocation | Yes | Yes | No |
-| User-triggered | Optional | No | Yes |
-| Tool restrictions | Yes | Yes | Possible |
-
-**Use agents** for specialized workflows needing separate context, independent tool permissions, or context preservation. **Use skills** when same-context knowledge is sufficient. **Use slash commands** for simple, frequently used prompts.
+- `REFERENCE.md` — detailed field docs, prompt writing guide, prompt template, CLI agents, troubleshooting
+- `BEST-PRACTICES.md` — design principles, anti-patterns, development workflow
+- `EXAMPLES.md` — complete agent definitions showing distinct patterns (read-only, edit-capable, hooks, memory)
 
 ## Creating Agents
 
@@ -111,48 +99,7 @@ Higher priority wins when names collide:
 | 3 | `~/.claude/agents/` | All projects |
 | 4 (Lowest) | Plugin `agents/` | Where plugin is enabled |
 
-**Best practice**: Use project-level agents (`.claude/agents/`) for team collaboration.
-
-**CLI-defined agents** (session-only, not saved to disk):
-
-```bash
-claude --agents '{
-  "code-reviewer": {
-    "description": "Expert code reviewer. Use proactively after code changes.",
-    "prompt": "You are a senior code reviewer...",
-    "tools": ["Read", "Grep", "Glob", "Bash"],
-    "model": "sonnet"
-  }
-}'
-```
-
-## Using Agents
-
-**Automatic**: Claude delegates based on task description, agent `description` field, and context. Include "use proactively" or "MUST BE USED" in descriptions to encourage auto-delegation.
-
-**Explicit**: `Use the code-reviewer agent to check my recent changes`
-
-**Resume**: `Continue that code review` — resumed agents retain full conversation history.
-
-## Common Patterns
-
-| Pattern | Tools | Permission Mode |
-|---------|-------|-----------------|
-| Research and Report | Read, Grep, Glob, Bash | `plan` |
-| Analyze and Fix | Read, Edit, Grep, Glob, Bash | `default` |
-| Validate and Approve | Read, Grep, Glob, Bash | `default` |
-| Chain Agents | Varies | Varies |
-
-Chain example: `Use code-reviewer to identify issues, then test-generator to add tests`
-
-## Model Selection
-
-| Model | Best For |
-|-------|----------|
-| **inherit** (default) | General-purpose agents, session consistency |
-| **sonnet** | Most agents — balanced capability and speed |
-| **opus** | Complex reasoning, architectural analysis |
-| **haiku** | Quick searches, simple analysis, high-volume operations |
+**Best practice**: Use project-level agents (`.claude/agents/`) for team collaboration. For CLI-defined ephemeral agents, see `REFERENCE.md`.
 
 ## Constraints and Runtime Behavior
 
