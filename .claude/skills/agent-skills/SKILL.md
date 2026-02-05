@@ -14,6 +14,8 @@ Reference for developing effective Agent Skills. Official specification at [agen
 
 **The agent is already smart.** Only include information the model doesn't possess. Challenge each piece: "Does the agent really need this?" If in doubt, leave it out.
 
+**But not all agents are equally capable.** Skills may be consumed by agents with varying model capabilities. Avoid explaining universal knowledge (basic syntax, common idioms), but do include enough context — concrete examples, complete workflows, and explicit decision criteria — so your specific conventions can be followed correctly by less capable agents too. Examples and workflows are robust across the capability spectrum: they guide weaker agents without burdening stronger ones.
+
 **Conciseness**: Aim to keep `SKILL.md` concise (500 lines is a good guideline, not a hard limit). Use progressive disclosure — split detailed content into separate files loaded on-demand.
 
 **Appropriate Degrees of Freedom**: Match specificity to the task's fragility:
