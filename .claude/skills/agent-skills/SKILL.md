@@ -14,7 +14,7 @@ Reference for developing effective Agent Skills. Official specification at [agen
 
 **The agent is already smart.** Only include information the model doesn't possess. Challenge each piece: "Does the agent really need this?" If in doubt, leave it out.
 
-**Conciseness**: Keep `SKILL.md` under 500 lines. Use progressive disclosure — split detailed content into separate files loaded on-demand.
+**Conciseness**: Aim to keep `SKILL.md` concise (500 lines is a good guideline, not a hard limit). Use progressive disclosure — split detailed content into separate files loaded on-demand.
 
 **Appropriate Degrees of Freedom**: Match specificity to the task's fragility:
 
@@ -257,7 +257,7 @@ Before deploying a skill:
 
 - [ ] Third-person description with specific trigger terms (what + when)
 - [ ] `name` matches directory name (lowercase, hyphens only)
-- [ ] `SKILL.md` under 500 lines
+- [ ] `SKILL.md` is concise (aim for ~500 lines, use progressive disclosure for longer content)
 - [ ] One-level-deep file references
 - [ ] Consistent terminology throughout
 - [ ] Concrete examples provided
