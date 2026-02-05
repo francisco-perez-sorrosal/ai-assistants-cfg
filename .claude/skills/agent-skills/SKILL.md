@@ -1,6 +1,6 @@
 ---
 name: agent-skills
-description: Creating and optimizing Agent Skills for Claude Code, Cursor, and other compatible agents. Covers activation patterns, content structure, progressive disclosure, and development workflows. Use when creating new skills, converting memory files to skills, debugging skill activation, or understanding skill architecture and best practices.
+description: Creating, updating, and optimizing Agent Skills for Claude Code, Cursor, and other compatible agents. Covers activation patterns, content structure, progressive disclosure, and development workflows. Use when creating new skills, updating or modernizing existing skills, converting memory files to skills, debugging skill activation, or understanding skill architecture and best practices.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, WebFetch(domain:agentskills.io), WebFetch(domain:platform.claude.com)]
 ---
 
