@@ -21,7 +21,7 @@ I follow an approach of high quality of desing and coding, with a strong emphasi
 - Use code comments ONLY to clarify complex or non-trivial algorithms or obscure language idioms to OTHER readers. If you need to explain the code, do so in a separate message before editing.
 
 For refactoring tasks, load the `refactoring` skill.
-For substantial work that requires extensive thought, load the `planning` skill for three-document model (PLAN.md, WIP.md, LEARNINGS.md).
+For substantial work that requires extensive thought, load the `software-planning` skill for three-document model (PLAN.md, WIP.md, LEARNINGS.md).
 
 ## Code Organization
 
@@ -46,7 +46,7 @@ For substantial work that requires extensive thought, load the `planning` skill 
 - Document gotchas, patterns, decisions, edge cases while context is fresh
 
 For refactoring tasks, load the `refactoring` skill.
-For substantial work that requires extensive thought, load the `planning` skill for three-document model (PLAN.md, WIP.md, LEARNINGS.md).
+For substantial work that requires extensive thought, load the `software-planning` skill for three-document model (PLAN.md, WIP.md, LEARNINGS.md).
 
 ## Personal Info
 

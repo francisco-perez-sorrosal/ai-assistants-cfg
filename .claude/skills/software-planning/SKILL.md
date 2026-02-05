@@ -1,10 +1,10 @@
 ---
-name: Planning
-description: Planning complex software tasks using a three-document model for tracking work in small, known-good increments. Use when starting significant work or breaking down complex tasks.
+name: Software Planning
+description: Planning complex software tasks using a three-document model for tracking work in small, known-good increments. Use when starting significant software work or breaking down complex development tasks.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, TodoWrite]
 ---
 
-# Planning in Small Increments
+# Software Planning in Small Increments
 
 **All work must be done in small, known-good increments.** Each increment leaves the codebase in a working state.
 Create and maintain planning documents (PLAN.md, WIP.md, LEARNINGS.md) directly using Write and Edit tools.
@@ -43,6 +43,53 @@ PLAN.md (static)          WIP.md (living)           LEARNINGS.md (temporary)
               three docs              - CLAUDE.md (gotchas, patterns)
                                       - ADRs (architectural decisions)
 ```
+
+## Language Context
+
+When planning work in a specific language or tech stack, load the relevant **context overlay** alongside this skill. Contexts augment the planning workflow with language-specific quality gates, step templates, and testing patterns — without duplicating content from language skills.
+
+**Available contexts**:
+
+| Context | File | Related Skills |
+|---------|------|----------------|
+| Python | [contexts/python.md](contexts/python.md) | [Python](../python/SKILL.md), [Python Project Management](../python-prj-mgmt/SKILL.md) |
+
+**How contexts integrate**:
+- **PLAN.md**: Add a `Tech Stack` field linking to the relevant context and skills
+- **Step templates**: Use language-specific templates for common step types (new module, add dependency, etc.)
+- **Quality gates**: Run language-specific checks (linter, type checker, tests) before each commit
+- **Testing field**: Choose testing approach based on language-specific patterns
+
+If no context exists for your language, use the generic planning workflow and reference language-specific documentation directly.
+
+## Phase Delegations
+
+Some plan steps delegate to a **specialized skill** for their methodology. A phase is a group of consecutive steps that follow a specialized skill's workflow while remaining tracked by the plan.
+
+**Available phases**:
+
+| Phase | File | Delegated Skill |
+|-------|------|-----------------|
+| Refactoring | [phases/refactoring.md](phases/refactoring.md) | [Refactoring](../refactoring/SKILL.md) |
+
+**How phases integrate**:
+- **Detection**: During plan creation, look for signals that a phase is needed (each phase doc lists its signals)
+- **Step marking**: Tag delegated steps with `[Phase: <Name>]` in the step title and a `Skill` field pointing to the delegated skill
+- **Entry/exit criteria**: Each phase defines what must be true before starting and after completing
+- **Scoped**: Phase steps serve the plan's goal — they are not open-ended improvement
+
+**Delegated step template**:
+
+```markdown
+### Step N: [Phase: <Name>] One sentence description
+
+**Skill**: [<Skill Name>](link/to/SKILL.md)
+**Implementation**: What structural change will we make?
+**Testing**: How do we verify behavior is preserved / new behavior works?
+**Done when**: Concrete exit condition
+```
+
+**Contexts and phases compose**: A plan can use a language context (Python quality gates) *and* a phase (refactoring methodology) simultaneously. The context provides the quality checks; the phase provides the approach.
 
 ## What Makes a "Known-Good Increment"
 
@@ -130,6 +177,10 @@ Only proceed with commit after explicit approval.
 ## Goal
 
 [One sentence describing the outcome]
+
+## Tech Stack
+
+[Language/framework and relevant context, e.g., "Python 3.13 with pixi — see [Python context](contexts/python.md)"]
 
 ## Acceptance Criteria
 
@@ -354,6 +405,8 @@ What does "done" look like?
 
 Ask: "What's the smallest change that moves toward the goal?"
 
+Before listing feature steps, check for **phase signals** — does the current codebase need preparatory work (refactoring, migration, etc.) before the feature can be built cleanly? If yes, prepend a [phase delegation](#phase-delegations) to the step list.
+
 **Example breakdown:**
 
 1. Add OAuth2 library dependency
@@ -503,6 +556,7 @@ After a spike, you may need to update subsequent steps:
 - [ ] System is in working state
 - [ ] Relevant tests pass (if tests exist)
 - [ ] Static analysis passes
+- [ ] Language-specific quality gates pass (see [Language Context](#language-context))
 - [ ] WIP.md reflects current state
 - [ ] Learnings captured if any
 - [ ] Can describe change in one sentence

@@ -4,7 +4,7 @@ Custom agents for specialized workflows. Agents are autonomous subprocesses that
 
 ## Available Agents
 
-No custom agents currently defined. For planning workflows, use the `planning` skill instead.
+No custom agents currently defined. For planning workflows, use the `software-planning` skill instead.
 
 ---
 

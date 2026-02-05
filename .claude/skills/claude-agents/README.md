@@ -36,7 +36,7 @@ You can also trigger it explicitly by asking about creating agents or referencin
 
 Agents live in `.claude/agents/` and are available to any project that symlinks to this config (via `install.sh`).
 
-No custom agents currently defined. For planning workflows, use the `planning` skill instead.
+No custom agents currently defined. For planning workflows, use the `software-planning` skill instead.
 
 ## Testing
 
