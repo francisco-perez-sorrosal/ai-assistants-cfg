@@ -7,7 +7,7 @@ allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, TodoWrite]
 # Planning in Small Increments
 
 **All work must be done in small, known-good increments.** Each increment leaves the codebase in a working state.
-**Document Management:** Use the plan-executor agent to create and maintain planning documents (PLAN.md, WIP.md, LEARNINGS.md).
+Create and maintain planning documents (PLAN.md, WIP.md, LEARNINGS.md) directly using Write and Edit tools.
 
 ## Three-Document Model
 

@@ -36,9 +36,7 @@ You can also trigger it explicitly by asking about creating agents or referencin
 
 Agents live in `.claude/agents/` and are available to any project that symlinks to this config (via `install.sh`).
 
-| Agent | Purpose |
-|-------|---------|
-| `plan-executor` | Manages significant work through PLAN.md / WIP.md / LEARNINGS.md three-document system |
+No custom agents currently defined. For planning workflows, use the `planning` skill instead.
 
 ## Testing
 
@@ -60,11 +58,11 @@ claude
 **Test an existing agent:**
 
 ```bash
-# Invoke the plan-executor agent explicitly
-> Use the plan-executor agent to set up tracking for this feature
+# Invoke an agent explicitly
+> Use the code-reviewer agent to check this PR
 
 # Or trigger it via matching context
-> Let's plan the implementation of user authentication
+> Review the security implications of this change
 ```
 
 **Verify agent discovery:**
@@ -96,7 +94,6 @@ Claude Desktop uses the same agent definitions but discovery works through MCP a
 
 **Test scenarios:**
 
-- Ask Claude Desktop to "use the plan-executor agent" — it should delegate to the subagent
 - Ask to "create a new agent for X" — the skill should activate and guide agent creation
 - Verify that agents created via Claude Code are available in Claude Desktop (and vice versa) since both read from `~/.claude/agents/`
 
