@@ -1,9 +1,14 @@
-Your task is to create a new worktree named .trees/$ARGUMENTS folder.
+---
+description: Create a new git worktree in .trees/
+argument-hint: [branch-name]
+allowed-tools: [Bash(git:*), Bash(ln:*), Bash(ls:*), Bash(cursor:*)]
+---
 
-Follow these steps:
+Create a new worktree named .trees/$ARGUMENTS.
 
-1. Check if an existing folder in the .trees folder with the name $ARGUMENTS already exists. If it
-does, stoe here and tell the user that the worktree already exists
-2. Create a new git worktree in the .trees folder witht he name $ARGUMENTS
-3. Symlink the .venv folder into the worktree directory
-4. Launches a new Cursor editor instance in that directory by running the `cursor` command
+## Steps
+
+1. Check if `.trees/$ARGUMENTS` already exists. If it does, stop and tell the user the worktree already exists
+2. Create a new git worktree in the `.trees/` folder with the name `$ARGUMENTS`
+3. Symlink the `.venv` folder into the worktree directory
+4. Launch a new Cursor editor instance in that directory by running the `cursor` command

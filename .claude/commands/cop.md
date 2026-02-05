@@ -1,3 +1,8 @@
+---
+description: Create a commit and push to remote
+allowed-tools: [Bash(git:*), Read, Grep]
+---
+
 Create a commit for the current staged changes (or all changes if nothing is staged), then push to the remote repository.
 
 ## Process
