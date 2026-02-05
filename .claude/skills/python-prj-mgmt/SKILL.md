@@ -1,5 +1,5 @@
 ---
-name: Python Project Management
+name: python-prj-mgmt
 description: Python project management with pixi and uv package managers. Use when setting up Python projects, managing dependencies, configuring environments, initializing projects, or choosing between package management tools. Defaults to pixi unless uv is explicitly requested.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
@@ -137,50 +137,6 @@ uv run pytest                # Run tests
 uv run mypy src/             # Type check
 
 # No activation needed with uv run
-```
-
-## Common Workflows
-
-### Development Setup (pixi)
-
-```bash
-# Initialize
-pixi init my-project --format pyproject
-cd my-project
-
-# Add dependencies
-pixi add --pypi requests pandas
-pixi add numpy  # conda version (better for numpy)
-
-# Add dev tools
-pixi add --pypi --feature dev pytest mypy ruff
-
-# Run development tasks
-pixi run pytest
-pixi run mypy src/
-pixi run ruff check .
-```
-
-### Development Setup (uv)
-
-```bash
-# Initialize
-uv init my-project
-cd my-project
-
-# Set Python version
-uv python pin 3.11
-
-# Add dependencies
-uv add requests pandas numpy
-
-# Add dev tools
-uv add --dev pytest mypy ruff
-
-# Run development tasks
-uv run pytest
-uv run mypy src/
-uv run ruff check .
 ```
 
 ### CI/CD Integration
@@ -362,26 +318,6 @@ uv publish                       # Publish to PyPI
 # Maintenance
 uv cache clean                   # Clean cache
 ```
-
-## Migration Between Tools
-
-### From pip to pixi
-
-```bash
-pixi init --format pyproject
-cat requirements.txt | xargs -n 1 pixi add --pypi
-```
-
-### From pip to uv
-
-```bash
-uv init
-cat requirements.txt | xargs -n 1 uv add
-```
-
-### From poetry to pixi/uv
-
-Both tools can read poetry's `pyproject.toml` directly.
 
 ## Best Practices
 
