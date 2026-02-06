@@ -27,8 +27,11 @@ commands/                            # Shared slash commands
 └── create-simple-python-prj.md      # /create-simple-python-prj — scaffold project
 agents/                              # Shared agent definitions (none yet)
 rules/                               # Rules (installed to ~/.claude/rules/)
-├── git-commit-message-format.md     # Commit message format and type prefixes
-└── git-commit-rules.md              # Git commit safety and hygiene rules
+├── swe/vcs/
+│   ├── git-commit-message-format.md # Commit message format and type prefixes
+│   └── git-commit-hygiene.md        # Git commit safety and hygiene rules
+└── writing/
+    └── readme-style.md              # Precision-first technical writing style
 .claude-plugin/                      # Claude Code plugin manifest
 ├── plugin.json
 └── PLUGIN_SCHEMA_NOTES.md
@@ -115,6 +118,20 @@ Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin
 | `/create-simple-python-prj [name] [desc] [pkg-mgr] [dir]` | Scaffold a Python project (defaults: pixi, `~/dev`) |
 
 
+## How Rules Interact with Commands
+
+Rules do **not** need to be referenced from slash commands. When `/co` triggers a commit workflow, Claude automatically loads relevant rules from `~/.claude/rules/` based on the task context — no explicit binding required.
+
+Commands can use **semantic hints** to help Claude disambiguate when multiple overlapping rules exist:
+
+```
+"Commit following our conventional commits standard."
+```
+
+Never reference rule filenames directly in commands — filenames have no special meaning to the command system.
+
+See [`rules/README.md`](rules/README.md) for the full rule specification, writing guidelines, and the rules-vs-skills-vs-CLAUDE.md decision model.
+
 ## Design Intent
 
 - **Assistant-agnostic shared assets**: `skills/`, `commands/`, `agents/` live at the repo root, reusable across any AI assistant
@@ -130,4 +147,3 @@ Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin
 - [Agent Skills Best Practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices.md)
 - [bendrucker/claude config](https://github.com/bendrucker/claude/blob/main/.claude/)
 - [citypaul/.dotfiles claude config](https://github.com/citypaul/.dotfiles/blob/main/claude)
-

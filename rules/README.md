@@ -2,8 +2,6 @@
 
 Rules are **contextual domain knowledge files** that Claude loads automatically based on relevance. They encode constraints, conventions, and reference material that Claude should apply when working in specific contexts — without requiring explicit invocation.
 
-This directory contains rules installed to `~/.claude/rules/` via `install.sh`.
-
 ## Current Rules
 
 ```
@@ -12,6 +10,8 @@ rules/
 │   └── vcs/
 │       ├── git-commit-hygiene.md
 │       └── git-commit-message-format.md
+├── writing/
+│   └── readme-style.md
 └── README.md
 ```
 
@@ -19,6 +19,7 @@ rules/
 | ---- | ------- |
 | `swe/vcs/git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
 | `swe/vcs/git-commit-hygiene.md` | Git commit safety, staging discipline, and exclusions |
+| `writing/readme-style.md` | Precision-first technical writing style for README.md files |
 
 ## How Rules Work
 
@@ -162,23 +163,7 @@ Rules are installed via `install.sh`, which recursively symlinks all `*.md` file
 ```
 rules/swe/vcs/git-commit-hygiene.md         →  ~/.claude/rules/swe/vcs/git-commit-hygiene.md
 rules/swe/vcs/git-commit-message-format.md  →  ~/.claude/rules/swe/vcs/git-commit-message-format.md
+rules/writing/readme-style.md               →  ~/.claude/rules/writing/readme-style.md
 ```
 
 Adding a new rule file here and re-running `install.sh` is all that's needed — no other configuration changes required.
-
-## Relationship to Slash Commands
-
-Rules do **not** need to be referenced from slash commands. When `/co` triggers a commit workflow, Claude automatically loads relevant rules from `~/.claude/rules/` based on the task context.
-
-You can optionally use **semantic hints** in command text to help disambiguation when multiple overlapping rules exist:
-
-```
-"Commit following our conventional commits standard."
-```
-
-But you should **never** reference rule filenames directly:
-
-```
-# Don't do this — filenames have no special meaning in commands
-"Use rules/git-commit-message-format.md"
-```
