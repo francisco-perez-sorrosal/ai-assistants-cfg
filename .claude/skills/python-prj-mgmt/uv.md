@@ -509,52 +509,6 @@ uv sync
 4. **Parallel installs**: uv automatically parallelizes
 5. **Global tools**: Use `uv tool install` for CLI tools
 
-## Useful Commands Reference
-
-```bash
-# Project management
-uv init [path]                    # Initialize project
-uv sync                           # Sync dependencies
-uv lock                           # Update lockfile
-uv tree                           # Show dependency tree
-
-# Dependencies
-uv add package                    # Add dependency
-uv add --dev package             # Add dev dependency
-uv remove package                # Remove dependency
-
-# Python versions
-uv python install 3.12           # Install Python version
-uv python list                   # List installed versions
-uv python pin 3.12              # Pin version
-
-# Virtual environments
-uv venv                          # Create venv
-uv venv --python 3.12           # With specific Python
-
-# Running
-uv run command                   # Run in environment
-uv run python script.py         # Run Python script
-
-# Pip compatibility
-uv pip install package           # Install package
-uv pip list                      # List packages
-uv pip compile requirements.in  # Compile requirements
-uv pip sync requirements.txt    # Sync from requirements
-
-# Tools
-uv tool install tool             # Install global tool
-uv tool list                     # List global tools
-
-# Build and publish
-uv build                         # Build package
-uv publish                       # Publish to PyPI
-
-# Maintenance
-uv cache clean                   # Clean cache
-uv cache dir                     # Show cache location
-```
-
 ## Best Practices
 
 1. **Always commit `uv.lock`** for reproducibility

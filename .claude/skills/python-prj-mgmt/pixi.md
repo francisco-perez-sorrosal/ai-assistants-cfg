@@ -503,41 +503,6 @@ pixi add package1 package2               # Conda packages
 pixi add --pypi pypi-package            # PyPI packages
 ```
 
-## Useful Commands
-
-```bash
-# Project management
-pixi init --format pyproject              # Initialize Python project
-pixi install                              # Install from lockfile
-pixi update                               # Update dependencies
-
-# Dependencies
-pixi add --pypi package                   # Add PyPI package
-pixi add package                          # Add conda package
-pixi add --pypi --feature dev package    # Add to feature
-pixi remove package                       # Remove package
-pixi list                                 # List packages
-pixi tree                                 # Dependency tree
-
-# Running
-pixi run command                          # Run in environment
-pixi run -e env command                   # Run in specific environment
-pixi shell                                # Interactive shell
-
-# Tasks
-pixi task list                            # List tasks
-pixi run task-name                        # Run task
-
-# Global tools
-pixi global install tool                  # Install globally
-pixi global list                          # List global tools
-
-# Maintenance
-pixi clean cache                          # Clean cache
-pixi info                                 # Show environment info
-pixi search package                       # Search packages
-```
-
 ## Best Practices
 
 1. **Use `pyproject.toml`** for Python projects (not `pixi.toml`)

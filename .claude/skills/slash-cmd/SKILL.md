@@ -210,6 +210,8 @@ ls -R ~/.claude/commands/
 cat .claude/commands/my-command.md
 ```
 
+Within Claude Code, the `Read` and `Glob` tools can also inspect command files directly.
+
 Verify: proper `---` delimiters, valid YAML, correct field names, expected argument substitution.
 
 ## Creation Workflow

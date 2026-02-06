@@ -355,17 +355,18 @@ exclude_lines = [
 **Pre-commit hooks** (optional but recommended):
 ```yaml
 # .pre-commit-config.yaml
-# Pin to latest stable versions — update periodically
+# Pin rev to the latest stable release — find current versions at each repo's releases page.
+# Specific versions are not pinned here to avoid staleness; the pattern matters, not the pin.
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+    rev: <version>  # https://github.com/astral-sh/ruff-pre-commit/releases
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
+    rev: <version>  # https://github.com/pre-commit/mirrors-mypy/tags
     hooks:
       - id: mypy
         additional_dependencies: [types-requests]

@@ -205,6 +205,22 @@ See the [Python](../python/SKILL.md) skill for detailed type hint patterns, test
 - Explicit dependencies over implicit
 - Readability in common cases, optimization in proven bottlenecks
 
+```typescript
+// Before: Mutable state couples callers to internal changes
+class ShoppingCart {
+  items: Item[] = [];
+  addItem(item: Item) { this.items.push(item); }
+}
+
+// After: Immutable updates — callers can reason locally
+class ShoppingCart {
+  constructor(readonly items: ReadonlyArray<Item> = []) {}
+  addItem(item: Item): ShoppingCart {
+    return new ShoppingCart([...this.items, item]);
+  }
+}
+```
+
 ## Verification Checklist
 
 Before committing refactoring:

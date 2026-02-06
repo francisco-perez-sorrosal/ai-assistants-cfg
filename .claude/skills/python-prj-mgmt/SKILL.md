@@ -274,21 +274,29 @@ pixi install                      # Install from lockfile
 # Dependencies
 pixi add --pypi package           # Add PyPI package
 pixi add package                  # Add conda package
+pixi add --pypi --feature dev pkg # Add to feature group
 pixi remove package               # Remove package
 pixi list                         # List packages
 pixi tree                         # Dependency tree
 
 # Running
 pixi run command                  # Run in environment
+pixi run -e env command           # Run in specific environment
 pixi shell                        # Interactive shell
 
 # Tasks
 pixi task list                    # List tasks
 pixi run task-name                # Run task
 
+# Global tools
+pixi global install tool          # Install globally
+pixi global list                  # List global tools
+
 # Maintenance
 pixi update                       # Update dependencies
 pixi clean cache                  # Clean cache
+pixi info                         # Show environment info
+pixi search package               # Search packages
 ```
 
 ### uv
@@ -297,19 +305,35 @@ pixi clean cache                  # Clean cache
 # Project
 uv init                           # Initialize project
 uv sync                           # Sync dependencies
+uv lock                           # Update lockfile
 
 # Dependencies
 uv add package                    # Add dependency
 uv add --dev package             # Add dev dependency
-uv remove package                # Remove package
+uv remove package                # Remove dependency
 uv tree                          # Dependency tree
 
 # Python versions
 uv python install 3.11           # Install Python version
+uv python list                   # List installed versions
 uv python pin 3.11               # Pin version
 
 # Running
 uv run command                   # Run in environment
+uv run python script.py         # Run Python script
+
+# Virtual environments
+uv venv                          # Create venv
+uv venv --python 3.12           # With specific Python
+
+# Pip compatibility
+uv pip install package           # Install package
+uv pip compile requirements.in  # Compile requirements
+uv pip sync requirements.txt    # Sync from requirements
+
+# Global tools
+uv tool install tool             # Install global tool
+uv tool list                     # List global tools
 
 # Build
 uv build                         # Build package
@@ -317,6 +341,7 @@ uv publish                       # Publish to PyPI
 
 # Maintenance
 uv cache clean                   # Clean cache
+uv cache dir                     # Show cache location
 ```
 
 ## Best Practices
