@@ -23,3 +23,8 @@ Trigger explicitly by mentioning "refactoring skill" or referencing it by name.
 | `SKILL.md` | Core reference: four pillars, workflow, decision framework, anti-patterns, verification checklist |
 | `references/patterns.md` | Detailed refactoring patterns and common scenarios with full code examples |
 | `README.md` | This file — overview and usage guide |
+
+## Related Skills
+
+- [python](../python/SKILL.md) — Python-specific patterns used in refactoring (Protocols, dataclasses, type hints)
+- [software-planning](../software-planning/SKILL.md) — Embedding refactoring phases within structured plans

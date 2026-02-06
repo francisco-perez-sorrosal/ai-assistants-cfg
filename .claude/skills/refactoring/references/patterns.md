@@ -199,3 +199,5 @@ Use the Grep tool to find import dependencies and coupling hotspots:
 - Search for `^import\|^from` patterns in Python files to map dependencies
 - Use tools like `pydeps` or `import-linter` for circular dependency detection
 - Count imports per module to identify high-coupling files
+
+These tools require installation: `<tool> add --pypi pydeps import-linter`
