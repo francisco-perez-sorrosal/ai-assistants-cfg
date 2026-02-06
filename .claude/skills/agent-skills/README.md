@@ -38,6 +38,11 @@ Trigger explicitly by asking about "agent skills," "creating a skill," or refere
 5. **Test**: use the author-tester workflow (one instance writes, another tests on real tasks)
 6. **Validate**: run through the deployment checklist in `SKILL.md`
 
+## Related Skills
+
+- **[agent-creator](../agent-creator/)** -- Building custom agents that consume skills via the `skills` frontmatter field
+- **[slash-cmd](../slash-cmd/)** -- Creating slash commands; understanding the distinction between commands and skills
+
 ## Testing
 
 **Test skill creation guidance:**

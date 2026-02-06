@@ -30,17 +30,17 @@ Reusable skill modules for Claude Code. Each skill is a self-contained directory
 
 ## How Skills Work
 
-Skills are loaded automatically when Claude detects a matching context based on each skill's `activation` field in its frontmatter. You can also reference them explicitly (e.g., "load the `refactoring` skill").
+Skills are loaded automatically when Claude detects a matching context based on each skill's `description` field in its frontmatter. You can also reference them explicitly (e.g., "load the `refactoring` skill").
 
 ### Activation
 
-- **Automatic**: Claude matches your task context against skill activation triggers
+- **Automatic**: Claude matches your task context against skill `description` triggers
 - **Explicit**: Reference a skill by name in conversation or from `CLAUDE.md`
 
 ### Structure
 
 Each skill directory contains at minimum a `SKILL.md` with:
-- **Frontmatter**: `name`, `description`, `activation`, `allowed-tools`, and other metadata
+- **Frontmatter**: `name`, `description`, `allowed-tools`, and other metadata
 - **Content**: Domain-specific guidance, patterns, and workflows
 
 Larger skills use **progressive disclosure** with supporting files (`REFERENCE.md`, `EXAMPLES.md`, `BEST-PRACTICES.md`) loaded only when needed, keeping the context window efficient.

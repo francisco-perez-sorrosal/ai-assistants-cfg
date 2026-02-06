@@ -93,6 +93,8 @@ skill-name/
 └── assets/               # Optional: templates, schemas, data files
 ```
 
+Satellite files can live at the skill root (e.g., `REFERENCE.md`, `pixi.md`) or inside subdirectories (e.g., `references/patterns.md`). Both conventions are valid. A common guideline: use root-level files when there are only one or two satellites; use subdirectories when there are three or more to keep the directory tidy.
+
 ### Progressive Disclosure
 
 Three tiers of context loading:
