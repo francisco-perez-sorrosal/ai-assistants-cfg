@@ -12,8 +12,8 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - `commands/` — Shared slash commands
 - `agents/` — Shared agent definitions (none yet)
 - `rules/` — Rules installed to `~/.claude/rules/` (auto-loaded by Claude when relevant)
-  - `git-commit-message-format.md` — Commit message format and type prefixes
-  - `git-commit-rules.md` — Git commit safety and hygiene rules
+  - `swe/vcs/git-commit-message-format.md` — Commit message format and type prefixes
+  - `swe/vcs/git-commit-hygiene.md` — Git commit safety, staging discipline, and exclusions
 - `.claude-plugin/` — Claude Code plugin manifest (`i-am`) and marketplace (`bit-agora`)
   - `plugin.json` — Plugin name, version, component paths
   - `PLUGIN_SCHEMA_NOTES.md` — Validator constraints reference

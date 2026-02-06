@@ -6,10 +6,19 @@ This directory contains rules installed to `~/.claude/rules/` via `install.sh`.
 
 ## Current Rules
 
+```
+rules/
+├── swe/
+│   └── vcs/
+│       ├── git-commit-hygiene.md
+│       └── git-commit-message-format.md
+└── README.md
+```
+
 | File | Purpose |
 | ---- | ------- |
-| `git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
-| `git-commit-rules.md` | Git commit safety and hygiene (one logical change, no secrets) |
+| `swe/vcs/git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
+| `swe/vcs/git-commit-hygiene.md` | Git commit safety, staging discipline, and exclusions |
 
 ## How Rules Work
 
@@ -21,7 +30,7 @@ Rules are **not invoked explicitly**. Claude scans `.claude/rules/` and loads ru
 2. **Files being read or edited** — the code or config Claude is working with
 3. **Semantic relevance** — filename and content matching against the current context
 
-When Claude executes a `/co` (commit) command, it automatically picks up `git-commit-message-format.md` and `git-commit-rules.md` because the task is semantically related. No `@`-reference or explicit import is needed.
+When Claude executes a `/co` (commit) command, it automatically picks up `git-commit-message-format.md` and `git-commit-hygiene.md` because the task is semantically related. No `@`-reference or explicit import is needed.
 
 ### What Rules Are NOT
 
@@ -148,11 +157,11 @@ Naming directly affects Claude's relevance scoring. Use:
 
 ## Installation
 
-Rules are installed via `install.sh`, which symlinks all `*.md` files (except `README.md`) from this directory to `~/.claude/rules/`:
+Rules are installed via `install.sh`, which recursively symlinks all `*.md` files (except `README.md`) from this directory to `~/.claude/rules/`, preserving subdirectory structure:
 
 ```
-rules/git-commit-message-format.md  →  ~/.claude/rules/git-commit-message-format.md
-rules/git-commit-rules.md           →  ~/.claude/rules/git-commit-rules.md
+rules/swe/vcs/git-commit-hygiene.md         →  ~/.claude/rules/swe/vcs/git-commit-hygiene.md
+rules/swe/vcs/git-commit-message-format.md  →  ~/.claude/rules/swe/vcs/git-commit-message-format.md
 ```
 
 Adding a new rule file here and re-running `install.sh` is all that's needed — no other configuration changes required.

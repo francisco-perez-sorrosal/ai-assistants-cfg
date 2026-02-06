@@ -82,7 +82,7 @@ install_claude() {
     echo ""
 
     # Clean stale symlinks from previous installations (whole-directory and per-item)
-    local stale_items=("skills" "commands" "agents" "commit-conventions.md" "rules/commit-conventions.md" "rules/git-commit-conventions.md")
+    local stale_items=("skills" "commands" "agents" "commit-conventions.md" "rules/commit-conventions.md" "rules/git-commit-conventions.md" "rules/git-commit-rules.md" "rules/git-commit-message-format.md")
     for item in "${stale_items[@]}"; do
         local target="$dest_dir/$item"
         if [ -L "$target" ]; then
@@ -139,18 +139,19 @@ install_claude() {
         fi
     fi
 
-    # Install rules (link all .md files from source rules/ directory)
+    # Install rules (link all .md files from source rules/ directory, recursively)
     local rules_src="${THIS_DIR}/rules"
     local rules_dir="${dest_dir}/rules"
     mkdir -p "${rules_dir}"
     echo ""
     echo "Installing rules..."
-    for rule in "$rules_src"/*.md; do
-        [ -f "$rule" ] || continue
-        local basename="$(basename "$rule")"
-        [[ "$basename" == "README.md" ]] && continue
-        link_item "$rule" "${rules_dir}/${basename}" "${basename} → rules/"
-    done
+    while IFS= read -r rule; do
+        local rel_path="${rule#"$rules_src"/}"
+        local rel_dir="$(dirname "$rel_path")"
+        [[ "$(basename "$rule")" == "README.md" ]] && continue
+        [ "$rel_dir" != "." ] && mkdir -p "${rules_dir}/${rel_dir}"
+        link_item "$rule" "${rules_dir}/${rel_path}" "${rel_path} → rules/"
+    done < <(find "$rules_src" -name '*.md' -type f | sort)
 
     echo ""
     echo "✓ Claude personal config installed"
