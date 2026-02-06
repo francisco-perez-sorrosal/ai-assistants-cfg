@@ -16,7 +16,7 @@ install: ## Install Claude config + plugin via local marketplace
 	./install.sh
 
 status: ## Show what would be installed
-	@echo "Plugin: fps-claude v$$(jq -r .version .claude-plugin/plugin.json)"
+	@echo "Plugin: i-am v$$(jq -r .version .claude-plugin/plugin.json)"
 	@echo ""
 	@echo "Skills:"
 	@ls -1d skills/*/SKILL.md 2>/dev/null | sed 's|skills/\(.*\)/SKILL.md|  \1|'

@@ -254,4 +254,4 @@ For complete command references, see [pixi.md](pixi.md) and [uv.md](uv.md). The 
 - [pixi Reference](pixi.md) — Complete pixi guide: environments, tasks, ML workflows, troubleshooting
 - [uv Reference](uv.md) — Complete uv guide: workspaces, build/publish, Python version management
 - [Python Development](../python/SKILL.md) — Type hints, testing, code quality, language patterns
-- [MCP Server](../mcp-server/SKILL.md) — Building MCP servers in Python (uses uv by default)
+- [mcp-crafting](../mcp-crafting/SKILL.md) — Building MCP servers in Python (uses uv by default)

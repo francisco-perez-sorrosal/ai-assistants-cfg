@@ -8,12 +8,12 @@ Configuration repository for AI coding assistants. Centralizes and version-contr
 
 ```
 skills/                              # Shared skill modules (assistant-agnostic)
-├── agent-skills/                    # Creating and maintaining skills
-├── agent-creator/                   # Building custom agents/subagents
-├── slash-cmd/                       # Creating slash commands
+├── skill-crafting/                  # Creating and maintaining skills
+├── agent-crafting/                  # Building custom agents/subagents
+├── command-crafting/                # Creating slash commands
+├── mcp-crafting/                    # Building MCP servers in Python
 ├── python/                          # Python development best practices
 ├── python-prj-mgmt/                # Project setup with pixi/uv
-├── mcp-server/                      # Building MCP servers in Python
 ├── refactoring/                     # Code restructuring patterns
 ├── software-planning/               # Three-document planning model
 ├── stock-clusters/                  # Stock clustering analysis
@@ -41,52 +41,76 @@ install.sh                           # Multi-assistant installer
 
 ### Plugin (skills, commands, agents)
 
-The repo is packaged as a Claude Code plugin (`fps-claude`). Install via the `/plugin` command or CLI:
+The repo is packaged as a Claude Code plugin (`i-am`) distributed via the `bit-agora` marketplace. Install via the `/plugin` command or CLI:
 
 ```bash
 # Load directly for a single session (no install needed)
 claude --plugin-dir /path/to/ai-assistants
 
 # Or add as a marketplace and install persistently
-claude plugin marketplace add francisco-perez-sorrosal/ai-assistants
-claude plugin install fps-claude
+claude plugin marketplace add /path/to/ai-assistants
+claude plugin install i-am@bit-agora
 ```
 
-When installed as a plugin, commands are namespaced: `/co` becomes `/fps-claude:co`.
+When installed as a plugin, commands are namespaced: `/co` becomes `/i-am:co`.
 
 Use `claude plugin validate .` from the repo root to verify the plugin structure.
 
-### install.sh (personal config)
+### Personal config (`install.sh`)
 
-Run `./install.sh` to symlink Claude personal config files (`CLAUDE.md`, `claude_desktop_config.json`, `userPreferences.txt`, `settings.local.json`) to `~/.claude/`.
+Run `./install.sh` to symlink Claude personal config files to `~/.claude/` and install rules. The installer also prompts to install the `i-am` plugin via the marketplace.
 
 ```bash
-./install.sh                # Install Claude personal config (default)
-./install.sh --with-plugin  # Also load the plugin via Claude Code CLI
-./install.sh --help         # Show all options
+./install.sh          # Install Claude personal config (prompts for plugin)
+./install.sh --help   # Show all options
 ```
 
+**What gets installed:**
+
+
+| Source (`.claude/`)          | Target (`~/.claude/`)                   | Purpose                                                                  |
+| ---------------------------- | --------------------------------------- | ------------------------------------------------------------------------ |
+| `CLAUDE.md`                  | `~/.claude/CLAUDE.md`                   | Global development guidelines, code style, available skills and commands |
+| `claude_desktop_config.json` | `~/.claude/claude_desktop_config.json`  | Claude Desktop settings (MCP servers)                                    |
+| `userPreferences.txt`        | `~/.claude/userPreferences.txt`         | Adaptive precision mode — controls response style and verbosity          |
+| `settings.local.json`        | `~/.claude/settings.local.json`         | Local permission settings (gitignored)                                   |
+| `commit-conventions.md`      | `~/.claude/rules/commit-conventions.md` | Git commit message conventions (installed as a rule)                     |
+
+
 The installer also links `claude_desktop_config.json` to the official Claude Desktop location:
+
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
+### User preferences on Claude Desktop / iOS
+
+On devices without filesystem access (e.g., Claude iOS app) or when using Claude Desktop without the CLI, you can load the same user preferences by pasting the following into the **User Preferences** field in Claude's settings:
+
+```
+Read the user preferences from https://raw.githubusercontent.com/francisco-perez-sorrosal/ai-assistants-cfg/main/.claude/userPreferences.txt and follow them before any other interaction
+```
+
+This tells Claude to fetch and apply the adaptive precision mode instructions at the start of each conversation, keeping behavior consistent across all clients.
+
 ## Skills
 
-Reusable knowledge modules that Claude loads automatically based on context. See [`skills/README.md`](skills/README.md) for the full catalog.
+Reusable knowledge modules that Claude loads automatically based on context. See `[skills/README.md](skills/README.md)` for the full catalog.
 
-**Categories**: Claude Code authoring (agent-skills, agent-creator, slash-cmd) · Software development (python, python-prj-mgmt, mcp-server, refactoring, software-planning) · Domain-specific (stock-clusters, ticker)
+**Categories**: AI assistant crafting (skill-crafting, agent-crafting, command-crafting, mcp-crafting) · Software development (python, python-prj-mgmt, refactoring, software-planning) · Domain-specific (stock-clusters, ticker)
 
 ## Commands
 
-Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin, commands are namespaced as `/fps-claude:<name>`.
+Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin, commands are namespaced as `/i-am:<name>`.
 
-| Command | Description |
-|---------|-------------|
-| `/co` | Create a commit for staged (or all) changes |
-| `/cop` | Create a commit and push to remote |
-| `/create_worktree [branch]` | Create a new git worktree in `.trees/` |
-| `/merge_worktree [branch]` | Merge a worktree branch back into current branch |
+
+| Command                                                   | Description                                         |
+| --------------------------------------------------------- | --------------------------------------------------- |
+| `/co`                                                     | Create a commit for staged (or all) changes         |
+| `/cop`                                                    | Create a commit and push to remote                  |
+| `/create_worktree [branch]`                               | Create a new git worktree in `.trees/`              |
+| `/merge_worktree [branch]`                                | Merge a worktree branch back into current branch    |
 | `/create-simple-python-prj [name] [desc] [pkg-mgr] [dir]` | Scaffold a Python project (defaults: pixi, `~/dev`) |
+
 
 ## Design Intent
 
@@ -103,3 +127,4 @@ Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin
 - [Agent Skills Best Practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices.md)
 - [bendrucker/claude config](https://github.com/bendrucker/claude/blob/main/.claude/)
 - [citypaul/.dotfiles claude config](https://github.com/citypaul/.dotfiles/blob/main/claude)
+

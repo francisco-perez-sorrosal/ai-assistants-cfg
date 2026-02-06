@@ -1,4 +1,4 @@
-# Slash Commands Skill
+# Command Crafting Skill
 
 Skill for creating and managing slash commands — reusable, user-invoked prompts stored as Markdown files.
 
@@ -31,7 +31,7 @@ You can also trigger it explicitly by asking about slash commands or referencing
 
 ## Existing Commands in This Repository
 
-Commands live in `commands/` (this repo) or `.claude/commands/` (consumer projects). Install as a plugin via `claude plugin install fps-claude`.
+Commands live in `commands/` (this repo) or `.claude/commands/` (consumer projects). Install as a plugin via `claude plugin install i-am@bit-agora`.
 
 | Command | Description |
 |---------|-------------|
@@ -55,7 +55,7 @@ claude
 > I want to create a slash command for running my test suite
 
 # Or reference it explicitly
-> Using the slash-cmd skill, help me build a deploy command
+> Using the command-crafting skill, help me build a deploy command
 ```
 
 **Test an existing command:**
@@ -80,8 +80,8 @@ claude
 
 ## Related Skills
 
-- [`agent-skills`](../agent-skills/) -- the spec for creating skills; commands can graduate to full skills when they outgrow a single file
-- [`agent-creator`](../agent-creator/) -- for building custom agents; helps distinguish when to use a command vs an agent
+- [`skill-crafting`](../skill-crafting/) -- the spec for creating skills; commands can graduate to full skills when they outgrow a single file
+- [`agent-crafting`](../agent-crafting/) -- for building custom agents; helps distinguish when to use a command vs an agent
 
 ### Validation Checklist
 

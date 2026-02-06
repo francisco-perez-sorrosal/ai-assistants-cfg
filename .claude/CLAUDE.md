@@ -30,17 +30,17 @@ I follow an approach of high quality of design and coding, with a strong emphasi
 
 Load skills when possible to adhere to the user's preferences and navigate their projects efficiently. Skills activate automatically based on context, but can also be loaded explicitly by name.
 
-### Claude Code Authoring
+### AI Assistant Crafting
 
-- `agent-skills` — Creating, updating, or debugging skills and understanding skill architecture
-- `agent-creator` — Building custom agents (subagents), designing agent workflows, or delegating tasks
-- `slash-cmd` — Creating or debugging slash commands
+- `skill-crafting` — Creating, updating, or debugging skills and understanding skill architecture
+- `agent-crafting` — Building custom agents (subagents), designing agent workflows, or delegating tasks
+- `command-crafting` — Creating or debugging slash commands
+- `mcp-crafting` — Building MCP servers in Python (tools, resources, prompts, transports, testing, deployment)
 
 ### Software Development
 
 - `python` — Writing Python code, tests, type hints, and configuring quality tools (ruff, mypy, pytest)
 - `python-prj-mgmt` — Setting up Python projects and managing dependencies (defaults to **pixi**, uv on request)
-- `mcp-server` — Building MCP servers in Python (tools, resources, prompts, transports, testing, deployment)
 - `refactoring` — Restructuring code, improving design, reducing coupling, eliminating code smells
 - `software-planning` — Three-document planning model (PLAN.md, WIP.md, LEARNINGS.md) for significant work
 

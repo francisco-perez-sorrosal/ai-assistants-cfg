@@ -8,4 +8,4 @@ No custom agents currently defined. For planning workflows, use the `software-pl
 
 ---
 
-For creating custom agents, see the `agent-creator` skill documentation.
+For creating custom agents, see the `agent-crafting` skill documentation.

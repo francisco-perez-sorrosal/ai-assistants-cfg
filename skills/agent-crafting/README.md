@@ -1,4 +1,4 @@
-# Agent Creator Skill
+# Agent Crafting Skill
 
 Skill for creating and managing Claude Code agents (subagents) -- specialized AI assistants that run in separate context windows to handle specific workflows.
 
@@ -33,14 +33,14 @@ You can also trigger it explicitly by asking about creating agents or referencin
 
 ## Current Agents in This Repository
 
-Agents live in `agents/` (this repo) or `.claude/agents/` (consumer projects). Install as a plugin via `claude plugin install fps-claude`.
+Agents live in `agents/` (this repo) or `.claude/agents/` (consumer projects). Install as a plugin via `claude plugin install i-am@bit-agora`.
 
 No custom agents currently defined. For planning workflows, use the `software-planning` skill instead.
 
 ## Related Skills
 
-- [`agent-skills`](../agent-skills/SKILL.md) -- the spec for creating skills that agents can consume via the `skills` field
-- [`slash-cmd`](../slash-cmd/SKILL.md) -- for understanding the distinction between slash commands and agents
+- [`skill-crafting`](../skill-crafting/SKILL.md) -- the spec for creating skills that agents can consume via the `skills` field
+- [`command-crafting`](../command-crafting/SKILL.md) -- for understanding the distinction between slash commands and agents
 
 ## Testing
 
@@ -56,7 +56,7 @@ claude
 > I want to create an agent for reviewing documentation quality
 
 # Or reference it explicitly
-> Using the agent-creator skill, help me build a linter agent
+> Using the agent-crafting skill, help me build a linter agent
 ```
 
 **Test an existing agent:**

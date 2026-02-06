@@ -12,7 +12,7 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - `commands/` — Shared slash commands
 - `agents/` — Shared agent definitions (none yet)
 - `commit-conventions.md` — Git commit conventions (used by `/co` and `/cop` commands; also installed as a rule to `~/.claude/rules/`)
-- `.claude-plugin/` — Claude Code plugin manifest (`fps-claude`)
+- `.claude-plugin/` — Claude Code plugin manifest (`i-am`) and marketplace (`bit-agora`)
   - `plugin.json` — Plugin name, version, component paths
   - `PLUGIN_SCHEMA_NOTES.md` — Validator constraints reference
 - `.claude/` — Claude personal config (symlinked to `~/.claude/`)
@@ -20,13 +20,13 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
   - `claude_desktop_config.json` — Claude Desktop settings (MCP servers)
   - `userPreferences.txt` — Adaptive precision mode instructions
   - `settings.local.json` — Local permission settings
-- `install.sh` — Multi-assistant installer (`--claude` default, `--with-plugin`)
+- `install.sh` — Multi-assistant installer (`--claude` default, prompts for plugin)
 
 ## Working on this Repo
 
-- When adding or modifying skills, load the `agent-skills` skill for spec compliance
-- When adding or modifying commands, load the `slash-cmd` skill
-- When adding or modifying agents, load the `agent-creator` skill
+- When adding or modifying skills, load the `skill-crafting` skill for spec compliance
+- When adding or modifying commands, load the `command-crafting` skill
+- When adding or modifying agents, load the `agent-crafting` skill
 - Follow commit conventions in `commit-conventions.md`
 - See `README.md` for full project documentation and `skills/README.md` for the skill catalog
 

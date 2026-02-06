@@ -154,7 +154,7 @@ install_claude() {
 
 install_plugin() {
     echo ""
-    echo "Installing fps-claude plugin via local marketplace..."
+    echo "Installing i-am plugin via local marketplace..."
 
     if ! command -v claude &>/dev/null; then
         echo "  ! Claude Code CLI not found. Install it first, then re-run."

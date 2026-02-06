@@ -224,8 +224,8 @@ Verify: proper `---` delimiters, valid YAML, correct field names, expected argum
 
 ## Related Skills
 
-- [`agent-skills`](../agent-skills/SKILL.md) -- the spec for creating skills; when a command outgrows a single file, convert it to a skill
-- [`agent-creator`](../agent-creator/SKILL.md) -- for building custom agents; helps distinguish when to use a command vs an agent
+- [`skill-crafting`](../skill-crafting/SKILL.md) -- the spec for creating skills; when a command outgrows a single file, convert it to a skill
+- [`agent-crafting`](../agent-crafting/SKILL.md) -- for building custom agents; helps distinguish when to use a command vs an agent
 
 ## Resources
 

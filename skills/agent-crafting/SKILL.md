@@ -1,5 +1,4 @@
 ---
-name: fps-claude-agent-creator
 description: Creating and configuring Claude Code agents (subagents) with effective prompts, tool permissions, and lifecycle hooks. Use when building custom agents, designing agent workflows, spawning subagents, delegating tasks via the Task tool, defining subagent_type, or using the /agents command.
 compatibility: Designed for Claude Code. Agents are a Claude Code feature; the concepts (role prompts, tool restrictions, lifecycle hooks) may inform similar patterns in other tools.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
@@ -212,5 +211,5 @@ tools: Read, Edit, Grep, Glob, Bash, Write
 
 ## Related Skills
 
-- [`agent-skills`](../agent-skills/SKILL.md) -- the spec for creating skills that agents can consume via the `skills` field
-- [`slash-cmd`](../slash-cmd/SKILL.md) -- for understanding the distinction between slash commands and agents
+- [`skill-crafting`](../skill-crafting/SKILL.md) -- the spec for creating skills that agents can consume via the `skills` field
+- [`command-crafting`](../command-crafting/SKILL.md) -- for understanding the distinction between slash commands and agents

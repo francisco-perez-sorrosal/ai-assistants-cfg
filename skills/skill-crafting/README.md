@@ -1,4 +1,4 @@
-# Agent Skills Skill
+# Skill Crafting Skill
 
 Meta-skill for creating and optimizing Agent Skills — the open format for extending AI agents with specialized knowledge and workflows.
 
@@ -32,7 +32,7 @@ Trigger explicitly by asking about "agent skills," "creating a skill," or refere
 
 ## Quick Start
 
-1. **Load the skill**: reference `agent-skills` when starting skill authoring work
+1. **Load the skill**: reference `skill-crafting` when starting skill authoring work
 2. **Create the directory**: `skill-name/SKILL.md` with required `name` and `description` frontmatter
 3. **Write instructions**: concise body content — only what the agent doesn't already know
 4. **Add supporting files** (optional): `scripts/`, `references/`, `assets/` as needed
@@ -41,8 +41,8 @@ Trigger explicitly by asking about "agent skills," "creating a skill," or refere
 
 ## Related Skills
 
-- **[agent-creator](../agent-creator/)** -- Building custom agents that consume skills via the `skills` frontmatter field
-- **[slash-cmd](../slash-cmd/)** -- Creating slash commands; understanding the distinction between commands and skills
+- **[agent-crafting](../agent-crafting/)** -- Building custom agents that consume skills via the `skills` frontmatter field
+- **[command-crafting](../command-crafting/)** -- Creating slash commands; understanding the distinction between commands and skills
 
 ## Testing
 
@@ -53,7 +53,7 @@ Trigger explicitly by asking about "agent skills," "creating a skill," or refere
 > I want to create a skill for reviewing pull requests
 
 # Or reference it explicitly
-> Using the agent-skills skill, help me structure a new data-analysis skill
+> Using the skill-crafting skill, help me structure a new data-analysis skill
 ```
 
 **Test troubleshooting:**

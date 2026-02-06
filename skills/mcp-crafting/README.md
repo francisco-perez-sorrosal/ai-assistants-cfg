@@ -1,4 +1,4 @@
-# MCP Server Skill
+# MCP Crafting Skill
 
 Guidance for building [Model Context Protocol](https://modelcontextprotocol.io) servers in Python using the official SDK (`mcp` package) and FastMCP framework.
 
@@ -36,7 +36,7 @@ Trigger explicitly by asking about "MCP server," "MCP bundle," "building an MCP 
 
 ## Quick Start
 
-1. **Load the skill**: reference `mcp-server` when starting MCP development work
+1. **Load the skill**: reference `mcp-crafting` when starting MCP development work
 2. **Scaffold**: `uv init --package mcp-server-myproject && uv add "mcp[cli]"`
 3. **Define primitives**: Use `@mcp.tool()`, `@mcp.resource()`, `@mcp.prompt()` decorators
 4. **Test**: `uv run mcp dev src/server.py` (Inspector) + pytest with in-memory client
@@ -57,7 +57,7 @@ Trigger explicitly by asking about "MCP server," "MCP bundle," "building an MCP 
 > I want to build an MCP server that exposes a database query tool
 
 # Or reference it explicitly
-> Using the mcp-server skill, help me add a resource to my MCP server
+> Using the mcp-crafting skill, help me add a resource to my MCP server
 ```
 
 **Test debugging guidance:**

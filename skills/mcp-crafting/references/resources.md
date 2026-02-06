@@ -1,6 +1,6 @@
 # MCP Server — Advanced Patterns and Resources
 
-Deep-dive content for the [mcp-server](../SKILL.md) skill. Load on demand.
+Deep-dive content for the [mcp-crafting](../SKILL.md) skill. Load on demand.
 
 ## Table of Contents
 
