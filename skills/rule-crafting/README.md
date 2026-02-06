@@ -1,0 +1,95 @@
+# Rule Crafting Skill
+
+Skill for creating and managing rules — contextual domain knowledge files that Claude loads automatically based on relevance.
+
+## What This Skill Does
+
+When activated, this skill provides guidance for:
+
+- **Creating rules** with proper structure, naming, and placement
+- **Organizing rules** using flat, layered, or path-scoped directory structures
+- **Deciding** whether content belongs in a rule, skill, or `CLAUDE.md`
+- **Debugging** rule loading and relevance matching
+- **Migrating** content between `CLAUDE.md`, rules, and skills
+
+## Activation
+
+The skill activates automatically when Claude detects tasks related to:
+
+- Creating or updating rules
+- Debugging rule loading or relevance matching
+- Organizing rule files across directories
+- Deciding where contextual knowledge should live
+
+You can also trigger it explicitly by asking about rules or referencing it by name.
+
+## Skill Contents
+
+| File | Purpose |
+|------|---------|
+| `SKILL.md` | Core reference: structure, locations, naming, content guidelines, decision model |
+| `REFERENCE.md` | Extended examples: complete rules, path-specific patterns, layered directories, migrations |
+| `README.md` | This file — overview and testing guide |
+
+## Existing Rules in This Repository
+
+Rules live in `rules/` (this repo) and are installed to `~/.claude/rules/` via `install.sh`.
+
+| Rule | Purpose |
+|------|---------|
+| `git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
+| `git-commit-rules.md` | Git commit safety and hygiene (one logical change, no secrets) |
+
+## Testing
+
+### In Claude Code (CLI)
+
+**Test rule creation guidance:**
+
+```bash
+# Start a Claude Code session
+claude
+
+# Ask to create a rule — the skill should activate automatically
+> I want to create a rule for our SQL naming conventions
+
+# Or reference it explicitly
+> Using the rule-crafting skill, help me write a security rule for auth tokens
+```
+
+**Test decision guidance:**
+
+```bash
+# Ask about layer placement
+> Should our API error handling conventions be a rule or go in CLAUDE.md?
+
+# Ask about organization
+> We have 15 rules and they're getting messy — how should I organize them?
+```
+
+**Test debugging:**
+
+```bash
+# Ask about loading issues
+> My rule isn't being picked up by Claude — how do I debug this?
+
+# Check loaded rules
+> Run /memory to see which rules are loaded
+```
+
+## Related Skills
+
+- [`skill-crafting`](../skill-crafting/) -- the spec for creating skills; rules can graduate to skills when they need procedural content
+- [`command-crafting`](../command-crafting/) -- for creating slash commands; helps distinguish rules from commands
+
+### Validation Checklist
+
+After creating or modifying rules, verify:
+
+- [ ] File uses `<domain>-<rule-intent>.md` naming pattern
+- [ ] Content is declarative (constraints), not procedural (steps)
+- [ ] `paths` frontmatter (if used) has valid YAML and glob patterns
+- [ ] Rule loads in the expected context (verify with `/memory`)
+- [ ] No duplication with `CLAUDE.md` content
+- [ ] Placed in correct scope (project `.claude/rules/` vs personal `~/.claude/rules/`)
+- [ ] Examples included where clarity demands it

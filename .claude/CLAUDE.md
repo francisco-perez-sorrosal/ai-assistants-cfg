@@ -36,6 +36,7 @@ Load skills when possible to adhere to the user's preferences and navigate their
 - `agent-crafting` — Building custom agents (subagents), designing agent workflows, or delegating tasks
 - `command-crafting` — Creating or debugging slash commands
 - `mcp-crafting` — Building MCP servers in Python (tools, resources, prompts, transports, testing, deployment)
+- `rule-crafting` — Creating, updating, or debugging rules and organizing rule files
 
 ### Software Development
 

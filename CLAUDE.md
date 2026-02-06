@@ -29,6 +29,7 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - When adding or modifying skills, load the `skill-crafting` skill for spec compliance
 - When adding or modifying commands, load the `command-crafting` skill
 - When adding or modifying agents, load the `agent-crafting` skill
+- When adding or modifying rules, load the `rule-crafting` skill
 - Follow commit conventions in `rules/` (auto-loaded by Claude when relevant)
 - See `README.md` for full project documentation and `skills/README.md` for the skill catalog
 

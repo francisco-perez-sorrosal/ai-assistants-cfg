@@ -12,6 +12,7 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── agent-crafting/                  # Building custom agents/subagents
 ├── command-crafting/                # Creating slash commands
 ├── mcp-crafting/                    # Building MCP servers in Python
+├── rule-crafting/                   # Creating and managing rules
 ├── python/                          # Python development best practices
 ├── python-prj-mgmt/                # Project setup with pixi/uv
 ├── refactoring/                     # Code restructuring patterns
@@ -98,7 +99,7 @@ This tells Claude to fetch and apply the adaptive precision mode instructions at
 
 Reusable knowledge modules that Claude loads automatically based on context. See `[skills/README.md](skills/README.md)` for the full catalog.
 
-**Categories**: AI assistant crafting (skill-crafting, agent-crafting, command-crafting, mcp-crafting) · Software development (python, python-prj-mgmt, refactoring, software-planning) · Domain-specific (stock-clusters, ticker)
+**Categories**: AI assistant crafting (skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting) · Software development (python, python-prj-mgmt, refactoring, software-planning) · Domain-specific (stock-clusters, ticker)
 
 ## Commands
 
