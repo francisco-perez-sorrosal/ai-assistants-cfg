@@ -1,6 +1,6 @@
 ---
 name: refactoring
-description: Pragmatic refactoring practices emphasizing modularity, low coupling, high cohesion, and incremental improvement. Use when restructuring code, improving design, reducing coupling, organizing codebases, eliminating code smells, or discussing refactoring patterns.
+description: Pragmatic refactoring practices emphasizing modularity, low coupling, high cohesion, and incremental improvement. Use when restructuring code, improving design, reducing coupling, organizing codebases, extracting modules, eliminating code smells, or discussing refactoring patterns and code organization.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
@@ -104,14 +104,18 @@ project/
 1. **Green Bar**: Ensure all tests pass
 2. **Small Change**: One small refactoring
 3. **Run Tests**: Verify behavior unchanged
-4. **Commit**: Save working state
-5. **Repeat**: Next small step
+4. **Review**: Check coupling/cohesion improved
+5. **Commit**: Save working state
+6. **Repeat**: Next small step
+
+If tests fail after a change, revert and try a smaller step.
 
 ### 4. Verify and Clean Up
 
 - All tests pass
 - No dead code left behind
 - Imports are clean
+- Run a final check: does each module have a single clear purpose?
 
 ## Decision Framework
 
@@ -133,25 +137,13 @@ project/
 
 **No, if**: Everything changes together, high cohesion across all parts, splitting would increase coupling.
 
-## Refactoring Patterns
+## Patterns & Scenarios Reference
 
-See [references/patterns.md](references/patterns.md) for detailed refactoring patterns with examples:
+See [references/patterns.md](references/patterns.md) for detailed refactoring patterns and common scenarios with full code examples:
 
-- Extract Module
-- Introduce Abstraction
-- Eliminate Circular Dependencies
-- Extract Data Structure
-- Inline Over-Abstraction
+**Patterns**: Extract Module, Introduce Abstraction, Eliminate Circular Dependencies, Extract Data Structure, Inline Over-Abstraction
 
-## Common Scenarios
-
-See [references/patterns.md](references/patterns.md) for detailed scenarios:
-
-- God Object/Module
-- Feature Envy
-- Primitive Obsession
-- Utils Hell
-- Deep Nesting
+**Scenarios**: God Object/Module, Feature Envy, Primitive Obsession, Utils Hell, Deep Nesting
 
 ## Anti-Patterns
 
@@ -199,11 +191,6 @@ Monitor these thresholds:
 See the [Python](../python/SKILL.md) skill for detailed type hint patterns, testing, and code quality tools.
 
 ### General (Language Agnostic)
-
-- Pure functions are easiest to refactor
-- Immutable data reduces coupling
-- Explicit dependencies over implicit
-- Readability in common cases, optimization in proven bottlenecks
 
 ```typescript
 // Before: Mutable state couples callers to internal changes

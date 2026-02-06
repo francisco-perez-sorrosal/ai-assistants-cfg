@@ -7,12 +7,13 @@ Pragmatic refactoring practices emphasizing modularity, low coupling, high cohes
 - Restructuring code or improving design
 - Reducing coupling between modules
 - Organizing codebases for better maintainability
+- Extracting modules or introducing abstractions
 - Eliminating code smells (god objects, feature envy, primitive obsession)
 - Deciding whether to extract modules, add abstractions, or split packages
 
 ## Activation
 
-The skill activates automatically when the agent detects refactoring tasks: restructuring code, improving design, reducing coupling, or discussing refactoring patterns.
+The skill activates automatically when the agent detects refactoring tasks: restructuring code, improving design, reducing coupling, extracting modules, or discussing refactoring patterns and code organization.
 
 Trigger explicitly by mentioning "refactoring skill" or referencing it by name.
 
