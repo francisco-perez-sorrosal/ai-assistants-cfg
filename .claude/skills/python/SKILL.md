@@ -1,6 +1,6 @@
 ---
 name: python
-description: Modern Python development with best practices, type hints, testing patterns, and code quality tools. Use when writing Python code, implementing tests, discussing Python language features, or needing guidance on testing frameworks, code organization, and error handling.
+description: Modern Python development conventions covering type hints, testing with pytest, code quality tools (ruff, mypy, pyright), data modeling (dataclasses, Pydantic), async patterns, and error handling. Use when writing Python code, implementing tests, configuring linting or formatting, choosing between dataclasses and Pydantic, working with structural pattern matching, or setting up pytest fixtures and parametrize.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
@@ -19,6 +19,16 @@ Comprehensive guidance for Python development following pragmatic, production-re
 **Code Quality**: Maintain consistency with automated tools. Let tools handle formatting.
 
 **Project Management**: Commands in this skill use `<tool>` as a placeholder for your project management tool (pixi or uv). See the [Python Project Management](../python-prj-mgmt/SKILL.md) skill for environment setup, dependency management, and choosing between pixi (default) and uv.
+
+## Python Version Guidelines
+
+**Target Python 3.13+** for new projects:
+- Better error messages
+- Faster performance
+- Modern type hint syntax (`X | Y`, `Self`)
+- Exception groups
+
+**For libraries**, support Python 3.10+ unless specific constraints require older versions.
 
 ## Project Structure
 
@@ -84,17 +94,6 @@ ignore = ["E501"]  # Line length handled by formatter
 quote-style = "double"
 indent-style = "space"
 ```
-
-**Naming conventions**:
-- `snake_case` for functions, variables, modules
-- `PascalCase` for classes
-- `UPPER_SNAKE_CASE` for constants
-- Prefix private attributes with `_`
-
-**Imports**: Group imports (ruff handles this automatically):
-1. Standard library
-2. Third-party packages
-3. Local imports
 
 ## Testing with pytest
 
@@ -253,16 +252,6 @@ def managed_resource(name: str) -> Iterator[Resource]:
         resource.cleanup()
 ```
 
-**Enums** for fixed sets of values:
-```python
-from enum import Enum, auto
-
-class Status(Enum):
-    PENDING = auto()
-    PROCESSING = auto()
-    COMPLETE = auto()
-```
-
 **Structural pattern matching** (Python 3.10+):
 ```python
 from dataclasses import dataclass
@@ -401,16 +390,6 @@ def load_config(path: str) -> Config:
 5. **Run checks**: `<tool> run ruff check . && <tool> run mypy src/ && <tool> run pytest`
 6. **Iterate** in small increments
 
-## Python Version Guidelines
-
-**Target Python 3.13+** for new projects:
-- Better error messages
-- Faster performance
-- Modern type hint syntax (`X | Y`, `Self`)
-- Exception groups
-
-**For libraries**, support Python 3.10+ unless specific constraints require older versions.
-
 ## Quick Commands
 
 For package management commands, see the [Python Project Management](../python-prj-mgmt/SKILL.md) skill.
@@ -427,3 +406,8 @@ For package management commands, see the [Python Project Management](../python-p
 <tool> run pytest -x                # Stop on first failure
 <tool> run pytest --lf              # Run last failed
 ```
+
+## Related Skills
+
+- [`python-prj-mgmt`](../python-prj-mgmt/SKILL.md) -- pixi/uv setup, dependency management, environment configuration
+- [`refactoring`](../refactoring/SKILL.md) -- restructuring code, improving design, reducing coupling

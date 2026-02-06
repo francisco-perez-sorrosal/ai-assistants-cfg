@@ -25,4 +25,5 @@ Trigger explicitly by mentioning "python skill" or referencing it by name.
 
 ## Related Skills
 
-- [Python Project Management](../python-prj-mgmt/SKILL.md) — pixi/uv setup, dependency management, environment configuration
+- [`python-prj-mgmt`](../python-prj-mgmt/SKILL.md) -- pixi/uv setup, dependency management, environment configuration
+- [`refactoring`](../refactoring/SKILL.md) -- restructuring code, improving design, reducing coupling
