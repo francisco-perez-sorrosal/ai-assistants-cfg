@@ -63,6 +63,7 @@ dependencies = [
     "pandas>=2.0.0",
 ]
 
+# PEP 621 standard approach — works with any tool, including uv
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",
@@ -74,6 +75,8 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+# uv-native approach — preferred for uv-only projects. Use one or the other,
+# not both. [tool.uv] dev-dependencies takes precedence when present.
 [tool.uv]
 dev-dependencies = [
     "pytest>=7.4.0",
@@ -384,7 +387,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
 

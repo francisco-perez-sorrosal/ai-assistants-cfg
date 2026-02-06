@@ -412,7 +412,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.4.1
+        uses: prefix-dev/setup-pixi@v0.9.4
         with:
           pixi-version: latest
           cache: true

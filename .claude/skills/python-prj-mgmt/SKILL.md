@@ -144,7 +144,7 @@ uv run mypy src/             # Type check
 #### pixi (GitHub Actions)
 
 ```yaml
-- uses: prefix-dev/setup-pixi@v0.4.1
+- uses: prefix-dev/setup-pixi@v0.9.4
   with:
     pixi-version: latest
     cache: true
@@ -157,7 +157,7 @@ uv run mypy src/             # Type check
 #### uv (GitHub Actions)
 
 ```yaml
-- uses: astral-sh/setup-uv@v3
+- uses: astral-sh/setup-uv@v7
   with:
     enable-cache: true
 
