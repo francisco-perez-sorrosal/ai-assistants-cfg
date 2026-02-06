@@ -1,5 +1,4 @@
 ---
-name: refactoring
 description: Pragmatic refactoring practices emphasizing modularity, low coupling, high cohesion, and incremental improvement. Use when restructuring code, improving design, reducing coupling, organizing codebases, extracting modules, eliminating code smells, or discussing refactoring patterns and code organization.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---

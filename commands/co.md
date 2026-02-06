@@ -13,4 +13,4 @@ Create a commit for the current staged changes (or all changes if nothing is sta
 4. Craft the commit message following the conventions below
 5. Create the commit
 
-@.claude/commit-conventions.md
+@commit-conventions.md

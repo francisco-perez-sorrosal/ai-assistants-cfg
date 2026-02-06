@@ -2,40 +2,52 @@
 
 set -eo pipefail
 
-THIS_DIR="$(pwd)"
-DEST_DIR="${HOME}/.claude"
-SRC_DIR="${THIS_DIR}/.claude"
+THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Detect OS and set Claude Desktop config path
-case "$(uname -s)" in
-    Darwin)
-        CLAUDE_DESKTOP_CONFIG_DIR="${HOME}/Library/Application Support/Claude"
-        ;;
-    Linux)
-        CLAUDE_DESKTOP_CONFIG_DIR="${HOME}/.config/Claude"
-        ;;
-    *)
-        echo "Unsupported OS: $(uname -s)"
-        exit 1
-        ;;
-esac
+# --- Usage ---
 
-mkdir -p "${DEST_DIR}"
+usage() {
+    echo "Usage: $(basename "$0") [--claude] [--help]"
+    echo ""
+    echo "Install ai-assistants configuration for AI coding assistants."
+    echo ""
+    echo "Options:"
+    echo "  --claude        Install Claude personal config (default)"
+    echo "  --help          Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $(basename "$0")                # Install Claude config"
+}
 
-# Function to create symlink with overwrite
+# --- Parse arguments ---
+
+INSTALL_CLAUDE=true
+
+for arg in "$@"; do
+    case "$arg" in
+        --claude)      INSTALL_CLAUDE=true ;;
+        --help)        usage; exit 0 ;;
+        *)
+            echo "Unknown option: $arg"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+# --- Shared helpers ---
+
 link_item() {
-    local item="$1"
-    local source="$SRC_DIR/$item"
-    local target="$DEST_DIR/$item"
+    local source="$1"
+    local target="$2"
+    local label="$3"
 
-    echo "Linking ${item} from ${source} to ${target}"
-    # Check if target already exists and is the correct symlink
+    echo "Linking ${label}"
     if [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
         echo "  ✓ ${target} (already linked)"
         return 0
     fi
 
-    # Ask for confirmation if target exists
     if [ -e "$target" ]; then
         echo "  ! ${target} exists and would be overwritten"
         read -p "    Continue? (y/N): " -n 1 -r
@@ -47,50 +59,138 @@ link_item() {
     fi
 
     ln -sf "$source" "$target"
-    echo "  - ${target} -> ${source} linked"
+    echo "  - ${target} -> ${source}"
 }
 
-echo "Installing My Claude Stuff..."
+# --- Claude installation ---
 
-# Process each item in .claude directory
-for item in "$SRC_DIR"/*; do
-    if [ -e "$item" ]; then
-        basename_item="$(basename "$item")"
-        link_item "$basename_item"
-    fi
-done
+install_claude() {
+    local src_dir="${THIS_DIR}/.claude"
+    local dest_dir="${HOME}/.claude"
 
-# Link Claude Desktop config file to official location
-link_claude_desktop_config() {
-    local source="${DEST_DIR}/claude_desktop_config.json"
-    local target="${CLAUDE_DESKTOP_CONFIG_DIR}/claude_desktop_config.json"
+    # Detect OS and set Claude Desktop config path
+    local desktop_config_dir
+    case "$(uname -s)" in
+        Darwin) desktop_config_dir="${HOME}/Library/Application Support/Claude" ;;
+        Linux)  desktop_config_dir="${HOME}/.config/Claude" ;;
+        *)      echo "Unsupported OS: $(uname -s)"; exit 1 ;;
+    esac
 
-    if [ ! -e "$source" ] && [ ! -L "$source" ]; then
-        echo "  ! claude_desktop_config.json not found in ${DEST_DIR}, skipping"
-        return 0
-    fi
+    mkdir -p "${dest_dir}"
 
-    echo "Linking Claude Desktop config to official location..."
-    if [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
-        echo "  ✓ ${target} (already linked)"
-        return 0
-    fi
+    echo "Installing Claude personal config..."
+    echo ""
 
-    if [ -e "$target" ] || [ -L "$target" ]; then
-        echo "  ! ${target} exists and would be replaced"
-        read -p "    Remove existing file and create symlink? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            echo "    Skipped ${target}"
-            return 0
+    # Clean stale symlinks from previous installations (whole-directory and per-item)
+    local stale_items=("skills" "commands" "agents" "commit-conventions.md")
+    for item in "${stale_items[@]}"; do
+        local target="$dest_dir/$item"
+        if [ -L "$target" ]; then
+            echo "  Removing stale symlink: ${target}"
+            rm "$target"
         fi
-        rm -f "$target"
+    done
+    for subdir in skills commands; do
+        local dest_subdir="$dest_dir/$subdir"
+        if [ -d "$dest_subdir" ]; then
+            for item in "$dest_subdir"/*; do
+                if [ -L "$item" ]; then
+                    echo "  Removing stale symlink: ${item}"
+                    rm "$item"
+                fi
+            done
+            rmdir "$dest_subdir" 2>/dev/null || true
+        fi
+    done
+
+    # Symlink personal config files
+    local config_items=("CLAUDE.md" "claude_desktop_config.json" "userPreferences.txt" "settings.local.json")
+    for item in "${config_items[@]}"; do
+        if [ -e "$src_dir/$item" ]; then
+            link_item "$src_dir/$item" "$dest_dir/$item" "$item"
+        else
+            echo "  - ${item} not found, skipping"
+        fi
+    done
+
+    # Link Claude Desktop config to official location
+    local desktop_source="${dest_dir}/claude_desktop_config.json"
+    local desktop_target="${desktop_config_dir}/claude_desktop_config.json"
+
+    if [ -e "$desktop_source" ] || [ -L "$desktop_source" ]; then
+        echo ""
+        echo "Linking Claude Desktop config to official location..."
+        if [ -L "$desktop_target" ] && [ "$(readlink "$desktop_target")" = "$desktop_source" ]; then
+            echo "  ✓ ${desktop_target} (already linked)"
+        elif [ -e "$desktop_target" ] || [ -L "$desktop_target" ]; then
+            echo "  ! ${desktop_target} exists and would be replaced"
+            read -p "    Remove existing and create symlink? (y/N): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                rm -f "$desktop_target"
+                ln -s "$desktop_source" "$desktop_target"
+                echo "  - ${desktop_target} -> ${desktop_source}"
+            else
+                echo "    Skipped ${desktop_target}"
+            fi
+        else
+            ln -s "$desktop_source" "$desktop_target"
+            echo "  - ${desktop_target} -> ${desktop_source}"
+        fi
     fi
 
-    ln -s "$source" "$target"
-    echo "  - ${target} -> ${source} linked"
+    # Install rules
+    local rules_dir="${dest_dir}/rules"
+    mkdir -p "${rules_dir}"
+    echo ""
+    echo "Installing rules..."
+    link_item "${THIS_DIR}/commit-conventions.md" "${rules_dir}/commit-conventions.md" "commit-conventions.md → rules/"
+
+    echo ""
+    echo "✓ Claude personal config installed"
 }
 
-link_claude_desktop_config
+# --- Plugin installation via local marketplace ---
 
-echo "✓ My Claude Stuff installed successfully"
+install_plugin() {
+    echo ""
+    echo "Installing fps-claude plugin via local marketplace..."
+
+    if ! command -v claude &>/dev/null; then
+        echo "  ! Claude Code CLI not found. Install it first, then re-run."
+        return 1
+    fi
+
+    # Validate the plugin manifest
+    claude plugin validate "${THIS_DIR}" 2>&1
+
+    # Register this repo as a local marketplace
+    echo ""
+    echo "Registering local marketplace..."
+    claude plugin marketplace add "${THIS_DIR}" 2>&1 \
+        || echo "  (marketplace may already be registered)"
+
+    # Install the plugin from the marketplace
+    echo ""
+    echo "Installing i-am from bit-agora marketplace..."
+    claude plugin install i-am@bit-agora --scope user 2>&1
+
+    echo ""
+    echo "✓ i-am plugin installed. Skills and commands available in all sessions."
+}
+
+# --- Main ---
+
+if $INSTALL_CLAUDE; then
+    install_claude
+
+    echo ""
+    read -p "Also install the i-am claude plugin? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        install_plugin
+    else
+        echo ""
+        echo "To install the plugin later, re-run: ./install.sh"
+    fi
+fi

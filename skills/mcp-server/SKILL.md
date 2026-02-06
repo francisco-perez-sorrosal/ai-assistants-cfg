@@ -1,5 +1,4 @@
 ---
-name: mcp-server
 description: Building MCP (Model Context Protocol) servers in Python using the official SDK and FastMCP. Covers tools, resources, prompts, transports (stdio, streamable HTTP), bundles (.mcpb), testing with pytest and MCP Inspector, deployment, Claude Desktop/Code integration, logging, and error handling. Use when creating MCP servers, defining tools or resources, configuring MCP transports, packaging MCP bundles, testing MCP servers, or integrating with Claude Desktop or Claude Code.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---

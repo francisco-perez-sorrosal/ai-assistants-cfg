@@ -1,6 +1,8 @@
+.trees/
+
 .claude/settings.local.json
 .claude/hooks/logs/
 
-# The following skils belong to another project.
-.claude/skills/ticker
-.claude/skills/stock-clusters
+# The following skills belong to another project.
+skills/ticker
+skills/stock-clusters

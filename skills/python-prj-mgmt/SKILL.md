@@ -1,5 +1,4 @@
 ---
-name: python-prj-mgmt
 description: Python project management with pixi and uv package managers. Covers project initialization, dependency management, pyproject.toml configuration, lockfiles, virtual environments, workspaces, and CI/CD integration. Use when setting up Python projects, managing dependencies, configuring conda or PyPI packages, choosing between package managers, or working with pixi.lock or uv.lock. Defaults to pixi unless uv is explicitly requested.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---

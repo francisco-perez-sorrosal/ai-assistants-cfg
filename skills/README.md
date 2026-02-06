@@ -47,5 +47,6 @@ Larger skills use **progressive disclosure** with supporting files (`REFERENCE.m
 
 ### Storage Locations
 
-- **Project-level** (shared via git): `.claude/skills/`
+- **This repository**: `skills/` at the root (distributed as a plugin)
+- **Consumer projects** (shared via git): `.claude/skills/`
 - **Personal** (user-specific): `~/.claude/skills/`

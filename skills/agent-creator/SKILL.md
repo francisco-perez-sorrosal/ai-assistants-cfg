@@ -1,5 +1,5 @@
 ---
-name: agent-creator
+name: fps-claude-agent-creator
 description: Creating and configuring Claude Code agents (subagents) with effective prompts, tool permissions, and lifecycle hooks. Use when building custom agents, designing agent workflows, spawning subagents, delegating tasks via the Task tool, defining subagent_type, or using the /agents command.
 compatibility: Designed for Claude Code. Agents are a Claude Code feature; the concepts (role prompts, tool restrictions, lifecycle hooks) may inform similar patterns in other tools.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]

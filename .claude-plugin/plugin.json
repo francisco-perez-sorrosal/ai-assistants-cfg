@@ -1,0 +1,22 @@
+{
+  "name": "i-am",
+  "version": "0.0.1",
+  "description": "Skills, commands, and agents for AI coding workflows — Claude Code authoring, Python development, project management, and domain-specific tools",
+  "author": {
+    "name": "Francisco Perez-Sorrosal",
+    "email": "fperezsorrosal@gmail.com",
+    "url": "https://github.com/francisco-perez-sorrosal"
+  },
+  "repository": "https://github.com/francisco-perez-sorrosal/ai-assistants-cfg",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "commands",
+    "agents",
+    "python",
+    "mcp",
+    "refactoring",
+    "planning"
+  ],
+  "skills": ["./skills/"]
+}

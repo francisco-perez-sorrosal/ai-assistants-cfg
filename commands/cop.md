@@ -14,4 +14,4 @@ Create a commit for the current staged changes (or all changes if nothing is sta
 5. Create the commit
 6. Push to the remote repository
 
-@.claude/commit-conventions.md
+@commit-conventions.md
