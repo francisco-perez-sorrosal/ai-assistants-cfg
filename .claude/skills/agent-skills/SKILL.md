@@ -241,6 +241,7 @@ Store templates in `assets/` directory.
 - Windows-style paths — use forward slashes everywhere
 - Too many options — provide one default with escape hatches
 - Deeply nested references — keep one level from `SKILL.md`
+- Hard-referencing slash commands from skills — commands are tool-specific and break portability. Describe the workflow outcome ("commit the changes") and let the agent's discovery mechanism find the right command. Cross-reference other skills instead; list commands in project-level files like `CLAUDE.md`
 - Scripts that punt errors to the agent
 - Time-based conditionals
 - Voodoo constants without justification
