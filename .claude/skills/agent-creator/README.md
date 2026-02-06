@@ -1,15 +1,15 @@
 # Agent Creator Skill
 
-Skill for creating and managing Claude Code agents (subagents) — specialized AI assistants that run in separate context windows to handle specific workflows.
+Skill for creating and managing Claude Code agents (subagents) -- specialized AI assistants that run in separate context windows to handle specific workflows.
 
 ## What This Skill Does
 
-When activated, this skill provides comprehensive guidance for:
+When activated, this skill provides guidance for:
 
 - **Creating agents** with proper frontmatter and system prompts
 - **Configuring** tool access, model selection, and permission modes
 - **Writing effective prompts** with checklists, output formats, and constraints
-- **Avoiding common pitfalls** (overly broad agents, vague descriptions, etc.)
+- **Integrating** agents with skills, slash commands, and lifecycle hooks
 
 ## Activation
 
@@ -18,6 +18,7 @@ The skill activates automatically when Claude detects tasks related to:
 - Building custom agents or subagents
 - Designing agent architectures or workflows
 - Implementing agent-based task delegation
+- Using the Task tool or defining subagent_type
 
 You can also trigger it explicitly by asking about creating agents or referencing it by name.
 
@@ -25,11 +26,10 @@ You can also trigger it explicitly by asking about creating agents or referencin
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Concise hub: file structure, field summary, constraints, quick reference |
-| `REFERENCE.md` | Detailed field docs, prompt writing guide, prompt template, CLI agents, troubleshooting |
-| `BEST-PRACTICES.md` | Design principles, anti-patterns, development workflow |
-| `EXAMPLES.md` | Four structurally distinct agent definitions (read-only, edit-capable, hooks, memory) |
-| `README.md` | This file — overview and testing guide |
+| `SKILL.md` | Hub: file structure, field summary, example, anti-patterns, integration, checklist |
+| `references/configuration.md` | Detailed field docs, prompt writing guide, prompt template, CLI agents, troubleshooting |
+| `references/examples.md` | Four structurally distinct agent definitions (read-only, edit-capable, hooks, memory) |
+| `README.md` | This file -- overview and testing guide |
 
 ## Current Agents in This Repository
 
@@ -52,7 +52,7 @@ No custom agents currently defined. For planning workflows, use the `software-pl
 # Start a Claude Code session
 claude
 
-# Ask to create an agent — the skill should activate automatically
+# Ask to create an agent -- the skill should activate automatically
 > I want to create an agent for reviewing documentation quality
 
 # Or reference it explicitly
@@ -86,20 +86,6 @@ claude
 ls -la .claude/agents/
 cat .claude/agents/code-reviewer.md
 ```
-
-### In Claude Desktop
-
-Claude Desktop uses the same agent definitions but discovery works through MCP and the project context.
-
-**Setup:**
-
-1. Ensure `install.sh` has been run to symlink `.claude/` to `~/.claude/`
-2. Open Claude Desktop — it picks up agents from `~/.claude/agents/`
-
-**Test scenarios:**
-
-- Ask to "create a new agent for X" — the skill should activate and guide agent creation
-- Verify that agents created via Claude Code are available in Claude Desktop (and vice versa) since both read from `~/.claude/agents/`
 
 ### Validation Checklist
 

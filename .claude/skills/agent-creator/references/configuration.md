@@ -4,10 +4,10 @@ Detailed documentation for all frontmatter fields, prompt writing, and troublesh
 
 ## Contents
 
-- [Configuration Fields](#configuration-fields) — required and optional frontmatter
-- [Writing Effective Agent Prompts](#writing-effective-agent-prompts) — principles, examples, template
-- [CLI-Defined Agents](#cli-defined-agents) — ephemeral session-only agents
-- [Troubleshooting](#troubleshooting) — activation, errors, performance, permissions
+- [Configuration Fields](#configuration-fields) -- required and optional frontmatter
+- [Writing Effective Agent Prompts](#writing-effective-agent-prompts) -- principles, examples, template
+- [CLI-Defined Agents](#cli-defined-agents) -- ephemeral session-only agents
+- [Troubleshooting](#troubleshooting) -- activation, errors, performance, permissions
 
 ## Configuration Fields
 
@@ -53,7 +53,7 @@ tools: Read, Grep, Glob, Bash
 # Development work
 tools: Read, Edit, Bash, Grep, Glob, Write
 
-# Full access — omit field entirely
+# Full access -- omit field entirely
 ```
 
 **disallowedTools**
@@ -93,7 +93,7 @@ If the parent uses `bypassPermissions`, it takes precedence and cannot be overri
 
 - Comma-separated skill names to inject at startup
 - Full skill content is injected into the agent's context, not just made available
-- Agents do **not** inherit skills from the parent conversation — list them explicitly
+- Agents do **not** inherit skills from the parent conversation -- list them explicitly
 - Example: `skills: python, refactoring`
 
 **hooks**
@@ -120,9 +120,9 @@ hooks:
 
 - Persistent memory directory for cross-session learning
 - Scopes:
-  - `user`: `~/.claude/agent-memory/<name>/` — learnings across all projects
-  - `project`: `.claude/agent-memory/<name>/` — project-specific, shareable via git
-  - `local`: `.claude/agent-memory-local/<name>/` — project-specific, not in git
+  - `user`: `~/.claude/agent-memory/<name>/` -- learnings across all projects
+  - `project`: `.claude/agent-memory/<name>/` -- project-specific, shareable via git
+  - `local`: `.claude/agent-memory-local/<name>/` -- project-specific, not in git
 - When enabled, first 200 lines of `MEMORY.md` from the memory directory are injected into the system prompt
 - Read, Write, and Edit tools are automatically enabled
 
@@ -196,7 +196,7 @@ Constraints:
 ```markdown
 ---
 name: [agent-name]
-description: [When to use this agent - be specific]
+description: [When to use this agent -- be specific]
 tools: [Optional: specific tools]
 model: [Optional: sonnet/opus/haiku/inherit]
 ---

@@ -4,10 +4,10 @@ Complete agent definitions demonstrating distinct structural patterns. Use as st
 
 ## Contents
 
-- [Code Reviewer](#code-reviewer) — read-only analysis with structured severity output
-- [Test Generator](#test-generator) — edit-capable agent that creates files
-- [Database Query Validator (with hooks)](#database-query-validator-with-hooks) — hooks for conditional tool validation
-- [Code Reviewer with Memory](#code-reviewer-with-memory) — persistent cross-session learning
+- [Code Reviewer](#code-reviewer) -- read-only analysis with structured severity output
+- [Test Generator](#test-generator) -- edit-capable agent that creates files
+- [Database Query Validator (with hooks)](#database-query-validator-with-hooks) -- hooks for conditional tool validation
+- [Code Reviewer with Memory](#code-reviewer-with-memory) -- persistent cross-session learning
 
 ## Code Reviewer
 
