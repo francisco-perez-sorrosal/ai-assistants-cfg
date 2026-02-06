@@ -11,7 +11,9 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - `skills/` — Shared skill modules (assistant-agnostic)
 - `commands/` — Shared slash commands
 - `agents/` — Shared agent definitions (none yet)
-- `commit-conventions.md` — Git commit conventions (used by `/co` and `/cop` commands; also installed as a rule to `~/.claude/rules/`)
+- `rules/` — Rules installed to `~/.claude/rules/` (auto-loaded by Claude when relevant)
+  - `git-commit-message-format.md` — Commit message format and type prefixes
+  - `git-commit-rules.md` — Git commit safety and hygiene rules
 - `.claude-plugin/` — Claude Code plugin manifest (`i-am`) and marketplace (`bit-agora`)
   - `plugin.json` — Plugin name, version, component paths
   - `PLUGIN_SCHEMA_NOTES.md` — Validator constraints reference
@@ -27,7 +29,7 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - When adding or modifying skills, load the `skill-crafting` skill for spec compliance
 - When adding or modifying commands, load the `command-crafting` skill
 - When adding or modifying agents, load the `agent-crafting` skill
-- Follow commit conventions in `commit-conventions.md`
+- Follow commit conventions in `rules/` (auto-loaded by Claude when relevant)
 - See `README.md` for full project documentation and `skills/README.md` for the skill catalog
 
 ## Design Intent

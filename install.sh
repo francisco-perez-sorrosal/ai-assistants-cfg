@@ -82,7 +82,7 @@ install_claude() {
     echo ""
 
     # Clean stale symlinks from previous installations (whole-directory and per-item)
-    local stale_items=("skills" "commands" "agents" "commit-conventions.md")
+    local stale_items=("skills" "commands" "agents" "commit-conventions.md" "rules/commit-conventions.md" "rules/git-commit-conventions.md")
     for item in "${stale_items[@]}"; do
         local target="$dest_dir/$item"
         if [ -L "$target" ]; then
@@ -139,12 +139,18 @@ install_claude() {
         fi
     fi
 
-    # Install rules
+    # Install rules (link all .md files from source rules/ directory)
+    local rules_src="${THIS_DIR}/rules"
     local rules_dir="${dest_dir}/rules"
     mkdir -p "${rules_dir}"
     echo ""
     echo "Installing rules..."
-    link_item "${THIS_DIR}/commit-conventions.md" "${rules_dir}/commit-conventions.md" "commit-conventions.md → rules/"
+    for rule in "$rules_src"/*.md; do
+        [ -f "$rule" ] || continue
+        local basename="$(basename "$rule")"
+        [[ "$basename" == "README.md" ]] && continue
+        link_item "$rule" "${rules_dir}/${basename}" "${basename} → rules/"
+    done
 
     echo ""
     echo "✓ Claude personal config installed"

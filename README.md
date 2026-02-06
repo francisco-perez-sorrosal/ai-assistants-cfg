@@ -25,7 +25,9 @@ commands/                            # Shared slash commands
 ├── merge_worktree.md                # /merge_worktree — merge worktree branch
 └── create-simple-python-prj.md      # /create-simple-python-prj — scaffold project
 agents/                              # Shared agent definitions (none yet)
-commit-conventions.md                # Git commit conventions (used by commands + installed as rule)
+rules/                               # Rules (installed to ~/.claude/rules/)
+├── git-commit-message-format.md     # Commit message format and type prefixes
+└── git-commit-rules.md              # Git commit safety and hygiene rules
 .claude-plugin/                      # Claude Code plugin manifest
 ├── plugin.json
 └── PLUGIN_SCHEMA_NOTES.md
@@ -74,7 +76,7 @@ Run `./install.sh` to symlink Claude personal config files to `~/.claude/` and i
 | `claude_desktop_config.json` | `~/.claude/claude_desktop_config.json`  | Claude Desktop settings (MCP servers)                                    |
 | `userPreferences.txt`        | `~/.claude/userPreferences.txt`         | Adaptive precision mode — controls response style and verbosity          |
 | `settings.local.json`        | `~/.claude/settings.local.json`         | Local permission settings (gitignored)                                   |
-| `commit-conventions.md`      | `~/.claude/rules/commit-conventions.md` | Git commit message conventions (installed as a rule)                     |
+| `rules/*.md`                      | `~/.claude/rules/*.md`                      | Rules (auto-linked, auto-loaded by Claude when relevant)           |
 
 
 The installer also links `claude_desktop_config.json` to the official Claude Desktop location:

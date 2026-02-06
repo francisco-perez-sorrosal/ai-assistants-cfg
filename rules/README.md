@@ -1,0 +1,175 @@
+# Rules
+
+Rules are **contextual domain knowledge files** that Claude loads automatically based on relevance. They encode constraints, conventions, and reference material that Claude should apply when working in specific contexts — without requiring explicit invocation.
+
+This directory contains rules installed to `~/.claude/rules/` via `install.sh`.
+
+## Current Rules
+
+| File | Purpose |
+| ---- | ------- |
+| `git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
+| `git-commit-rules.md` | Git commit safety and hygiene (one logical change, no secrets) |
+
+## How Rules Work
+
+### Loading Mechanism
+
+Rules are **not invoked explicitly**. Claude scans `.claude/rules/` and loads rules opportunistically based on:
+
+1. **Current task** — what the user asked Claude to do
+2. **Files being read or edited** — the code or config Claude is working with
+3. **Semantic relevance** — filename and content matching against the current context
+
+When Claude executes a `/co` (commit) command, it automatically picks up `git-commit-message-format.md` and `git-commit-rules.md` because the task is semantically related. No `@`-reference or explicit import is needed.
+
+### What Rules Are NOT
+
+- Rules are **not callable** — there is no syntax to invoke a rule by name
+- Rules are **not procedural** — they don't contain step-by-step workflows (that's what Skills are for)
+- Rules are **not always loaded** — unlike `CLAUDE.md`, rules load only when relevant
+- Rules are **not executable** — they contain knowledge, not code
+
+## Rules vs Skills vs CLAUDE.md
+
+Understanding when to use each configuration layer is critical for effective Claude setup.
+
+### Decision Model
+
+Ask: **"Is this something Claude should _know_, or something Claude should _do_?"**
+
+| Question | Answer | Use |
+| -------- | ------ | --- |
+| Should Claude always remember this? | Yes | `CLAUDE.md` |
+| Should Claude know this in certain contexts? | Yes | Rule |
+| Should Claude perform this as a workflow? | Yes | Skill |
+
+### Detailed Comparison
+
+| Aspect | CLAUDE.md | Rules | Skills |
+| ------ | --------- | ----- | ------ |
+| **Purpose** | Global project context | Domain-specific knowledge | Task-specific workflows |
+| **Loading** | Always loaded, every session | Loaded when contextually relevant | Metadata always loaded; full content on activation |
+| **Content type** | Short, opinionated directives | Deep constraints and reference material | Step-by-step procedures, optionally with code |
+| **Invocation** | Automatic (always present) | Automatic (relevance-based) | Automatic (context-triggered) or explicit |
+| **Execution** | N/A (passive context) | N/A (passive knowledge) | Can execute code and scripts |
+| **Verbosity** | Concise — keep it lean | Verbose is fine — loaded only when needed | Progressive disclosure — metadata first |
+| **Scope** | Project-wide | Domain-scoped (SQL, security, git, etc.) | Task-scoped (commit, deploy, scaffold, etc.) |
+
+### Concrete Examples
+
+| Need | Wrong layer | Right layer |
+| ---- | ----------- | ----------- |
+| "Always use snake_case in Python" | Rule (too lightweight) | `CLAUDE.md` |
+| "SQL column naming, join conventions, migration rules" | `CLAUDE.md` (too verbose) | Rule |
+| "How to create a git commit with conventions" | Rule (procedural) | Skill or Command |
+| "Commit messages must use imperative mood, type prefixes" | Skill (not procedural) | Rule |
+| "Security checklist for auth code" | `CLAUDE.md` (too detailed, not always relevant) | Rule |
+
+### How They Interact
+
+```
+CLAUDE.md          ← always in context (global directives)
+    ↓
+Rules              ← loaded when relevant (domain knowledge)
+    ↓
+Skills/Commands    ← activated for specific tasks (workflows)
+```
+
+Skills and commands **implicitly benefit** from rules — Claude has the rules in mind if they're relevant to the task a skill is performing. There is no explicit binding between them.
+
+## Writing Effective Rules
+
+### Structure
+
+Rules should be **declarative and constraint-oriented**, not procedural.
+
+**Good** — states what should be true:
+```markdown
+## SQL Conventions
+
+- Always use snake_case for column names
+- No SELECT *
+- Explicit JOIN syntax only
+- Foreign keys must be indexed
+```
+
+**Bad** — describes steps to follow (this is a Skill):
+```markdown
+## SQL
+
+Step 1: Open the query editor
+Step 2: Write the SELECT statement
+Step 3: Make sure to use snake_case
+```
+
+### Content Guidelines
+
+- **Be declarative** — state constraints and conventions, not procedures
+- **Be specific** — "Use `snake_case` for column names" not "Use good naming"
+- **Group by domain** — one rule file per coherent domain area
+- **Include examples** — show correct and incorrect patterns when clarity demands it
+- **Explain the _why_** — when a constraint isn't self-evident, briefly state the rationale
+
+### File Organization
+
+- **One file per domain** — `sql.md`, `security.md`, `frontend.md`, not `rules1.md`
+- **Split when domains diverge** — if a file covers unrelated concerns, split it
+- **Don't over-split** — two closely related topics (e.g., commit format + commit rules) can coexist or split based on reuse patterns
+- **Skip generic names** — `important.md`, `notes.md`, `stuff.md` hurt relevance matching
+
+### Naming Conventions
+
+Naming directly affects Claude's relevance scoring. Use:
+
+- **Lowercase**, hyphen-separated
+- **Domain-oriented** names that describe the subject area
+- **Task-neutral** wording (rules describe _what_, not _how_)
+
+| Good | Bad | Why |
+| ---- | --- | --- |
+| `sql.md` | `rules1.md` | Domain name aids relevance matching |
+| `security.md` | `important.md` | Specific domain, not subjective importance |
+| `git-commit-message-format.md` | `commit.md` | Precise scope, not ambiguous |
+| `frontend.md` | `stuff.md` | Meaningful, discoverable |
+| `design-system.md` | `company_rules.md` | Domain-scoped, not org-scoped |
+
+### What NOT to Put in Rules
+
+| Content | Where it belongs |
+| ------- | ---------------- |
+| Temporary instructions | Prompt / conversation |
+| One-off tasks | Prompt / conversation |
+| User preferences | `CLAUDE.md` or `userPreferences.txt` |
+| Output formatting directives | `CLAUDE.md` |
+| "Always do X in every response" | `CLAUDE.md` |
+| Multi-step automation workflows | Skill |
+| Repeatable procedural recipes | Skill or Command |
+
+## Installation
+
+Rules are installed via `install.sh`, which symlinks all `*.md` files (except `README.md`) from this directory to `~/.claude/rules/`:
+
+```
+rules/git-commit-message-format.md  →  ~/.claude/rules/git-commit-message-format.md
+rules/git-commit-rules.md           →  ~/.claude/rules/git-commit-rules.md
+```
+
+Adding a new rule file here and re-running `install.sh` is all that's needed — no other configuration changes required.
+
+## Relationship to Slash Commands
+
+Rules do **not** need to be referenced from slash commands. When `/co` triggers a commit workflow, Claude automatically loads relevant rules from `~/.claude/rules/` based on the task context.
+
+You can optionally use **semantic hints** in command text to help disambiguation when multiple overlapping rules exist:
+
+```
+"Commit following our conventional commits standard."
+```
+
+But you should **never** reference rule filenames directly:
+
+```
+# Don't do this — filenames have no special meaning in commands
+"Use rules/git-commit-message-format.md"
+```
