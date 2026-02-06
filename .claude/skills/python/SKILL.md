@@ -410,4 +410,5 @@ For package management commands, see the [Python Project Management](../python-p
 ## Related Skills
 
 - [`python-prj-mgmt`](../python-prj-mgmt/SKILL.md) -- pixi/uv setup, dependency management, environment configuration
+- [`mcp-server`](../mcp-server/SKILL.md) -- building MCP servers in Python (tools, resources, prompts, transports)
 - [`refactoring`](../refactoring/SKILL.md) -- restructuring code, improving design, reducing coupling

@@ -13,12 +13,13 @@ Configuration repository for AI coding assistants. Centralizes and version-contr
 ├── commit-conventions.md           # Git commit message conventions
 ├── userPreferences.txt             # Adaptive precision mode instructions
 ├── settings.local.json             # Local permission settings
-├── skills/                         # Reusable skill modules (8 skills)
+├── skills/                         # Reusable skill modules (9 skills)
 │   ├── agent-skills/               # Creating and maintaining skills
 │   ├── agent-creator/              # Building custom agents/subagents
 │   ├── slash-cmd/                  # Creating slash commands
 │   ├── python/                     # Python development best practices
 │   ├── python-prj-mgmt/           # Project setup with pixi/uv
+│   ├── mcp-server/                 # Building MCP servers in Python
 │   ├── refactoring/                # Code restructuring patterns
 │   ├── software-planning/          # Three-document planning model
 │   ├── stock-clusters/             # Stock clustering analysis
@@ -47,7 +48,7 @@ This creates a symlink chain: `<official location>` → `~/.claude/claude_deskto
 
 Reusable knowledge modules that Claude loads automatically based on context. See [`.claude/skills/README.md`](.claude/skills/README.md) for the full catalog.
 
-**Categories**: Claude Code authoring (agent-skills, agent-creator, slash-cmd) · Software development (python, python-prj-mgmt, refactoring, software-planning) · Domain-specific (stock-clusters, ticker)
+**Categories**: Claude Code authoring (agent-skills, agent-creator, slash-cmd) · Software development (python, python-prj-mgmt, mcp-server, refactoring, software-planning) · Domain-specific (stock-clusters, ticker)
 
 ## Commands
 

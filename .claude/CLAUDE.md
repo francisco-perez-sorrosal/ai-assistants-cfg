@@ -40,6 +40,7 @@ Load skills when possible to adhere to the user's preferences and navigate their
 
 - `python` — Writing Python code, tests, type hints, and configuring quality tools (ruff, mypy, pytest)
 - `python-prj-mgmt` — Setting up Python projects and managing dependencies (defaults to **pixi**, uv on request)
+- `mcp-server` — Building MCP servers in Python (tools, resources, prompts, transports, testing, deployment)
 - `refactoring` — Restructuring code, improving design, reducing coupling, eliminating code smells
 - `software-planning` — Three-document planning model (PLAN.md, WIP.md, LEARNINGS.md) for significant work
 
