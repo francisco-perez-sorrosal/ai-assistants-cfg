@@ -1,7 +1,8 @@
 ---
 name: slash-cmd
-description: Creating effective slash commands with proper syntax, arguments, frontmatter, and best practices. Use when creating custom slash commands, debugging command behavior, or converting prompts to reusable commands.
+description: Creating and managing slash commands for Claude Code -- reusable user-invoked prompts with arguments, tool permissions, and dynamic context. Use when creating custom slash commands, debugging command behavior, fixing argument substitution, converting prompts to reusable commands, or organizing commands with namespacing.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
+compatibility: Claude Code
 ---
 
 # Slash Commands
@@ -9,7 +10,7 @@ allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 Guide for creating effective, reusable slash commands.
 
 **Satellite files** (loaded on-demand):
-- `REFERENCE.md` — command patterns, full examples, organization strategies
+- [REFERENCE.md](REFERENCE.md) -- command patterns, full examples, organization strategies
 
 ## What Are Slash Commands
 
@@ -163,12 +164,12 @@ Provide a summary of changes.
 | **Scope** | Project or personal | Project or personal |
 | **Use case** | Frequently used prompts | Team workflows, expertise |
 
-**Slash commands** — quick templates, frequently-used instructions, simple operations, reminders.
-**Skills** — multi-file capabilities, complex workflows, team standardization, reference material.
+**Slash commands** -- quick templates, frequently-used instructions, simple operations, reminders.
+**Skills** -- multi-file capabilities, complex workflows, team standardization, reference material.
 
 ## Best Practices
 
-- **Clear descriptions**: Be specific — "Review code for security vulnerabilities" not "Helps with code"
+- **Clear descriptions**: Be specific -- "Review code for security vulnerabilities" not "Helps with code"
 - **Always declare `allowed-tools`**: Without it, Claude prompts for permission every time
 - **Use `argument-hint`**: Show users what arguments are expected
 - **Provide context via `!` commands**: Include git status, project structure, recent changes
@@ -176,11 +177,11 @@ Provide a summary of changes.
 
 ## Common Mistakes
 
-- **Missing descriptions** — commands without `description` are invisible in `/help`
-- **No tool restrictions** — without `allowed-tools`, Claude prompts every time
-- **Name conflicts** — project commands override personal ones with the same name; use subdirectories
-- **Overloaded commands** — slash commands work best for focused tasks; use Skills for complex workflows
-- **Untested arguments** — `$ARGUMENTS` might be empty; test and handle missing values gracefully
+- **Missing descriptions** -- commands without `description` are invisible in `/help`
+- **No tool restrictions** -- without `allowed-tools`, Claude prompts every time
+- **Name conflicts** -- project commands override personal ones with the same name; use subdirectories
+- **Overloaded commands** -- slash commands work best for focused tasks; use Skills for complex workflows
+- **Untested arguments** -- `$ARGUMENTS` might be empty; test and handle missing values gracefully
 
 ## Permission Management
 
@@ -216,14 +217,18 @@ Verify: proper `---` delimiters, valid YAML, correct field names, expected argum
 
 ## Creation Workflow
 
-1. **Define** — identify the repeated prompt or workflow to automate
-2. **Create** — write the `.md` file with frontmatter and content
-3. **Test** — invoke with `/command` and verify behavior with various inputs
-4. **Iterate** — refine based on output; adjust tools, arguments, context
-5. **Share** — commit to `.claude/commands/` for team use
+1. **Define** -- identify the repeated prompt or workflow to automate
+2. **Create** -- write the `.md` file with frontmatter and content
+3. **Test** -- invoke with `/command` and verify behavior with various inputs
+4. **Iterate** -- refine based on output; adjust tools, arguments, context
+5. **Share** -- commit to `.claude/commands/` for team use
 
-## Additional Resources
+## Related Skills
 
-- [Official Documentation](https://code.claude.com/docs/en/slash-commands.md)
-- Skills: See [Agent Skills](../agent-skills/SKILL.md) for converting to Skills
-- Extended examples: See `REFERENCE.md` for command patterns and organization strategies
+- [`agent-skills`](../agent-skills/SKILL.md) -- the spec for creating skills; when a command outgrows a single file, convert it to a skill
+- [`agent-creator`](../agent-creator/SKILL.md) -- for building custom agents; helps distinguish when to use a command vs an agent
+
+## Resources
+
+- [Official Documentation](https://docs.anthropic.com/en/docs/claude-code/slash-commands)
+- Extended examples: See [REFERENCE.md](REFERENCE.md) for command patterns and organization strategies

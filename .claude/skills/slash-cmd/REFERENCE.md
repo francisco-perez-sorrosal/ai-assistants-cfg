@@ -2,6 +2,13 @@
 
 Extended examples, patterns, and organization strategies. Loaded on-demand from `SKILL.md`.
 
+## Contents
+
+- [Command Patterns](#command-patterns) -- git commit, code review, project setup, simple template
+- [Real-World Examples](#real-world-examples) -- git operations, documentation, testing
+- [Quick Start Recipes](#quick-start-recipes) -- copy-paste shell commands to create commands
+- [Command Organization Strategies](#command-organization-strategies) -- by category, tool, or workflow
+
 ## Command Patterns
 
 ### Pattern 1: Git Commit
