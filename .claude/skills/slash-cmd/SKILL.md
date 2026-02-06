@@ -52,7 +52,7 @@ Guide for creating effective, reusable slash commands.
 description: Brief description shown in /help
 argument-hint: [expected] [arguments]
 allowed-tools: [Bash(git:*), Read, Grep]
-model: claude-3-5-haiku-20241022
+model: haiku
 ---
 
 Your command content here
@@ -65,7 +65,7 @@ Your command content here
 | `description` | Brief description (shown in `/help`) | "Create a git commit" |
 | `allowed-tools` | Limit tools Claude can use | `Bash(git:*), Read, Grep` |
 | `argument-hint` | Show expected arguments | `[message]` or `[pr-number] [priority]` |
-| `model` | Use specific model | `claude-3-5-haiku-20241022` |
+| `model` | Use specific model (short-form: `haiku`, `sonnet`, `opus`) | `haiku` |
 | `disable-model-invocation` | Prevent auto-invocation | `true` |
 
 ## Argument Handling
@@ -223,5 +223,5 @@ Verify: proper `---` delimiters, valid YAML, correct field names, expected argum
 ## Additional Resources
 
 - [Official Documentation](https://code.claude.com/docs/en/slash-commands.md)
-- Skills: See [Claude Skills](../claude-skills/SKILL.md) for converting to Skills
+- Skills: See [Agent Skills](../agent-skills/SKILL.md) for converting to Skills
 - Extended examples: See `REFERENCE.md` for command patterns and organization strategies

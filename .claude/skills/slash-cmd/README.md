@@ -78,6 +78,11 @@ claude
 > Why doesn't my command show up in /help?
 ```
 
+## Related Skills
+
+- [`agent-skills`](../agent-skills/) -- the spec for creating skills; commands can graduate to full skills when they outgrow a single file
+- [`agent-creator`](../agent-creator/) -- for building custom agents; helps distinguish when to use a command vs an agent
+
 ### Validation Checklist
 
 After creating or modifying commands, verify:
