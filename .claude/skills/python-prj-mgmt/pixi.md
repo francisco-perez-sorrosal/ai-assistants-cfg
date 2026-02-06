@@ -2,6 +2,35 @@
 
 pixi is a fast, cross-platform package manager built on conda that supports multiple languages. For Python projects, pixi uses `pyproject.toml` as the primary configuration file, providing a Python-native development experience.
 
+## Table of Contents
+
+- [Why pixi for Python?](#why-pixi-for-python)
+- [Installation](#installation)
+- [Project Initialization](#project-initialization)
+- [Configuration: pyproject.toml](#configuration-pyprojecttoml)
+- [Key Concepts](#key-concepts)
+- [Dependency Management](#dependency-management)
+- [Package Source Guidance](#package-source-guidance)
+- [Running Commands](#running-commands)
+- [Multiple Environments with Dependency Groups](#multiple-environments-with-dependency-groups)
+- [Platform-Specific Dependencies](#platform-specific-dependencies)
+- [PyTorch and ML Workflows](#pytorch-and-ml-workflows)
+- [Project Structure](#project-structure)
+- [Common Workflows](#common-workflows)
+- [Tasks Configuration](#tasks-configuration)
+- [Package Interoperability](#package-interoperability)
+- [Global Tools](#global-tools)
+- [IDE Integration](#ide-integration)
+- [CI/CD Integration](#cicd-integration)
+- [Caching and Performance](#caching-and-performance)
+- [Lockfile Management](#lockfile-management)
+- [Troubleshooting](#troubleshooting)
+- [Migration from Other Tools](#migration-from-other-tools)
+- [Best Practices](#best-practices)
+- [Common Pitfalls](#common-pitfalls)
+- [Example: Complete Python Project](#example-complete-python-project)
+- [Additional Resources](#additional-resources)
+
 ## Why pixi for Python?
 
 - **Multi-ecosystem**: Seamlessly mix conda and PyPI packages
@@ -113,7 +142,7 @@ typecheck = "mypy src/"
 ```bash
 pixi add --pypi requests pandas
 pixi add --pypi "flask[async]>=3.1.0"     # With extras and version
-pixi add --pypi --feature dev pytest ruff # Add to feature
+pixi add --pypi --feature dev pytest ruff # Add to dependency group
 ```
 
 **Add conda packages**:
@@ -122,10 +151,6 @@ pixi add numpy                             # Prefer conda version
 pixi add pytorch torchvision              # ML packages often better from conda
 pixi add black=25                         # Specific version
 ```
-
-**When to use conda vs PyPI**:
-- Use **conda** for: System libraries, C extensions (numpy, scipy), ML frameworks (pytorch, tensorflow), complex dependencies
-- Use **PyPI** for: Pure Python packages, latest versions, packages not in conda-forge
 
 **Remove dependencies**:
 ```bash
@@ -144,6 +169,25 @@ pixi update numpy                          # Update specific package
 pixi list                                  # All installed packages
 pixi tree                                  # Dependency tree
 ```
+
+## Package Source Guidance
+
+**Use PyPI** (`pixi add --pypi`):
+- Pure Python packages
+- Latest package versions
+- Packages not in conda-forge
+
+**Use conda** (`pixi add`):
+- System libraries (libxml2, etc.)
+- C extensions (numpy, scipy, pandas)
+- ML frameworks (pytorch, tensorflow)
+- Complex dependencies requiring compiled binaries
+
+**Both work together**: pixi automatically manages dependencies from both ecosystems.
+
+**When to use conda vs PyPI**:
+- Use **conda** for: System libraries, C extensions (numpy, scipy), ML frameworks (pytorch, tensorflow), complex dependencies
+- Use **PyPI** for: Pure Python packages, latest versions, packages not in conda-forge
 
 ## Running Commands
 

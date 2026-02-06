@@ -6,21 +6,22 @@ Managing Python projects with modern package managers. Defaults to **pixi** unle
 
 - Setting up a new Python project
 - Managing dependencies (add, remove, update)
-- Configuring environments and dependency groups
+- Configuring `pyproject.toml` and dependency groups
 - Choosing between pixi and uv
+- Working with lockfiles (`pixi.lock`, `uv.lock`)
 - CI/CD integration for Python projects
 
 ## Activation
 
 The skill activates automatically when the agent detects project management tasks: initializing projects, managing dependencies, configuring environments, or choosing package managers.
 
-Trigger explicitly by mentioning "python project management," "pixi," or "uv."
+Trigger explicitly by mentioning "python project management," "pixi," "uv," "pyproject.toml," or "dependency management."
 
 ## Skill Contents
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Core reference: tool selection, project init, dependency management, CI/CD, pyproject.toml configs, best practices |
+| `SKILL.md` | Core reference: tool selection, project init, dependency management, CI/CD, pyproject.toml shared config, best practices |
 | `pixi.md` | Complete pixi reference: conda+PyPI ecosystem, environments, tasks, ML workflows, troubleshooting |
 | `uv.md` | Complete uv reference: fast installs, Python version management, workspaces, build/publish |
 | `README.md` | This file — overview and usage guide |

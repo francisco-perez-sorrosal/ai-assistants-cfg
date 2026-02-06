@@ -1,6 +1,6 @@
 ---
 name: python-prj-mgmt
-description: Python project management with pixi and uv package managers. Use when setting up Python projects, managing dependencies, configuring environments, initializing projects, or choosing between package management tools. Defaults to pixi unless uv is explicitly requested.
+description: Python project management with pixi and uv package managers. Covers project initialization, dependency management, pyproject.toml configuration, lockfiles, virtual environments, workspaces, and CI/CD integration. Use when setting up Python projects, managing dependencies, configuring conda or PyPI packages, choosing between package managers, or working with pixi.lock or uv.lock. Defaults to pixi unless uv is explicitly requested.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
@@ -13,8 +13,8 @@ Managing Python projects with modern package managers and dependency tools. **De
 **Python Coding**: See the [Python Development](../python/SKILL.md) skill for type hints, testing patterns, code quality, and language best practices.
 
 **Package Managers**:
-- [pixi](pixi.md) - **Default** - Python-native with pyproject.toml, conda+PyPI ecosystem
-- [uv](uv.md) - Fast Python package installer and resolver
+- [pixi](pixi.md) - **Default** - conda+PyPI ecosystem, tasks, multi-language support
+- [uv](uv.md) - Extremely fast PyPI-only installer and resolver
 
 ## Default Behavior
 
@@ -96,7 +96,7 @@ pixi add --pypi requests pandas
 # Conda packages (for compiled libs, ML frameworks)
 pixi add numpy scipy pytorch
 
-# Development dependencies
+# Development dependency group
 pixi add --pypi --feature dev pytest ruff mypy
 
 # Install all dependencies
@@ -109,7 +109,7 @@ pixi install
 # Add dependencies
 uv add requests pandas numpy
 
-# Development dependencies
+# Development dependency group
 uv add --dev pytest ruff mypy
 
 # Sync dependencies
@@ -167,11 +167,11 @@ uv run mypy src/             # Type check
 - run: uv run mypy src/
 ```
 
-## pyproject.toml Integration
+## pyproject.toml Configuration
 
-Both pixi and uv use `pyproject.toml` as the primary configuration file, following Python standards (PEP 621, PEP 735).
+Both pixi and uv use `pyproject.toml` as the primary configuration file, following Python standards (PEP 621, PEP 735). The shared structure is identical; tool-specific sections differ.
 
-### Basic pyproject.toml
+### Shared pyproject.toml
 
 ```toml
 [project]
@@ -193,44 +193,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 ```
 
-### pixi-specific config
-
-```toml
-[tool.pixi.workspace]
-channels = ["conda-forge"]
-platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
-
-[tool.pixi.dependencies]
-# Conda packages (takes precedence over PyPI)
-numpy = ">=1.24"
-
-[tool.pixi.pypi-dependencies]
-# Editable install
-my-project = { path = ".", editable = true }
-
-[tool.pixi.environments]
-default = { solve-group = "default" }
-dev = { features = ["dev"], solve-group = "default" }
-
-[tool.pixi.tasks]
-test = "pytest tests/"
-lint = "ruff check ."
-format = "ruff format ."
-```
-
-### uv-specific config
-
-```toml
-[tool.uv]
-dev-dependencies = [
-    "pytest>=7.4.0",
-    "mypy>=1.7.0",
-]
-
-[tool.uv.sources]
-# Optional: custom package sources
-internal-pkg = { git = "https://github.com/org/repo" }
-```
+For tool-specific `pyproject.toml` sections (`[tool.pixi.*]`, `[tool.uv]`), see the corresponding reference files: [pixi.md](pixi.md) and [uv.md](uv.md).
 
 ## Package Manager Comparison
 
@@ -247,102 +210,20 @@ internal-pkg = { git = "https://github.com/org/repo" }
 | **Pure Python** | Good | Excellent |
 | **Maturity** | Mature (conda ecosystem) | New but stable |
 
-## Package Source Guidance (pixi)
+## Command Quick Reference
 
-**Use PyPI** (pixi add --pypi):
-- Pure Python packages
-- Latest package versions
-- Packages not in conda-forge
+For complete command references, see [pixi.md](pixi.md) and [uv.md](uv.md). The most common commands:
 
-**Use conda** (pixi add):
-- System libraries (libxml2, etc.)
-- C extensions (numpy, scipy, pandas)
-- ML frameworks (pytorch, tensorflow)
-- Complex dependencies requiring compiled binaries
-
-**Both work together**: pixi automatically manages dependencies from both ecosystems.
-
-## Quick Commands Reference
-
-### pixi
-
-```bash
-# Project
-pixi init --format pyproject      # Initialize Python project
-pixi install                      # Install from lockfile
-
-# Dependencies
-pixi add --pypi package           # Add PyPI package
-pixi add package                  # Add conda package
-pixi add --pypi --feature dev pkg # Add to feature group
-pixi remove package               # Remove package
-pixi list                         # List packages
-pixi tree                         # Dependency tree
-
-# Running
-pixi run command                  # Run in environment
-pixi run -e env command           # Run in specific environment
-pixi shell                        # Interactive shell
-
-# Tasks
-pixi task list                    # List tasks
-pixi run task-name                # Run task
-
-# Global tools
-pixi global install tool          # Install globally
-pixi global list                  # List global tools
-
-# Maintenance
-pixi update                       # Update dependencies
-pixi clean cache                  # Clean cache
-pixi info                         # Show environment info
-pixi search package               # Search packages
-```
-
-### uv
-
-```bash
-# Project
-uv init                           # Initialize project
-uv sync                           # Sync dependencies
-uv lock                           # Update lockfile
-
-# Dependencies
-uv add package                    # Add dependency
-uv add --dev package             # Add dev dependency
-uv remove package                # Remove dependency
-uv tree                          # Dependency tree
-
-# Python versions
-uv python install 3.11           # Install Python version
-uv python list                   # List installed versions
-uv python pin 3.11               # Pin version
-
-# Running
-uv run command                   # Run in environment
-uv run python script.py         # Run Python script
-
-# Virtual environments
-uv venv                          # Create venv
-uv venv --python 3.12           # With specific Python
-
-# Pip compatibility
-uv pip install package           # Install package
-uv pip compile requirements.in  # Compile requirements
-uv pip sync requirements.txt    # Sync from requirements
-
-# Global tools
-uv tool install tool             # Install global tool
-uv tool list                     # List global tools
-
-# Build
-uv build                         # Build package
-uv publish                       # Publish to PyPI
-
-# Maintenance
-uv cache clean                   # Clean cache
-uv cache dir                     # Show cache location
-```
+| Task | pixi | uv |
+|------|------|-----|
+| Initialize | `pixi init --format pyproject` | `uv init` |
+| Add dependency | `pixi add --pypi pkg` | `uv add pkg` |
+| Add conda dependency | `pixi add pkg` | N/A |
+| Add dev dependency | `pixi add --pypi --feature dev pkg` | `uv add --dev pkg` |
+| Install/sync | `pixi install` | `uv sync` |
+| Run command | `pixi run cmd` | `uv run cmd` |
+| Update lockfile | `pixi update` | `uv lock` |
+| Dependency tree | `pixi tree` | `uv tree` |
 
 ## Best Practices
 
@@ -369,8 +250,8 @@ uv cache dir                     # Show cache location
 - Forgetting to sync after adding dependencies
 - Using venv activation instead of `uv run` (slower)
 
-## Additional Resources
+## Related Skills
 
-- [pixi Documentation](pixi.md) - Complete pixi reference
-- [uv Documentation](uv.md) - Complete uv reference
-- [Python Development Skill](../python/SKILL.md) - Coding best practices
+- [pixi Reference](pixi.md) — Complete pixi guide: environments, tasks, ML workflows, troubleshooting
+- [uv Reference](uv.md) — Complete uv guide: workspaces, build/publish, Python version management
+- [Python Development](../python/SKILL.md) — Type hints, testing, code quality, language patterns

@@ -2,6 +2,33 @@
 
 uv is an extremely fast Python package installer and resolver written in Rust. Use when explicitly requested by the user or when pixi is not suitable for the project needs.
 
+## Table of Contents
+
+- [Why uv?](#why-uv)
+- [Installation](#installation)
+- [Project Initialization](#project-initialization)
+- [Configuration: pyproject.toml](#configuration-pyprojecttoml)
+- [Virtual Environment Management](#virtual-environment-management)
+- [Dependency Management](#dependency-management)
+- [Running Commands](#running-commands)
+- [Python Version Management](#python-version-management)
+- [Package Installation](#package-installation)
+- [Lockfile Management](#lockfile-management)
+- [Project Structure Best Practices](#project-structure-best-practices)
+- [Common Tasks](#common-tasks)
+- [Working with Workspaces](#working-with-workspaces)
+- [Build and Publish](#build-and-publish)
+- [Scripts and Tools](#scripts-and-tools)
+- [Cache Management](#cache-management)
+- [CI/CD Integration](#cicd-integration)
+- [Advanced Features](#advanced-features)
+- [Migration from Other Tools](#migration-from-other-tools)
+- [Troubleshooting](#troubleshooting)
+- [Performance Tips](#performance-tips)
+- [Best Practices](#best-practices)
+- [Comparison: uv vs pip](#comparison-uv-vs-pip)
+- [Additional Resources](#additional-resources)
+
 ## Why uv?
 
 - **Blazing fast**: 10-100x faster than pip
@@ -115,7 +142,7 @@ uv run python script.py
 **Add dependencies**:
 ```bash
 uv add requests pandas            # Add to dependencies
-uv add --dev pytest mypy ruff    # Add to dev dependencies
+uv add --dev pytest mypy ruff    # Add to dev dependency group
 uv add "numpy>=1.24,<2"          # With version constraint
 ```
 
@@ -514,7 +541,7 @@ uv sync
 1. **Always commit `uv.lock`** for reproducibility
 2. **Pin Python version** with `.python-version`
 3. **Use `uv run`** instead of activating environments
-4. **Organize dependencies**: Use `dev`, `test`, `docs` groups
+4. **Organize dependencies**: Use `dev`, `test`, `docs` dependency groups
 5. **Version constraints**: Be specific for applications, flexible for libraries
 6. **Keep pyproject.toml clean**: Don't specify transitive dependencies
 7. **Use workspaces** for monorepos
