@@ -8,7 +8,7 @@ Plan complex software tasks using a three-document model (PLAN.md, WIP.md, LEARN
 - Work with architectural implications or evolving requirements
 - Complex tasks where you need to track progress, capture learnings, and maintain a working codebase throughout
 
-For simple tasks (bug fixes, single-module changes), skip this skill and use TodoWrite instead.
+For simple tasks (bug fixes, single-module changes), skip this skill and use Task tools (TaskCreate/TaskUpdate) instead.
 
 ## Activation
 
@@ -20,6 +20,8 @@ Load explicitly with `software-planning` or reference the three-document model. 
 |------|---------|
 | `SKILL.md` | Core skill: three-document model, step sizing, commit discipline, workflow |
 | `README.md` | This file — overview and usage guide |
+| `contexts/python.md` | Python-specific quality gates and step templates |
+| `phases/refactoring.md` | Refactoring phase methodology |
 
 ### Extension Directories
 
@@ -54,6 +56,11 @@ software-planning/
 4. **Check for phases** (optional): if existing code needs restructuring, prepend a refactoring phase from `phases/refactoring.md`
 5. **Execute**: one step at a time, one commit per step, keeping WIP.md accurate
 6. **Finish**: merge learnings into permanent locations, delete all three documents
+
+## Related Skills
+
+- [`python`](../python/SKILL.md) / [`python-prj-mgmt`](../python-prj-mgmt/SKILL.md) -- for Python-specific planning contexts (quality gates, project setup)
+- [`refactoring`](../refactoring/SKILL.md) -- for embedding refactoring phases in plans
 
 ## Adding New Contexts and Phases
 

@@ -1,7 +1,7 @@
 ---
-name: Software Planning
+name: software-planning
 description: Planning complex software tasks using a three-document model for tracking work in small, known-good increments. Use when starting significant software work or breaking down complex development tasks.
-allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, TodoWrite]
+allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, TaskCreate, TaskUpdate, TaskList]
 ---
 
 # Software Planning in Small Increments
@@ -29,19 +29,8 @@ PLAN.md (static)          WIP.md (living)           LEARNINGS.md (temporary)
 │ Steps 1-N       │       │ Blockers        │       │ Decisions       │
 │ (approved)      │       │ Next action     │       │ Edge cases      │
 └─────────────────┘       └─────────────────┘       └─────────────────┘
-        │                         │                         │
-        │                         │                         │
-        └─────────────────────────┴─────────────────────────┘
-                                  │
-                                  ▼
-                         END OF FEATURE
-                                  │
-                    ┌─────────────┴─────────────┐
-                    │                           │
-                    ▼                           ▼
-              DELETE all              Merge LEARNINGS into:
-              three docs              - CLAUDE.md (gotchas, patterns)
-                                      - ADRs (architectural decisions)
+
+END OF FEATURE: Merge LEARNINGS into CLAUDE.md / ADRs, then DELETE all three docs
 ```
 
 ## Language Context
@@ -162,13 +151,6 @@ After completing a step:
 
 Only proceed with commit after explicit approval.
 
-### Why Wait for Approval?
-
-- User maintains control of git history
-- Opportunity to review before commit
-- Prevents accidental commits of incomplete work
-- Creates natural checkpoint for discussion
-
 ## PLAN.md Structure
 
 ```markdown
@@ -195,12 +177,6 @@ Only proceed with commit after explicit approval.
 **Implementation**: What code will we write?
 **Testing**: What needs testing? (if critical/complex)
 **Done when**: How do we know it's complete?
-
-### Step 2: [One sentence description]
-
-**Implementation**: ...
-**Testing**: ...
-**Done when**: ...
 
 ### Step N: [One sentence description]
 
@@ -230,16 +206,16 @@ Step N of M: [Description]
 
 ## Status
 
-🔨 IMPLEMENTING - Writing code
-🧪 TESTING - Writing/running tests
-🔍 REVIEWING - Checking quality
-⏸️ WAITING - Awaiting commit approval
-✅ COMPLETE - Step finished
+[IMPLEMENTING] - Writing code
+[TESTING] - Writing/running tests
+[REVIEWING] - Checking quality
+[WAITING] - Awaiting commit approval
+[COMPLETE] - Step finished
 
 ## Progress
 
-- [x] Step 1: [Description] ✓
-- [x] Step 2: [Description] ✓
+- [x] Step 1: [Description]
+- [x] Step 2: [Description]
 - [ ] Step 3: [Description] ← current
 - [ ] Step 4: [Description]
 
@@ -274,39 +250,19 @@ Update WIP.md:
 # Learnings: [Feature Name]
 
 ## Gotchas
-
-### [Title]
-
-- **Context**: When this occurs
-- **Issue**: What goes wrong
-- **Solution**: How to handle it
+- **[Title]**: Context, issue, solution
 
 ## Patterns That Worked
-
-### [Title]
-
-- **What**: Description
-- **Why it works**: Rationale
-- **Example**: Brief code example
+- **[Title]**: What, why it works, brief example
 
 ## Decisions Made
-
-### [Title]
-
-- **Options considered**: What we evaluated
-- **Decision**: What we chose
-- **Rationale**: Why
-- **Trade-offs**: What we gained/lost
+- **[Title]**: Options considered, decision, rationale, trade-offs
 
 ## Edge Cases
-
-- [Edge case 1]: How we handled it
-- [Edge case 2]: How we handled it
+- [Edge case]: How we handled it
 
 ## Technical Debt
-
-- [Item 1]: What was compromised and why
-- [Item 2]: Future improvements needed
+- [Item]: What was compromised, why, future improvement needed
 ```
 
 ### Capture Learnings As They Occur
@@ -320,29 +276,16 @@ Don't wait until the end. When you discover something:
 ## Workflow Example
 
 ```
-START FEATURE
-│
-├─► Create PLAN.md (get approval)
-├─► Create WIP.md
-├─► Create LEARNINGS.md
-│
-│   FOR EACH STEP:
-│   │
-│   ├─► Update WIP.md (status: IMPLEMENTING)
-│   ├─► Write implementation
-│   ├─► Add tests if critical/complex
-│   ├─► Verify system works
-│   ├─► Update WIP.md (status: REVIEWING)
-│   ├─► Run quality checks
-│   ├─► Capture learnings
-│   ├─► Update WIP.md (status: WAITING)
-│   └─► **WAIT FOR COMMIT APPROVAL**
-│
-END FEATURE
-│
-├─► Verify all criteria met
-├─► Merge learnings into permanent locations
-└─► Delete PLAN.md, WIP.md, LEARNINGS.md
+START: Create PLAN.md (get approval) + WIP.md + LEARNINGS.md
+
+FOR EACH STEP:
+  1. Update WIP.md (IMPLEMENTING)
+  2. Write implementation + tests (if critical)
+  3. Verify system works, run quality checks
+  4. Capture learnings, update WIP.md (WAITING)
+  5. WAIT FOR COMMIT APPROVAL
+
+END: Verify all criteria met, merge learnings, delete all three docs
 ```
 
 ## End of Feature
@@ -374,7 +317,7 @@ After learnings are merged:
 
 ```bash
 rm PLAN.md WIP.md LEARNINGS.md
-git add -A
+git add PLAN.md WIP.md LEARNINGS.md
 git commit -m "chore: complete [feature], remove planning docs"
 ```
 
@@ -423,10 +366,10 @@ Each step is one commit, leaves system working.
 
 For each step, ask:
 
-- Can I describe this in one sentence? ✓
-- Can I do this in one session? ✓
-- Will the system still work after? ✓
-- Is it obvious when I'm done? ✓
+- Can I describe this in one sentence? (yes)
+- Can I do this in one session? (yes)
+- Will the system still work after? (yes)
+- Is it obvious when I'm done? (yes)
 
 If any answer is "no", break it down further.
 
@@ -451,50 +394,25 @@ For exploratory work, add spike steps:
 - Must produce a decision
 - Document findings in LEARNINGS.md
 
-### Updating the Plan
-
-After a spike, you may need to update subsequent steps:
-
-1. Document findings in LEARNINGS.md
-2. Propose plan changes based on findings
-3. Get approval for updated plan
-4. Continue with revised steps
+After a spike, update the plan: document findings in LEARNINGS.md, propose plan changes, get approval, then continue.
 
 ## Anti-Patterns
 
-❌ **Committing without approval**
+**Don't:** Commit without approval — always wait for explicit "yes" before committing
 
-- Always wait for explicit "yes" before committing
+**Don't:** Let steps span multiple commits — break down further until one step = one commit
 
-❌ **Steps that span multiple commits**
+**Don't:** Use vague "done when" criteria — "when it works" is not specific enough. Be concrete: "When users can log in with Google and existing tests pass"
 
-- Break down further until one step = one commit
+**Don't:** Let WIP.md become stale — update immediately when reality changes
 
-❌ **Vague "done when" criteria**
+**Don't:** Wait until end to capture learnings — add to LEARNINGS.md as discoveries occur
 
-- "When it works" is not specific enough
-- Be concrete: "When users can log in with Google and existing tests pass"
+**Don't:** Change plans silently — all plan changes require discussion and approval
 
-❌ **Letting WIP.md become stale**
+**Don't:** Keep planning docs after feature complete — delete them; knowledge is now in permanent locations
 
-- Update immediately when reality changes
-
-❌ **Waiting until end to capture learnings**
-
-- Add to LEARNINGS.md as discoveries occur
-
-❌ **Plans that change silently**
-
-- All plan changes require discussion and approval
-
-❌ **Keeping planning docs after feature complete**
-
-- Delete them; knowledge is now in permanent locations
-
-❌ **Skipping tests for complex logic**
-
-- Critical and complex components need tests
-- Don't defer testing indefinitely
+**Don't:** Skip tests for complex logic — critical and complex components need tests; don't defer testing indefinitely
 
 ## When to Use This Skill
 
@@ -515,21 +433,21 @@ After a spike, you may need to update subsequent steps:
 - Documentation updates
 - Configuration changes
 
-**Use TodoWrite for simple multi-step tasks instead.**
+**Use TaskCreate/TaskUpdate for simple multi-step tasks instead.**
 
-## Integration with TodoWrite
+## Integration with Task Tools
 
-**PLAN.md vs TodoWrite:**
+**PLAN.md vs Task Tools (TaskCreate/TaskUpdate/TaskList):**
 
-| Use PLAN.md when: | Use TodoWrite when: |
-|-------------------|---------------------|
+| Use PLAN.md when: | Use Task Tools when: |
+|-------------------|----------------------|
 | Multi-session feature | Single-session task |
 | Need to capture learnings | Simple checklist |
 | Complex dependencies | Independent tasks |
 | Requirements may evolve | Clear requirements |
 | Need approval for plan changes | Straightforward execution |
 
-**Can use both**: TodoWrite tracks current session's micro-tasks, PLAN.md tracks overall feature steps.
+**Can use both**: Task tools track current session's micro-tasks, PLAN.md tracks overall feature steps.
 
 ## Quick Reference
 
