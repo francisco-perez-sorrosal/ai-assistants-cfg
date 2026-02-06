@@ -18,7 +18,7 @@ Load explicitly with `software-planning` or reference the three-document model. 
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Core skill: three-document model, step sizing, commit discipline, workflow |
+| `SKILL.md` | Core skill: three-document model, step sizing, testing guidance, commit discipline, workflow |
 | `README.md` | This file — overview and usage guide |
 | `contexts/python.md` | Python-specific quality gates and step templates |
 | `phases/refactoring.md` | Refactoring phase methodology |

@@ -1,13 +1,14 @@
 ---
 name: software-planning
-description: Planning complex software tasks using a three-document model for tracking work in small, known-good increments. Use when starting significant software work or breaking down complex development tasks.
-allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, TaskCreate, TaskUpdate, TaskList]
+description: Planning complex software tasks using a three-document model (PLAN.md, WIP.md, LEARNINGS.md) for tracking work in small, known-good increments. Use when starting significant development work, breaking down complex features, doing architecture planning, managing multi-session projects, or when the user mentions feature breakdown, work planning, or incremental development.
+compatibility: Designed for Claude Code (or similar products with file read/write capabilities)
+allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
 # Software Planning in Small Increments
 
 **All work must be done in small, known-good increments.** Each increment leaves the codebase in a working state.
-Create and maintain planning documents (PLAN.md, WIP.md, LEARNINGS.md) directly using Write and Edit tools.
+Create and maintain planning documents (PLAN.md, WIP.md, LEARNINGS.md) directly in the project root.
 
 ## Three-Document Model
 
@@ -110,31 +111,23 @@ Each step MUST:
 - Obvious when done
 - Single responsibility
 
-## Testing Strategy
+## Testing in Plan Steps
 
-**Pragmatic testing**: Test critical paths, complex logic, and integrations.
+**Pragmatic testing**: Include a **Testing** field in plan steps for critical paths, complex logic, and integrations. Skip it for trivial steps where testing adds no value.
 
-**Write tests for:**
+**Include testing when:**
 
 - Complex algorithms or business logic
-- Critical user flows
-- Integration points between components
+- Critical user flows or integration points
 - Edge cases in important features
-- Anything that's been a source of bugs
+- Fixing bugs (regression tests)
+- When instructed or requested
 
-**Don't test:**
+**Skip testing when:**
 
-- Simple getters/setters
-- Obvious code with no logic
+- Obvious code with no logic (simple wiring, config)
 - Framework-provided functionality
 - Code that will be deleted soon
-
-**When to write tests:**
-
-- Before implementation for critical/complex components
-- After implementation for straightforward features
-- When instructed or requested
-- When fixing bugs (regression tests)
 
 ## Commit Discipline
 
@@ -273,7 +266,7 @@ Don't wait until the end. When you discover something:
 2. Continue with current work
 3. At end of feature, learnings are ready to merge
 
-## Workflow Example
+## Workflow
 
 ```
 START: Create PLAN.md (get approval) + WIP.md + LEARNINGS.md
@@ -433,11 +426,15 @@ After a spike, update the plan: document findings in LEARNINGS.md, propose plan 
 - Documentation updates
 - Configuration changes
 
-**Use TaskCreate/TaskUpdate for simple multi-step tasks instead.**
+For simple multi-step tasks, use the agent's built-in task tracking instead.
 
-## Integration with Task Tools
+## Claude Code Usage
 
-**PLAN.md vs Task Tools (TaskCreate/TaskUpdate/TaskList):**
+When using this skill with Claude Code specifically:
+
+- Use `Write` and `Edit` tools to create and maintain PLAN.md, WIP.md, and LEARNINGS.md
+- For simple multi-step tasks that don't warrant three-document planning, use `TaskCreate`/`TaskUpdate`/`TaskList` to track micro-tasks within a session
+- Both approaches can coexist: task tools track current session's micro-tasks while PLAN.md tracks overall feature steps
 
 | Use PLAN.md when: | Use Task Tools when: |
 |-------------------|----------------------|
@@ -447,15 +444,7 @@ After a spike, update the plan: document findings in LEARNINGS.md, propose plan 
 | Requirements may evolve | Clear requirements |
 | Need approval for plan changes | Straightforward execution |
 
-**Can use both**: Task tools track current session's micro-tasks, PLAN.md tracks overall feature steps.
-
 ## Quick Reference
-
-### Document Purposes
-
-- **PLAN.md**: The contract - what we agreed to build
-- **WIP.md**: The dashboard - where we are right now
-- **LEARNINGS.md**: The notebook - what we're discovering
 
 ### Update Triggers
 
@@ -479,13 +468,3 @@ After a spike, update the plan: document findings in LEARNINGS.md, propose plan 
 - [ ] Learnings captured if any
 - [ ] Can describe change in one sentence
 
-## Summary
-
-Planning with the three-document model:
-
-1. **Start**: Create PLAN.md (approved), WIP.md, LEARNINGS.md
-2. **Execute**: One step at a time, one commit per step
-3. **Track**: Keep WIP.md accurate, capture learnings immediately
-4. **Finish**: Merge learnings, delete all three documents
-
-**The goal**: Break complex work into simple steps, maintain working state, capture knowledge, and always know where you are.
