@@ -26,8 +26,9 @@ Trigger explicitly by asking about "agent skills," "creating a skill," or refere
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Core reference: spec fields, naming, structure, progressive disclosure, content guidelines, development workflow, anti-patterns, checklist |
+| `SKILL.md` | Core reference: spec fields, naming, structure, progressive disclosure, content guidelines, choosing content type, development workflow, cross-agent portability, anti-patterns, checklist |
 | `README.md` | This file — overview and usage guide |
+| `references/cross-agent-portability.md` | Detailed portability guide: adopter list, discovery paths per tool, portable vs. tool-specific elements, skills vs. project instruction files |
 
 ## Quick Start
 

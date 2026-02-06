@@ -16,7 +16,7 @@ Reference for developing effective Agent Skills. Official specification at [agen
 
 **But not all agents are equally capable.** Skills may be consumed by agents with varying model capabilities. Avoid explaining universal knowledge (basic syntax, common idioms), but do include enough context — concrete examples, complete workflows, and explicit decision criteria — so your specific conventions can be followed correctly by less capable agents too. Examples and workflows are robust across the capability spectrum: they guide weaker agents without burdening stronger ones.
 
-**Conciseness**: Aim to keep `SKILL.md` concise (500 lines is a good guideline, not a hard limit). Use progressive disclosure — split detailed content into separate files loaded on-demand.
+**Conciseness**: Aim to keep `SKILL.md` concise (500 lines is a good guideline, not a hard limit). Use progressive disclosure — split detailed content into separate files loaded on-demand. Remember that once your skill is activated, its tokens compete for attention with other skills' metadata, the system prompt, and conversation history. Every instruction you add dilutes the weight of every other instruction — in your skill and in others.
 
 **Appropriate Degrees of Freedom**: Match specificity to the task's fragility:
 
@@ -127,6 +127,18 @@ For reference files over 100 lines, include a table of contents at the top so th
 
 **Avoid Time-Sensitive Info**: Use "Old Patterns" sections with `<details>` for deprecated methods rather than date-based conditionals.
 
+### Choosing Content Type
+
+When deciding how to encode behavior in your skill, match the content type to the degree of freedom:
+
+| Content Type | When to Use | Agent Behavior |
+|---|---|---|
+| **Script** (`scripts/`) | Deterministic operations where consistency is critical (validation, transformation, migration) | Executes the script — doesn't generate its own |
+| **Worked example** | A pattern exists that the agent should follow (commit format, report structure, API response shape) | Pattern-matches the example |
+| **Prose instruction** | Multiple approaches are valid and context determines the best one (code review, architecture decisions) | Reasons about the situation |
+
+Prefer scripts for anything a linter, formatter, or validator could do — deterministic checks are cheaper and more reliable than LLM reasoning. Reserve prose instructions for decisions that genuinely require judgment.
+
 ### Workflows with Feedback Loops
 
 For complex tasks, provide step-by-step checklists the agent can track:
@@ -148,6 +160,8 @@ For high-stakes operations, use the **plan-validate-execute** pattern: create a 
 
 ### Evaluation-Driven Development
 
+Start with a minimal SKILL.md addressing only observed gaps. Add content only when testing reveals the agent needs it — not preemptively.
+
 Build evaluations BEFORE writing extensive documentation:
 
 1. **Identify gaps**: Run the agent on representative tasks without the skill. Note specific failures
@@ -160,7 +174,7 @@ Build evaluations BEFORE writing extensive documentation:
 
 1. **Instance A** (author): Helps create/refine skill content
 2. **Instance B** (tester): Uses the skill on real tasks in a fresh session
-3. Observe Instance B's behavior — where it struggles, succeeds, or makes unexpected choices
+3. Observe Instance B's behavior — where it struggles, succeeds, or makes unexpected choices. Grade outcomes, not paths: agents may find valid approaches you didn't anticipate
 4. Bring observations back to Instance A for refinements
 5. Repeat until the skill reliably handles target scenarios
 
@@ -285,9 +299,23 @@ Before deploying a skill:
 - [ ] Tested across target models
 - [ ] Real-world scenario validation
 
+## Cross-Agent Portability
+
+The [Agent Skills standard](https://agentskills.io) is adopted by 25+ tools including Claude Code, Cursor, VS Code/Copilot, OpenAI Codex, Gemini CLI, Roo Code, Goose, Amp, and others. A well-authored SKILL.md works across all of them.
+
+**What's portable**: The SKILL.md format (frontmatter + markdown body), directory structure (`scripts/`, `references/`, `assets/`), and progressive disclosure model.
+
+**What's tool-specific**: `allowed-tools` names, MCP tool references (`ServerName:tool_name`), `compatibility` field values, and tool-specific frontmatter extensions (e.g., Claude Code's `context: fork`, `disable-model-invocation`).
+
+To maximize portability, keep the SKILL.md body in standard markdown and isolate tool-specific instructions behind clear headings. See [references/cross-agent-portability.md](references/cross-agent-portability.md) for discovery paths per tool, the relationship between skills and project instruction files (`AGENTS.md`, `CLAUDE.md`), and detailed guidance.
+
 ## Resources
 
 - [Agent Skills Specification](https://agentskills.io/specification)
 - [Authoring Best Practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)
-- [Example Skills](https://github.com/anthropics/skills)
+- [Example Skills](https://github.com/anthropics/skills) — Anthropic's official reference implementations
 - [Validation Library (skills-ref)](https://github.com/agentskills/agentskills/tree/main/skills-ref)
+- [Awesome Agent Skills](https://github.com/VoltAgent/awesome-agent-skills) — Curated collection of 200+ skills from Anthropic, Google Labs, Vercel, Stripe, Cloudflare, and others
+- [Vercel Labs Skills](https://github.com/vercel-labs/agent-skills) — Reference implementations from Vercel
+- [Claude Skills Deep Dive](https://leehanchung.github.io/blogs/2025/10/26/claude-skills-deep-dive/) — Lee Han Chung's architectural analysis of how skills work
+- [Agent Skills Course](https://www.deeplearning.ai/short-courses/agent-skills-with-anthropic/) — DeepLearning.AI hands-on course on skill creation
