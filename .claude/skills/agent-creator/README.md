@@ -37,6 +37,11 @@ Agents live in `.claude/agents/` and are available to any project that symlinks 
 
 No custom agents currently defined. For planning workflows, use the `software-planning` skill instead.
 
+## Related Skills
+
+- [`agent-skills`](../agent-skills/SKILL.md) -- the spec for creating skills that agents can consume via the `skills` field
+- [`slash-cmd`](../slash-cmd/SKILL.md) -- for understanding the distinction between slash commands and agents
+
 ## Testing
 
 ### In Claude Code (CLI)

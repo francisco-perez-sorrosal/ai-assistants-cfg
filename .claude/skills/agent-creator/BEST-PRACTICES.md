@@ -132,6 +132,19 @@ git commit -m "Add [agent] for [purpose]"
 - Use `skills` field to inject skill content into agents
 - Can coexist in same project
 
+Example: Inject the `python` and `refactoring` skills into a code reviewer agent:
+
+```yaml
+---
+name: code-reviewer
+description: Reviews Python code for quality, design, and correctness
+skills: python, refactoring
+tools: Read, Glob, Grep
+---
+```
+
+The agent receives the full skill content in its context, enabling language-specific and design-aware reviews without duplicating that knowledge in the agent's system prompt.
+
 ### Agents + Slash Commands
 
 - Commands are user-invoked
