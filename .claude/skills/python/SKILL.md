@@ -74,7 +74,7 @@ class Processor(Protocol):
 ```toml
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "PT"]
@@ -263,6 +263,64 @@ class Status(Enum):
     COMPLETE = auto()
 ```
 
+**Structural pattern matching** (Python 3.10+):
+```python
+from dataclasses import dataclass
+
+@dataclass
+class Command:
+    action: str
+    name: str = ""
+
+def handle_command(command: Command) -> str:
+    match command:
+        case Command(action="quit"):
+            return "Goodbye"
+        case Command(action="greet", name=name):
+            return f"Hello, {name}"
+        case _:
+            return "Unknown command"
+```
+
+## Async Patterns
+
+**Basic async/await**:
+```python
+import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+import httpx
+
+async def fetch_data(url: str) -> dict:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        return response.json()
+```
+
+**Async context managers** for resource lifecycle:
+```python
+@asynccontextmanager
+async def managed_connection(url: str) -> AsyncIterator[Connection]:
+    conn = await connect(url)
+    try:
+        yield conn
+    finally:
+        await conn.close()
+```
+
+**Testing**: Use `pytest-asyncio` for async test functions:
+```python
+import pytest
+
+@pytest.mark.asyncio
+async def test_fetch_data():
+    result = await fetch_data("https://api.example.com/data")
+    assert "id" in result
+```
+
+**Common async libraries**: `asyncio` (stdlib), `httpx` (async HTTP client), `aiohttp` (HTTP client/server), `anyio` (structured concurrency).
+
 ## Code Quality Tools
 
 **Essential tools** in `pyproject.toml`:
@@ -297,16 +355,17 @@ exclude_lines = [
 **Pre-commit hooks** (optional but recommended):
 ```yaml
 # .pre-commit-config.yaml
+# Pin to latest stable versions — update periodically
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.4
+    rev: v0.15.0
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
+    rev: v1.19.1
     hooks:
       - id: mypy
         additional_dependencies: [types-requests]
@@ -349,7 +408,7 @@ def load_config(path: str) -> Config:
 - Modern type hint syntax (`X | Y`, `Self`)
 - Exception groups
 
-**For libraries**, support Python 3.9+ unless specific features required.
+**For libraries**, support Python 3.10+ unless specific constraints require older versions.
 
 ## Quick Commands
 
