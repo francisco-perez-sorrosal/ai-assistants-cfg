@@ -27,5 +27,5 @@ Trigger explicitly by mentioning "refactoring skill" or referencing it by name.
 
 ## Related Skills
 
-- [python](../python/SKILL.md) — Python-specific patterns used in refactoring (Protocols, dataclasses, type hints)
-- [software-planning](../software-planning/SKILL.md) — Embedding refactoring phases within structured plans
+- [`python`](../python/SKILL.md) -- Python-specific patterns used in refactoring (Protocols, dataclasses, type hints)
+- [`software-planning`](../software-planning/SKILL.md) -- embedding refactoring phases within structured plans
