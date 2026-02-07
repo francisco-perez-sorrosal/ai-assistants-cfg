@@ -32,6 +32,7 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - When adding or modifying agents, load the `agent-crafting` skill
 - When adding or modifying rules, load the `rule-crafting` skill
 - Follow commit conventions in `rules/` (auto-loaded by Claude when relevant)
+- **Never modify `~/.claude/plugins/cache/`** — it contains installed copies that get overwritten on reinstall; always edit source files in this repo instead
 - See `README.md` for full project documentation and `skills/README.md` for the skill catalog
 
 ## Design Intent
