@@ -37,8 +37,12 @@ Rules live in `rules/` (this repo) and are installed to `~/.claude/rules/` via `
 
 | Rule | Purpose |
 |------|---------|
-| `git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
-| `git-commit-rules.md` | Git commit safety and hygiene (one logical change, no secrets) |
+| `swe/coding-style.md` | Language-independent structural and design conventions |
+| `swe/software-agents-usage.md` | When and how to use the available software agents |
+| `swe/agent-intermediate-documents.md` | Placement and lifecycle of agent pipeline documents |
+| `swe/vcs/git-commit-hygiene.md` | Git commit safety and hygiene (one logical change, no secrets) |
+| `swe/vcs/git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
+| `writing/readme-style.md` | Technical writing conventions for README files |
 
 ## Testing
 
