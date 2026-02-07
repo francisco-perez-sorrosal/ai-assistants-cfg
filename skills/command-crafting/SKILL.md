@@ -45,6 +45,12 @@ Guide for creating effective, reusable slash commands.
     └── generate.md    → /generate (shows "project:docs")
 ```
 
+## Naming Convention
+
+- Default to **kebab-case**: `create-worktree.md`, `add-rules.md`
+- **Abbreviations** acceptable for high-frequency commands: `co.md`, `cop.md`
+- The filename (minus `.md`) becomes the slash command name: `create-worktree.md` → `/create-worktree`
+
 ## Command Structure
 
 ```markdown
