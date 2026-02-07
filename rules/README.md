@@ -184,29 +184,13 @@ Naming directly affects Claude's relevance scoring. Use:
 | Multi-step automation workflows | Skill |
 | Repeatable procedural recipes | Skill or Command |
 
-## Using Rules in Projects
+## How Rules Reach Claude
 
-Rules are designed to be added **per project** — selectively, customized, and committed to git.
+Two mechanisms, each serving a different purpose:
 
-1. Create `.claude/rules/` in the project root
-2. Copy the rules you need (preserving subdirectory structure)
-3. Fill in `[CUSTOMIZE]` sections with project-specific content
-4. Commit to git — rules auto-load when Claude works in that context
+### Personal rules (global baseline)
 
-The `/add-rules` command automates steps 1–2:
-
-```bash
-/add-rules coding-style git-commit-hygiene   # Add specific rules
-/add-rules all                                # Add all available rules
-```
-
-The command copies from your personal rules library (`~/.claude/rules/`) into the project's `.claude/rules/`. Copies are independent — customize freely without affecting other projects.
-
-**Personal vs project rules**: Personal rules (`~/.claude/rules/`) apply everywhere as defaults. Project rules (`.claude/rules/`) take precedence when both exist with the same name. Use personal rules as your baseline library; use project rules for project-specific customization.
-
-## Installation
-
-Rules are installed to the personal library via `install.sh`, which recursively symlinks all `*.md` files (except `README.md`) from this directory to `~/.claude/rules/`, preserving subdirectory structure:
+`install.sh` symlinks all rules from this repo to `~/.claude/rules/`. Personal rules load automatically for **every project** when contextually relevant — no per-project setup needed.
 
 ```
 rules/swe/coding-style.md                   →  ~/.claude/rules/swe/coding-style.md
@@ -216,4 +200,20 @@ rules/swe/vcs/git-commit-message-format.md  →  ~/.claude/rules/swe/vcs/git-com
 rules/writing/readme-style.md               →  ~/.claude/rules/writing/readme-style.md
 ```
 
-Adding a new rule file here and re-running `install.sh` is all that's needed — no other configuration changes required. From there, use `/add-rules` to distribute selected rules to individual projects.
+Adding a new rule file here and re-running `install.sh` is all that's needed.
+
+### Project rules (customized overrides)
+
+When a project needs project-specific conventions (filled-in `[CUSTOMIZE]` sections, modified thresholds, domain-specific constraints), copy the rule into the project's `.claude/rules/` directory. The project copy takes precedence over the personal one.
+
+The `/add-rules` command automates this:
+
+```bash
+/add-rules coding-style                     # Copy one rule for customization
+/add-rules coding-style git-commit-hygiene  # Copy several
+/add-rules all                              # Copy all rules
+```
+
+After copying, fill in the `[CUSTOMIZE]` sections with project-specific content and commit to git.
+
+**Do not copy rules you don't intend to customize** — personal rules already load for every project. Copying without customizing just wastes tokens (both copies load into context).

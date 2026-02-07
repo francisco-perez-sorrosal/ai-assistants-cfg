@@ -1,10 +1,12 @@
 ---
-description: Add rules from personal library to the current project
+description: Copy rules into the current project for customization
 argument-hint: [rule-names... | all]
 allowed-tools: [Bash(mkdir:*), Bash(cp:*), Bash(ls:*), Bash(find:*), Read, Glob, Grep]
 ---
 
-Add rules to the current project's `.claude/rules/` directory by copying them from the personal rules library (`~/.claude/rules/`).
+Copy rules from the personal library (`~/.claude/rules/`) into this project's `.claude/rules/` directory so they can be customized with project-specific content.
+
+**Why**: Personal rules already load for every project. Copying a rule to `.claude/rules/` creates an independent project copy where you can fill in `[CUSTOMIZE]` sections. The project copy takes precedence over the personal one.
 
 ## Arguments
 
@@ -22,6 +24,7 @@ Add rules to the current project's `.claude/rules/` directory by copying them fr
    b. Create the target subdirectory under `.claude/rules/` if needed (preserve source directory structure)
    c. Copy the rule file to the target location
 6. Report summary: rules added, rules skipped, rules not found
+7. Remind the user to fill in `[CUSTOMIZE]` sections in the copied rules
 
 ## Important
 

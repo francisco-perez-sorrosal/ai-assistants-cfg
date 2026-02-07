@@ -119,7 +119,7 @@ Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin
 
 | Command                                                   | Description                                                |
 | --------------------------------------------------------- | ---------------------------------------------------------- |
-| `/add-rules [names... \| all]`                             | Add rules from personal library to the current project     |
+| `/add-rules [names... \| all]`                             | Copy rules into the current project for customization      |
 | `/co`                                                     | Create a commit for staged (or all) changes                |
 | `/cop`                                                    | Create a commit and push to remote                         |
 | `/create_worktree [branch]`                               | Create a new git worktree in `.trees/`                     |
