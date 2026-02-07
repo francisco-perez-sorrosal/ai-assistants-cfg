@@ -2,14 +2,12 @@
 
 Skill for creating and managing slash commands — reusable, user-invoked prompts stored as Markdown files.
 
-## What This Skill Does
+## When to Use
 
-When activated, this skill provides guidance for:
-
-- **Creating commands** with proper frontmatter, arguments, and tool permissions
-- **Choosing** between slash commands and skills for a given use case
-- **Debugging** command behavior, argument substitution, and discovery issues
-- **Organizing** commands with subdirectories and namespacing
+- Creating commands with proper frontmatter, arguments, and tool permissions
+- Choosing between slash commands and skills for a given use case
+- Debugging command behavior, argument substitution, and discovery issues
+- Organizing commands with subdirectories and namespacing
 
 ## Activation
 

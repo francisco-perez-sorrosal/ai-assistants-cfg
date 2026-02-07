@@ -2,14 +2,12 @@
 
 Skill for creating and managing Claude Code agents (subagents) -- specialized AI assistants that run in separate context windows to handle specific workflows.
 
-## What This Skill Does
+## When to Use
 
-When activated, this skill provides guidance for:
-
-- **Creating agents** with proper frontmatter and system prompts
-- **Configuring** tool access, model selection, and permission modes
-- **Writing effective prompts** with checklists, output formats, and constraints
-- **Integrating** agents with skills, slash commands, and lifecycle hooks
+- Creating agents with proper frontmatter and system prompts
+- Configuring tool access, model selection, and permission modes
+- Writing effective prompts with checklists, output formats, and constraints
+- Integrating agents with skills, slash commands, and lifecycle hooks
 
 ## Activation
 

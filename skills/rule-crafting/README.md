@@ -2,15 +2,13 @@
 
 Skill for creating and managing rules — contextual domain knowledge files that Claude loads automatically based on relevance.
 
-## What This Skill Does
+## When to Use
 
-When activated, this skill provides guidance for:
-
-- **Creating rules** with proper structure, naming, and placement
-- **Organizing rules** using flat, layered, or path-scoped directory structures
-- **Deciding** whether content belongs in a rule, skill, or `CLAUDE.md`
-- **Debugging** rule loading and relevance matching
-- **Migrating** content between `CLAUDE.md`, rules, and skills
+- Creating rules with proper structure, naming, and placement
+- Organizing rules using flat, layered, or path-scoped directory structures
+- Deciding whether content belongs in a rule, skill, or `CLAUDE.md`
+- Debugging rule loading and relevance matching
+- Migrating content between `CLAUDE.md`, rules, and skills
 
 ## Activation
 
