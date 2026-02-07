@@ -43,6 +43,7 @@ Additional skills may be available depending on the project. Discover them throu
 Agents are autonomous subprocesses delegated for complex tasks. Claude spawns them based on context or explicit request.
 
 - `software-architect` — Analyzes codebases, produces structured implementation plans, reviews through stakeholder lenses, and supervises execution (PLAN.md, WIP.md, LEARNINGS.md)
+- `context-engineer` — Audits, architects, and optimizes AI assistant context artifacts (CLAUDE.md, skills, rules, commands, agents) for quality, consistency, and token efficiency
 
 ## Available Commands
 

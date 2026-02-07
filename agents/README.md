@@ -7,6 +7,7 @@ Custom agents for specialized workflows. Agents are autonomous subprocesses that
 | Agent | Description | Skills Used |
 |-------|-------------|-------------|
 | `software-architect` | Analyzes codebases, produces structured implementation plans, reviews through stakeholder lenses, and supervises execution (PLAN.md, WIP.md, LEARNINGS.md) | `software-planning` |
+| `context-engineer` | Audits, architects, and optimizes AI assistant context artifacts (CLAUDE.md, skills, rules, commands, agents) for quality, consistency, and token efficiency | `skill-crafting`, `rule-crafting`, `command-crafting`, `agent-crafting` |
 
 ## How Agents Work
 
@@ -22,7 +23,7 @@ Agents are **delegated, not invoked**. Claude decides when to spawn an agent bas
 Agents require explicit file paths in `plugin.json` (directory wildcards are not supported):
 
 ```json
-"agents": ["./agents/software-architect.md"]
+"agents": ["./agents/software-architect.md", "./agents/context-engineer.md"]
 ```
 
 ---

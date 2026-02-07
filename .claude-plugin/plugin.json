@@ -19,5 +19,5 @@
     "planning"
   ],
   "skills": ["./skills/"],
-  "agents": ["./agents/software-architect.md"]
+  "agents": ["./agents/software-architect.md", "./agents/context-engineer.md"]
 }

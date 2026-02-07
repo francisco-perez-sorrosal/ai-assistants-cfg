@@ -12,6 +12,7 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - `commands/` — Shared slash commands
 - `agents/` — Shared agent definitions
   - `software-architect.md` — Codebase analysis, structured plan creation, stakeholder review, and execution supervision
+  - `context-engineer.md` — Context artifact auditing, architecture, optimization, and ecosystem management
 - `rules/` — Rules installed to `~/.claude/rules/` (auto-loaded by Claude when relevant)
   - `swe/coding-style.md` — Language-independent structural and design conventions
   - `swe/vcs/git-commit-message-format.md` — Commit message format and type prefixes
