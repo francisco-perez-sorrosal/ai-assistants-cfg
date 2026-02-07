@@ -48,11 +48,11 @@ Define role, expertise, instructions, constraints, and output format.
 | `tools` | No | Allowlist of tools; omit to inherit all |
 | `disallowedTools` | No | Denylist; removed from inherited/specified set |
 | `model` | No | `inherit` (default), `sonnet`, `opus`, `haiku` |
-| `permissionMode` | No | `default`, `acceptEdits`, `dontAsk`, `bypassPermissions`, `plan` |
+| `permissionMode` | No | `default` for read-heavy agents, `acceptEdits` for agents that write files |
 | `color` | No | UI background color for identification |
 | `skills` | No | Skills injected into context (not inherited from parent) |
 | `hooks` | No | `PreToolUse`, `PostToolUse`, `Stop` events |
-| `memory` | No | Cross-session learning: `user`, `project`, `local` |
+| `memory` | No | `user` (personal prefs), `project` (project-specific), `local` (gitignored). Default to `user` for most agents |
 
 For detailed field documentation, prompt writing guide, and the full prompt template, see [references/configuration.md](references/configuration.md).
 
@@ -86,6 +86,14 @@ Focus on fixing the underlying issue, not the symptoms.
 ```
 
 For more complete examples (read-only, edit-capable, hooks, memory), see [references/examples.md](references/examples.md).
+
+### System Prompt Sizing
+
+Keep agent prompts focused. When a prompt grows too long, use the `skills` field to offload domain knowledge:
+
+- **Target**: 50–150 lines for the system prompt body
+- **Hard ceiling**: ~300 lines — beyond this, extract domain content into skills or satellite files
+- **Progressive disclosure**: Use the `skills` field to inject reusable knowledge that the agent needs but that doesn't define its core behavior
 
 ## Agent Location Hierarchy
 
