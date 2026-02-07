@@ -142,7 +142,7 @@ Run agents in the background when their output is not immediately needed:
 Check background agent output before proceeding with work that depends on their findings.
 
 ### [CUSTOMIZE] Custom Agents
-<!-- Add project-specific agents beyond the standard four:
+<!-- Add project-specific agents beyond the standard five:
 - Agent name, purpose, output artifact, and when to use
 - Where it fits in the coordination pipeline (before/after which stage)
 - Whether it can run in parallel with standard agents
