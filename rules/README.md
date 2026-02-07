@@ -7,6 +7,7 @@ Rules are **contextual domain knowledge files** that Claude loads automatically 
 ```
 rules/
 ├── swe/
+│   ├── coding-style.md
 │   └── vcs/
 │       ├── git-commit-hygiene.md
 │       └── git-commit-message-format.md
@@ -17,6 +18,7 @@ rules/
 
 | File | Purpose |
 | ---- | ------- |
+| `swe/coding-style.md` | Immutability, function/file size, nesting, error handling, naming, validation |
 | `swe/vcs/git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
 | `swe/vcs/git-commit-hygiene.md` | Git commit safety, staging discipline, and exclusions |
 | `writing/readme-style.md` | Precision-first technical writing style for README.md files |

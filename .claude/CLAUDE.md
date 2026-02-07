@@ -6,25 +6,14 @@ PRAGMATISM IS NON-NEGOTIABLE. Every single line of code must be written with a p
 
 I follow an approach of high quality of design and coding, with a strong emphasis on behavior-driven development and object and functional programming principles when required. All work should be done in small, bold incremental changes that maintain a working state throughout development. Tests are required when the code is critical or when instructed.
 
-## Code Style
+## Response Style
 
-**Core principle**: Object and functional programming with immutable data when possible. Self-documenting code.
-
-- Prefer concise, and direct responses. Add educational, clarifying sentences when situation requires due to complexity, obscure, or requested by the user.
+- Prefer concise, direct responses. Add educational or clarifying sentences when the situation requires it due to complexity, obscurity, or user request.
 - When developing, minimize unnecessary explanations unless requested by the user.
-- Use natural line breaks unless the surrounding code is wrapped at a specific column.
+- If you need to explain code, do so in a separate message before editing.
 - Wrap filenames and code identifiers with `backticks` in any markdown context.
-- Include a trailing newline in all new files.
 - Prefer meaningful anchor text over raw URLs.
 - Use bullet points for lists and checklists if user asks for tasks.
-- Write always readable code so it is as self-explanatory as possible.
-- Use code comments ONLY to clarify complex or non-trivial algorithms or obscure language idioms to OTHER readers. If you need to explain the code, do so in a separate message before editing.
-
-## Code Organization
-
-- Always modularize and structure the codebase. Provide meaningful names for packages and keep them well-scoped, but not overly small.
-- Avoid creating or adding to catch-all packages/modules like `utils` or similar. Only when a particular module is getting too big, separate the utilities for that module in a `<module_name>_utils` file. Only use `utils` when a utility function is so generic that doesn't make any sense to place it anywhere else.
-- Break code into multiple files where appropriate first before splitting across directories.
 
 ## Available Skills
 
