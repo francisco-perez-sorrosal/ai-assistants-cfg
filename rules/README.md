@@ -184,9 +184,29 @@ Naming directly affects Claude's relevance scoring. Use:
 | Multi-step automation workflows | Skill |
 | Repeatable procedural recipes | Skill or Command |
 
+## Using Rules in Projects
+
+Rules are designed to be added **per project** — selectively, customized, and committed to git.
+
+1. Create `.claude/rules/` in the project root
+2. Copy the rules you need (preserving subdirectory structure)
+3. Fill in `[CUSTOMIZE]` sections with project-specific content
+4. Commit to git — rules auto-load when Claude works in that context
+
+The `/add-rules` command automates steps 1–2:
+
+```bash
+/add-rules coding-style git-commit-hygiene   # Add specific rules
+/add-rules all                                # Add all available rules
+```
+
+The command copies from your personal rules library (`~/.claude/rules/`) into the project's `.claude/rules/`. Copies are independent — customize freely without affecting other projects.
+
+**Personal vs project rules**: Personal rules (`~/.claude/rules/`) apply everywhere as defaults. Project rules (`.claude/rules/`) take precedence when both exist with the same name. Use personal rules as your baseline library; use project rules for project-specific customization.
+
 ## Installation
 
-Rules are installed via `install.sh`, which recursively symlinks all `*.md` files (except `README.md`) from this directory to `~/.claude/rules/`, preserving subdirectory structure:
+Rules are installed to the personal library via `install.sh`, which recursively symlinks all `*.md` files (except `README.md`) from this directory to `~/.claude/rules/`, preserving subdirectory structure:
 
 ```
 rules/swe/coding-style.md                   →  ~/.claude/rules/swe/coding-style.md
@@ -196,4 +216,4 @@ rules/swe/vcs/git-commit-message-format.md  →  ~/.claude/rules/swe/vcs/git-com
 rules/writing/readme-style.md               →  ~/.claude/rules/writing/readme-style.md
 ```
 
-Adding a new rule file here and re-running `install.sh` is all that's needed — no other configuration changes required.
+Adding a new rule file here and re-running `install.sh` is all that's needed — no other configuration changes required. From there, use `/add-rules` to distribute selected rules to individual projects.

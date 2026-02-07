@@ -20,6 +20,7 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── stock-clusters/                  # Stock clustering analysis
 └── ticker/                          # Stock ticker lookup
 commands/                            # Shared slash commands
+├── add-rules.md                     # /add-rules — add rules to a project
 ├── co.md                            # /co — commit staged changes
 ├── cop.md                           # /cop — commit and push
 ├── create_worktree.md               # /create_worktree — new git worktree
@@ -116,13 +117,14 @@ Reusable knowledge modules that Claude loads automatically based on context. See
 Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin, commands are namespaced as `/i-am:<name>`.
 
 
-| Command                                                   | Description                                         |
-| --------------------------------------------------------- | --------------------------------------------------- |
-| `/co`                                                     | Create a commit for staged (or all) changes         |
-| `/cop`                                                    | Create a commit and push to remote                  |
-| `/create_worktree [branch]`                               | Create a new git worktree in `.trees/`              |
-| `/merge_worktree [branch]`                                | Merge a worktree branch back into current branch    |
-| `/create-simple-python-prj [name] [desc] [pkg-mgr] [dir]` | Scaffold a Python project (defaults: pixi, `~/dev`) |
+| Command                                                   | Description                                                |
+| --------------------------------------------------------- | ---------------------------------------------------------- |
+| `/add-rules [names... \| all]`                             | Add rules from personal library to the current project     |
+| `/co`                                                     | Create a commit for staged (or all) changes                |
+| `/cop`                                                    | Create a commit and push to remote                         |
+| `/create_worktree [branch]`                               | Create a new git worktree in `.trees/`                     |
+| `/merge_worktree [branch]`                                | Merge a worktree branch back into current branch           |
+| `/create-simple-python-prj [name] [desc] [pkg-mgr] [dir]` | Scaffold a Python project (defaults: pixi, `~/dev`)        |
 
 
 ## Agents
