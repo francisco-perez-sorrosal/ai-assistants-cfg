@@ -1,5 +1,6 @@
 ---
 description: Create a commit and push to remote
+argument-hint: [message]
 allowed-tools: [Bash(git:*), Read, Grep]
 ---
 
