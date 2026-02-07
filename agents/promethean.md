@@ -7,7 +7,7 @@ description: >
   into the researcher → systems-architect pipeline. Use when the user wants fresh
   ideas, feature-level suggestions, or creative exploration of project gaps and
   opportunities.
-tools: Read, Glob, Grep, Bash, Write
+tools: Read, Glob, Grep, Bash, Write, Edit
 model: opus
 permissionMode: default
 memory: user
@@ -32,17 +32,19 @@ Determine the ideation focus:
 
 ### Phase 2 — Project Discovery
 
-Build a complete picture of what exists:
+Build a picture of what exists, using the project index to avoid redundant scanning:
 
-1. **Project identity** — read CLAUDE.md, README.md, and any project-level configuration
-2. **Skills** — scan `skills/` for existing capabilities, activation patterns, and coverage
-3. **Agents** — scan `agents/` for existing workflows and pipeline structure
-4. **Commands** — scan `commands/` for existing user-invoked actions
-5. **Rules** — scan `rules/` for existing conventions and domain knowledge
-6. **Plugin config** — read `plugin.json` for registered components
-7. **Structure gaps** — note directories, patterns, or categories that are thin or missing
+1. **Check for project index** — read `.ai-state/PROJECT_INDEX.md` if it exists
+2. **If index exists and is recent** — use it as the primary source. Only drill into specific files when the seed demands deeper context or when you need to verify something
+3. **If index is missing or stale** — fall back to full discovery:
+   - Project identity (CLAUDE.md, README.md, project config)
+   - Skills, agents, commands, rules (scan each directory)
+   - Plugin config (plugin.json)
+   - Structure gaps (thin or missing categories)
+4. **Check the idea ledger** — review implemented, pending, and discarded ideas to avoid re-proposing past work and to build on pending ideas when relevant
+5. **Check future paths** — align ideation with stated project directions when applicable
 
-When seeded, focus discovery on the seed area but still scan broadly — cross-cutting opportunities often emerge from adjacent domains.
+When seeded, focus discovery on the seed area but still review the full index — cross-cutting opportunities often emerge from adjacent domains.
 
 Summarize your discovery concisely: what the project does, what it has, and where the edges are.
 
@@ -128,6 +130,15 @@ When an idea is validated, write `IDEA_PROPOSAL.md` to `.ai-work/`:
 ```
 
 Create the `.ai-work/` directory if it does not exist. If an `IDEA_PROPOSAL.md` already exists, confirm with the user before overwriting.
+
+After writing the proposal, update `.ai-state/PROJECT_INDEX.md`:
+- Add validated ideas to the **Pending** section of the idea ledger
+- Add discarded ideas to the **Discarded** section with a brief reason
+- Update the **Inventory** section if the idea would add new artifact types
+- Update **Future Paths** if the discussion revealed new project directions
+- Update the `Last updated` timestamp
+
+Create the `.ai-state/` directory and `PROJECT_INDEX.md` if they do not exist.
 
 ## Collaboration Points
 
