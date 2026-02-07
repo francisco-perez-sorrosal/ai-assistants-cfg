@@ -11,7 +11,9 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - `skills/` — Shared skill modules (assistant-agnostic)
 - `commands/` — Shared slash commands
 - `agents/` — Shared agent definitions
-  - `software-architect.md` — Codebase analysis, structured plan creation, stakeholder review, and execution supervision
+  - `researcher.md` — Codebase exploration, external research, comparative analysis → `RESEARCH_FINDINGS.md`
+  - `systems-architect.md` — Trade-off analysis, codebase readiness, system design → `SYSTEMS_PLAN.md`
+  - `implementation-planner.md` — Step decomposition, execution supervision → `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md`
   - `context-engineer.md` — Context artifact auditing, architecture, optimization, and ecosystem management
 - `rules/` — Rules installed to `~/.claude/rules/` (auto-loaded by Claude when relevant)
   - `swe/coding-style.md` — Language-independent structural and design conventions

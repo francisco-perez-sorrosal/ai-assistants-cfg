@@ -19,5 +19,10 @@
     "planning"
   ],
   "skills": ["./skills/"],
-  "agents": ["./agents/software-architect.md", "./agents/context-engineer.md"]
+  "agents": [
+    "./agents/researcher.md",
+    "./agents/systems-architect.md",
+    "./agents/implementation-planner.md",
+    "./agents/context-engineer.md"
+  ]
 }

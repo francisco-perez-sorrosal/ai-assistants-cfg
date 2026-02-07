@@ -26,7 +26,10 @@ commands/                            # Shared slash commands
 ├── merge_worktree.md                # /merge_worktree — merge worktree branch
 └── create-simple-python-prj.md      # /create-simple-python-prj — scaffold project
 agents/                              # Shared agent definitions
-├── software-architect.md             # Codebase analysis, plan creation, stakeholder review, execution supervision
+├── researcher.md                    # Codebase exploration, external research → RESEARCH_FINDINGS.md
+├── systems-architect.md              # Trade-off analysis, system design → SYSTEMS_PLAN.md
+├── implementation-planner.md        # Step decomposition, execution supervision → IMPLEMENTATION_PLAN.md, WIP.md, LEARNINGS.md
+├── context-engineer.md              # Context artifact auditing, optimization, ecosystem management
 rules/                               # Rules (installed to ~/.claude/rules/)
 ├── swe/
 │   ├── coding-style.md              # Language-independent structural conventions
@@ -125,9 +128,21 @@ Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin
 
 Autonomous subprocesses that Claude delegates complex tasks to. Each agent runs in its own context window with injected skills and scoped tool permissions.
 
+### Software Development Crew
+
+Three agents that collaborate through shared documents (`RESEARCH_FINDINGS.md` → `PLAN.md` → `WIP.md`, `LEARNINGS.md`). Each can be invoked independently or in sequence.
+
 | Agent | Description | Skills |
 |-------|-------------|--------|
-| `software-architect` | Analyzes codebases, produces structured implementation plans, reviews through stakeholder lenses, and supervises execution | `software-planning` |
+| `researcher` | Explores codebases, gathers external docs, evaluates alternatives → `RESEARCH_FINDINGS.md` | — |
+| `systems-architect` | Trade-off analysis, codebase readiness, system design → `SYSTEMS_PLAN.md` | — |
+| `implementation-planner` | Step decomposition and execution supervision → `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | `software-planning` |
+
+### Context Engineering
+
+| Agent | Description | Skills |
+|-------|-------------|--------|
+| `context-engineer` | Audits, architects, and optimizes context artifacts (CLAUDE.md, skills, rules, commands, agents) | `skill-crafting`, `rule-crafting`, `command-crafting`, `agent-crafting` |
 
 Agents activate automatically based on their description triggers, or can be invoked explicitly. See [`agents/README.md`](agents/README.md) for details.
 

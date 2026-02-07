@@ -431,18 +431,21 @@ For simple multi-step tasks, use the agent's built-in task tracking instead.
 
 When using this skill with Claude Code specifically:
 
-- The **`software-architect` agent** automates the full planning workflow — codebase analysis, architecture assessment, document creation, stakeholder review, and execution supervision. It follows this skill's methodology with the skill injected into its context. Use it for significant features and architectural work.
-- For **manual planning** without the agent, use `Write` and `Edit` tools to create and maintain PLAN.md, WIP.md, and LEARNINGS.md directly.
+- The **development crew** (`researcher` → `systems-architect` → `implementation-planner`) splits the planning workflow into focused phases. The `implementation-planner` agent uses this skill directly — it owns step decomposition, document creation (`IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md`), and execution supervision.
+- The **`researcher` agent** gathers codebase and external information into `RESEARCH_FINDINGS.md`.
+- The **`systems-architect` agent** produces `SYSTEMS_PLAN.md` (Goal, Criteria, Architecture, Risks).
+- The **`implementation-planner` agent** produces `IMPLEMENTATION_PLAN.md` with incremental steps and maintains `WIP.md` and `LEARNINGS.md`.
+- For **manual planning** without agents, use `Write` and `Edit` tools to create and maintain PLAN.md, WIP.md, and LEARNINGS.md directly.
 - For simple multi-step tasks that don't warrant three-document planning, use `TaskCreate`/`TaskUpdate`/`TaskList` to track micro-tasks within a session.
 - Both approaches can coexist: task tools track current session's micro-tasks while PLAN.md tracks overall feature steps.
 
-| Use `software-architect` agent when: | Use manual planning when: | Use Task Tools when: |
-|--------------------------------------|---------------------------|----------------------|
+| Use the agent crew when: | Use manual planning when: | Use Task Tools when: |
+|--------------------------|---------------------------|----------------------|
 | New feature or architectural change | Iterative plan refinement | Single-session task |
 | Need codebase analysis first | Plan already exists | Simple checklist |
 | Starting from scratch | Adjusting existing steps | Independent tasks |
 | Complex scope requiring risk assessment | User wants direct control | Clear requirements |
-| Stakeholder review of plan quality | Minor plan adjustments | No plan needed |
+| Trade-off analysis needed | Minor plan adjustments | No plan needed |
 | Supervising execution against a plan | — | — |
 
 ## Quick Reference
