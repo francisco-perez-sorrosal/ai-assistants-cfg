@@ -18,5 +18,6 @@
     "refactoring",
     "planning"
   ],
-  "skills": ["./skills/"]
+  "skills": ["./skills/"],
+  "agents": ["./agents/software-architect.md"]
 }

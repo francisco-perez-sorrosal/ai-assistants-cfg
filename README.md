@@ -25,9 +25,12 @@ commands/                            # Shared slash commands
 ├── create_worktree.md               # /create_worktree — new git worktree
 ├── merge_worktree.md                # /merge_worktree — merge worktree branch
 └── create-simple-python-prj.md      # /create-simple-python-prj — scaffold project
-agents/                              # Shared agent definitions (none yet)
+agents/                              # Shared agent definitions
+├── software-architect.md             # Codebase analysis, plan creation, stakeholder review, execution supervision
 rules/                               # Rules (installed to ~/.claude/rules/)
-├── swe/vcs/
+├── swe/
+│   ├── coding-style.md              # Language-independent structural conventions
+│   └── vcs/
 │   ├── git-commit-message-format.md # Commit message format and type prefixes
 │   └── git-commit-hygiene.md        # Git commit safety and hygiene rules
 └── writing/
@@ -117,6 +120,16 @@ Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin
 | `/merge_worktree [branch]`                                | Merge a worktree branch back into current branch    |
 | `/create-simple-python-prj [name] [desc] [pkg-mgr] [dir]` | Scaffold a Python project (defaults: pixi, `~/dev`) |
 
+
+## Agents
+
+Autonomous subprocesses that Claude delegates complex tasks to. Each agent runs in its own context window with injected skills and scoped tool permissions.
+
+| Agent | Description | Skills |
+|-------|-------------|--------|
+| `software-architect` | Analyzes codebases, produces structured implementation plans, reviews through stakeholder lenses, and supervises execution | `software-planning` |
+
+Agents activate automatically based on their description triggers, or can be invoked explicitly. See [`agents/README.md`](agents/README.md) for details.
 
 ## How Rules Interact with Commands
 

@@ -10,8 +10,10 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 
 - `skills/` — Shared skill modules (assistant-agnostic)
 - `commands/` — Shared slash commands
-- `agents/` — Shared agent definitions (none yet)
+- `agents/` — Shared agent definitions
+  - `software-architect.md` — Codebase analysis, structured plan creation, stakeholder review, and execution supervision
 - `rules/` — Rules installed to `~/.claude/rules/` (auto-loaded by Claude when relevant)
+  - `swe/coding-style.md` — Language-independent structural and design conventions
   - `swe/vcs/git-commit-message-format.md` — Commit message format and type prefixes
   - `swe/vcs/git-commit-hygiene.md` — Git commit safety, staging discipline, and exclusions
   - `writing/readme-style.md` — Precision-first technical writing style for README.md files

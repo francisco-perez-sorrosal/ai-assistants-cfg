@@ -38,6 +38,12 @@ Load skills when possible to adhere to the user's preferences and navigate their
 
 Additional skills may be available depending on the project. Discover them through skill activation triggers or by exploring the `skills/` directory.
 
+## Available Agents
+
+Agents are autonomous subprocesses delegated for complex tasks. Claude spawns them based on context or explicit request.
+
+- `software-architect` — Analyzes codebases, produces structured implementation plans, reviews through stakeholder lenses, and supervises execution (PLAN.md, WIP.md, LEARNINGS.md)
+
 ## Available Commands
 
 Slash commands for common workflows:
