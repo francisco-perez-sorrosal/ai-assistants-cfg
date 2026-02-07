@@ -173,6 +173,7 @@ Provide a summary of changes.
 - **Use `argument-hint`**: Show users what arguments are expected
 - **Provide context via `!` commands**: Include git status, project structure, recent changes
 - **Test with various inputs**: no arguments, one argument, multiple, special characters
+- **Don't duplicate rule content**: Commands define *process* (what to do); rules provide *knowledge* (conventions, constraints). If a relevant rule exists, Claude loads it automatically when the command runs — don't inline that knowledge in the command body
 
 ## Common Mistakes
 
@@ -181,6 +182,7 @@ Provide a summary of changes.
 - **Name conflicts** -- project commands override personal ones with the same name; use subdirectories
 - **Overloaded commands** -- slash commands work best for focused tasks; use Skills for complex workflows
 - **Untested arguments** -- `$ARGUMENTS` might be empty; test and handle missing values gracefully
+- **Inlining rule knowledge** -- if conventions or constraints already exist in a rule file, don't copy them into the command; rules load automatically by semantic relevance when the command executes
 
 ## Permission Management
 
