@@ -81,8 +81,8 @@ claude
 
 ## Related Skills
 
-- [`skill-crafting`](../skill-crafting/) -- the spec for creating skills; rules can graduate to skills when they need procedural content
-- [`command-crafting`](../command-crafting/) -- for creating slash commands; helps distinguish rules from commands
+- [`skill-crafting`](../skill-crafting/) — the spec for creating skills; rules can graduate to skills when they need procedural content
+- [`command-crafting`](../command-crafting/) — creating slash commands; helps distinguish rules from commands
 
 ### Validation Checklist
 

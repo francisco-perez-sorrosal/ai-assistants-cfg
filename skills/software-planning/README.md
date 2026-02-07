@@ -59,8 +59,8 @@ software-planning/
 
 ## Related Skills
 
-- [`python`](../python/SKILL.md) / [`python-prj-mgmt`](../python-prj-mgmt/SKILL.md) -- for Python-specific planning contexts (quality gates, project setup)
-- [`refactoring`](../refactoring/SKILL.md) -- for embedding refactoring phases in plans
+- [`python`](../python/) / [`python-prj-mgmt`](../python-prj-mgmt/) — Python-specific planning contexts (quality gates, project setup)
+- [`refactoring`](../refactoring/) — embedding refactoring phases in plans
 
 ## Adding New Contexts and Phases
 

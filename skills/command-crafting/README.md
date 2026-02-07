@@ -78,8 +78,8 @@ claude
 
 ## Related Skills
 
-- [`skill-crafting`](../skill-crafting/) -- the spec for creating skills; commands can graduate to full skills when they outgrow a single file
-- [`agent-crafting`](../agent-crafting/) -- for building custom agents; helps distinguish when to use a command vs an agent
+- [`skill-crafting`](../skill-crafting/) — the spec for creating skills; commands can graduate to full skills when they outgrow a single file
+- [`agent-crafting`](../agent-crafting/) — building custom agents; helps distinguish when to use a command vs an agent
 
 ### Validation Checklist
 

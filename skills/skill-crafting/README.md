@@ -41,8 +41,8 @@ Trigger explicitly by asking about "agent skills," "creating a skill," or refere
 
 ## Related Skills
 
-- **[agent-crafting](../agent-crafting/)** -- Building custom agents that consume skills via the `skills` frontmatter field
-- **[command-crafting](../command-crafting/)** -- Creating slash commands; understanding the distinction between commands and skills
+- [`agent-crafting`](../agent-crafting/) — building custom agents that consume skills via the `skills` frontmatter field
+- [`command-crafting`](../command-crafting/) — creating slash commands; understanding the distinction between commands and skills
 
 ## Testing
 
