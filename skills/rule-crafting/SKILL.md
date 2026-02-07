@@ -61,6 +61,8 @@ Use `/memory` in Claude Code to see which rules are currently loaded.
 
 ## Rule File Structure
 
+Use `##` (h2) as the top-level heading — rules are injected into a larger context, so h1 would conflict with the surrounding document structure.
+
 ### Basic Rule
 
 ```markdown
