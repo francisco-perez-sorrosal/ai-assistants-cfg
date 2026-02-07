@@ -1,8 +1,8 @@
 ---
-
-## description: Create or refine README.md files with precision-first technical writing style
+description: Create or refine README.md files with precision-first technical writing style
 argument-hint: [file-paths...]
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash(find:*)]
+---
 
 Create or refine README.md documentation following our technical writing conventions.
 
