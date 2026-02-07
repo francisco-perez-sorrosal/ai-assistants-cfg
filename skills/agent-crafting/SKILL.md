@@ -8,7 +8,7 @@ allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 
 Guide for building agents -- specialized subprocesses with separate context windows, independent tool permissions, and focused system prompts. The term "subagent" is used interchangeably with "agent" throughout Claude Code documentation.
 
-**Reference files** (loaded on-demand):
+**Satellite files** (loaded on-demand):
 
 - [references/configuration.md](references/configuration.md) -- detailed field docs, prompt writing guide, prompt template, CLI agents, troubleshooting
 - [references/examples.md](references/examples.md) -- complete agent definitions showing distinct patterns (read-only, edit-capable, hooks, memory)
