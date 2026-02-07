@@ -6,6 +6,7 @@ Extended examples and migration patterns. Loaded on-demand from `SKILL.md`.
 
 - [Complete Rule Examples](#complete-rule-examples) -- minimal, domain-scoped, and security rules
 - [Path-Specific Rule Examples](#path-specific-rule-examples) -- targeted loading with glob patterns
+- [Customization Section Examples](#customization-section-examples) -- `[CUSTOMIZE]` marker patterns for project-specific content
 - [Layered Directory Examples](#layered-directory-examples) -- common/ + language/ structure
 - [Migration Patterns](#migration-patterns) -- moving content between layers
 
@@ -94,6 +95,68 @@ paths:
 - Test names follow "should <expected behavior> when <condition>" pattern
 - No shared mutable state between tests
 - Prefer factory functions over fixtures for test data
+```
+
+## Customization Section Examples
+
+### Rule with Customization Sections
+
+A coding-style rule that separates universal conventions from project-specific content:
+
+```markdown
+## Coding Style
+
+### Naming
+- Variables: descriptive, intention-revealing names
+- Booleans: read as yes/no questions — `is_valid`, `has_permission`
+- Collections: plural nouns — `users`, `pending_tasks`
+- Functions: verb phrases — `fetch_user`, `validate_input`
+
+### Error Handling
+- Handle errors explicitly — never silently swallow exceptions
+- Distinguish recoverable errors (retry, fallback) from fatal ones (fail fast)
+- Log full context: stack trace, input values, operation attempted
+
+### [CUSTOMIZE] Project Naming Conventions
+<!-- Add project-specific naming patterns here:
+- Prefix conventions for modules/packages
+- Domain-specific naming (e.g., database models, API routes)
+- Abbreviations accepted in this codebase
+-->
+
+### [CUSTOMIZE] Error Reporting
+<!-- Add project-specific error reporting here:
+- Error tracking service (Sentry, Datadog, etc.)
+- Alert thresholds and escalation rules
+- Required error metadata fields
+-->
+```
+
+### Minimal Rule with Optional Customization
+
+A testing rule where customization is optional — the universal conventions stand alone:
+
+```markdown
+---
+paths:
+  - "tests/**"
+  - "**/*.test.*"
+  - "**/*.spec.*"
+---
+
+## Testing Conventions
+
+- Use `describe` blocks grouped by function/method under test
+- Test names follow "should <expected behavior> when <condition>" pattern
+- No shared mutable state between tests
+- Prefer factory functions over fixtures for test data
+
+### [CUSTOMIZE] Test Infrastructure
+<!-- Optional — add if your project has specific test infrastructure:
+- Custom test utilities or helpers location
+- Required test database setup
+- CI-specific test configuration
+-->
 ```
 
 ### Glob Pattern Reference

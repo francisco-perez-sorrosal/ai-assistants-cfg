@@ -125,6 +125,30 @@ Step 3: Make sure to use snake_case
 - **Include examples** — show correct and incorrect patterns when clarity demands it
 - **Explain the _why_** — when a constraint isn't self-evident, briefly state the rationale
 
+### Customization Sections
+
+Rules that mix universal conventions with project-specific needs can designate `[CUSTOMIZE]` sections — clearly marked zones where users add their own content.
+
+**When to use**: Rules covering domains with inherent project variation (coding style, testing, security). Rules that are fully universal (e.g., commit message format) don't need them.
+
+**Pattern**: Place `### [CUSTOMIZE] <Topic>` sections at the end of the rule, after all universal content. Include placeholder guidance in HTML comments:
+
+```markdown
+## Security Baseline
+
+- Never log tokens, API keys, or session identifiers
+- Validate token expiry server-side on every request
+
+### [CUSTOMIZE] Project Security Requirements
+<!-- Add project-specific security rules here:
+- Required auth mechanisms
+- Compliance constraints (SOC2, HIPAA, etc.)
+- Approved cryptographic libraries
+-->
+```
+
+Keep universal and custom content clearly separated — never mix `[CUSTOMIZE]` content into universal sections.
+
 ### File Organization
 
 - **One file per domain** — `sql.md`, `security.md`, `frontend.md`, not `rules1.md`

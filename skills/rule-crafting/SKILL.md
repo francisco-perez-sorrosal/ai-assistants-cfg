@@ -185,6 +185,37 @@ Step 3: Make sure to use snake_case
 - **Explain the _why_** — when a constraint isn't self-evident, briefly state the rationale
 - **Verbose is fine** — rules load only when relevant, so depth is welcome
 
+### Customization Sections
+
+Rules often mix universal conventions (applicable everywhere) with areas where users need to inject project-specific or team-specific content. Use `[CUSTOMIZE]` sections to separate the two clearly.
+
+**When to use**: Rules that cover domains with inherent project variation — coding style, testing, security, deployment. Not every rule needs one; rules that are fully universal (e.g., commit message format) can omit customization sections entirely.
+
+**Pattern**: Add a `### [CUSTOMIZE] <Topic>` section header at the end of the rule, after all universal conventions. Include placeholder guidance listing what the user should add.
+
+```markdown
+## Coding Style
+
+### Naming
+- Variables: descriptive, intention-revealing names
+- Booleans: read as yes/no questions — `is_valid`, `has_permission`
+
+### [CUSTOMIZE] Project Naming Conventions
+<!-- Add project-specific naming patterns here:
+- Prefix conventions for modules/packages
+- Domain-specific naming (e.g., database models, API routes)
+- Abbreviations accepted in this codebase
+-->
+```
+
+**Guidelines**:
+- Place all `[CUSTOMIZE]` sections at the end, after universal content
+- Never mix customizable content into universal sections — keep them separate
+- Each `[CUSTOMIZE]` section should have a clear topic and placeholder guidance
+- Use HTML comments (`<!-- -->`) for placeholder instructions so they don't affect rule semantics
+
+See [REFERENCE.md](REFERENCE.md) for complete examples with customization sections.
+
 ## Rules vs Skills vs CLAUDE.md
 
 Ask: **"Is this something Claude should _know_, or something Claude should _do_?"**
