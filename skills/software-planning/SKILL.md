@@ -1,6 +1,6 @@
 ---
 description: Planning complex software tasks using a three-document model (PLAN.md, WIP.md, LEARNINGS.md) for tracking work in small, known-good increments. Use when starting significant development work, breaking down complex features, doing architecture planning, managing multi-session projects, or when the user mentions feature breakdown, work planning, or incremental development.
-compatibility: Designed for Claude Code (or similar products with file read/write capabilities)
+compatibility: Claude Code
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
