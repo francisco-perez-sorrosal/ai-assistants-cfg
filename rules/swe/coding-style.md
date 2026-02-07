@@ -130,3 +130,27 @@ Before marking implementation complete:
 - [ ] No hardcoded magic values
 - [ ] Immutable patterns used where applicable
 - [ ] Names are descriptive and consistent
+
+### [CUSTOMIZE] Project Naming Conventions
+<!-- Add project-specific naming patterns here:
+- Prefix conventions for modules/packages
+- Domain-specific naming (e.g., database models, API routes, component names)
+- Abbreviations accepted in this codebase
+- File naming convention (kebab-case, snake_case, PascalCase)
+-->
+
+### [CUSTOMIZE] Size Thresholds
+<!-- Override default size targets if this project requires different limits:
+- File size target and ceiling (defaults: 200-400 / 800 lines)
+- Function size target and ceiling (defaults: 30 / 50 lines)
+- Nesting depth limit (default: 4 levels)
+-->
+
+### [CUSTOMIZE] Language-Specific Tooling
+<!-- List the formatting and linting tools used in this project:
+- Python: ruff, black, mypy, pyright
+- JS/TS: prettier, eslint, biome
+- Rust: rustfmt, clippy
+- Go: gofmt, golangci-lint
+- Add tool configuration file locations if non-standard
+-->

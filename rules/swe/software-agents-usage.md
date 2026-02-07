@@ -135,3 +135,17 @@ Run agents in the background when their output is not immediately needed:
 - Parallel investigation of independent concerns
 
 Check background agent output before proceeding with work that depends on their findings.
+
+### [CUSTOMIZE] Custom Agents
+<!-- Add project-specific agents beyond the standard four:
+- Agent name, purpose, output artifact, and when to use
+- Where it fits in the coordination pipeline (before/after which stage)
+- Whether it can run in parallel with standard agents
+-->
+
+### [CUSTOMIZE] Pipeline Overrides
+<!-- Adjust coordination pipeline behavior for this project:
+- Stages that can be skipped (e.g., skip research when domain is well-known)
+- Additional review lenses for multi-perspective analysis
+- Project-specific triggers for proactive agent spawning
+-->
