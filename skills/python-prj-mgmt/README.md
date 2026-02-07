@@ -28,4 +28,4 @@ Trigger explicitly by mentioning "python project management," "pixi," "uv," "pyp
 
 ## Related Skills
 
-- [`python`](../python/) — type hints, testing, code quality, language patterns
+- [`python-development`](../python-development/) — type hints, testing, code quality, language patterns

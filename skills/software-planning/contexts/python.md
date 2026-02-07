@@ -3,7 +3,7 @@
 Language-specific planning guidance for Python projects. Load alongside the [Software Planning](../SKILL.md) skill when planning Python work.
 
 **Related skills**:
-- [Python Development](../../python/SKILL.md) — Type hints, testing patterns, code quality
+- [Python Development](../../python-development/SKILL.md) — Type hints, testing patterns, code quality
 - [Python Project Management](../../python-prj-mgmt/SKILL.md) — pixi/uv, dependencies, environments
 
 ## Project Setup Steps
@@ -95,7 +95,7 @@ When writing the **Testing** field of a plan step, choose the appropriate level:
 | Dependency addition | Import smoke test, integration test if non-trivial |
 | Configuration | Validate config loads correctly with test fixtures |
 
-Reference the [Python Development](../../python/SKILL.md) skill for pytest patterns (fixtures, parametrize, markers).
+Reference the [Python Development](../../python-development/SKILL.md) skill for pytest patterns (fixtures, parametrize, markers).
 
 ## Common Plan Shapes
 

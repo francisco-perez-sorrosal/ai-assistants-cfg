@@ -1,6 +1,6 @@
 # Project Index
 
-Last updated: 2026-02-07
+Last updated: 2026-02-07T19:30
 
 ## Inventory
 
@@ -9,31 +9,32 @@ Configuration repository for AI coding assistants. Centralizes settings, skills,
 ### Skills (10)
 
 
-| Skill             | Purpose                                                       |
-| ----------------- | ------------------------------------------------------------- |
-| skill-crafting    | Creating and optimizing Agent Skills                          |
-| agent-crafting    | Building custom agents with prompts, tools, lifecycle hooks   |
-| command-crafting  | Creating slash commands with arguments and tool permissions   |
-| rule-crafting     | Creating rules — contextual domain knowledge files            |
-| mcp-crafting      | Building MCP servers in Python with FastMCP                   |
-| python            | Modern Python development conventions                         |
-| python-prj-mgmt   | Python project management with pixi and uv                    |
-| refactoring       | Pragmatic refactoring: modularity, coupling, cohesion         |
-| code-review       | Structured code review with finding classification and language adaptation |
-| software-planning | Three-document planning model (PLAN.md, WIP.md, LEARNINGS.md) |
+| Skill              | Purpose                                                                    |
+| ------------------ | -------------------------------------------------------------------------- |
+| skill-crafting     | Creating and optimizing Agent Skills                                       |
+| agent-crafting     | Building custom agents with prompts, tools, lifecycle hooks                |
+| command-crafting   | Creating slash commands with arguments and tool permissions                |
+| rule-crafting      | Creating rules — contextual domain knowledge files                         |
+| mcp-crafting       | Building MCP servers in Python with FastMCP                                |
+| python-development | Modern Python development conventions                                      |
+| python-prj-mgmt    | Python project management with pixi and uv                                 |
+| refactoring        | Pragmatic refactoring: modularity, coupling, cohesion                      |
+| code-review        | Structured code review with finding classification and language adaptation |
+| software-planning  | Three-document planning model (PLAN.md, WIP.md, LEARNINGS.md)              |
 
 
-### Agents (6)
+### Agents (7)
 
 
-| Agent                  | Purpose                                                   |
-| ---------------------- | --------------------------------------------------------- |
-| promethean             | Feature-level ideation from project state analysis        |
-| researcher             | Codebase exploration, external docs, comparative analysis |
-| systems-architect      | Trade-off analysis, codebase readiness, system design     |
-| implementation-planner | Step decomposition, execution supervision                 |
-| context-engineer       | Context artifact auditing, architecture, and optimization |
-| verifier               | Post-implementation review against acceptance criteria and conventions |
+| Agent                  | Purpose                                                                   |
+| ---------------------- | ------------------------------------------------------------------------- |
+| promethean             | Feature-level ideation from project state analysis                        |
+| researcher             | Codebase exploration, external docs, comparative analysis                 |
+| systems-architect      | Trade-off analysis, codebase readiness, system design                     |
+| implementation-planner | Step decomposition, execution supervision                                 |
+| context-engineer       | Context artifact auditing, architecture, and optimization                 |
+| implementer            | Step execution with skill-augmented coding, self-review, parallel support |
+| verifier               | Post-implementation review against acceptance criteria and conventions    |
 
 
 ### Commands (7)
@@ -69,6 +70,7 @@ Configuration repository for AI coding assistants. Centralizes settings, skills,
 
 - **Ecosystem consistency audit** (2026-02-07) — Audited all crafting skills against their governed artifacts. Fixed 2 critical YAML bugs, 5 stale catalogs, and 13 consistency improvements across specs and artifacts.
 - **Verifier agent and code-review skill** (2026-02-07) — Post-implementation review agent (`verifier`) and reusable `code-review` skill. Closes the pipeline's last-mile gap with structured verification against acceptance criteria, coding conventions, and test coverage. Three-layer design: coding-style rule (what) → code-review skill (how) → verifier agent (when + pipeline).
+- **Implementer agent and skill ecosystem updates** (2026-02-07) — Principal software engineer agent (`implementer`) with skill-augmented coding, self-review, and parallel execution support. Python skill renamed to `python-development` for naming consistency. Software-planning skill amended with parallel WIP.md mode. Planner upgraded with implementer collaboration and parallel coordination. Pipeline rule updated with Intra-Stage Parallelism.
 
 ### Pending
 
@@ -76,7 +78,7 @@ Configuration repository for AI coding assistants. Centralizes settings, skills,
 
 ### Discarded
 
-(none)
+- **Shell-scripting skill** (2026-02-07) — Only `install.sh` uses shell; coding-style rule covers structural conventions. Premature. Reopen when a second shell-heavy file appears.
 
 ## Future Paths
 
@@ -86,4 +88,5 @@ Directional possibilities for where the project could go. Paths may be compatibl
 - **Community plugin ecosystem** — Evolve from personal config repo to a distributable plugin marketplace with versioning, dependency management, and discovery.
 - **Project template generation** — Use the accumulated skills and rules as a foundation for scaffolding new projects with pre-configured AI assistant setups.
 - **Pipeline quality loop** — Close the pipeline with a verification stage, enabling the full cycle from ideation through verified result. The verifier agent is the first step; future iterations could add security review, performance analysis, and cross-feature retrospective capabilities.
+- **Language skill expansion** — Add language-specific development skills beyond Python, starting with TypeScript (Claude Code plugin/MCP server ecosystem) and eventually Rust. Each follows the `<language>-development` naming pattern established by the python rename.
 

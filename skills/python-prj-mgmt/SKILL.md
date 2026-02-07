@@ -9,7 +9,7 @@ Managing Python projects with modern package managers and dependency tools. **De
 
 ## Quick Reference
 
-**Python Coding**: See the [Python Development](../python/SKILL.md) skill for type hints, testing patterns, code quality, and language best practices.
+**Python Coding**: See the [Python Development](../python-development/SKILL.md) skill for type hints, testing patterns, code quality, and language best practices.
 
 **Package Managers**:
 - [pixi](pixi.md) - **Default** - conda+PyPI ecosystem, tasks, multi-language support

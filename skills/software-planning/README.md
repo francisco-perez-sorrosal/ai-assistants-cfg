@@ -40,7 +40,7 @@ software-planning/
 
 | Context | File | Related Skills |
 |---------|------|----------------|
-| Python | [`contexts/python.md`](contexts/python.md) | [Python](../python/SKILL.md), [Python Project Management](../python-prj-mgmt/SKILL.md) |
+| Python | [`contexts/python.md`](contexts/python.md) | [Python](../python-development/SKILL.md), [Python Project Management](../python-prj-mgmt/SKILL.md) |
 
 **Phases** delegate a *group of steps* to a specialized skill's methodology. Include when the plan analysis detects preparatory work is needed before feature development.
 
@@ -59,7 +59,7 @@ software-planning/
 
 ## Related Skills
 
-- [`python`](../python/) / [`python-prj-mgmt`](../python-prj-mgmt/) — Python-specific planning contexts (quality gates, project setup)
+- [`python-development`](../python-development/) / [`python-prj-mgmt`](../python-prj-mgmt/) — Python-specific planning contexts (quality gates, project setup)
 - [`refactoring`](../refactoring/) — embedding refactoring phases in plans
 
 ## Adding New Contexts and Phases

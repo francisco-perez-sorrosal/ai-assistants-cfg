@@ -187,7 +187,7 @@ Monitor these thresholds:
 - Prefer composition over inheritance
 - Type hints enable safe refactoring
 
-See the [Python](../python/SKILL.md) skill for detailed type hint patterns, testing, and code quality tools.
+See the [Python](../python-development/SKILL.md) skill for detailed type hint patterns, testing, and code quality tools.
 
 ### General (Language Agnostic)
 

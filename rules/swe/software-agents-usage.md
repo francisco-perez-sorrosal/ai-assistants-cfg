@@ -11,6 +11,7 @@ Conventions for when and how to use the available software agents — autonomous
 | `systems-architect` | Trade-off analysis, codebase readiness, system design | `SYSTEMS_PLAN.md` | Architectural decisions, structural assessment, technology selection |
 | `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Breaking architecture into increments, resuming multi-session work |
 | `context-engineer` | Context artifact domain expert and implementer — audits, architects, and optimizes context artifacts; collaborates at any pipeline stage when work involves context engineering | Audit report + artifact changes | Auditing quality, resolving conflicts, growing the context ecosystem, providing domain expertise during pipeline work involving context artifacts |
+| `implementer` | Executes individual implementation steps with skill-augmented coding and self-review | Code changes + WIP.md status update | Implementation plan ready with steps to execute |
 | `verifier` | Post-implementation review against acceptance criteria, conventions, and test coverage | `VERIFICATION_REPORT.md` | Validating completed implementation quality before committing |
 
 ### Proactive Agent Usage
@@ -25,6 +26,7 @@ Spawn agents without waiting for the user to ask:
 - Research involving context engineering → `researcher` + `context-engineer` in parallel (researcher gathers info, context-engineer provides artifact domain expertise)
 - Architecture for context-based systems → `context-engineer` alongside `systems-architect` (context-engineer provides artifact placement, token budget, and progressive disclosure constraints)
 - Implementation plan touching context artifacts → `context-engineer` reviews step ordering and crafting spec compliance
+- Implementation plan ready with steps to execute → `implementer`
 - Implementation complete and plan adherence confirmed → `verifier`
 
 ### Coordination Pipeline
@@ -39,6 +41,8 @@ researcher → RESEARCH_FINDINGS.md
 systems-architect → SYSTEMS_PLAN.md
     ↓
 implementation-planner → IMPLEMENTATION_PLAN.md + WIP.md + LEARNINGS.md
+    ↓
+implementer → code changes + WIP.md status updates (sequential or parallel)
     ↓
 verifier → VERIFICATION_REPORT.md (optional — when quality review is needed)
 ```
@@ -94,6 +98,29 @@ First research auth, then research database (no dependency between them)
 - One agent's output is the next agent's input (the pipeline)
 - Two agents would analyze and modify the same files
 
+### Intra-Stage Parallelism
+
+Multiple instances of the same agent type can run concurrently on disjoint work units within a single pipeline stage. This is distinct from cross-agent parallelism (different agent types running independently).
+
+**When to use:**
+
+- Implementation steps in the same `[parallel-group]` with disjoint file sets
+- No shared mutable state between the concurrent steps
+
+**Batch size:** Limit to 2-3 concurrent agents. More increases coordination overhead without proportional throughput gain.
+
+**Coordination protocol:**
+
+1. The implementation-planner prepares WIP.md in parallel mode with per-step assignees and file lists
+2. The user spawns N implementer agents concurrently, each assigned one step
+3. Each implementer updates only its own step's status in WIP.md
+4. After all implementers report back, the planner runs a coherence review (re-reads all modified files, verifies integration, merges step-specific learnings)
+
+**Conflict avoidance:**
+
+- The planner verifies file disjointness before marking steps as parallel
+- If an implementer discovers it needs a file outside its declared set, it stops and reports `[CONFLICT]`
+
 ### Multi-Perspective Analysis
 
 For complex or high-risk decisions, use parallel agents with distinct review lenses:
@@ -114,6 +141,7 @@ Each agent has a defined responsibility — respect the boundaries:
 - **Architect does not plan steps.** It designs structure and makes decisions.
 - **Implementation planner does not redesign.** It decomposes and supervises.
 - **Context engineer does not implement features.** It manages the information architecture. In pipeline mode, it provides domain expertise (artifact placement, token budget, progressive disclosure) — not architectural decisions or implementation steps. It implements context artifacts directly or under planner supervision, but does not implement application features.
+- **Implementer does not plan.** It receives a step and implements it. It does not choose what to build, skip steps, reorder the plan, or make go/no-go decisions. It reports blockers with evidence rather than resolving them.
 - **Verifier does not fix.** It identifies issues and recommends corrective action through documents. Fixes go back to the implementation-planner (for pipeline work) or the user (for standalone review). It does not check plan adherence (that is Phase 7's job) or assess context artifact quality (that is the context-engineer's job).
 
 When an agent encounters work outside its boundary, it flags the need and recommends invoking the appropriate agent.
@@ -134,6 +162,8 @@ When deciding whether to use an agent vs. doing the work directly:
 | Context artifact audit or ecosystem restructuring | Agent (`context-engineer`) | — |
 | Single context artifact creation or update | — | Direct (or `context-engineer` for spec compliance) |
 | Pipeline work involving 3+ context artifacts | Agent (`context-engineer` + pipeline) | — |
+| Multi-file implementation step from a plan | Agent (`implementer`) | — |
+| Single obvious code change with clear placement | — | Direct |
 | Post-implementation quality review of a complex feature | Agent (`verifier`) | — |
 | Quick review of a single-file change | — | Direct (or `code-review` skill) |
 

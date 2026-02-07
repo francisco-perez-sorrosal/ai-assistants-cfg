@@ -41,7 +41,7 @@ When planning work in a specific language or tech stack, load the relevant **con
 
 | Context | File | Related Skills |
 |---------|------|----------------|
-| Python | [contexts/python.md](contexts/python.md) | [Python](../python/SKILL.md), [Python Project Management](../python-prj-mgmt/SKILL.md) |
+| Python | [contexts/python.md](contexts/python.md) | [Python](../python-development/SKILL.md), [Python Project Management](../python-prj-mgmt/SKILL.md) |
 
 **How contexts integrate**:
 - **PLAN.md**: Add a `Tech Stack` field linking to the relevant context and skills
@@ -189,6 +189,8 @@ Plans are not immutable, but changes must be explicit and approved.
 
 ## WIP.md Structure
 
+### Sequential Mode (default)
+
 ```markdown
 # WIP: [Feature Name]
 
@@ -223,6 +225,53 @@ Step N of M: [Description]
 
 [Optional: Brief notes about current work]
 ```
+
+### Parallel Mode
+
+When the plan contains steps annotated with `[parallel-group]`, use the parallel format for batches of concurrent steps. Switch back to sequential mode for non-parallel steps.
+
+```markdown
+# WIP: [Feature Name]
+
+## Current Batch
+
+Mode: parallel
+Steps: 3, 4
+Status: in-progress
+
+### Step 3 — [Description]
+- Assignee: implementer-1
+- Status: [IN-PROGRESS]
+- Files: path/to/file1.md, path/to/file2.md
+
+### Step 4 — [Description]
+- Assignee: implementer-2
+- Status: [IN-PROGRESS]
+- Files: path/to/file3.md
+
+## Progress
+
+- [x] Step 1: [Description]
+- [x] Step 2: [Description]
+- [~] Step 3: [Description] ← parallel batch
+- [~] Step 4: [Description] ← parallel batch
+- [ ] Step 5: [Description]
+
+## Blockers
+
+[None / List current blockers]
+
+## Next Action
+
+Wait for all parallel implementers to complete, then run coherence review.
+```
+
+**Parallel mode rules:**
+
+- Each implementer updates only its own step's `Status` field — never another step's
+- The planner writes the `Current Batch` header, `Mode`, `Steps`, and `Assignee` fields
+- After all implementers report back, the planner runs a coherence review and advances to the next batch or step
+- Use `[~]` in the Progress checklist to indicate in-progress parallel steps
 
 ### WIP Must Always Be Accurate
 

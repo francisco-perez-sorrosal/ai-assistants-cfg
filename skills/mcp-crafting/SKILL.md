@@ -7,7 +7,7 @@ allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 
 Build [Model Context Protocol](https://modelcontextprotocol.io) servers that expose tools, resources, and prompts to LLM applications.
 
-**Python Coding**: See the [Python Development](../python/SKILL.md) skill for type hints, testing patterns, code quality, and language best practices.
+**Python Coding**: See the [Python Development](../python-development/SKILL.md) skill for type hints, testing patterns, code quality, and language best practices.
 
 **Project Setup**: See the [Python Project Management](../python-prj-mgmt/SKILL.md) skill for environment setup and dependency management. The MCP SDK recommends **uv** for project management.
 

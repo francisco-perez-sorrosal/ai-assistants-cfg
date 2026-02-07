@@ -45,7 +45,7 @@ Trigger explicitly by asking about "MCP server," "MCP bundle," "building an MCP 
 
 ## Related Skills
 
-- [`python`](../python/) — type hints, testing, code quality, async patterns
+- [`python-development`](../python-development/) — type hints, testing, code quality, async patterns
 - [`python-prj-mgmt`](../python-prj-mgmt/) — uv/pixi setup, dependency management, pyproject.toml configuration
 
 ## Testing

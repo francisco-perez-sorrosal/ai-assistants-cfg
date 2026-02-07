@@ -70,8 +70,18 @@ Break the architecture into incremental implementation steps.
 - Be independently testable
 - Have clear done criteria
 - Fit in a single commit
+- Include a `Files` field listing expected write targets (required for parallel steps, recommended for all)
 
 **If you can't describe a step in one sentence, break it down further.**
+
+**Parallel step annotations:**
+
+When steps can execute concurrently (disjoint file sets, no shared mutable state), annotate them:
+
+- `[parallel-group: X]` — steps in the same group can run concurrently
+- `[depends-on: N, M]` — step cannot start until steps N and M are complete
+
+Before marking steps as parallel, verify **file disjointness**: no two steps in the same parallel group may list overlapping files in their `Files` field. If overlap exists, the steps must be sequential.
 
 ### Step Size Heuristics
 
@@ -149,7 +159,9 @@ Complete the planning documents:
 **Done when**: ...
 ```
 
-**WIP.md** — initialize tracking:
+**WIP.md** — initialize tracking.
+
+Sequential Mode (default):
 
 ```markdown
 # WIP: [Feature Name]
@@ -175,6 +187,44 @@ None
 ## Next Action
 
 [Specific next thing to do]
+```
+
+Parallel Mode (when parallel groups exist):
+
+```markdown
+# WIP: [Feature Name]
+
+## Current Batch
+
+Mode: parallel
+Steps: 3, 4
+Status: in-progress
+
+### Step 3 — [Description]
+- Assignee: implementer-1
+- Status: [IN-PROGRESS]
+- Files: [list from IMPLEMENTATION_PLAN.md]
+
+### Step 4 — [Description]
+- Assignee: implementer-2
+- Status: [IN-PROGRESS]
+- Files: [list from IMPLEMENTATION_PLAN.md]
+
+## Progress
+
+- [x] Step 1: [Description]
+- [x] Step 2: [Description]
+- [~] Step 3: [Description] ← parallel batch
+- [~] Step 4: [Description] ← parallel batch
+- [ ] Step 5: [Description]
+
+## Blockers
+
+None
+
+## Next Action
+
+Wait for all parallel implementers to complete, then run coherence review.
 ```
 
 **LEARNINGS.md** — seed with anything discovered:
@@ -227,6 +277,17 @@ After the plan is approved and implementation begins, the implementation planner
 - [Proposed changes to remaining steps]
 ```
 
+**Parallel batch supervision:**
+
+When the plan contains parallel groups:
+
+1. **Prepare the batch** — write WIP.md in parallel mode with per-step assignees and file lists
+2. **Track concurrently** — each implementer updates its own step's status independently
+3. **Coherence review** — after all implementers in a batch report back, re-read all files touched by the batch and verify integration correctness
+4. **Merge learnings** — consolidate step-specific LEARNINGS.md sections into the canonical topic-based structure
+5. **Batch failure handling** — if one implementer reports `[BLOCKED]` or `[CONFLICT]`, let the others finish. Handle the failure during coherence review: retry, amend the plan, or escalate
+6. **Advance** — update WIP.md to the next batch or step
+
 **Post-completion handoff:**
 
 When all steps are marked on-track and `WIP.md` shows completion:
@@ -256,6 +317,13 @@ The verifier only operates after Phase 7 confirms plan adherence. Verifying an i
 - Implementation execution: for large-scope context work (3+ artifacts, restructuring, ecosystem-wide changes), the context-engineer executes the artifact steps (create/update/restructure) using its crafting skills while you supervise progress and deviation
 - Learnings capture: context-specific patterns go to `LEARNINGS.md`; the context-engineer reviews them for permanent placement in the appropriate artifact type
 - Scope boundary: you decompose and supervise; the context-engineer implements and validates context artifact correctness
+
+### With the Implementer
+
+- Provide each step with: one-sentence description, `Implementation` field, `Testing` field (if applicable), `Done when` field, `Files` field
+- Expect back one of: `[COMPLETE]` (step done, WIP.md updated), `[BLOCKED]` (blocker described with evidence), `[CONFLICT]` (file outside declared set needed, parallel mode only)
+- **Sequential invocation**: invoke one implementer at a time, review result, advance WIP.md, invoke next
+- **Parallel invocation**: invoke 2-3 implementers concurrently on steps in the same parallel group, run coherence review after all report back, then advance to the next group
 
 ## Output
 

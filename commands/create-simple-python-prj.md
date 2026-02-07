@@ -41,4 +41,4 @@ Create a basic Python project named "$1" using ${3:-pixi} as the package manager
 
 5. Configure ruff with basic rules in pyproject.toml
 
-From there on, use the [Python Development](../skills/python/SKILL.md) skill for coding best practices.
+From there on, use the [Python Development](../skills/python-development/SKILL.md) skill for coding best practices.
