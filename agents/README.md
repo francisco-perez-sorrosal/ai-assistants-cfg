@@ -35,12 +35,65 @@ User Request
 
 ## How Agents Work
 
-Agents are **delegated, not invoked**. Claude decides when to spawn an agent based on the task at hand and the agent's description. Agents can also be triggered explicitly by name.
+Agents are **delegated, not invoked**. Claude decides when to spawn an agent based on the task at hand and the agent's `description` field. Unlike skills and commands, agents don't have a `/slash-command` syntax.
 
 - Each agent runs in its own context window with its own tool permissions
 - Agents cannot spawn other agents
 - Skills listed in the agent's `skills` field are injected into its context (agents do not inherit skills from the parent)
 - Foreground agents block the main conversation; background agents run concurrently
+
+## Using Agents
+
+### In conversation (recommended)
+
+Ask Claude directly — it delegates based on the agent's description:
+
+```
+"Use the researcher agent to investigate authentication libraries"
+"Run the systems-architect to design the new API layer"
+```
+
+### `/agents` command
+
+List all available agents (built-in, user, project, and plugin):
+
+```
+/agents
+```
+
+### `--agent` flag (run as main thread)
+
+Run Claude *as* a specific agent for the entire session. This makes the agent the main thread, not a delegated subagent — useful for headless or scripted runs:
+
+```bash
+claude --agent i-am:researcher -p "investigate X"
+```
+
+### `--agents` JSON flag (session-only overrides)
+
+Define or override agents dynamically for a single session:
+
+```bash
+claude --agents '{
+  "researcher": {
+    "description": "Research specialist",
+    "prompt": "You are a researcher...",
+    "tools": ["Read", "Grep", "Glob", "Bash", "WebSearch", "WebFetch"],
+    "skills": ["python"]
+  }
+}'
+```
+
+### Priority order
+
+When multiple agents share the same name, higher priority wins:
+
+| Location | Priority |
+|----------|----------|
+| `--agents` CLI flag | 1 (highest) |
+| `.claude/agents/` (project) | 2 |
+| `~/.claude/agents/` (user) | 3 |
+| Plugin `agents/` | 4 (lowest) |
 
 ## Plugin Registration
 
