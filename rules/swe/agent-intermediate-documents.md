@@ -16,6 +16,7 @@ Agent documents live in two locations based on their lifecycle:
     IMPLEMENTATION_PLAN.md
     WIP.md
     LEARNINGS.md
+    VERIFICATION_REPORT.md
 ```
 
 - Dot-prefixed — hidden by default in file browsers and `ls`
@@ -51,7 +52,7 @@ Agents that update the index: promethean (idea ledger, future paths), any agent 
 
 | Tier | Location | Documents | Lifetime | Cleanup |
 |------|----------|-----------|----------|---------|
-| Ephemeral | `.ai-work/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md` | Single pipeline run | Delete after downstream agent consumes them |
+| Ephemeral | `.ai-work/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md`, `VERIFICATION_REPORT.md` | Single pipeline run | Delete after downstream agent consumes them; merge recurring patterns from `VERIFICATION_REPORT.md` into `LEARNINGS.md` first |
 | Session-persistent | `.ai-work/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions | Merge learnings into permanent locations, then delete at feature end |
 | Permanent | `.ai-state/` | `PROJECT_INDEX.md` | Project lifetime | Committed to git, updated incrementally |
 

@@ -227,6 +227,16 @@ After the plan is approved and implementation begins, the implementation planner
 - [Proposed changes to remaining steps]
 ```
 
+**Post-completion handoff:**
+
+When all steps are marked on-track and `WIP.md` shows completion:
+
+1. Confirm plan adherence in the supervision output
+2. Append to the supervision output: "All steps complete and on-track. Recommend invoking the verifier agent for quality review before committing."
+3. The user decides whether to invoke the verifier -- this is not automatic
+
+The verifier only operates after Phase 7 confirms plan adherence. Verifying an implementation that deviated from the plan is not meaningful until deviations are resolved.
+
 ## Collaboration Points
 
 ### With the Researcher

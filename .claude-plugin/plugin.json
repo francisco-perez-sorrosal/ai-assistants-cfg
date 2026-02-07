@@ -25,6 +25,7 @@
     "./agents/systems-architect.md",
     "./agents/implementation-planner.md",
     "./agents/context-engineer.md",
-    "./agents/promethean.md"
+    "./agents/promethean.md",
+    "./agents/verifier.md"
   ]
 }

@@ -24,6 +24,7 @@ Reusable skill modules for Claude Code. Each skill is a self-contained directory
 | **[python](python/)**                       | Modern Python development with type hints, testing patterns (pytest), and code quality tools (ruff, mypy).       | Writing Python code, implementing tests, configuring tooling, discussing language features.             |
 | **[python-prj-mgmt](python-prj-mgmt/)**     | Python project management with pixi and uv. Defaults to **pixi** unless uv is explicitly requested.              | Setting up projects, managing dependencies, configuring environments, initializing new projects.        |
 | **[refactoring](refactoring/)**             | Pragmatic refactoring emphasizing modularity, low coupling, high cohesion, and incremental improvement.          | Restructuring code, improving design, reducing coupling, organizing codebases, eliminating code smells. |
+| **[code-review](code-review/)**             | Structured code review methodology with finding classification (PASS/FAIL/WARN), language adaptation, and report templates. | Reviewing code for convention compliance, post-implementation verification, reviewing PRs, ad-hoc quality assessments. |
 | **[software-planning](software-planning/)** | Three-document planning model (PLAN.md, WIP.md, LEARNINGS.md) for tracking work in small, known-good increments. | Starting significant software work, breaking down complex tasks, multi-step development efforts.        |
 
 

@@ -6,7 +6,7 @@ Custom agents for specialized workflows. Agents are autonomous subprocesses that
 
 ### Software Development Crew
 
-Five agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The promethean sits upstream as an optional ideation engine. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts.
+Six agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The promethean sits upstream as an optional ideation engine. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts. The verifier sits downstream as an optional quality gate.
 
 ```
  promethean ──► IDEA_PROPOSAL.md (optional — when ideation is needed)
@@ -19,6 +19,9 @@ Five agents that collaborate on software development tasks, each with a dedicate
      │                              │   at any stage)  │
      ▼                              └─────────────────┘
  implementation-planner ──► IMPLEMENTATION_PLAN.md (Steps), WIP.md, LEARNINGS.md
+     │
+     ▼
+ verifier ──────────────► VERIFICATION_REPORT.md (optional — when quality review needed)
 ```
 
 | Agent | Description | Skills Used |
@@ -28,6 +31,7 @@ Five agents that collaborate on software development tasks, each with a dedicate
 | `systems-architect` | Evaluates trade-offs, assesses codebase readiness, and produces architectural decisions in `SYSTEMS_PLAN.md` | — |
 | `implementation-planner` | Breaks architecture into incremental steps (`IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md`) and supervises execution | `software-planning` |
 | `context-engineer` | Audits, architects, and optimizes context artifacts (CLAUDE.md, skills, rules, commands, agents); collaborates with pipeline agents as domain expert for context engineering; implements context artifacts directly or under planner supervision | `skill-crafting`, `rule-crafting`, `command-crafting`, `agent-crafting` |
+| `verifier` | Verifies completed implementation against acceptance criteria, coding conventions, and test coverage; produces `VERIFICATION_REPORT.md` with pass/fail/warn findings | `code-review` |
 
 ## How Agents Work
 
@@ -101,7 +105,8 @@ Agents require explicit file paths in `plugin.json` (directory wildcards are not
   "./agents/researcher.md",
   "./agents/systems-architect.md",
   "./agents/implementation-planner.md",
-  "./agents/context-engineer.md"
+  "./agents/context-engineer.md",
+  "./agents/verifier.md"
 ]
 ```
 

@@ -11,6 +11,7 @@ Conventions for when and how to use the available software agents — autonomous
 | `systems-architect` | Trade-off analysis, codebase readiness, system design | `SYSTEMS_PLAN.md` | Architectural decisions, structural assessment, technology selection |
 | `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Breaking architecture into increments, resuming multi-session work |
 | `context-engineer` | Context artifact domain expert and implementer — audits, architects, and optimizes context artifacts; collaborates at any pipeline stage when work involves context engineering | Audit report + artifact changes | Auditing quality, resolving conflicts, growing the context ecosystem, providing domain expertise during pipeline work involving context artifacts |
+| `verifier` | Post-implementation review against acceptance criteria, conventions, and test coverage | `VERIFICATION_REPORT.md` | Validating completed implementation quality before committing |
 
 ### Proactive Agent Usage
 
@@ -24,6 +25,7 @@ Spawn agents without waiting for the user to ask:
 - Research involving context engineering → `researcher` + `context-engineer` in parallel (researcher gathers info, context-engineer provides artifact domain expertise)
 - Architecture for context-based systems → `context-engineer` alongside `systems-architect` (context-engineer provides artifact placement, token budget, and progressive disclosure constraints)
 - Implementation plan touching context artifacts → `context-engineer` reviews step ordering and crafting spec compliance
+- Implementation complete and plan adherence confirmed → `verifier`
 
 ### Coordination Pipeline
 
@@ -37,6 +39,8 @@ researcher → RESEARCH_FINDINGS.md
 systems-architect → SYSTEMS_PLAN.md
     ↓
 implementation-planner → IMPLEMENTATION_PLAN.md + WIP.md + LEARNINGS.md
+    ↓
+verifier → VERIFICATION_REPORT.md (optional — when quality review is needed)
 ```
 
 - **Do not skip stages.** If a task needs architecture, it needs research first (unless the codebase context is already sufficient).
@@ -51,6 +55,7 @@ implementation-planner → IMPLEMENTATION_PLAN.md + WIP.md + LEARNINGS.md
 | Architecture | Supplies artifact type selection, token budget, and progressive disclosure constraints | Architecture affects context artifacts or introduces new conventions |
 | Implementation Planning | Reviews step ordering for artifact dependencies, validates crafting spec compliance | Implementation plan includes steps that create, modify, or restructure context artifacts |
 | Implementation Execution | Executes artifact steps (create/update/restructure) using crafting skills; planner supervises | Large-scope context work (3+ artifacts, restructuring, ecosystem-wide changes) |
+| Verification | N/A — verifier checks code quality and acceptance criteria, not context artifacts | Verifier discovers that planned context artifact updates were skipped (completeness finding routed to context-engineer) |
 
 **Scale-dependent implementation:** For small-scope context work (single artifact — e.g., create one skill, update a rule), the context-engineer implements directly using its crafting skills, no pipeline needed. For large-scope context work (3+ artifacts, restructuring, ecosystem-wide changes), use the full pipeline — the context-engineer executes artifact steps while the implementation-planner supervises.
 
@@ -109,6 +114,7 @@ Each agent has a defined responsibility — respect the boundaries:
 - **Architect does not plan steps.** It designs structure and makes decisions.
 - **Implementation planner does not redesign.** It decomposes and supervises.
 - **Context engineer does not implement features.** It manages the information architecture. In pipeline mode, it provides domain expertise (artifact placement, token budget, progressive disclosure) — not architectural decisions or implementation steps. It implements context artifacts directly or under planner supervision, but does not implement application features.
+- **Verifier does not fix.** It identifies issues and recommends corrective action through documents. Fixes go back to the implementation-planner (for pipeline work) or the user (for standalone review). It does not check plan adherence (that is Phase 7's job) or assess context artifact quality (that is the context-engineer's job).
 
 When an agent encounters work outside its boundary, it flags the need and recommends invoking the appropriate agent.
 
@@ -128,6 +134,8 @@ When deciding whether to use an agent vs. doing the work directly:
 | Context artifact audit or ecosystem restructuring | Agent (`context-engineer`) | — |
 | Single context artifact creation or update | — | Direct (or `context-engineer` for spec compliance) |
 | Pipeline work involving 3+ context artifacts | Agent (`context-engineer` + pipeline) | — |
+| Post-implementation quality review of a complex feature | Agent (`verifier`) | — |
+| Quick review of a single-file change | — | Direct (or `code-review` skill) |
 
 **Rule of thumb:** If the task benefits from a separate context window (large scope, multiple phases, structured output), use an agent. If it fits in the current conversation, work directly.
 
