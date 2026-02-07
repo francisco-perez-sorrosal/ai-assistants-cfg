@@ -14,6 +14,7 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - `rules/` — Rules installed to `~/.claude/rules/` (auto-loaded by Claude when relevant)
   - `swe/vcs/git-commit-message-format.md` — Commit message format and type prefixes
   - `swe/vcs/git-commit-hygiene.md` — Git commit safety, staging discipline, and exclusions
+  - `writing/readme-style.md` — Precision-first technical writing style for README.md files
 - `.claude-plugin/` — Claude Code plugin manifest (`i-am`) and marketplace (`bit-agora`)
   - `plugin.json` — Plugin name, version, component paths
   - `PLUGIN_SCHEMA_NOTES.md` — Validator constraints reference
