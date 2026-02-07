@@ -27,15 +27,6 @@ Reusable skill modules for Claude Code. Each skill is a self-contained directory
 | **[software-planning](software-planning/)** | Three-document planning model (PLAN.md, WIP.md, LEARNINGS.md) for tracking work in small, known-good increments. | Starting significant software work, breaking down complex tasks, multi-step development efforts.        |
 
 
-### Domain-Specific
-
-
-| Skill                                 | Description                                                                                                 | When to Use                                                                                                                |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **[ticker](ticker/)**                 | Look up stock ticker symbols from company names using Yahoo Finance. Caches results with 30-day TTL.        | Researching stocks, needing ticker symbols, validating tickers, getting company details (sector, market cap).              |
-| **[stock-clusters](stock-clusters/)** | Analyze stocks by return and volatility using K-means clustering. Produces interactive HTML visualizations. | Exploring investment opportunities, identifying risk profiles, comparing market segments, analyzing portfolio positioning. |
-
-
 ## How Skills Work
 
 Skills are loaded automatically when Claude detects a matching context based on each skill's `description` field in its frontmatter. You can also reference them explicitly (e.g., "load the `refactoring` skill").
