@@ -224,11 +224,6 @@ Verify: proper `---` delimiters, valid YAML, correct field names, expected argum
 4. **Iterate** -- refine based on output; adjust tools, arguments, context
 5. **Share** -- commit to `.claude/commands/` for team use
 
-## Related Skills
-
-- [`skill-crafting`](../skill-crafting/SKILL.md) -- the spec for creating skills; when a command outgrows a single file, convert it to a skill
-- [`agent-crafting`](../agent-crafting/SKILL.md) -- for building custom agents; helps distinguish when to use a command vs an agent
-
 ## Resources
 
 - [Official Documentation](https://docs.anthropic.com/en/docs/claude-code/slash-commands)

@@ -264,11 +264,6 @@ Ask: **"Is this something Claude should _know_, or something Claude should _do_?
 | Duplicating CLAUDE.md content | Redundant, may conflict | Keep in one place only |
 | Referencing rule filenames in commands | Filenames aren't invocable | Use semantic hints instead |
 
-## Related Skills
-
-- [`skill-crafting`](../skill-crafting/SKILL.md) -- when a rule outgrows declarative knowledge and needs procedural workflow
-- [`command-crafting`](../command-crafting/SKILL.md) -- when a rule's content is better expressed as a user-invoked prompt
-
 ## Resources
 
 - [Official Documentation](https://docs.anthropic.com/en/docs/claude-code/memory#rules) -- rules section of Claude Code memory docs

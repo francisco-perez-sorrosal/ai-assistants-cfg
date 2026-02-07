@@ -409,11 +409,6 @@ See [references/resources.md](references/resources.md) for the full manifest spe
 - **Overly broad permissions** — start read-only, whitelist operations, restrict filesystem paths
 - **Not testing** — use pytest with in-memory clients, not manual chat testing
 
-## Related Skills
-
-- [`python`](../python/SKILL.md) — Type hints, testing, code quality, language patterns
-- [`python-prj-mgmt`](../python-prj-mgmt/SKILL.md) — uv/pixi setup, dependency management, environment configuration
-
 ## Resources
 
 - [MCP Specification](https://modelcontextprotocol.io/specification/2025-06-18) — Official protocol spec

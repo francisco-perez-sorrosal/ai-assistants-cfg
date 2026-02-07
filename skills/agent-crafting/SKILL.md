@@ -209,7 +209,3 @@ tools: Read, Edit, Grep, Glob, Bash, Write
 # Full access -- omit tools field
 ```
 
-## Related Skills
-
-- [`skill-crafting`](../skill-crafting/SKILL.md) -- the spec for creating skills that agents can consume via the `skills` field
-- [`command-crafting`](../command-crafting/SKILL.md) -- for understanding the distinction between slash commands and agents

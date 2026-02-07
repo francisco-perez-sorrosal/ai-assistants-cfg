@@ -249,9 +249,7 @@ For complete command references, see [pixi.md](pixi.md) and [uv.md](uv.md). The 
 - Forgetting to sync after adding dependencies
 - Using venv activation instead of `uv run` (slower)
 
-## Related Skills
+## Reference Files
 
 - [pixi Reference](pixi.md) — Complete pixi guide: environments, tasks, ML workflows, troubleshooting
 - [uv Reference](uv.md) — Complete uv guide: workspaces, build/publish, Python version management
-- [Python Development](../python/SKILL.md) — Type hints, testing, code quality, language patterns
-- [mcp-crafting](../mcp-crafting/SKILL.md) — Building MCP servers in Python (uses uv by default)
