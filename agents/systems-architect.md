@@ -214,7 +214,10 @@ Your `SYSTEMS_PLAN.md` is the implementation planner's primary input. Focus on:
 
 ### With the Context Engineer
 
-If architectural decisions create new conventions or patterns that should be documented in the context ecosystem (CLAUDE.md, rules, skills), note them as follow-up items.
+- For context-based system design (artifact restructuring, new artifact types, ecosystem changes): the context-engineer provides domain constraints — artifact type selection, token budget, progressive disclosure patterns
+- For features that create new conventions: the context-engineer assesses where conventions should be documented (rule vs. skill vs. CLAUDE.md) and flags potential conflicts with existing artifacts
+- Reference context engineering reviews for artifact placement rationale rather than making artifact-type decisions independently
+- Scope boundary: you make architectural decisions; the context-engineer provides context engineering domain expertise that informs those decisions
 
 ## Output
 

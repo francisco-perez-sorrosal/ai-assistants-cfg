@@ -241,8 +241,11 @@ After the plan is approved and implementation begins, the implementation planner
 
 ### With the Context Engineer
 
-- If implementation reveals new conventions, patterns, or gotchas that should be documented in context artifacts, capture them in `LEARNINGS.md` for later review
-- At end of feature, learnings are merged into permanent locations (CLAUDE.md, rules, ADRs)
+- Step review: the context-engineer validates artifact dependency ordering (e.g., a skill referencing a rule must be created after the rule) and crafting spec compliance
+- Artifact compliance: the context-engineer flags conflicts, redundancy, or misplacement in planned artifact changes
+- Implementation execution: for large-scope context work (3+ artifacts, restructuring, ecosystem-wide changes), the context-engineer executes the artifact steps (create/update/restructure) using its crafting skills while you supervise progress and deviation
+- Learnings capture: context-specific patterns go to `LEARNINGS.md`; the context-engineer reviews them for permanent placement in the appropriate artifact type
+- Scope boundary: you decompose and supervise; the context-engineer implements and validates context artifact correctness
 
 ## Output
 

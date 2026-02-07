@@ -131,19 +131,14 @@ Autonomous subprocesses that Claude delegates complex tasks to. Each agent runs 
 
 ### Software Development Crew
 
-Three agents that collaborate through shared documents (`RESEARCH_FINDINGS.md` → `PLAN.md` → `WIP.md`, `LEARNINGS.md`). Each can be invoked independently or in sequence.
+Four agents that collaborate through shared documents (`RESEARCH_FINDINGS.md` → `PLAN.md` → `WIP.md`, `LEARNINGS.md`). Each can be invoked independently or in sequence. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts.
 
 | Agent | Description | Skills |
 |-------|-------------|--------|
 | `researcher` | Explores codebases, gathers external docs, evaluates alternatives → `RESEARCH_FINDINGS.md` | — |
 | `systems-architect` | Trade-off analysis, codebase readiness, system design → `SYSTEMS_PLAN.md` | — |
 | `implementation-planner` | Step decomposition and execution supervision → `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | `software-planning` |
-
-### Context Engineering
-
-| Agent | Description | Skills |
-|-------|-------------|--------|
-| `context-engineer` | Audits, architects, and optimizes context artifacts (CLAUDE.md, skills, rules, commands, agents) | `skill-crafting`, `rule-crafting`, `command-crafting`, `agent-crafting` |
+| `context-engineer` | Audits, architects, and optimizes context artifacts; collaborates with pipeline agents as domain expert for context engineering; implements context artifacts directly or under planner supervision | `skill-crafting`, `rule-crafting`, `command-crafting`, `agent-crafting` |
 
 Agents activate automatically based on their description triggers, or can be invoked explicitly. See [`agents/README.md`](agents/README.md) for details.
 

@@ -178,7 +178,10 @@ Your codebase findings help the implementation planner understand:
 
 ### With the Context Engineer
 
-If your research reveals context-related issues (missing documentation, conflicting conventions, undocumented patterns), flag them as open questions for the context engineer.
+- Request domain expertise when researching context engineering topics — the context-engineer knows artifact types, loading semantics, token implications, and the existing artifact inventory
+- Flag context-related findings (missing documentation, conflicting conventions, undocumented patterns) for the context-engineer to assess artifact placement
+- Reference context engineering reviews rather than duplicating artifact analysis in your findings
+- Scope boundary: you gather and present information; the context-engineer assesses what it means for context architecture
 
 ## Output
 
