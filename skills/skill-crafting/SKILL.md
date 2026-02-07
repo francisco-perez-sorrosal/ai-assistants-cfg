@@ -106,6 +106,10 @@ READMEs are human-facing documentation (not loaded into Claude's context). Use t
 
 Meta-crafting skills (those governing an artifact type) may add an artifact catalog section after Skill Contents.
 
+### SKILL.md Section Ordering
+
+No prescribed section order — structure should follow the skill's content and domain. A python skill and a refactoring skill will naturally have different sections. Keep related concepts grouped and use progressive disclosure (satellite files) for depth.
+
 Satellite files can live at the skill root (e.g., `REFERENCE.md`, `pixi.md`) or inside subdirectories (e.g., `references/patterns.md`). Both conventions are valid. A common guideline: use root-level files when there are only one or two satellites; use subdirectories when there are three or more to keep the directory tidy.
 
 ### Progressive Disclosure
