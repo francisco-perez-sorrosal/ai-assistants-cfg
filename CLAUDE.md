@@ -10,13 +10,8 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 
 - `skills/` — Shared skill modules (assistant-agnostic)
 - `commands/` — Shared slash commands
-- `agents/` — Shared agent definitions (`researcher`, `systems-architect`, `implementation-planner`, `context-engineer`)
-- `rules/` — Rules installed to `~/.claude/rules/` (auto-loaded by Claude when relevant)
-  - `swe/coding-style.md` — Language-independent structural and design conventions
-  - `swe/software-agents-usage.md` — Agent selection, coordination pipeline, parallel execution, and boundary discipline
-  - `swe/vcs/git-commit-message-format.md` — Commit message format and type prefixes
-  - `swe/vcs/git-commit-hygiene.md` — Git commit safety, staging discipline, and exclusions
-  - `writing/readme-style.md` — Precision-first technical writing style for README.md files
+- `agents/` — Shared agent definitions
+- `rules/` — Rules installed to `~/.claude/rules/` (auto-loaded unconditionally by Claude)
 - `.claude-plugin/` — Claude Code plugin manifest (`i-am`) and marketplace (`bit-agora`)
   - `plugin.json` — Plugin name, version, component paths
   - `PLUGIN_SCHEMA_NOTES.md` — Validator constraints reference
@@ -44,3 +39,4 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - **Plugin distribution**: Skills, commands, and agents installed via Claude Code plugin system
 - **Personal config via symlinks**: `install.sh` symlinks `.claude/` files to `~/.claude/`
 - Skills use progressive disclosure: metadata at startup, full content on activation, reference files on demand
+- **Do not list skills, commands, agents, or rules in CLAUDE.md** — Claude auto-discovers all of them via filesystem scanning (plugin directories, `~/.claude/rules/`). Enumerating them in always-loaded context wastes tokens and creates sync burden. The `README.md` and per-directory READMEs serve as human-facing catalogs instead

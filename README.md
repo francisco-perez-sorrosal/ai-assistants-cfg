@@ -33,9 +33,10 @@ agents/                              # Shared agent definitions
 rules/                               # Rules (installed to ~/.claude/rules/)
 ├── swe/
 │   ├── coding-style.md              # Language-independent structural conventions
+│   ├── software-agents-usage.md     # Agent coordination, parallel execution, boundaries
 │   └── vcs/
-│   ├── git-commit-message-format.md # Commit message format and type prefixes
-│   └── git-commit-hygiene.md        # Git commit safety and hygiene rules
+│       ├── git-commit-message-format.md # Commit message format and type prefixes
+│       └── git-commit-hygiene.md        # Git commit safety and hygiene rules
 └── writing/
     └── readme-style.md              # Precision-first technical writing style
 .claude-plugin/                      # Claude Code plugin manifest
@@ -167,6 +168,7 @@ See [`rules/README.md`](rules/README.md) for the full rule specification, writin
 - **Plugin distribution**: Skills, commands, and agents are installed via Claude Code's plugin system (`.claude-plugin/plugin.json`)
 - **Symlink for personal config**: `install.sh` symlinks assistant-specific config to the expected locations
 - **Progressive disclosure**: Skills load metadata at startup, full content on activation, reference files on demand
+- **CLAUDE.md stays lean**: Skills, commands, agents, and rules are auto-discovered by Claude via filesystem scanning — listing them in `CLAUDE.md` wastes always-loaded tokens and creates a sync burden. This README and per-directory READMEs serve as the human-facing catalogs
 
 ## References
 
