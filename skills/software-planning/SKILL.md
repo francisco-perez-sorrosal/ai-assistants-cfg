@@ -7,7 +7,7 @@ allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 # Software Planning in Small Increments
 
 **All work must be done in small, known-good increments.** Each increment leaves the codebase in a working state.
-Create and maintain planning documents (PLAN.md, WIP.md, LEARNINGS.md) directly in the project root.
+Create and maintain planning documents (PLAN.md, WIP.md, LEARNINGS.md) following the [agent intermediate documents](../../rules/swe/agent-intermediate-documents.md) placement convention.
 
 ## Three-Document Model
 
@@ -305,13 +305,7 @@ Review LEARNINGS.md and determine destination:
 
 ### 3. Delete Documents
 
-After learnings are merged:
-
-```bash
-rm PLAN.md WIP.md LEARNINGS.md
-git add PLAN.md WIP.md LEARNINGS.md
-git commit -m "chore: complete [feature], remove planning docs"
-```
+After learnings are merged, delete all planning documents (see [agent intermediate documents](../../rules/swe/agent-intermediate-documents.md) for cleanup instructions).
 
 **The knowledge lives on in:**
 

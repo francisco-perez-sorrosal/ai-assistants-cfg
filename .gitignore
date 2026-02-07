@@ -6,3 +6,6 @@
 # The following skills belong to another project.
 skills/ticker
 skills/stock-clusters
+
+# Agent intermediate documents
+.ai-work/
