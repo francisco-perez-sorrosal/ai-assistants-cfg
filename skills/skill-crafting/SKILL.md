@@ -93,6 +93,19 @@ skill-name/
 └── assets/               # Optional: templates, schemas, data files
 ```
 
+### README Section Order
+
+READMEs are human-facing documentation (not loaded into Claude's context). Use this section order:
+
+1. `## When to Use` — bullet list of scenarios (required)
+2. `## Activation` — how the skill gets triggered (required)
+3. `## Skill Contents` — table of files in the skill directory (required)
+4. `## Quick Start` — minimal usage example (optional)
+5. `## Testing` — how to verify the skill works (optional)
+6. `## Related Skills` — cross-references to other skills (optional)
+
+Meta-crafting skills (those governing an artifact type) may add an artifact catalog section after Skill Contents.
+
 Satellite files can live at the skill root (e.g., `REFERENCE.md`, `pixi.md`) or inside subdirectories (e.g., `references/patterns.md`). Both conventions are valid. A common guideline: use root-level files when there are only one or two satellites; use subdirectories when there are three or more to keep the directory tidy.
 
 ### Progressive Disclosure
