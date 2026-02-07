@@ -19,6 +19,7 @@
     "planning"
   ],
   "skills": ["./skills/"],
+  "commands": ["./commands/"],
   "agents": [
     "./agents/researcher.md",
     "./agents/systems-architect.md",
