@@ -40,12 +40,12 @@ Additional skills may be available depending on the project. Discover them throu
 
 ## Available Agents
 
-Agents are autonomous subprocesses delegated for complex tasks. Claude spawns them based on context or explicit request.
+Agents are autonomous subprocesses delegated for complex tasks. Usage conventions (coordination, parallelism, boundaries) are in the `software-agents-usage` rule.
 
-- `researcher` — Explores codebases, gathers external docs, evaluates alternatives → `RESEARCH_FINDINGS.md`
-- `systems-architect` — Trade-off analysis, codebase readiness, system design → `SYSTEMS_PLAN.md`
-- `implementation-planner` — Step decomposition and execution supervision → `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md`
-- `context-engineer` — Audits, architects, and optimizes AI assistant context artifacts (CLAUDE.md, skills, rules, commands, agents) for quality, consistency, and token efficiency
+- `researcher` → `RESEARCH_FINDINGS.md`
+- `systems-architect` → `SYSTEMS_PLAN.md`
+- `implementation-planner` → `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md`
+- `context-engineer` → audit report + artifact changes
 
 ## Available Commands
 

@@ -8,6 +8,7 @@ Rules are **contextual domain knowledge files** that Claude loads automatically 
 rules/
 ├── swe/
 │   ├── coding-style.md
+│   ├── software-agents-usage.md
 │   └── vcs/
 │       ├── git-commit-hygiene.md
 │       └── git-commit-message-format.md
@@ -19,6 +20,7 @@ rules/
 | File | Purpose |
 | ---- | ------- |
 | `swe/coding-style.md` | Immutability, function/file size, nesting, error handling, naming, validation |
+| `swe/software-agents-usage.md` | Agent selection, coordination pipeline, parallel execution, and boundary discipline |
 | `swe/vcs/git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
 | `swe/vcs/git-commit-hygiene.md` | Git commit safety, staging discipline, and exclusions |
 | `writing/readme-style.md` | Precision-first technical writing style for README.md files |
@@ -163,6 +165,8 @@ Naming directly affects Claude's relevance scoring. Use:
 Rules are installed via `install.sh`, which recursively symlinks all `*.md` files (except `README.md`) from this directory to `~/.claude/rules/`, preserving subdirectory structure:
 
 ```
+rules/swe/coding-style.md                   →  ~/.claude/rules/swe/coding-style.md
+rules/swe/software-agents-usage.md          →  ~/.claude/rules/swe/software-agents-usage.md
 rules/swe/vcs/git-commit-hygiene.md         →  ~/.claude/rules/swe/vcs/git-commit-hygiene.md
 rules/swe/vcs/git-commit-message-format.md  →  ~/.claude/rules/swe/vcs/git-commit-message-format.md
 rules/writing/readme-style.md               →  ~/.claude/rules/writing/readme-style.md
