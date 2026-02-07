@@ -6,6 +6,7 @@ Conventions for when and how to use the available software agents — autonomous
 
 | Agent | Purpose | Output | When to Use |
 |-------|---------|--------|-------------|
+| `promethean` | Feature-level ideation from project state analysis | `IDEA_PROPOSAL.md` | Generating improvement ideas, exploring gaps, creative exploration of opportunities |
 | `researcher` | Codebase exploration, external docs, comparative analysis | `RESEARCH_FINDINGS.md` | Understanding a technology, evaluating options, gathering context |
 | `systems-architect` | Trade-off analysis, codebase readiness, system design | `SYSTEMS_PLAN.md` | Architectural decisions, structural assessment, technology selection |
 | `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Breaking architecture into increments, resuming multi-session work |
@@ -29,6 +30,8 @@ Spawn agents without waiting for the user to ask:
 Agents communicate through shared documents, not direct invocation. Each agent's output is the next agent's input:
 
 ```
+promethean → IDEA_PROPOSAL.md (optional upstream — when ideation is needed)
+    ↓
 researcher → RESEARCH_FINDINGS.md
     ↓
 systems-architect → SYSTEMS_PLAN.md
@@ -101,6 +104,7 @@ Reserve multi-perspective analysis for decisions with significant blast radius. 
 
 Each agent has a defined responsibility — respect the boundaries:
 
+- **Promethean does not research or design.** It ideates — generating and refining ideas through dialog, then writing a proposal. External research and architecture are downstream responsibilities.
 - **Researcher does not recommend.** It presents options with trade-offs.
 - **Architect does not plan steps.** It designs structure and makes decisions.
 - **Implementation planner does not redesign.** It decomposes and supervises.
@@ -114,6 +118,7 @@ When deciding whether to use an agent vs. doing the work directly:
 
 | Situation | Agent | Direct |
 |-----------|-------|--------|
+| Generating feature-level improvement ideas | Agent (`promethean`) | — |
 | Multi-source research with synthesis needed | Agent | — |
 | Quick lookup in one file | — | Direct |
 | Architecture affecting 3+ components | Agent | — |

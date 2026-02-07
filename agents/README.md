@@ -6,10 +6,10 @@ Custom agents for specialized workflows. Agents are autonomous subprocesses that
 
 ### Software Development Crew
 
-Four agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts.
+Five agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The promethean sits upstream as an optional ideation engine. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts.
 
 ```
-User Request
+ promethean ──► IDEA_PROPOSAL.md (optional — when ideation is needed)
      │
      ▼
  researcher ──► RESEARCH_FINDINGS.md
@@ -23,6 +23,7 @@ User Request
 
 | Agent | Description | Skills Used |
 |-------|-------------|-------------|
+| `promethean` | Analyzes project state, generates feature-level improvement ideas through dialog, and writes `IDEA_PROPOSAL.md` for downstream agents | — |
 | `researcher` | Explores codebases, gathers external documentation, evaluates alternatives, and distills findings into `RESEARCH_FINDINGS.md` | — |
 | `systems-architect` | Evaluates trade-offs, assesses codebase readiness, and produces architectural decisions in `SYSTEMS_PLAN.md` | — |
 | `implementation-planner` | Breaks architecture into incremental steps (`IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md`) and supervises execution | `software-planning` |
@@ -96,6 +97,7 @@ Agents require explicit file paths in `plugin.json` (directory wildcards are not
 
 ```json
 "agents": [
+  "./agents/promethean.md",
   "./agents/researcher.md",
   "./agents/systems-architect.md",
   "./agents/implementation-planner.md",

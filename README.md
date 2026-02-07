@@ -27,6 +27,7 @@ commands/                            # Shared slash commands
 ├── merge_worktree.md                # /merge_worktree — merge worktree branch
 └── create-simple-python-prj.md      # /create-simple-python-prj — scaffold project
 agents/                              # Shared agent definitions
+├── promethean.md                    # Feature-level ideation from project state → IDEA_PROPOSAL.md
 ├── researcher.md                    # Codebase exploration, external research → RESEARCH_FINDINGS.md
 ├── systems-architect.md              # Trade-off analysis, system design → SYSTEMS_PLAN.md
 ├── implementation-planner.md        # Step decomposition, execution supervision → IMPLEMENTATION_PLAN.md, WIP.md, LEARNINGS.md
@@ -133,10 +134,11 @@ Autonomous subprocesses that Claude delegates complex tasks to. Each agent runs 
 
 ### Software Development Crew
 
-Four agents that collaborate through shared documents (`RESEARCH_FINDINGS.md` → `PLAN.md` → `WIP.md`, `LEARNINGS.md`). Each can be invoked independently or in sequence. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts.
+Five agents that collaborate through shared documents (`IDEA_PROPOSAL.md` → `RESEARCH_FINDINGS.md` → `PLAN.md` → `WIP.md`, `LEARNINGS.md`). Each can be invoked independently or in sequence. The promethean sits upstream as an optional ideation engine. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts.
 
 | Agent | Description | Skills |
 |-------|-------------|--------|
+| `promethean` | Analyzes project state, generates improvement ideas through dialog → `IDEA_PROPOSAL.md` | — |
 | `researcher` | Explores codebases, gathers external docs, evaluates alternatives → `RESEARCH_FINDINGS.md` | — |
 | `systems-architect` | Trade-off analysis, codebase readiness, system design → `SYSTEMS_PLAN.md` | — |
 | `implementation-planner` | Step decomposition and execution supervision → `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | `software-planning` |

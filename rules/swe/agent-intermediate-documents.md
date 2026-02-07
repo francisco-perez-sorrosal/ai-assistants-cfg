@@ -7,6 +7,7 @@ Agent pipeline documents (`RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md`, `IMPLEMENTA
 ```
 <project-root>/
   .ai-work/
+    IDEA_PROPOSAL.md
     RESEARCH_FINDINGS.md
     SYSTEMS_PLAN.md
     IMPLEMENTATION_PLAN.md
@@ -31,7 +32,7 @@ Not stored here:
 
 | Tier | Documents | Lifetime | Cleanup |
 |------|-----------|----------|---------|
-| Ephemeral | `RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md` | Single pipeline run | Delete after downstream agent consumes them |
+| Ephemeral | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md` | Single pipeline run | Delete after downstream agent consumes them |
 | Session-persistent | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions | Merge learnings into permanent locations, then delete at feature end |
 
 ### Version Control
