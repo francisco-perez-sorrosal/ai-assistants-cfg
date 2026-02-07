@@ -31,7 +31,6 @@ Think of it as a path: an open field (many valid routes, give general direction)
 
 ```yaml
 ---
-name: my-skill-name
 description: What the skill does and when to use it. Include specific trigger terms.
 ---
 ```
@@ -53,18 +52,20 @@ allowed-tools: [Read, Write, Bash]
 
 | Field           | Required | Constraints                                                              |
 | --------------- | -------- | ------------------------------------------------------------------------ |
-| `name`          | Yes      | 1-64 chars. Lowercase alphanumeric + hyphens. Must match directory name. |
+| `name`          | No       | 1-64 chars. Lowercase alphanumeric + hyphens. Claude Code infers from directory name; omit to avoid plugin install conflicts. |
 | `description`   | Yes      | 1-1024 chars. What it does + when to use it + trigger terms.             |
 | `license`       | No       | License name or reference to bundled file.                               |
 | `compatibility` | No       | Max 500 chars. Environment requirements.                                 |
 | `metadata`      | No       | Arbitrary key-value pairs for additional info.                           |
 | `allowed-tools` | No       | Pre-approved tools the skill may use. (Experimental)                     |
 
-### Name Constraints
+### Directory Name Constraints
+
+The directory name is the skill's identity (Claude Code infers the name from it):
 
 - Lowercase letters, numbers, and hyphens only
 - No consecutive hyphens (`--`), no leading/trailing hyphens
-- Must match the parent directory name
+- If `name` field is present, it must match the directory name
 - Prefer gerund form (`processing-pdfs`) or noun phrases (`pdf-processing`)
 - Avoid vague names: `helper`, `utils`, `tools`
 
@@ -252,7 +253,7 @@ Store templates in `assets/` directory.
 
 1. Verify description includes specific trigger terms
 2. Check YAML syntax (spaces not tabs, proper `---` delimiters)
-3. Confirm `name` matches directory name exactly
+3. If `name` is present, confirm it matches directory name exactly
 4. Test with explicit trigger phrases
 5. Consult the specific agent's documentation for skill-loading behavior
 
@@ -275,7 +276,7 @@ Before deploying a skill:
 **Core Quality**
 
 - [ ] Third-person description with specific trigger terms (what + when)
-- [ ] `name` matches directory name (lowercase, hyphens only)
+- [ ] If `name` is present, it matches directory name (lowercase, hyphens only)
 - [ ] `README.md` with overview, activation triggers, and skill contents table
 - [ ] `SKILL.md` is concise (aim for ~500 lines, use progressive disclosure for longer content)
 - [ ] One-level-deep file references
