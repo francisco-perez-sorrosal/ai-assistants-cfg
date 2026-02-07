@@ -35,7 +35,13 @@ You can also trigger it explicitly by asking about creating agents or referencin
 
 Agents live in `agents/` (this repo) or `.claude/agents/` (consumer projects). Install as a plugin via `claude plugin install i-am@bit-agora`.
 
-No custom agents currently defined. For planning workflows, use the `software-planning` skill instead.
+| Agent | Purpose |
+|-------|---------|
+| `promethean` | Feature-level ideation from project state analysis |
+| `researcher` | Codebase exploration, external docs, comparative analysis |
+| `systems-architect` | Trade-off analysis, codebase readiness, system design |
+| `implementation-planner` | Step decomposition, execution supervision |
+| `context-engineer` | Context artifact auditing, architecture, and optimization |
 
 ## Related Skills
 
