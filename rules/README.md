@@ -6,6 +6,8 @@ Rules are **contextual domain knowledge files** that Claude loads automatically 
 
 ```
 rules/
+├── context-engineering/
+│   └── artifact-naming.md
 ├── swe/
 │   ├── agent-intermediate-documents.md
 │   ├── coding-style.md
@@ -20,6 +22,7 @@ rules/
 
 | File | Purpose |
 | ---- | ------- |
+| `context-engineering/artifact-naming.md` | Naming conventions for skills, agents, commands, and rules |
 | `swe/agent-intermediate-documents.md` | Agent document locations (`.ai-work/` ephemeral, `.ai-state/` persistent), lifecycle tiers, cleanup |
 | `swe/coding-style.md` | Immutability, function/file size, nesting, error handling, naming, validation |
 | `swe/software-agents-usage.md` | Agent selection, coordination pipeline, parallel execution, and boundary discipline |
@@ -195,6 +198,7 @@ Two mechanisms, each serving a different purpose:
 `install.sh` symlinks all rules from this repo to `~/.claude/rules/`. Personal rules load automatically for **every project** when contextually relevant — no per-project setup needed.
 
 ```
+rules/context-engineering/artifact-naming.md →  ~/.claude/rules/context-engineering/artifact-naming.md
 rules/swe/agent-intermediate-documents.md    →  ~/.claude/rules/swe/agent-intermediate-documents.md
 rules/swe/coding-style.md                   →  ~/.claude/rules/swe/coding-style.md
 rules/swe/software-agents-usage.md          →  ~/.claude/rules/swe/software-agents-usage.md

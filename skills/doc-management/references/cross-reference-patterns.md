@@ -19,7 +19,7 @@ Every path referenced in documentation must resolve to an existing file or direc
 
 1. Extract all paths from the document:
    - Markdown links: `[text](path/to/file)`
-   - Code blocks referencing paths: `skills/documentation/SKILL.md`
+   - Code blocks referencing paths: `skills/doc-management/SKILL.md`
    - Structure trees: indented directory listings
    - Prose references: "see `path/to/file` for details"
 
@@ -102,7 +102,7 @@ Names in documentation must match actual filenames exactly. Mismatches usually c
 - **Hyphens vs. underscores**: `create-worktree` vs. `create_worktree`
 - **Capitalization**: `README.md` vs. `readme.md`
 - **Extension presence**: `sentinel` vs. `sentinel.md`
-- **Directory vs. file**: `skills/documentation/` vs. `skills/documentation/SKILL.md`
+- **Directory vs. file**: `skills/doc-management/` vs. `skills/doc-management/SKILL.md`
 
 ### Detection
 

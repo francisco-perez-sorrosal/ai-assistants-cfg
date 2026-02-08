@@ -18,7 +18,7 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── refactoring/                     # Code restructuring patterns
 ├── code-review/                     # Code review methodology with finding classification
 ├── software-planning/               # Three-document planning model
-└── documentation/                   # Documentation quality management (README.md, catalogs)
+└── doc-management/                  # Documentation quality management (README.md, catalogs)
 commands/                            # Shared slash commands
 ├── add-rules.md                     # /add-rules — add rules to a project
 ├── co.md                            # /co — commit staged changes
@@ -117,7 +117,7 @@ This tells Claude to fetch and apply the adaptive precision mode instructions at
 
 Reusable knowledge modules that Claude loads automatically based on context. See `[skills/README.md](skills/README.md)` for the full catalog.
 
-**Categories**: AI assistant crafting (skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting) · Software development (python-development, python-prj-mgmt, refactoring, code-review, software-planning, documentation)
+**Categories**: AI assistant crafting (skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting) · Software development (python-development, python-prj-mgmt, refactoring, code-review, software-planning, doc-management)
 
 ## Commands
 
@@ -152,7 +152,7 @@ Nine agents that collaborate through shared documents (`IDEA_PROPOSAL.md` → `R
 | `context-engineer` | Audits, architects, and optimizes context artifacts; collaborates with pipeline agents as domain expert for context engineering; implements context artifacts directly or under planner supervision | `skill-crafting`, `rule-crafting`, `command-crafting`, `agent-crafting` |
 | `implementer` | Implements individual plan steps with skill-augmented coding and self-review; supports sequential and parallel execution | `software-planning`, `code-review`, `refactoring` |
 | `verifier` | Verifies completed implementation against acceptance criteria, conventions, and test coverage → `VERIFICATION_REPORT.md` | `code-review` |
-| `doc-engineer` | Maintains project-facing documentation quality (README.md, catalogs, architecture docs, changelogs); validates cross-references, catalog completeness, naming consistency, and writing quality | `documentation` |
+| `doc-engineer` | Maintains project-facing documentation quality (README.md, catalogs, architecture docs, changelogs); validates cross-references, catalog completeness, naming consistency, and writing quality | `doc-management` |
 | `sentinel` | Independent read-only ecosystem quality auditor scanning all context artifacts across eight dimensions; produces timestamped `SENTINEL_REPORT_*.md` and `SENTINEL_LOG.md` in `.ai-state/` | — |
 
 Agents activate automatically based on their description triggers, or can be invoked explicitly. See [`agents/README.md`](agents/README.md) for details.

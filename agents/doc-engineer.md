@@ -9,7 +9,7 @@ description: >
   manage context artifacts (CLAUDE.md, skills, rules, commands, agents) -- that
   is the context-engineer's domain.
 tools: Read, Write, Edit, Glob, Grep, Bash
-skills: documentation
+skills: doc-management
 permissionMode: acceptEdits
 memory: user
 ---
@@ -67,7 +67,7 @@ Verify all links and references across documentation files:
 4. **Name consistency** -- verify names in documentation match actual filenames (hyphens vs. underscores, capitalization)
 5. **Inter-document references** -- verify links between documentation files resolve correctly
 
-Use the documentation skill's cross-reference patterns for detailed validation procedures.
+Use the doc-management skill's cross-reference patterns for detailed validation procedures.
 
 ### Phase 5 -- Quality Assessment (5/6)
 

@@ -20,7 +20,7 @@ Reusable skill modules for Claude Code. Each skill is a self-contained directory
 
 | Skill | Description | When to Use |
 | --- | --- | --- |
-| **[documentation](documentation/)** | Writing and maintaining project documentation (README.md, catalogs, architecture docs, changelogs). Covers cross-reference validation, catalog maintenance, and structural integrity. | Creating or reviewing project documentation, maintaining catalog READMEs, validating cross-references, ensuring documentation freshness. |
+| **[doc-management](doc-management/)** | Writing and maintaining project documentation (README.md, catalogs, architecture docs, changelogs). Covers cross-reference validation, catalog maintenance, and structural integrity. | Creating or reviewing project documentation, maintaining catalog READMEs, validating cross-references, ensuring documentation freshness. |
 
 
 ### Software Development

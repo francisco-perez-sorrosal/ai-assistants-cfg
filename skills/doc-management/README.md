@@ -15,7 +15,7 @@ Writing and maintaining project documentation with cross-reference validation, c
 
 The skill activates automatically when the agent detects documentation tasks: README writing, documentation review, catalog maintenance, cross-reference validation, or documentation freshness assessment.
 
-Trigger explicitly by mentioning "documentation skill" or referencing it by name.
+Trigger explicitly by mentioning "doc-management skill" or referencing it by name.
 
 ## Skill Contents
 
