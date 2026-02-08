@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task Chronograph</title>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+  <style>
+    :root {
+      --color-bg: #1a1a2e;
+      --color-surface: #16213e;
+      --color-surface-alt: #0f3460;
+      --color-text: #e0e0e0;
+      --color-text-muted: #a0a0b0;
+      --color-border: #2a2a4a;
+      --color-running: #3b82f6;
+      --color-complete: #22c55e;
+      --color-failed: #ef4444;
+      --color-blocked: #eab308;
+      --color-pending: #6b7280;
+      --color-query: #a855f7;
+      --color-delegation: #3b82f6;
+      --color-result: #22c55e;
+      --color-decision: #eab308;
+      --color-response: #14b8a6;
+      --color-unknown: #6b7280;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.5;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .liveness {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+    }
+
+    .liveness-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-failed);
+      transition: background-color 0.3s;
+    }
+
+    .liveness-dot.live { background: var(--color-complete); }
+
+    .main-layout {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      height: calc(100vh - 52px);
+    }
+
+    .panel {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-left { flex: 6; min-width: 0; }
+    .panel-right { flex: 4; min-width: 0; }
+
+    .panel-header {
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-muted);
+      border-bottom: 1px solid var(--color-border);
+      flex-shrink: 0;
+    }
+
+    .panel-body {
+      padding: 0.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Interaction timeline */
+    .interaction-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.5rem 0.6rem;
+      border-bottom: 1px solid var(--color-border);
+      animation: fadeSlideIn 0.3s ease-out;
+    }
+
+    .interaction-row:last-child { border-bottom: none; }
+
+    .interaction-arrow {
+      font-size: 0.8rem;
+      white-space: nowrap;
+      color: var(--color-text-muted);
+      font-weight: 500;
+      min-width: 140px;
+    }
+
+    .interaction-arrow .source { color: var(--color-text); }
+    .interaction-arrow .target { color: var(--color-text); }
+
+    .interaction-summary {
+      flex: 1;
+      font-size: 0.82rem;
+      color: var(--color-text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .interaction-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .interaction-time {
+      font-size: 0.72rem;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+    }
+
+    /* Type badges */
+    .badge {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 10px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    .badge-query { background: var(--color-query); color: #fff; }
+    .badge-delegation { background: var(--color-delegation); color: #fff; }
+    .badge-result { background: var(--color-result); color: #fff; }
+    .badge-decision { background: var(--color-decision); color: #000; }
+    .badge-response { background: var(--color-response); color: #fff; }
+    .badge-unknown { background: var(--color-unknown); color: #fff; }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 10px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-running { background: var(--color-running); color: #fff; }
+    .status-complete { background: var(--color-complete); color: #fff; }
+    .status-failed { background: var(--color-failed); color: #fff; }
+    .status-blocked { background: var(--color-blocked); color: #000; }
+    .status-pending { background: var(--color-pending); color: #fff; }
+
+    /* Agent cards */
+    .agent-card {
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+      transition: background-color 0.3s, border-color 0.3s;
+      animation: fadeSlideIn 0.3s ease-out;
+    }
+
+    .agent-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.3rem;
+    }
+
+    .agent-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .agent-phase {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+
+    .progress-bar-track {
+      height: 4px;
+      background: var(--color-border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 0.3rem 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .agent-task-summary {
+      font-size: 0.75rem;
+      color: var(--color-text);
+      margin-bottom: 0.3rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .agent-timing {
+      font-size: 0.7rem;
+      color: var(--color-text-muted);
+    }
+
+    .agent-message {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Timeline event rows (hook events) */
+    .timeline-event {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.35rem 0.6rem;
+      border-bottom: 1px solid var(--color-border);
+      font-size: 0.78rem;
+      animation: fadeSlideIn 0.3s ease-out;
+    }
+
+    .timeline-event:last-child { border-bottom: none; }
+
+    .timeline-event-type {
+      font-weight: 600;
+      min-width: 100px;
+      color: var(--color-text-muted);
+    }
+
+    .timeline-event-agent { min-width: 100px; }
+    .timeline-event-message { flex: 1; color: var(--color-text-muted); }
+    .timeline-event-time { font-size: 0.72rem; color: var(--color-text-muted); }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--color-text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* Animations */
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main-layout {
+        flex-direction: column;
+        height: auto;
+      }
+      .panel-left, .panel-right {
+        flex: none;
+        height: 50vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Task Chronograph</h1>
+    <div class="liveness">
+      <span class="liveness-dot" id="liveness-dot"></span>
+      <span id="liveness-label">Disconnected</span>
+    </div>
+  </header>
+  {% block content %}{% endblock %}
+  <script>
+    document.body.addEventListener("htmx:sseOpen", function() {
+      document.getElementById("liveness-dot").classList.add("live");
+      document.getElementById("liveness-label").textContent = "Live";
+    });
+    document.body.addEventListener("htmx:sseError", function() {
+      document.getElementById("liveness-dot").classList.remove("live");
+      document.getElementById("liveness-label").textContent = "Disconnected";
+    });
+  </script>
+</body>
+</html>

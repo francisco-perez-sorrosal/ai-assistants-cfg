@@ -74,6 +74,8 @@ Perform cross-artifact analysis across six dimensions:
 
 ### Phase 4 — Recommendations
 
+**Incremental writing:** Write the audit report document structure (all section headers with `[pending]` markers for incomplete sections) at the start of Phase 1. Fill in Scope during Phase 1, Artifact Map during Phase 2, Findings during Phase 3, Proposed Changes during Phase 4, and update Implementation status during Phase 5. This ensures partial progress is visible even if the agent fails mid-execution, and allows the main agent to check partial results of a background agent.
+
 Produce a structured report with prioritized findings:
 
 ```markdown
@@ -228,6 +230,16 @@ After completing the analysis, return a concise summary:
 4. **Proposed actions** — prioritized list of recommended changes
 5. **Ready for review** — point the user to the full audit report for details
 
+## Progress Signals
+
+At each phase transition, append a single line to `.ai-work/PROGRESS.md` (create the file and `.ai-work/` directory if they do not exist):
+
+```
+[TIMESTAMP] [context-engineer] Phase N/5: [phase-name] -- [one-line summary of what was done or found]
+```
+
+Write the line immediately upon entering each new phase. Include optional hashtag labels at the end for categorization (e.g., `#observability #feature=auth`).
+
 ## Constraints
 
 - **Respect existing patterns.** Extend the project's conventions, don't replace them.
@@ -238,3 +250,4 @@ After completing the analysis, return a concise summary:
 - **Progressive disclosure by default.** Prefer skills with reference files over monolithic documents.
 - **Do not commit.** Produce changes for user review.
 - **Do not invent requirements.** If something is ambiguous, state your assumption.
+- **Partial output on failure.** If you encounter an error that prevents completing your full output, write what you have to `.ai-work/` with a `[PARTIAL]` header: `# [Document Title] [PARTIAL]` followed by `**Completed phases**: [list]`, `**Failed at**: Phase N -- [error]`, and `**Usable sections**: [list]`. Then continue with whatever content is reliable.

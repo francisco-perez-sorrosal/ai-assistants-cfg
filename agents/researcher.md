@@ -79,6 +79,8 @@ Do not recommend — that is the systems-architect's job. Present the options wi
 
 ### Phase 5 — Synthesis
 
+**Incremental writing:** Write the `RESEARCH_FINDINGS.md` document structure (all section headers with `[pending]` markers for incomplete sections) at the start of Phase 1. Fill in Codebase Findings during Phase 2, External Findings during Phase 3, Comparative Analysis during Phase 4, and finalize in Phase 5. This ensures partial progress is visible even if the agent fails mid-execution, and allows the main agent to check partial results of a background agent.
+
 Distill all findings into `RESEARCH_FINDINGS.md`:
 
 1. **Consolidate** — merge related findings, eliminate redundancy
@@ -193,6 +195,16 @@ After creating `RESEARCH_FINDINGS.md`, return a concise summary:
 4. **Open questions** — unresolved items needing decisions
 5. **Ready for review** — point the user to `RESEARCH_FINDINGS.md` for full details
 
+## Progress Signals
+
+At each phase transition, append a single line to `.ai-work/PROGRESS.md` (create the file and `.ai-work/` directory if they do not exist):
+
+```
+[TIMESTAMP] [researcher] Phase N/5: [phase-name] -- [one-line summary of what was done or found]
+```
+
+Write the line immediately upon entering each new phase. Include optional hashtag labels at the end for categorization (e.g., `#observability #feature=auth`).
+
 ## Constraints
 
 - **Do not design or recommend.** Your job is to gather and present information — not make architectural decisions. That is the systems-architect's role.
@@ -203,3 +215,4 @@ After creating `RESEARCH_FINDINGS.md`, return a concise summary:
 - **Respect existing patterns.** Describe what the codebase does, don't judge it — that is the systems-architect's job.
 - **Right-size the document.** A simple research task does not need 10 sections. Match depth to the complexity of the questions.
 - **Do not commit.** The document is a draft for user and downstream agent review.
+- **Partial output on failure.** If you encounter an error that prevents completing your full output, write what you have to `.ai-work/` with a `[PARTIAL]` header: `# [Document Title] [PARTIAL]` followed by `**Completed phases**: [list]`, `**Failed at**: Phase N -- [error]`, and `**Usable sections**: [list]`. Then continue with whatever content is reliable.

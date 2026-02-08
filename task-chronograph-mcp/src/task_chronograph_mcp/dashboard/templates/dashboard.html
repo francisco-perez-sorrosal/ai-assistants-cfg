@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  /* Delegation nesting */
+  .delegation-children {
+    margin-left: 1.2rem;
+    padding-left: 0.8rem;
+    border-left: 2px solid var(--color-border);
+  }
+
+  .delegation-children .delegation-children {
+    margin-left: 1rem;
+  }
+
+  /* Label badges */
+  .label-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.3rem;
+  }
+
+  .label-badge {
+    display: inline-block;
+    padding: 0.05rem 0.4rem;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    background: var(--color-surface-alt);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+  }
+
+  .agent-card-details {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    margin-top: 0.15rem;
+  }
+
+  .agent-elapsed {
+    font-style: italic;
+  }
+</style>
+
+{# Macro to render an agent card and its delegation children recursively #}
+{% macro render_agent_tree(agent_key, agents, children_map, depth) %}
+  {% set agent = agents[agent_key] %}
+  {% with agent=agent %}
+    {% include "partials/agent_card.html" %}
+  {% endwith %}
+  {% set child_keys = children_map.get(agent_key, []) %}
+  {% if child_keys and depth < 3 %}
+    <div class="delegation-children">
+      {% for child_key in child_keys %}
+        {% if child_key in agents %}
+          {{ render_agent_tree(child_key, agents, children_map, depth + 1) }}
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+<div class="main-layout"
+     hx-ext="sse"
+     sse-connect="/api/events/stream"
+     sse-swap="message">
+
+  {# Left panel: Interaction Timeline #}
+  <div class="panel panel-left">
+    <div class="panel-header">Interaction Timeline</div>
+    <div class="panel-body" id="interaction-timeline"
+         hx-get="/" hx-trigger="sse:tool_use delay:100ms"
+         hx-target="#interaction-timeline-inner" hx-select="#interaction-timeline-inner"
+         hx-swap="outerHTML">
+      <div id="interaction-timeline-inner">
+        {% if state.interactions %}
+          {% for interaction in state.interactions %}
+            {% include "partials/interaction_row.html" %}
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">No interactions recorded yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# Right panel: Agent Status Cards with delegation nesting #}
+  <div class="panel panel-right">
+    <div class="panel-header">Agent Status</div>
+    <div class="panel-body" id="agent-cards"
+         hx-get="/" hx-trigger="sse:agent_start delay:100ms, sse:agent_stop delay:100ms, sse:phase_transition delay:100ms"
+         hx-target="#agent-cards-inner" hx-select="#agent-cards-inner"
+         hx-swap="outerHTML">
+      <div id="agent-cards-inner">
+        {% if root_agents %}
+          {% for agent_key in root_agents %}
+            {{ render_agent_tree(agent_key, state.agents, children_map, 0) }}
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">No agents active yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* On SSE reconnect, fetch full state to catch up on missed events */
+  document.body.addEventListener("htmx:sseOpen", function() {
+    htmx.ajax("GET", "/", {target: "#agent-cards-inner", select: "#agent-cards-inner", swap: "outerHTML"});
+    htmx.ajax("GET", "/", {target: "#interaction-timeline-inner", select: "#interaction-timeline-inner", swap: "outerHTML"});
+  });
+</script>
+{% endblock %}

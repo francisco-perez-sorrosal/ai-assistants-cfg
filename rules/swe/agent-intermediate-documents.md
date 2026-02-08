@@ -17,7 +17,10 @@ Agent documents live in two locations based on their lifecycle:
     WIP.md
     LEARNINGS.md
     VERIFICATION_REPORT.md
+    PROGRESS.md
 ```
+
+`PROGRESS.md` is an append-only log of agent phase-transition signals. Format: `[TIMESTAMP] [AGENT] Phase N/M: [phase-name] -- [summary] #label1 #key=value`
 
 - Dot-prefixed — hidden by default in file browsers and `ls`
 - Flat structure — all documents at directory root, no per-agent subdirectories
@@ -52,7 +55,7 @@ Agents that update the index: promethean (idea ledger, future paths), any agent 
 
 | Tier | Location | Documents | Lifetime | Cleanup |
 |------|----------|-----------|----------|---------|
-| Ephemeral | `.ai-work/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md`, `VERIFICATION_REPORT.md` | Single pipeline run | Delete after downstream agent consumes them; merge recurring patterns from `VERIFICATION_REPORT.md` into `LEARNINGS.md` first |
+| Ephemeral | `.ai-work/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md`, `VERIFICATION_REPORT.md`, `PROGRESS.md` | Single pipeline run | Delete after downstream agent consumes them; merge recurring patterns from `VERIFICATION_REPORT.md` into `LEARNINGS.md` first |
 | Session-persistent | `.ai-work/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions | Merge learnings into permanent locations, then delete at feature end |
 | Permanent | `.ai-state/` | `PROJECT_INDEX.md` | Project lifetime | Committed to git, updated incrementally |
 

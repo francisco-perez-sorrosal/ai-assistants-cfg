@@ -336,6 +336,16 @@ After completing the planning documents, return a concise summary:
 5. **Supervision checkpoints** — milestones for execution review
 6. **Ready for review** — point the user to `IMPLEMENTATION_PLAN.md` for full details
 
+## Progress Signals
+
+At each phase transition, append a single line to `.ai-work/PROGRESS.md` (create the file and `.ai-work/` directory if they do not exist):
+
+```
+[TIMESTAMP] [implementation-planner] Phase N/7: [phase-name] -- [one-line summary of what was done or found]
+```
+
+Write the line immediately upon entering each new phase. Include optional hashtag labels at the end for categorization (e.g., `#observability #feature=auth`).
+
 ## Constraints
 
 - **Do not implement.** Your job is to produce the plan and supervise execution — not write production code.
@@ -348,3 +358,4 @@ After completing the planning documents, return a concise summary:
 - **Never commit without user approval.** After completing a step during supervision, stop and ask.
 - **Keep WIP.md accurate.** If reality changes, update immediately.
 - **Capture learnings as they occur.** Don't defer to the end.
+- **Partial output on failure.** If you encounter an error that prevents completing your full output, write what you have to `.ai-work/` with a `[PARTIAL]` header: `# [Document Title] [PARTIAL]` followed by `**Completed phases**: [list]`, `**Failed at**: Phase N -- [error]`, and `**Usable sections**: [list]`. Then continue with whatever content is reliable.

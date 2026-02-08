@@ -93,6 +93,8 @@ Skip this phase entirely in standalone mode.
 
 ### Phase 7 -- Report Generation
 
+**Incremental writing:** Write the `VERIFICATION_REPORT.md` document structure (all section headers with `[pending]` markers for incomplete sections) at the start of Phase 1. Fill in Scope during Phase 2, Acceptance Criteria results during Phase 3, Convention Compliance during Phase 4, Test Coverage during Phase 5, Context Artifact Completeness during Phase 6, and finalize the verdict in Phase 7. This ensures partial progress is visible even if the agent fails mid-execution, and allows the main agent to check partial results of a background agent.
+
 1. Load the report template from the `code-review` skill's `references/report-template.md`
 2. Determine the overall verdict:
    - **PASS** -- all acceptance criteria met, no FAIL findings
@@ -148,6 +150,16 @@ After creating `VERIFICATION_REPORT.md`, return a concise summary:
 4. **Scope** -- files reviewed, commits reviewed
 5. **Ready for review** -- point the user to `VERIFICATION_REPORT.md` for full details
 
+## Progress Signals
+
+At each phase transition, append a single line to `.ai-work/PROGRESS.md` (create the file and `.ai-work/` directory if they do not exist):
+
+```
+[TIMESTAMP] [verifier] Phase N/7: [phase-name] -- [one-line summary of what was done or found]
+```
+
+Write the line immediately upon entering each new phase. Include optional hashtag labels at the end for categorization (e.g., `#observability #feature=auth`).
+
 ## Constraints
 
 - **Do not fix issues.** Your job is to identify and classify -- not to write corrective code.
@@ -159,3 +171,4 @@ After creating `VERIFICATION_REPORT.md`, return a concise summary:
 - **No subjective observations.** "Could be improved" is not a finding. "Exceeds 50-line function ceiling (coding-style.md: Function Size)" is.
 - **Focus on changed code.** Do not review the entire codebase -- only files affected by the implementation.
 - **Include the human-judgment disclaimer** in every report.
+- **Partial output on failure.** If you encounter an error that prevents completing your full output, write what you have to `.ai-work/` with a `[PARTIAL]` header: `# [Document Title] [PARTIAL]` followed by `**Completed phases**: [list]`, `**Failed at**: Phase N -- [error]`, and `**Usable sections**: [list]`. Then continue with whatever content is reliable.

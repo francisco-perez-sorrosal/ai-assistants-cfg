@@ -133,6 +133,8 @@ When approved:
 
 ### Phase 7 — Document Creation
 
+**Incremental writing:** Write the `SYSTEMS_PLAN.md` document structure (all section headers with `[pending]` markers for incomplete sections) at the start of Phase 1. Fill in Acceptance Criteria during Phase 1, Codebase Readiness during Phase 2, Architecture during Phase 3, Decisions during Phase 4, Risk Assessment during Phase 5, Stakeholder Review during Phase 6, and finalize in Phase 7. This ensures partial progress is visible even if the agent fails mid-execution, and allows the main agent to check partial results of a background agent.
+
 Write `SYSTEMS_PLAN.md`:
 
 ```markdown
@@ -231,6 +233,16 @@ After creating `SYSTEMS_PLAN.md`, return a concise summary:
 6. **Stakeholder review** — tier used, key findings
 7. **Ready for review** — point the user to `SYSTEMS_PLAN.md` for full details
 
+## Progress Signals
+
+At each phase transition, append a single line to `.ai-work/PROGRESS.md` (create the file and `.ai-work/` directory if they do not exist):
+
+```
+[TIMESTAMP] [systems-architect] Phase N/7: [phase-name] -- [one-line summary of what was done or found]
+```
+
+Write the line immediately upon entering each new phase. Include optional hashtag labels at the end for categorization (e.g., `#observability #feature=auth`).
+
 ## Constraints
 
 - **Do not plan implementation steps.** Your job is to design the architecture — not break it into incremental steps. That is the implementation planner's role.
@@ -241,3 +253,4 @@ After creating `SYSTEMS_PLAN.md`, return a concise summary:
 - **Right-size the design.** A 3-file feature does not need a multi-page architecture document. Match depth to complexity.
 - **Make trade-offs explicit.** Every significant decision should show what was considered and why.
 - **Design for incrementality.** The architecture must be implementable in small, safe steps — if it requires a big-bang change, redesign it.
+- **Partial output on failure.** If you encounter an error that prevents completing your full output, write what you have to `.ai-work/` with a `[PARTIAL]` header: `# [Document Title] [PARTIAL]` followed by `**Completed phases**: [list]`, `**Failed at**: Phase N -- [error]`, and `**Usable sections**: [list]`. Then continue with whatever content is reliable.

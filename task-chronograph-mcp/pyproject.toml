@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "task-chronograph-mcp"
+version = "0.1.0"
+description = "Real-time agent pipeline observability via MCP server and web dashboard"
+requires-python = ">=3.13"
+dependencies = [
+    "mcp[cli]>=1.25,<2",
+    "starlette",
+    "sse-starlette",
+    "uvicorn",
+    "watchfiles",
+    "jinja2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+    "ruff>=0.15.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/task_chronograph_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-ra -q --strict-markers"
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "PT"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

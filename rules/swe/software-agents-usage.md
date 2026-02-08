@@ -4,15 +4,15 @@ Conventions for when and how to use the available software agents — autonomous
 
 ### Available Agents
 
-| Agent | Purpose | Output | When to Use |
-|-------|---------|--------|-------------|
-| `promethean` | Feature-level ideation from project state analysis | `IDEA_PROPOSAL.md` | Generating improvement ideas, exploring gaps, creative exploration of opportunities |
-| `researcher` | Codebase exploration, external docs, comparative analysis | `RESEARCH_FINDINGS.md` | Understanding a technology, evaluating options, gathering context |
-| `systems-architect` | Trade-off analysis, codebase readiness, system design | `SYSTEMS_PLAN.md` | Architectural decisions, structural assessment, technology selection |
-| `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Breaking architecture into increments, resuming multi-session work |
-| `context-engineer` | Context artifact domain expert and implementer — audits, architects, and optimizes context artifacts; collaborates at any pipeline stage when work involves context engineering | Audit report + artifact changes | Auditing quality, resolving conflicts, growing the context ecosystem, providing domain expertise during pipeline work involving context artifacts |
-| `implementer` | Executes individual implementation steps with skill-augmented coding and self-review | Code changes + WIP.md status update | Implementation plan ready with steps to execute |
-| `verifier` | Post-implementation review against acceptance criteria, conventions, and test coverage | `VERIFICATION_REPORT.md` | Validating completed implementation quality before committing |
+| Agent | Purpose | Output | When to Use | Background Safe |
+|-------|---------|--------|-------------|-----------------|
+| `promethean` | Feature-level ideation from project state analysis | `IDEA_PROPOSAL.md` | Generating improvement ideas, exploring gaps, creative exploration of opportunities | No (foreground only -- dialog loop requires user input) |
+| `researcher` | Codebase exploration, external docs, comparative analysis | `RESEARCH_FINDINGS.md` | Understanding a technology, evaluating options, gathering context | Yes |
+| `systems-architect` | Trade-off analysis, codebase readiness, system design | `SYSTEMS_PLAN.md` | Architectural decisions, structural assessment, technology selection | Yes |
+| `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Breaking architecture into increments, resuming multi-session work | Yes |
+| `context-engineer` | Context artifact domain expert and implementer — audits, architects, and optimizes context artifacts; collaborates at any pipeline stage when work involves context engineering | Audit report + artifact changes | Auditing quality, resolving conflicts, growing the context ecosystem, providing domain expertise during pipeline work involving context artifacts | Yes |
+| `implementer` | Executes individual implementation steps with skill-augmented coding and self-review | Code changes + WIP.md status update | Implementation plan ready with steps to execute | Yes |
+| `verifier` | Post-implementation review against acceptance criteria, conventions, and test coverage | `VERIFICATION_REPORT.md` | Validating completed implementation quality before committing | Yes |
 
 ### Proactive Agent Usage
 
@@ -28,6 +28,16 @@ Spawn agents without waiting for the user to ask:
 - Implementation plan touching context artifacts → `context-engineer` reviews step ordering and crafting spec compliance
 - Implementation plan ready with steps to execute → `implementer`
 - Implementation complete and plan adherence confirmed → `verifier`
+
+**Depth check:** Before spawning an agent that was recommended by another agent's output, confirm with the user if doing so would create a chain of 3+ agents from the original request.
+
+**Interaction reporting:** When the Task Chronograph MCP server is registered, call `report_interaction` at these key moments:
+
+1. Receiving a user query: `report_interaction(source="user", target="main_agent", summary="...", interaction_type="query")`
+2. Delegating to an agent: `report_interaction(source="main_agent", target="{agent_type}", summary="...", interaction_type="delegation")`
+3. Receiving an agent's result: `report_interaction(source="{agent_type}", target="main_agent", summary="...", interaction_type="result")`
+4. Making a pipeline decision: `report_interaction(source="main_agent", target="main_agent", summary="...", interaction_type="decision")`
+5. Responding to the user: `report_interaction(source="main_agent", target="user", summary="...", interaction_type="response")`
 
 ### Coordination Pipeline
 
@@ -177,7 +187,20 @@ Run agents in the background when their output is not immediately needed:
 - Context audits alongside active development
 - Parallel investigation of independent concerns
 
-Check background agent output before proceeding with work that depends on their findings.
+Never launch a foreground-only agent in the background. Check the Background Safety column in the Available Agents table before using `run_in_background`.
+
+Check background agent output before proceeding with work that depends on their findings. After launching a background agent, periodically check `.ai-work/PROGRESS.md` for status updates.
+
+### Delegation Depth
+
+Track how many agent spawns separate a task from the original user request:
+
+- **Depth 0:** User request handled directly by the main agent — no delegation.
+- **Depth 1:** Main agent spawns an agent (e.g., researcher). This is the standard pipeline.
+- **Depth 2:** A depth-1 agent's output recommends spawning another agent; the main agent decides whether to proceed. This is the deepest level of automatic chaining.
+- **Depth 3+:** Requires explicit user confirmation before proceeding. The main agent presents the recommendation and waits for approval.
+
+**Constraint:** Agents at depth 1 can recommend further agents, but the main agent must not automatically chain to depth 3+ without user confirmation. When in doubt about the current depth, count the number of agent spawns between the original user request and the proposed new agent.
 
 ### [CUSTOMIZE] Custom Agents
 <!-- Add project-specific agents beyond the standard five:

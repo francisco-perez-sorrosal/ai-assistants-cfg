@@ -1,0 +1,38 @@
+<div class="agent-card">
+  <div class="agent-card-header">
+    <span class="agent-name">{{ agent.agent_type }}</span>
+    <span class="status-badge status-{{ agent.status }}">{{ agent.status }}</span>
+  </div>
+
+  {% if agent.task_summary %}
+    <div class="agent-task-summary">{{ agent.task_summary }}</div>
+  {% endif %}
+
+  {% if agent.total_phases > 0 %}
+    <div class="agent-phase">Phase {{ agent.current_phase }}/{{ agent.total_phases }}{% if agent.phase_name %}: {{ agent.phase_name }}{% endif %}</div>
+    {% with phase_pct=(agent.current_phase / agent.total_phases * 100) | round,
+            bar_status=agent.status %}
+      {% include "partials/phase_bar.html" %}
+    {% endwith %}
+  {% endif %}
+
+  <div class="agent-card-details">
+    {% if agent.started_at_display %}
+      <span class="agent-timing">
+        Started {{ agent.started_at_display }}{% if agent.stopped_at_display %} · Ended {{ agent.stopped_at_display }}{% endif %}{% if agent.elapsed_display %} · {{ agent.elapsed_display }}{% endif %}
+      </span>
+    {% endif %}
+  </div>
+
+  {% if agent.last_message %}
+    <div class="agent-message">{{ agent.last_message }}</div>
+  {% endif %}
+
+  {% if agent.labels %}
+    <div class="label-badges">
+      {% for key, value in agent.labels.items() %}
+        <span class="label-badge">{% if value %}#{{ key }}={{ value }}{% else %}#{{ key }}{% endif %}</span>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>

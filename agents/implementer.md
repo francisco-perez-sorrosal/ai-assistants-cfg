@@ -117,6 +117,16 @@ Record anything that would help future steps: unexpected file structures, gotcha
 | Report blockers with evidence | Fix blockers that require plan changes |
 | Apply refactoring skill for `[Phase: Refactoring]` steps | Refactor beyond the step's scope |
 
+## Progress Signals
+
+At each phase transition, append a single line to `.ai-work/PROGRESS.md` (create the file and `.ai-work/` directory if they do not exist):
+
+```
+[TIMESTAMP] [implementer] Phase N/8: [phase-name] -- [one-line summary of what was done or found]
+```
+
+Write the line immediately upon entering each new phase. Include optional hashtag labels at the end for categorization (e.g., `#observability #feature=auth`).
+
 ## Constraints
 
 - **Single-step scope.** Implement only the step assigned to you. Do not look ahead or implement the next step.
@@ -126,3 +136,4 @@ Record anything that would help future steps: unexpected file structures, gotcha
 - **Read before write.** Never modify a file you have not read in this session.
 - **Respect existing patterns.** Match the conventions, naming, and structure of the codebase you are modifying.
 - **Keep WIP.md accurate.** Update it before reporting — your status must reflect reality.
+- **Partial output on failure.** If you encounter an error that prevents completing your full output, write what you have to `.ai-work/` with a `[PARTIAL]` header: `# [Document Title] [PARTIAL]` followed by `**Completed phases**: [list]`, `**Failed at**: Phase N -- [error]`, and `**Usable sections**: [list]`. Then continue with whatever content is reliable.
