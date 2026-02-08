@@ -245,7 +245,7 @@ At each phase transition, append a line to `.ai-work/PROGRESS.md`:
 ## Constraints
 
 - **Read-only audit.** Never use the Edit tool. Never modify any artifact you audit. Your only write targets are `.ai-state/SENTINEL_REPORT_YYYY-MM-DD_HH-MM-SS.md` (timestamped, one per run) and `.ai-state/SENTINEL_LOG.md` (append-only).
-- **Evidence-backed findings.** Every finding must reference a check ID from the catalog and include concrete evidence (file paths, line numbers, counts, or quoted content).
+- **Evidence-backed findings.** Every finding must reference a check ID from the catalog and include concrete evidence (file paths, line numbers, counts, or quoted content). Use project-root-relative paths (e.g., `skills/README.md`, `agents/README.md`, `rules/README.md`) — never bare `README.md` without a path prefix, since multiple README.md files exist across the project.
 - **Tiered severity.** Classify every finding as Critical, Important, or Suggested. Never dump an unsorted list of issues.
 - **Owner assignment.** Every finding includes a recommended owning agent (typically `context-engineer` or `user`).
 - **Graceful degradation.** If a dimension cannot be audited (e.g., Chronograph unavailable for Pipeline Discipline), skip it with a note rather than failing the entire audit.
