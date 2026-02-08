@@ -20,6 +20,7 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
   - `claude_desktop_config.json` — Claude Desktop settings (MCP servers)
   - `userPreferences.txt` — Adaptive precision mode instructions
   - `settings.local.json` — Local permission settings
+- `task-chronograph-mcp/` — Pipeline observability MCP server (agent lifecycle, interactions, dashboard)
 - `install.sh` — Multi-assistant installer (`--claude` default, prompts for plugin)
 
 ## Working on this Repo

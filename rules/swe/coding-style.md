@@ -111,6 +111,21 @@ if retries > MAX_RETRIES:
     sleep(RETRY_DELAY_SECONDS)
 ```
 
+### Timestamp Formatting
+
+Use the appropriate format for the context:
+
+- **Data interchange** (JSON, APIs, logs): ISO 8601 — `2026-02-08T14:30:00Z`
+- **Filenames**: `YYYY-MM-DD_HH-MM-SS` — no colons, which are invalid or problematic on macOS/Windows
+- **User-facing display**: locale-aware formatting
+
+Language-specific:
+- Python: `datetime.isoformat()`
+- Java/Kotlin: `Instant.toString()`
+- JS/TS: `toISOString()`
+
+Always store and transmit in UTC. Convert to local time only at the presentation layer.
+
 ### Naming
 
 - Variables and functions: descriptive, intention-revealing names

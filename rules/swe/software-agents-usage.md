@@ -6,13 +6,14 @@ Conventions for when and how to use the available software agents — autonomous
 
 | Agent | Purpose | Output | When to Use | Background Safe |
 |-------|---------|--------|-------------|-----------------|
-| `promethean` | Feature-level ideation from project state analysis | `IDEA_PROPOSAL.md` + `CLAUDE.md` `## Structure` sync | Generating improvement ideas, exploring gaps, creative exploration of opportunities | No (foreground only -- dialog loop requires user input) |
+| `promethean` | Feature-level ideation from project state analysis, informed by sentinel health baseline | `IDEA_PROPOSAL.md` (`.ai-work/`), `IDEA_LEDGER_*.md` (`.ai-state/`) + `CLAUDE.md` `## Structure` sync | Generating improvement ideas, exploring gaps, creative exploration of opportunities | No (foreground only -- dialog loop requires user input) |
 | `researcher` | Codebase exploration, external docs, comparative analysis | `RESEARCH_FINDINGS.md` | Understanding a technology, evaluating options, gathering context | Yes |
 | `systems-architect` | Trade-off analysis, codebase readiness, system design | `SYSTEMS_PLAN.md` | Architectural decisions, structural assessment, technology selection | Yes |
 | `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Breaking architecture into increments, resuming multi-session work | Yes |
 | `context-engineer` | Context artifact domain expert and implementer — audits, architects, and optimizes context artifacts; collaborates at any pipeline stage when work involves context engineering | Audit report + artifact changes | Auditing quality, resolving conflicts, growing the context ecosystem, providing domain expertise during pipeline work involving context artifacts | Yes |
 | `implementer` | Executes individual implementation steps with skill-augmented coding and self-review | Code changes + WIP.md status update | Implementation plan ready with steps to execute | Yes |
 | `verifier` | Post-implementation review against acceptance criteria, conventions, and test coverage | `VERIFICATION_REPORT.md` | Validating completed implementation quality before committing | Yes |
+| `sentinel` | Read-only ecosystem quality auditor scanning context artifacts across eight dimensions (seven per-artifact + ecosystem coherence as system-level composite) | `SENTINEL_REPORT.md` + `SENTINEL_LOG.md` (`.ai-state/`) | Ecosystem health checks, pre-pipeline baselines, post-change regression detection | Yes |
 
 ### Proactive Agent Usage
 
@@ -28,6 +29,10 @@ Spawn agents without waiting for the user to ask:
 - Implementation plan touching context artifacts → `context-engineer` reviews step ordering and crafting spec compliance
 - Implementation plan ready with steps to execute → `implementer`
 - Implementation complete and plan adherence confirmed → `verifier`
+- Ecosystem health check needed → `sentinel`
+- Before major pipeline runs (baseline quality) → `sentinel`
+- After large artifact changes (regression detection) → `sentinel`
+- Promethean ideation requested → check `.ai-state/SENTINEL_LOG.md` first; if missing or stale (>7 days), run `sentinel` before `promethean`
 
 **Depth check:** Before spawning an agent that was recommended by another agent's output, confirm with the user if doing so would create a chain of 3+ agents from the original request.
 
@@ -44,7 +49,9 @@ Spawn agents without waiting for the user to ask:
 Agents communicate through shared documents, not direct invocation. Each agent's output is the next agent's input:
 
 ```
-promethean → IDEA_PROPOSAL.md (optional upstream — when ideation is needed)
+sentinel → SENTINEL_REPORT.md + SENTINEL_LOG.md (.ai-state/ — ecosystem baseline)
+    ↓
+promethean → IDEA_PROPOSAL.md + IDEA_LEDGER_*.md (reads sentinel report for health context)
     ↓
 researcher → RESEARCH_FINDINGS.md
     ↓
@@ -153,6 +160,7 @@ Each agent has a defined responsibility — respect the boundaries:
 - **Context engineer does not implement features.** It manages the information architecture. In pipeline mode, it provides domain expertise (artifact placement, token budget, progressive disclosure) — not architectural decisions or implementation steps. It implements context artifacts directly or under planner supervision, but does not implement application features.
 - **Implementer does not plan.** It receives a step and implements it. It does not choose what to build, skip steps, reorder the plan, or make go/no-go decisions. It reports blockers with evidence rather than resolving them.
 - **Verifier does not fix.** It identifies issues and recommends corrective action through documents. Fixes go back to the implementation-planner (for pipeline work) or the user (for standalone review). It does not check plan adherence (that is Phase 7's job) or assess context artifact quality (that is the context-engineer's job).
+- **Sentinel does not fix.** It diagnoses and reports across the full ecosystem. Remediation goes to the context-engineer (for artifact fixes) or the user (for pipeline corrections). It never modifies the artifacts it audits.
 
 When an agent encounters work outside its boundary, it flags the need and recommends invoking the appropriate agent.
 
@@ -176,6 +184,8 @@ When deciding whether to use an agent vs. doing the work directly:
 | Single obvious code change with clear placement | — | Direct |
 | Post-implementation quality review of a complex feature | Agent (`verifier`) | — |
 | Quick review of a single-file change | — | Direct (or `code-review` skill) |
+| Full ecosystem health check or quality baseline | Agent (`sentinel`) | — |
+| Broad cross-reference or consistency audit | Agent (`sentinel`) | — |
 
 **Rule of thumb:** If the task benefits from a separate context window (large scope, multiple phases, structured output), use an agent. If it fits in the current conversation, work directly.
 

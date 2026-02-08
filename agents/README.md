@@ -6,10 +6,13 @@ Custom agents for specialized workflows. Agents are autonomous subprocesses that
 
 ### Software Development Crew
 
-Seven agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The promethean sits upstream as an optional ideation engine. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts. The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate.
+Eight agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The sentinel provides ecosystem health baselines that feed into the promethean's ideation. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts. The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate.
 
 ```
- promethean ──► IDEA_PROPOSAL.md (optional — when ideation is needed)
+ sentinel ──► SENTINEL_REPORT.md + SENTINEL_LOG.md (.ai-state/)
+     │
+     ▼
+ promethean ──► IDEA_PROPOSAL.md + IDEA_LEDGER_*.md (reads sentinel baseline)
      │
      ▼
  researcher ──► RESEARCH_FINDINGS.md
@@ -29,13 +32,14 @@ Seven agents that collaborate on software development tasks, each with a dedicat
 
 | Agent | Description | Skills Used |
 |-------|-------------|-------------|
-| `promethean` | Analyzes project state, generates feature-level improvement ideas through dialog, and writes `IDEA_PROPOSAL.md` for downstream agents | — |
+| `promethean` | Analyzes project state informed by sentinel health baseline, generates feature-level improvement ideas through dialog, writes `IDEA_PROPOSAL.md` for downstream agents and timestamped `IDEA_LEDGER_*.md` to `.ai-state/` | — |
 | `researcher` | Explores codebases, gathers external documentation, evaluates alternatives, and distills findings into `RESEARCH_FINDINGS.md` | — |
 | `systems-architect` | Evaluates trade-offs, assesses codebase readiness, and produces architectural decisions in `SYSTEMS_PLAN.md` | — |
 | `implementation-planner` | Breaks architecture into incremental steps (`IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md`) and supervises execution | `software-planning` |
 | `context-engineer` | Audits, architects, and optimizes context artifacts (CLAUDE.md, skills, rules, commands, agents); collaborates with pipeline agents as domain expert for context engineering; implements context artifacts directly or under planner supervision | `skill-crafting`, `rule-crafting`, `command-crafting`, `agent-crafting` |
 | `implementer` | Implements individual plan steps with skill-augmented coding, self-reviews against conventions, and reports completion. Supports sequential and parallel execution | `software-planning`, `code-review`, `refactoring` |
 | `verifier` | Verifies completed implementation against acceptance criteria, coding conventions, and test coverage; produces `VERIFICATION_REPORT.md` with pass/fail/warn findings | `code-review` |
+| `sentinel` | Read-only ecosystem quality auditor scanning all context artifacts across eight dimensions (seven per-artifact + ecosystem coherence as system-level composite); produces `SENTINEL_REPORT.md` (overwritten each run) and `SENTINEL_LOG.md` (historical metrics) in `.ai-state/` | — |
 
 ## How Agents Work
 
@@ -111,7 +115,8 @@ Agents require explicit file paths in `plugin.json` (directory wildcards are not
   "./agents/implementation-planner.md",
   "./agents/context-engineer.md",
   "./agents/verifier.md",
-  "./agents/implementer.md"
+  "./agents/implementer.md",
+  "./agents/sentinel.md"
 ]
 ```
 

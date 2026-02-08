@@ -27,6 +27,7 @@
     "./agents/context-engineer.md",
     "./agents/promethean.md",
     "./agents/verifier.md",
-    "./agents/implementer.md"
+    "./agents/implementer.md",
+    "./agents/sentinel.md"
   ]
 }

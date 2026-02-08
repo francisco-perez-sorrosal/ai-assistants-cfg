@@ -38,18 +38,24 @@ Not stored here:
 ```
 <project-root>/
   .ai-state/
-    PROJECT_INDEX.md
+    IDEA_LEDGER_*.md
+    SENTINEL_REPORT.md
+    SENTINEL_LOG.md
 ```
 
 - Committed to git — versioned, shareable, accumulates value over time
 - Created on first use — agents create `.ai-state/` when writing their first persistent document
 
-`PROJECT_INDEX.md` contains:
-- **Inventory** — what artifacts exist (skills, agents, commands, rules) and their purposes
-- **Idea Ledger** — ideas implemented, pending, or discarded (with reasons)
+`IDEA_LEDGER_*.md` are the promethean's timestamped records of ideation outcomes. Each run produces a new file carrying forward all previous entries:
+- **Sentinel baseline** — reference to the sentinel report that informed ideation
+- **Implemented / Pending / Discarded** — idea tracking with dates and rationale
 - **Future Paths** — directional possibilities for where the project could go (compatible or mutually exclusive)
 
-Agents that update the index: promethean (idea ledger, future paths), any agent that adds or removes artifacts (inventory).
+Artifact inventory is not stored here — it is derivable from the filesystem and audited by the sentinel.
+
+`SENTINEL_REPORT.md` is the sentinel's latest audit report (overwritten each run — only the most recent report is kept). `SENTINEL_LOG.md` is an append-only table of sentinel run summaries (timestamp, health grade, finding counts, ecosystem coherence grade) providing historical metric tracking.
+
+Agents that update `.ai-state/`: promethean (idea ledger, future paths), sentinel (report, log).
 
 ### Document Lifecycle
 
@@ -57,7 +63,7 @@ Agents that update the index: promethean (idea ledger, future paths), any agent 
 |------|----------|-----------|----------|---------|
 | Ephemeral | `.ai-work/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md`, `VERIFICATION_REPORT.md`, `PROGRESS.md` | Single pipeline run | Delete after downstream agent consumes them; merge recurring patterns from `VERIFICATION_REPORT.md` into `LEARNINGS.md` first |
 | Session-persistent | `.ai-work/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions | Merge learnings into permanent locations, then delete at feature end |
-| Permanent | `.ai-state/` | `PROJECT_INDEX.md` | Project lifetime | Committed to git, updated incrementally |
+| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT.md`, `SENTINEL_LOG.md` | Project lifetime | Committed to git; `SENTINEL_REPORT.md` overwritten each run, `SENTINEL_LOG.md` append-only, `IDEA_LEDGER_*.md` timestamped per run |
 
 ### Version Control
 
