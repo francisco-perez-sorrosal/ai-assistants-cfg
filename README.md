@@ -17,7 +17,8 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── python-prj-mgmt/                # Project setup with pixi/uv
 ├── refactoring/                     # Code restructuring patterns
 ├── code-review/                     # Code review methodology with finding classification
-└── software-planning/               # Three-document planning model
+├── software-planning/               # Three-document planning model
+└── documentation/                   # Documentation quality management (README.md, catalogs)
 commands/                            # Shared slash commands
 ├── add-rules.md                     # /add-rules — add rules to a project
 ├── co.md                            # /co — commit staged changes
@@ -116,7 +117,7 @@ This tells Claude to fetch and apply the adaptive precision mode instructions at
 
 Reusable knowledge modules that Claude loads automatically based on context. See `[skills/README.md](skills/README.md)` for the full catalog.
 
-**Categories**: AI assistant crafting (skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting) · Software development (python-development, python-prj-mgmt, refactoring, code-review, software-planning)
+**Categories**: AI assistant crafting (skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting) · Software development (python-development, python-prj-mgmt, refactoring, code-review, software-planning, documentation)
 
 ## Commands
 
