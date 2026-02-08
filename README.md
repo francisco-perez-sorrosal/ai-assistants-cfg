@@ -17,16 +17,15 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── python-prj-mgmt/                # Project setup with pixi/uv
 ├── refactoring/                     # Code restructuring patterns
 ├── code-review/                     # Code review methodology with finding classification
-├── software-planning/               # Three-document planning model
-├── stock-clusters/                  # Stock clustering analysis
-└── ticker/                          # Stock ticker lookup
+└── software-planning/               # Three-document planning model
 commands/                            # Shared slash commands
 ├── add-rules.md                     # /add-rules — add rules to a project
 ├── co.md                            # /co — commit staged changes
 ├── cop.md                           # /cop — commit and push
-├── create_worktree.md               # /create_worktree — new git worktree
-├── merge_worktree.md                # /merge_worktree — merge worktree branch
-└── create-simple-python-prj.md      # /create-simple-python-prj — scaffold project
+├── create-simple-python-prj.md      # /create-simple-python-prj — scaffold project
+├── create-worktree.md               # /create-worktree — new git worktree
+├── manage-readme.md                 # /manage-readme — create or refine README.md files
+└── merge-worktree.md                # /merge-worktree — merge worktree branch
 agents/                              # Shared agent definitions
 ├── promethean.md                    # Feature-level ideation from project state → IDEA_PROPOSAL.md
 ├── researcher.md                    # Codebase exploration, external research → RESEARCH_FINDINGS.md
@@ -35,8 +34,11 @@ agents/                              # Shared agent definitions
 ├── context-engineer.md              # Context artifact auditing, optimization, ecosystem management
 ├── implementer.md                   # Step execution with skill-augmented coding and self-review
 ├── verifier.md                      # Post-implementation review → VERIFICATION_REPORT.md
+├── doc-engineer.md                  # Documentation quality management → README.md audits and fixes
+└── sentinel.md                      # Independent ecosystem quality auditor → SENTINEL_REPORT_*.md
 rules/                               # Rules (installed to ~/.claude/rules/)
 ├── swe/
+│   ├── agent-intermediate-documents.md # Agent document locations and lifecycle
 │   ├── coding-style.md              # Language-independent structural conventions
 │   ├── software-agents-usage.md     # Agent coordination, parallel execution, boundaries
 │   └── vcs/
@@ -114,7 +116,7 @@ This tells Claude to fetch and apply the adaptive precision mode instructions at
 
 Reusable knowledge modules that Claude loads automatically based on context. See `[skills/README.md](skills/README.md)` for the full catalog.
 
-**Categories**: AI assistant crafting (skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting) · Software development (python-development, python-prj-mgmt, refactoring, code-review, software-planning) · Domain-specific (stock-clusters, ticker)
+**Categories**: AI assistant crafting (skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting) · Software development (python-development, python-prj-mgmt, refactoring, code-review, software-planning)
 
 ## Commands
 
@@ -126,9 +128,10 @@ Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin
 | `/add-rules [names... \| all]`                             | Copy rules into the current project for customization      |
 | `/co`                                                     | Create a commit for staged (or all) changes                |
 | `/cop`                                                    | Create a commit and push to remote                         |
-| `/create_worktree [branch]`                               | Create a new git worktree in `.trees/`                     |
-| `/merge_worktree [branch]`                                | Merge a worktree branch back into current branch           |
+| `/create-worktree [branch]`                               | Create a new git worktree in `.trees/`                     |
+| `/merge-worktree [branch]`                                | Merge a worktree branch back into current branch           |
 | `/create-simple-python-prj [name] [desc] [pkg-mgr] [dir]` | Scaffold a Python project (defaults: pixi, `~/dev`)        |
+| `/manage-readme [file-paths...]`                           | Create or refine README.md files with precision-first style |
 
 
 ## Agents
@@ -137,7 +140,7 @@ Autonomous subprocesses that Claude delegates complex tasks to. Each agent runs 
 
 ### Software Development Crew
 
-Seven agents that collaborate through shared documents (`IDEA_PROPOSAL.md` → `RESEARCH_FINDINGS.md` → `PLAN.md` → `WIP.md`, `LEARNINGS.md` → `VERIFICATION_REPORT.md`). Each can be invoked independently or in sequence. The promethean sits upstream as an optional ideation engine. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts. The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate.
+Nine agents that collaborate through shared documents (`IDEA_PROPOSAL.md` → `RESEARCH_FINDINGS.md` → `PLAN.md` → `WIP.md`, `LEARNINGS.md` → `VERIFICATION_REPORT.md`). Each can be invoked independently or in sequence. The promethean sits upstream as an optional ideation engine. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts. The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate. The doc-engineer maintains project-facing documentation quality. The sentinel operates independently as an on-demand ecosystem auditor whose reports any agent can consume.
 
 | Agent | Description | Skills |
 |-------|-------------|--------|
@@ -148,6 +151,8 @@ Seven agents that collaborate through shared documents (`IDEA_PROPOSAL.md` → `
 | `context-engineer` | Audits, architects, and optimizes context artifacts; collaborates with pipeline agents as domain expert for context engineering; implements context artifacts directly or under planner supervision | `skill-crafting`, `rule-crafting`, `command-crafting`, `agent-crafting` |
 | `implementer` | Implements individual plan steps with skill-augmented coding and self-review; supports sequential and parallel execution | `software-planning`, `code-review`, `refactoring` |
 | `verifier` | Verifies completed implementation against acceptance criteria, conventions, and test coverage → `VERIFICATION_REPORT.md` | `code-review` |
+| `doc-engineer` | Maintains project-facing documentation quality (README.md, catalogs, architecture docs, changelogs); validates cross-references, catalog completeness, naming consistency, and writing quality | `documentation` |
+| `sentinel` | Independent read-only ecosystem quality auditor scanning all context artifacts across eight dimensions; produces timestamped `SENTINEL_REPORT_*.md` and `SENTINEL_LOG.md` in `.ai-state/` | — |
 
 Agents activate automatically based on their description triggers, or can be invoked explicitly. See [`agents/README.md`](agents/README.md) for details.
 

@@ -7,6 +7,7 @@ Rules are **contextual domain knowledge files** that Claude loads automatically 
 ```
 rules/
 ├── swe/
+│   ├── agent-intermediate-documents.md
 │   ├── coding-style.md
 │   ├── software-agents-usage.md
 │   └── vcs/
@@ -19,6 +20,7 @@ rules/
 
 | File | Purpose |
 | ---- | ------- |
+| `swe/agent-intermediate-documents.md` | Agent document locations (`.ai-work/` ephemeral, `.ai-state/` persistent), lifecycle tiers, cleanup |
 | `swe/coding-style.md` | Immutability, function/file size, nesting, error handling, naming, validation |
 | `swe/software-agents-usage.md` | Agent selection, coordination pipeline, parallel execution, and boundary discipline |
 | `swe/vcs/git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
@@ -193,6 +195,7 @@ Two mechanisms, each serving a different purpose:
 `install.sh` symlinks all rules from this repo to `~/.claude/rules/`. Personal rules load automatically for **every project** when contextually relevant — no per-project setup needed.
 
 ```
+rules/swe/agent-intermediate-documents.md    →  ~/.claude/rules/swe/agent-intermediate-documents.md
 rules/swe/coding-style.md                   →  ~/.claude/rules/swe/coding-style.md
 rules/swe/software-agents-usage.md          →  ~/.claude/rules/swe/software-agents-usage.md
 rules/swe/vcs/git-commit-hygiene.md         →  ~/.claude/rules/swe/vcs/git-commit-hygiene.md
