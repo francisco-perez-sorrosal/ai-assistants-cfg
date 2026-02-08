@@ -3,9 +3,10 @@ name: promethean
 description: >
   Ideation engine that analyzes a project's current state and generates concrete
   improvement ideas at the feature level. Accepts an optional seed (topic, gist,
-  or domain direction) to focus ideation. Produces an IDEA_PROPOSAL.md that feeds
-  into the researcher → systems-architect pipeline. Use when the user wants fresh
-  ideas, feature-level suggestions, or creative exploration of project gaps and
+  or domain direction) to focus ideation. Consumes sentinel reports when available
+  for health context. Produces an IDEA_PROPOSAL.md that feeds into the
+  researcher → systems-architect pipeline. Use when the user wants fresh ideas,
+  feature-level suggestions, or creative exploration of project gaps and
   opportunities.
 tools: Read, Glob, Grep, Bash, Write, Edit
 model: opus
@@ -42,7 +43,7 @@ Determine the ideation focus:
 Establish the ecosystem's current health state before ideating. The sentinel's persistent reports in `.ai-state/` are the authoritative source.
 
 1. **Read `.ai-state/SENTINEL_LOG.md`** — find the latest row. Extract the timestamp, health grade, and ecosystem coherence grade
-2. **If a report exists and is recent** (within 7 days based on the log's timestamp), read `.ai-state/SENTINEL_REPORT.md`. Extract:
+2. **If a report exists and is recent** (within 7 days based on the log's timestamp), read the latest `.ai-state/SENTINEL_REPORT_*.md` (identified by timestamp in the filename or from the log's Report File column). Extract:
    - **Ecosystem health grade** — overall system state
    - **Ecosystem coherence grade** — system-level integration quality (orphaned artifacts, pipeline handoff gaps, structural blind spots)
    - **Critical/Important findings** — active problems to avoid aggravating
@@ -72,7 +73,7 @@ Build a picture of what exists from three information sources:
 - Review discarded ideas — understand why they were rejected
 - Check future paths — align ideation with stated project directions
 
-**Source 3 — Sentinel report** (`.ai-state/SENTINEL_REPORT.md`, loaded in Phase 2):
+**Source 3 — Sentinel report** (latest `.ai-state/SENTINEL_REPORT_*.md`, loaded in Phase 2):
 - Use the per-artifact scorecard to identify weak artifacts worth improving
 - Use ecosystem coherence findings (system-level) to spot structural opportunities
 - Use the findings list to understand what is already flagged for remediation
@@ -220,10 +221,10 @@ When the idea's scope is clear and no research is needed, the systems-architect 
 
 ### With the Sentinel
 
-The sentinel's persistent reports are a required input. Data flows through specific files:
+The promethean consumes sentinel reports as input for ideation. The sentinel operates independently — it does not exist to feed the promethean, and the promethean's consumption of its reports is a unilateral decision. Data flows through specific files:
 
-- **`.ai-state/SENTINEL_LOG.md`** — Phase 2 reads this to check report recency and get summary metrics
-- **`.ai-state/SENTINEL_REPORT.md`** — Phase 2 reads the full report for health grade, ecosystem coherence grade, findings, and per-artifact scores
+- **`.ai-state/SENTINEL_LOG.md`** — Phase 2 reads this to check report recency, get summary metrics, and identify the latest report file
+- **`.ai-state/SENTINEL_REPORT_*.md`** — Phase 2 reads the latest report (by timestamp in filename) for health grade, ecosystem coherence grade, findings, and per-artifact scores
 - The idea ledger records which sentinel run was used as baseline (`Sentinel baseline` timestamp), creating a traceable link between ecosystem state and the ideas it informed
 - Ecosystem coherence gaps from the report inform Phase 4 idea generation — structural holes are high-value opportunities
 - Critical/Important findings constrain ideation — don't propose changes that conflict with known issues

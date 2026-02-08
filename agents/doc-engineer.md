@@ -31,7 +31,7 @@ Determine what documentation to evaluate:
 3. **Set mode** -- audit (report only) or fix (report and remediate).
 4. **Echo the scope** before proceeding so the user can correct misinterpretation.
 
-If invoked with a sentinel report (`SENTINEL_REPORT.md`), extract documentation-related findings as the remediation work queue.
+If invoked with a sentinel report (latest `SENTINEL_REPORT_*.md` from `.ai-state/`), extract documentation-related findings as the remediation work queue.
 
 ### Phase 2 -- Documentation Inventory (2/6)
 
@@ -138,7 +138,7 @@ When both agents are invoked, the doc-engineer runs AFTER the context-engineer t
 ### With the Sentinel
 
 - The sentinel detects ecosystem-wide documentation drift across its eight audit dimensions
-- The doc-engineer consumes sentinel findings from `.ai-state/SENTINEL_REPORT.md` as a remediation work queue
+- The doc-engineer consumes sentinel findings from the latest `.ai-state/SENTINEL_REPORT_*.md` as a remediation work queue
 - Boundary: the sentinel diagnoses broadly; the doc-engineer remediates documentation specifically
 
 ### With the Implementer

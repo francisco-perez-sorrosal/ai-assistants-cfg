@@ -6,13 +6,10 @@ Custom agents for specialized workflows. Agents are autonomous subprocesses that
 
 ### Software Development Crew
 
-Nine agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The sentinel provides ecosystem health baselines that feed into the promethean's ideation. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts. The doc-engineer maintains project-facing documentation quality (README.md files, catalogs, architecture docs). The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate.
+Nine agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The sentinel and context-engineer operate independently alongside the pipeline -- the sentinel as an on-demand ecosystem auditor whose reports any agent can consume, and the context-engineer as a domain expert at any pipeline stage. The doc-engineer maintains project-facing documentation quality (README.md files, catalogs, architecture docs). The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate.
 
 ```
- sentinel ──► SENTINEL_REPORT.md + SENTINEL_LOG.md (.ai-state/)
-     │
-     ▼
- promethean ──► IDEA_PROPOSAL.md + IDEA_LEDGER_*.md (reads sentinel baseline)
+ promethean ──► IDEA_PROPOSAL.md + IDEA_LEDGER_*.md
      │
      ▼
  researcher ──► RESEARCH_FINDINGS.md
@@ -28,11 +25,16 @@ Nine agents that collaborate on software development tasks, each with a dedicate
      │                    changes   │   doc quality)│
      ▼                              └──────────────┘
  verifier ──────────────► VERIFICATION_REPORT.md (optional — when quality review needed)
+
+ ┌──────────────────────────────────────────────────────────────────┐
+ │ sentinel ──► SENTINEL_REPORT_*.md + SENTINEL_LOG.md (.ai-state/)│
+ │ (independent audit — any agent or user can consume reports)      │
+ └──────────────────────────────────────────────────────────────────┘
 ```
 
 | Agent | Description | Skills Used |
 |-------|-------------|-------------|
-| `promethean` | Analyzes project state informed by sentinel health baseline, generates feature-level improvement ideas through dialog, writes `IDEA_PROPOSAL.md` for downstream agents and timestamped `IDEA_LEDGER_*.md` to `.ai-state/` | — |
+| `promethean` | Analyzes project state, optionally consuming sentinel reports for health context, generates feature-level improvement ideas through dialog, writes `IDEA_PROPOSAL.md` for downstream agents and timestamped `IDEA_LEDGER_*.md` to `.ai-state/` | — |
 | `researcher` | Explores codebases, gathers external documentation, evaluates alternatives, and distills findings into `RESEARCH_FINDINGS.md` | — |
 | `systems-architect` | Evaluates trade-offs, assesses codebase readiness, and produces architectural decisions in `SYSTEMS_PLAN.md` | — |
 | `implementation-planner` | Breaks architecture into incremental steps (`IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md`) and supervises execution | `software-planning` |
@@ -40,7 +42,7 @@ Nine agents that collaborate on software development tasks, each with a dedicate
 | `implementer` | Implements individual plan steps with skill-augmented coding, self-reviews against conventions, and reports completion. Supports sequential and parallel execution | `software-planning`, `code-review`, `refactoring` |
 | `verifier` | Verifies completed implementation against acceptance criteria, coding conventions, and test coverage; produces `VERIFICATION_REPORT.md` with pass/fail/warn findings | `code-review` |
 | `doc-engineer` | Maintains project-facing documentation quality (README.md, catalogs, architecture docs, changelogs); validates cross-references, catalog completeness, naming consistency, and writing quality | `documentation` |
-| `sentinel` | Read-only ecosystem quality auditor scanning all context artifacts across eight dimensions (seven per-artifact + ecosystem coherence as system-level composite); produces `SENTINEL_REPORT.md` (overwritten each run) and `SENTINEL_LOG.md` (historical metrics) in `.ai-state/` | — |
+| `sentinel` | Independent read-only ecosystem quality auditor scanning all context artifacts across eight dimensions (seven per-artifact + ecosystem coherence as system-level composite); produces timestamped `SENTINEL_REPORT_*.md` (accumulates) and `SENTINEL_LOG.md` (historical metrics) in `.ai-state/` — any agent or user can consume its reports | — |
 
 ## How Agents Work
 

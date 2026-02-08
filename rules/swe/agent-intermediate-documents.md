@@ -39,7 +39,7 @@ Not stored here:
 <project-root>/
   .ai-state/
     IDEA_LEDGER_*.md
-    SENTINEL_REPORT.md
+    SENTINEL_REPORT_*.md
     SENTINEL_LOG.md
 ```
 
@@ -53,7 +53,7 @@ Not stored here:
 
 Artifact inventory is not stored here — it is derivable from the filesystem and audited by the sentinel.
 
-`SENTINEL_REPORT.md` is the sentinel's latest audit report (overwritten each run — only the most recent report is kept). `SENTINEL_LOG.md` is an append-only table of sentinel run summaries (timestamp, health grade, finding counts, ecosystem coherence grade) providing historical metric tracking.
+`SENTINEL_REPORT_*.md` are the sentinel's timestamped audit reports (one per run, accumulate like `IDEA_LEDGER_*.md`). Each filename includes the run timestamp in filesystem-safe format: `SENTINEL_REPORT_YYYY-MM-DD_HH-MM-SS.md`. `SENTINEL_LOG.md` is an append-only table of sentinel run summaries (timestamp, report file, health grade, finding counts, ecosystem coherence grade) providing historical metric tracking and linking to specific report files.
 
 Agents that update `.ai-state/`: promethean (idea ledger, future paths), sentinel (report, log).
 
@@ -63,7 +63,7 @@ Agents that update `.ai-state/`: promethean (idea ledger, future paths), sentine
 |------|----------|-----------|----------|---------|
 | Ephemeral | `.ai-work/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md`, `VERIFICATION_REPORT.md`, `PROGRESS.md` | Single pipeline run | Delete after downstream agent consumes them; merge recurring patterns from `VERIFICATION_REPORT.md` into `LEARNINGS.md` first |
 | Session-persistent | `.ai-work/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions | Merge learnings into permanent locations, then delete at feature end |
-| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT.md`, `SENTINEL_LOG.md` | Project lifetime | Committed to git; `SENTINEL_REPORT.md` overwritten each run, `SENTINEL_LOG.md` append-only, `IDEA_LEDGER_*.md` timestamped per run |
+| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md` | Project lifetime | Committed to git; `SENTINEL_REPORT_*.md` timestamped per run (accumulates), `SENTINEL_LOG.md` append-only, `IDEA_LEDGER_*.md` timestamped per run |
 
 ### Version Control
 

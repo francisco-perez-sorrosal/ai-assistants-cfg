@@ -6,7 +6,7 @@ Conventions for when and how to use the available software agents — autonomous
 
 | Agent | Purpose | Output | When to Use | Background Safe |
 |-------|---------|--------|-------------|-----------------|
-| `promethean` | Feature-level ideation from project state analysis, informed by sentinel health baseline | `IDEA_PROPOSAL.md` (`.ai-work/`), `IDEA_LEDGER_*.md` (`.ai-state/`) + `CLAUDE.md` `## Structure` sync | Generating improvement ideas, exploring gaps, creative exploration of opportunities | No (foreground only -- dialog loop requires user input) |
+| `promethean` | Feature-level ideation from project state analysis, optionally consuming sentinel reports for health context | `IDEA_PROPOSAL.md` (`.ai-work/`), `IDEA_LEDGER_*.md` (`.ai-state/`) + `CLAUDE.md` `## Structure` sync | Generating improvement ideas, exploring gaps, creative exploration of opportunities | No (foreground only -- dialog loop requires user input) |
 | `researcher` | Codebase exploration, external docs, comparative analysis | `RESEARCH_FINDINGS.md` | Understanding a technology, evaluating options, gathering context | Yes |
 | `systems-architect` | Trade-off analysis, codebase readiness, system design | `SYSTEMS_PLAN.md` | Architectural decisions, structural assessment, technology selection | Yes |
 | `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Breaking architecture into increments, resuming multi-session work | Yes |
@@ -14,7 +14,7 @@ Conventions for when and how to use the available software agents — autonomous
 | `implementer` | Executes individual implementation steps with skill-augmented coding and self-review | Code changes + WIP.md status update | Implementation plan ready with steps to execute | Yes |
 | `verifier` | Post-implementation review against acceptance criteria, conventions, and test coverage | `VERIFICATION_REPORT.md` | Validating completed implementation quality before committing | Yes |
 | `doc-engineer` | Project-facing documentation quality management (README.md, catalogs, architecture docs, changelogs) | Documentation quality report or direct file fixes | After implementation changes affecting documentation, when creating project documentation, when auditing documentation quality | Yes |
-| `sentinel` | Read-only ecosystem quality auditor scanning context artifacts across eight dimensions (seven per-artifact + ecosystem coherence as system-level composite) | `SENTINEL_REPORT.md` + `SENTINEL_LOG.md` (`.ai-state/`) | Ecosystem health checks, pre-pipeline baselines, post-change regression detection | Yes |
+| `sentinel` | Read-only ecosystem quality auditor scanning context artifacts across eight dimensions (seven per-artifact + ecosystem coherence as system-level composite). Operates independently — not a pipeline stage | `SENTINEL_REPORT_*.md` + `SENTINEL_LOG.md` (`.ai-state/`) | Ecosystem health checks, pre-pipeline baselines, post-change regression detection | Yes |
 
 ### Proactive Agent Usage
 
@@ -33,9 +33,9 @@ Spawn agents without waiting for the user to ask:
 - Ecosystem health check needed → `sentinel`
 - Before major pipeline runs (baseline quality) → `sentinel`
 - After large artifact changes (regression detection) → `sentinel`
+- Sentinel report may be stale → check `.ai-state/SENTINEL_LOG.md` last entry timestamp against the latest `git log -1 --format=%ci`; if commits exist after the last report, run `sentinel` proactively. If no new commits but another agent needs the report (e.g., promethean for ideation), ask the user whether a fresh report is warranted before triggering
 - After implementation changes that add/remove/rename files → `doc-engineer`
 - After context-engineer creates new artifacts that need catalog entries → `doc-engineer`
-- Promethean ideation requested → check `.ai-state/SENTINEL_LOG.md` first; if missing or stale (>7 days), run `sentinel` before `promethean`
 
 **Depth check:** Before spawning an agent that was recommended by another agent's output, confirm with the user if doing so would create a chain of 3+ agents from the original request.
 
@@ -52,24 +52,27 @@ Spawn agents without waiting for the user to ask:
 Agents communicate through shared documents, not direct invocation. Each agent's output is the next agent's input:
 
 ```
-sentinel → SENTINEL_REPORT.md + SENTINEL_LOG.md (.ai-state/ — ecosystem baseline)
-    ↓
-promethean → IDEA_PROPOSAL.md + IDEA_LEDGER_*.md (reads sentinel report for health context)
+promethean → IDEA_PROPOSAL.md + IDEA_LEDGER_*.md
     ↓
 researcher → RESEARCH_FINDINGS.md
-    ↓
-systems-architect → SYSTEMS_PLAN.md
-    ↓
-implementation-planner → IMPLEMENTATION_PLAN.md + WIP.md + LEARNINGS.md
-    ↓
-implementer → code changes + WIP.md status updates (sequential or parallel)
-    ↓
-verifier → VERIFICATION_REPORT.md (optional — when quality review is needed)
+    ↓                              ┌─────────────────┐
+systems-architect → SYSTEMS_PLAN.md    │ context-engineer │
+    ↓                              │  (domain expert  │
+implementation-planner → IMPL...   │   at any stage)  │
+    ↓                              └─────────────────┘
+implementer → code changes         ┌─────────────────┐
+    ↓                              │    sentinel      │
+verifier → VERIFICATION_REPORT.md  │  (independent    │
+                                   │   audit — any    │
+                                   │   agent/user can │
+                                   │   read reports)  │
+                                   └─────────────────┘
 ```
 
 - **Do not skip stages.** If a task needs architecture, it needs research first (unless the codebase context is already sufficient).
 - **Re-invoke upstream agents** when a downstream agent discovers the input is incomplete — e.g., the implementation-planner finds the architecture can't be decomposed incrementally.
 - **The context-engineer is a domain expert** that can collaborate at any pipeline stage when the work involves context artifacts. It also operates independently for standalone audits.
+- **The sentinel is an independent audit tool** that runs on demand. Its reports (`SENTINEL_REPORT_*.md`) are public — any agent or user can consume them. The promethean may read them as input for ideation, but that is the promethean's choice, not a pipeline handoff from the sentinel.
 
 **Context-Engineer Pipeline Engagement:**
 
