@@ -170,8 +170,10 @@ Report schema:
 
 ### Scorecard
 
-| Artifact | Type | Complete | Consistent | Fresh | Spec | Cross-Ref | Tokens | Coherence | Overall |
-|----------|------|----------|------------|-------|------|-----------|--------|-----------|---------|
+| Artifact | Type | Complete (C) | Consistent (N) | Fresh (F) | Spec (S) | Cross-Ref (X) | Tokens (T) | Coherence (EC) | Overall |
+|----------|------|--------------|-----------------|-----------|----------|----------------|------------|----------------|---------|
+
+Check codes reference dimensions above; Pipeline Discipline (P) and Self-Verification (V) appear in findings only. Full definitions: `agents/references/sentinel-checks.md`
 
 ### Findings
 
