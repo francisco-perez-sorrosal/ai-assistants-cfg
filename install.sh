@@ -7,25 +7,34 @@ THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # --- Usage ---
 
 usage() {
-    echo "Usage: $(basename "$0") [--claude] [--help]"
+    echo "Usage: $(basename "$0") [--claude] [--plugin] [--check] [--help]"
     echo ""
     echo "Install ai-assistants configuration for AI coding assistants."
     echo ""
     echo "Options:"
-    echo "  --claude        Install Claude personal config (default)"
+    echo "  --claude        Install Claude personal config (default when no flags given)"
+    echo "  --plugin        Install/repair the i-am plugin only (skips config)"
+    echo "  --check         Verify plugin health without modifying anything"
     echo "  --help          Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $(basename "$0")                # Install Claude config"
+    echo "  $(basename "$0")                # Install Claude config, prompt for plugin"
+    echo "  $(basename "$0") --plugin       # Re-register marketplace and reinstall plugin"
+    echo "  $(basename "$0") --check        # Verify plugin is healthy"
 }
 
 # --- Parse arguments ---
 
-INSTALL_CLAUDE=true
+INSTALL_CLAUDE=false
+INSTALL_PLUGIN=false
+CHECK_ONLY=false
+HAS_FLAGS=false
 
 for arg in "$@"; do
     case "$arg" in
-        --claude)      INSTALL_CLAUDE=true ;;
+        --claude)      INSTALL_CLAUDE=true; HAS_FLAGS=true ;;
+        --plugin)      INSTALL_PLUGIN=true; HAS_FLAGS=true ;;
+        --check)       CHECK_ONLY=true; HAS_FLAGS=true ;;
         --help)        usage; exit 0 ;;
         *)
             echo "Unknown option: $arg"
@@ -34,6 +43,11 @@ for arg in "$@"; do
             ;;
     esac
 done
+
+# Default: --claude when no flags given
+if ! $HAS_FLAGS; then
+    INSTALL_CLAUDE=true
+fi
 
 # --- Shared helpers ---
 
@@ -157,47 +171,174 @@ install_claude() {
     echo "✓ Claude personal config installed"
 }
 
+# --- Plugin helpers ---
+
+PLUGIN_NAME="i-am"
+MARKETPLACE_NAME="bit-agora"
+PLUGIN_CACHE_DIR="${HOME}/.claude/plugins/cache/${MARKETPLACE_NAME}/${PLUGIN_NAME}"
+
+require_claude_cli() {
+    if ! command -v claude &>/dev/null; then
+        echo "  ! Claude Code CLI not found. Install it first, then re-run."
+        return 1
+    fi
+}
+
+plugin_is_orphaned() {
+    local orphaned_marker
+    orphaned_marker=$(find "$PLUGIN_CACHE_DIR" -name '.orphaned_at' 2>/dev/null | head -1)
+    [ -n "$orphaned_marker" ]
+}
+
+plugin_is_installed() {
+    local installed_file="${HOME}/.claude/plugins/installed_plugins.json"
+    [ -f "$installed_file" ] && grep -q "${PLUGIN_NAME}@${MARKETPLACE_NAME}" "$installed_file"
+}
+
+marketplace_is_registered() {
+    local known_file="${HOME}/.claude/plugins/known_marketplaces.json"
+    [ -f "$known_file" ] && grep -q "${MARKETPLACE_NAME}" "$known_file"
+}
+
+# --- Plugin health check ---
+
+check_plugin() {
+    echo ""
+    echo "Checking i-am plugin health..."
+
+    require_claude_cli || return 1
+
+    local healthy=true
+
+    if marketplace_is_registered; then
+        echo "  ✓ Marketplace '${MARKETPLACE_NAME}' is registered"
+    else
+        echo "  ✗ Marketplace '${MARKETPLACE_NAME}' is NOT registered"
+        healthy=false
+    fi
+
+    if plugin_is_installed; then
+        echo "  ✓ Plugin '${PLUGIN_NAME}@${MARKETPLACE_NAME}' is in installed_plugins.json"
+    else
+        echo "  ✗ Plugin '${PLUGIN_NAME}@${MARKETPLACE_NAME}' is NOT in installed_plugins.json"
+        healthy=false
+    fi
+
+    if plugin_is_orphaned; then
+        echo "  ✗ Plugin has an .orphaned_at marker (Claude Code won't load it)"
+        healthy=false
+    else
+        echo "  ✓ No .orphaned_at marker"
+    fi
+
+    if [ -d "$PLUGIN_CACHE_DIR" ]; then
+        echo "  ✓ Plugin cache directory exists"
+    else
+        echo "  ✗ Plugin cache directory missing"
+        healthy=false
+    fi
+
+    echo ""
+    if $healthy; then
+        echo "✓ Plugin is healthy"
+    else
+        echo "✗ Plugin needs repair — run: ./install.sh --plugin"
+    fi
+
+    $healthy
+}
+
 # --- Plugin installation via local marketplace ---
 
 install_plugin() {
     echo ""
     echo "Installing i-am plugin via local marketplace..."
 
-    if ! command -v claude &>/dev/null; then
-        echo "  ! Claude Code CLI not found. Install it first, then re-run."
+    require_claude_cli || return 1
+
+    # Validate the plugin manifest
+    if ! claude plugin validate "${THIS_DIR}" 2>&1; then
+        echo "  ! Plugin validation failed. Fix plugin.json before installing."
         return 1
     fi
 
-    # Validate the plugin manifest
-    claude plugin validate "${THIS_DIR}" 2>&1
+    # Remove orphan marker if present (allows clean reinstall)
+    if plugin_is_orphaned; then
+        echo ""
+        echo "Removing .orphaned_at marker from previous installation..."
+        find "$PLUGIN_CACHE_DIR" -name '.orphaned_at' -delete 2>/dev/null
+        echo "  ✓ Orphan marker removed"
+    fi
 
-    # Register this repo as a local marketplace
+    # Register marketplace (idempotent — re-register to ensure it's current)
     echo ""
     echo "Registering local marketplace..."
-    claude plugin marketplace add "${THIS_DIR}" 2>&1 \
-        || echo "  (marketplace may already be registered)"
+    if claude plugin marketplace add "${THIS_DIR}" 2>&1; then
+        echo "  ✓ Marketplace registered"
+    else
+        echo "  ! Marketplace registration had warnings (may already exist)"
+    fi
 
-    # Install the plugin from the marketplace
+    # Install the plugin
     echo ""
-    echo "Installing i-am from bit-agora marketplace..."
-    claude plugin install i-am@bit-agora --scope user 2>&1
+    echo "Installing ${PLUGIN_NAME} from ${MARKETPLACE_NAME} marketplace..."
+    if ! claude plugin install "${PLUGIN_NAME}@${MARKETPLACE_NAME}" --scope user 2>&1; then
+        echo "  ! Plugin install command failed"
+        return 1
+    fi
+
+    # Post-install verification
+    echo ""
+    echo "Verifying installation..."
+
+    local ok=true
+
+    if plugin_is_installed; then
+        echo "  ✓ Plugin registered in installed_plugins.json"
+    else
+        echo "  ✗ Plugin NOT found in installed_plugins.json after install"
+        ok=false
+    fi
+
+    if plugin_is_orphaned; then
+        echo "  ✗ Plugin still has .orphaned_at marker after install"
+        ok=false
+    else
+        echo "  ✓ No orphan marker"
+    fi
 
     echo ""
-    echo "✓ i-am plugin installed. Skills and commands available in all sessions."
+    if $ok; then
+        echo "✓ i-am plugin installed and verified. Skills and commands available in all sessions."
+    else
+        echo "✗ Installation completed but verification found issues. Check output above."
+        return 1
+    fi
 }
 
 # --- Main ---
 
+if $CHECK_ONLY; then
+    check_plugin
+    exit $?
+fi
+
 if $INSTALL_CLAUDE; then
     install_claude
 
-    echo ""
-    read -p "Also install the i-am claude plugin? (y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        install_plugin
-    else
+    if ! $INSTALL_PLUGIN; then
         echo ""
-        echo "To install the plugin later, re-run: ./install.sh"
+        read -p "Also install the i-am claude plugin? (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            install_plugin
+        else
+            echo ""
+            echo "To install the plugin later, re-run: ./install.sh --plugin"
+        fi
     fi
+fi
+
+if $INSTALL_PLUGIN; then
+    install_plugin
 fi

@@ -21,13 +21,13 @@ BASE_URL = "http://test"
 async def client():
     """Async HTTP client with ASGI transport and lifespan properly managed.
 
-    httpx.ASGITransport does not run Starlette lifespan events, so we
-    manually enter the app lifespan context before creating the client.
+    Uses _core_lifespan (EventStore + file watcher) without the MCP session
+    manager, which requires anyio task group lifecycle not compatible with
+    pytest-asyncio fixtures.
     """
     import task_chronograph_mcp.server as server_module
 
-    # Manually run lifespan to initialize store
-    async with server_module.app_lifespan(app):
+    async with server_module._core_lifespan(app):
         transport = httpx.ASGITransport(app=app)  # type: ignore[arg-type]
         async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as c:
             yield c

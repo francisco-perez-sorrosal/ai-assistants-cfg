@@ -7,7 +7,7 @@
 }.get(interaction.interaction_type, "badge-unknown") %}
 <div class="interaction-row">
   <span class="interaction-arrow">
-    <span class="source">{{ interaction.source }}</span> &rarr; <span class="target">{{ interaction.target }}</span>
+    <span class="source">{{ interaction.source_display or interaction.source }}</span> &rarr; <span class="target">{{ interaction.target_display or interaction.target }}</span>
   </span>
   <span class="interaction-summary" title="{{ interaction.summary }}">{{ interaction.summary }}</span>
   <span class="interaction-meta">

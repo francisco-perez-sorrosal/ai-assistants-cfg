@@ -32,8 +32,19 @@ mcp = FastMCP("Task Chronograph")
 _store: EventStore | None = None
 
 
+def _build_mcp_app() -> Starlette:
+    """Build (or rebuild) the MCP HTTP sub-app.
+
+    Each call creates a fresh session manager so that lifespan can be entered
+    more than once (needed for tests).
+    """
+    mcp._session_manager = None  # noqa: SLF001 — force fresh session manager
+    return mcp.streamable_http_app()
+
+
 @asynccontextmanager
-async def app_lifespan(app: Starlette):
+async def _core_lifespan(app: Starlette):
+    """Initialize EventStore and file watcher (no MCP session manager)."""
     global _store  # noqa: PLW0603
     _store = EventStore()
     app.state.store = _store
@@ -52,6 +63,18 @@ async def app_lifespan(app: Starlette):
             await watcher_task
         except asyncio.CancelledError:
             pass
+
+
+@asynccontextmanager
+async def app_lifespan(app: Starlette):
+    """Full lifespan: core services + MCP session manager.
+
+    Mount doesn't propagate lifespan events to sub-apps, so the MCP session
+    manager must be started here.
+    """
+    async with _core_lifespan(app):
+        async with mcp.session_manager.run():
+            yield
 
 
 async def receive_event(request: Request) -> JSONResponse:
@@ -96,6 +119,33 @@ async def receive_event(request: Request) -> JSONResponse:
     await store.add(event)
 
     return JSONResponse({"event_id": event.event_id}, status_code=201)
+
+
+async def receive_interaction(request: Request) -> JSONResponse:
+    """POST /api/interactions -- record a pipeline interaction."""
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
+
+    missing = [f for f in ("source", "target", "summary", "interaction_type") if f not in body]
+    if missing:
+        return JSONResponse(
+            {"error": f"Missing required fields: {', '.join(missing)}"},
+            status_code=400,
+        )
+
+    interaction = Interaction(
+        source=body["source"],
+        target=body["target"],
+        summary=body["summary"],
+        interaction_type=body["interaction_type"],
+        labels=body.get("labels", {}),
+    )
+
+    store: EventStore = request.app.state.store
+    interaction_id = await store.add_interaction(interaction)
+    return JSONResponse({"interaction_id": interaction_id}, status_code=201)
 
 
 async def pipeline_state(request: Request) -> JSONResponse:
@@ -210,9 +260,10 @@ app = Starlette(
     routes=[
         Route("/", dashboard_handler, methods=["GET"]),
         Route("/api/events", receive_event, methods=["POST"]),
+        Route("/api/interactions", receive_interaction, methods=["POST"]),
         Route("/api/state", pipeline_state, methods=["GET"]),
         Route("/api/events/stream", sse_stream, methods=["GET"]),
-        Mount("/mcp", mcp.streamable_http_app()),
+        Mount("", _build_mcp_app()),
     ],
     lifespan=app_lifespan,
 )

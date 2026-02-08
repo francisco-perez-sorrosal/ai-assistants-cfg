@@ -30,7 +30,7 @@ def _build_agent_hierarchy(agents: dict) -> tuple[list[str], dict[str, list[str]
 
     for key, agent in agents.items():
         parent = agent.get("delegation_parent", "")
-        if parent:
+        if parent and parent in agents:
             children_map.setdefault(parent, []).append(key)
         else:
             root_agents.append(key)
@@ -38,13 +38,31 @@ def _build_agent_hierarchy(agents: dict) -> tuple[list[str], dict[str, list[str]
     return root_agents, children_map
 
 
-def _format_interaction_timestamps(interactions: list[dict]) -> list[dict]:
-    """Add a display-friendly timestamp field to each interaction dict."""
+def _resolve_agent_label(key: str, agents: dict) -> str:
+    """Turn an agent key into a human-readable label.
+
+    If the key is an opaque agent_id (short hash) that exists in the agents
+    dict, return 'agent_type (id)'.  Otherwise return the key as-is.
+    """
+    if key in agents:
+        agent_type = agents[key].get("agent_type", "")
+        if agent_type and agent_type != key:
+            return f"{agent_type} ({key})"
+    return key
+
+
+def _format_interaction_timestamps(
+    interactions: list[dict], agents: dict | None = None,
+) -> list[dict]:
+    """Add display-friendly fields to each interaction dict."""
+    agents = agents or {}
     formatted = []
     for interaction in interactions:
         enriched = dict(interaction)
         raw_ts = interaction.get("timestamp", "")
         enriched["timestamp_display"] = _format_timestamp(raw_ts)
+        enriched["source_display"] = _resolve_agent_label(enriched["source"], agents)
+        enriched["target_display"] = _resolve_agent_label(enriched["target"], agents)
         formatted.append(enriched)
     return formatted
 
@@ -107,7 +125,9 @@ async def dashboard_handler(request: Request) -> HTMLResponse:
 
     state["agents"] = _format_agent_timestamps(state["agents"])
     root_agents, children_map = _build_agent_hierarchy(state["agents"])
-    state["interactions"] = _format_interaction_timestamps(state["interactions"])
+    state["interactions"] = _format_interaction_timestamps(
+        state["interactions"], state["agents"],
+    )
 
     template = _jinja_env.get_template("dashboard.html")
     html = template.render(
