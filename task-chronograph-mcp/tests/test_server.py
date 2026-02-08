@@ -124,7 +124,7 @@ class TestPipelineState:
             summary="Research auth patterns",
             interaction_type="delegation",
         )
-        await store.add_interaction(delegation)
+        store.add_interaction(delegation)
 
         await client.post(
             "/api/events",
@@ -163,7 +163,7 @@ class TestSSEStream:
 
         queue = store.subscribe()
         event = Event(event_type=EventType.AGENT_START, agent_type="researcher")
-        await store.add(event)
+        store.add(event)
 
         received = await asyncio.wait_for(queue.get(), timeout=1.0)
         assert received.agent_type == "researcher"
@@ -208,7 +208,7 @@ class TestDashboard:
             summary="Research auth patterns",
             interaction_type="delegation",
         )
-        await store.add_interaction(delegation)
+        store.add_interaction(delegation)
         await client.post("/api/events", json=sample_event_payload)
 
         resp = await client.get("/")
@@ -233,7 +233,7 @@ class TestDashboard:
             summary="Delegate auth research",
             interaction_type="delegation",
         )
-        await store.add_interaction(interaction)
+        store.add_interaction(interaction)
 
         resp = await client.get("/")
         assert "Delegate auth research" in resp.text
@@ -257,7 +257,7 @@ class TestMCPReportInteraction:
             summary="Delegate research",
             interaction_type="delegation",
         )
-        await store.add_interaction(interaction)
+        store.add_interaction(interaction)
 
         # Now start both agents via API
         await client.post(
@@ -291,7 +291,7 @@ class TestMCPReportInteraction:
         interaction = Interaction(
             source="a", target="b", summary="custom action", interaction_type="novel_kind"
         )
-        await store.add_interaction(interaction)
+        store.add_interaction(interaction)
 
         resp = await client.get("/api/state")
         state = resp.json()

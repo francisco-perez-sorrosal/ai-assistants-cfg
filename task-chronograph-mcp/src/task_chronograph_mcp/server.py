@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -29,7 +30,8 @@ DEFAULT_PORT = 8765
 WATCH_DIR_ENV = "CHRONOGRAPH_WATCH_DIR"
 
 mcp = FastMCP("Task Chronograph")
-_store: EventStore | None = None
+_store = EventStore()
+_http_ready = threading.Event()
 
 
 def _build_mcp_app() -> Starlette:
@@ -44,9 +46,10 @@ def _build_mcp_app() -> Starlette:
 
 @asynccontextmanager
 async def _core_lifespan(app: Starlette):
-    """Initialize EventStore and file watcher (no MCP session manager)."""
+    """Reset store, start file watcher, and expose store to Starlette routes."""
     global _store  # noqa: PLW0603
     _store = EventStore()
+    _store.set_loop(asyncio.get_running_loop())
     app.state.store = _store
 
     watch_dir = os.environ.get(WATCH_DIR_ENV, "")
@@ -54,6 +57,8 @@ async def _core_lifespan(app: Starlette):
     if watch_dir:
         watch_path = Path(watch_dir)
         watcher_task = asyncio.create_task(watch_progress_file(watch_path, app.state.store))
+
+    _http_ready.set()
 
     yield
 
@@ -116,7 +121,7 @@ async def receive_event(request: Request) -> JSONResponse:
     )
 
     store: EventStore = request.app.state.store
-    await store.add(event)
+    store.add(event)
 
     return JSONResponse({"event_id": event.event_id}, status_code=201)
 
@@ -144,7 +149,7 @@ async def receive_interaction(request: Request) -> JSONResponse:
     )
 
     store: EventStore = request.app.state.store
-    interaction_id = await store.add_interaction(interaction)
+    interaction_id = store.add_interaction(interaction)
     return JSONResponse({"interaction_id": interaction_id}, status_code=201)
 
 
@@ -193,8 +198,6 @@ def get_pipeline_status() -> dict:
     status (running/complete/failed), labels, delegation hierarchy,
     interaction timeline, and delegation chain.
     """
-    if _store is None:
-        return {"error": "Store not initialized"}
     return _store.get_pipeline_summary()
 
 
@@ -207,13 +210,11 @@ def get_agent_events(agent_type: str, limit: int = 20, label: str = "") -> list[
         limit: Maximum number of events to return (default 20).
         label: Optional label filter (e.g., "feature=auth"). Only events with matching label returned.
     """
-    if _store is None:
-        return []
     return _store.get_events_by_agent(agent_type, limit, label or None)
 
 
 @mcp.tool()
-async def report_interaction(
+def report_interaction(
     source: str,
     target: str,
     summary: str,
@@ -239,8 +240,6 @@ async def report_interaction(
         interaction_type: One of "query", "delegation", "result", "decision", "response" (extensible).
         labels: Optional key-value annotations.
     """
-    if _store is None:
-        return {"error": "Store not initialized"}
     interaction = Interaction(
         source=source,
         target=target,
@@ -248,7 +247,7 @@ async def report_interaction(
         interaction_type=interaction_type,
         labels=labels or {},
     )
-    interaction_id = await _store.add_interaction(interaction)
+    interaction_id = _store.add_interaction(interaction)
     return {"status": "recorded", "interaction_id": interaction_id}
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -135,21 +136,33 @@ class EventStore:
         self._events: deque[Event] = deque(maxlen=max_events)
         self._interactions: list[Interaction] = []
         self._agents: dict[str, AgentState] = {}
-        self._lock = asyncio.Lock()
+        self._lock = threading.Lock()
         self._subscribers: list[asyncio.Queue[Event]] = []
+        self._loop: asyncio.AbstractEventLoop | None = None
 
-    async def add(self, event: Event) -> None:
-        async with self._lock:
+    def set_loop(self, loop: asyncio.AbstractEventLoop) -> None:
+        """Register the event loop for cross-thread SSE broadcasting."""
+        self._loop = loop
+
+    def add(self, event: Event) -> None:
+        with self._lock:
             self._events.append(event)
             self._update_agent_state(event)
-        await self._broadcast(event)
+        self._notify(event)
 
-    async def add_interaction(self, interaction: Interaction) -> str:
-        async with self._lock:
+    def add_interaction(self, interaction: Interaction) -> str:
+        with self._lock:
             self._interactions.append(interaction)
             if interaction.interaction_type == "delegation":
                 self._register_delegation_from_interaction(interaction)
-        await self._broadcast_interaction(interaction)
+        synthetic = Event(
+            event_type=EventType.TOOL_USE,
+            agent_type=interaction.source,
+            timestamp=interaction.timestamp,
+            message=f"interaction:{interaction.interaction_type}:{interaction.target}",
+            metadata={"interaction_id": interaction.interaction_id},
+        )
+        self._notify(synthetic)
         return interaction.interaction_id
 
     def _update_agent_state(self, event: Event) -> None:
@@ -260,20 +273,15 @@ class EventStore:
         except ValueError:
             pass
 
-    async def _broadcast(self, event: Event) -> None:
-        for queue in self._subscribers:
-            await queue.put(event)
-
-    async def _broadcast_interaction(self, interaction: Interaction) -> None:
-        synthetic = Event(
-            event_type=EventType.TOOL_USE,
-            agent_type=interaction.source,
-            timestamp=interaction.timestamp,
-            message=f"interaction:{interaction.interaction_type}:{interaction.target}",
-            metadata={"interaction_id": interaction.interaction_id},
-        )
-        for queue in self._subscribers:
-            await queue.put(synthetic)
+    def _notify(self, event: Event) -> None:
+        """Broadcast event to SSE subscribers, safe from any thread."""
+        if not self._loop or not self._subscribers:
+            return
+        for queue in list(self._subscribers):
+            try:
+                self._loop.call_soon_threadsafe(queue.put_nowait, event)
+            except RuntimeError:
+                pass  # event loop closed
 
 
 def _filter_by_label(events: list[Event], label: str) -> list[Event]:

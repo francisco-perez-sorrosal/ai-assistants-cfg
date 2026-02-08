@@ -18,6 +18,19 @@
     "refactoring",
     "planning"
   ],
+  "mcpServers": {
+    "task-chronograph": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--project",
+        "${CLAUDE_PLUGIN_ROOT}/task-chronograph-mcp",
+        "python",
+        "-m",
+        "task_chronograph_mcp"
+      ]
+    }
+  },
   "skills": ["./skills/"],
   "commands": ["./commands/"],
   "agents": [

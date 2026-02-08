@@ -4,14 +4,14 @@ Real-time observability for Claude Code agent pipelines. The web dashboard shows
 
 ## Quick Start
 
-Start the server:
+The `i-am` plugin auto-registers the MCP server on install. The dashboard starts automatically at `http://localhost:8765` — no manual setup required.
+
+To run the server standalone (without the plugin):
 
 ```bash
 cd task-chronograph-mcp
-uv run python -m task_chronograph_mcp.server
+uv run python -m task_chronograph_mcp
 ```
-
-Open `http://localhost:8765` in a browser.
 
 ## Hook Setup
 
@@ -69,13 +69,17 @@ The hook script uses only Python stdlib and exits 0 unconditionally -- it never 
 
 ## MCP Server Registration
 
-Register with Claude Code so the main agent can report interactions and query pipeline state:
+The `i-am` plugin declares `mcpServers` in its manifest. Installing the plugin auto-registers everything — MCP tools via stdio **and** the web dashboard via a background HTTP server. No manual `claude mcp add` needed.
 
-```bash
-claude mcp add --transport http task-chronograph http://localhost:8765/mcp
-```
+On startup, the entry point (`python -m task_chronograph_mcp`):
 
-This exposes 3 tools:
+1. Launches the HTTP server (dashboard + REST API + SSE) in a daemon thread
+2. Runs the MCP stdio transport in the main thread
+3. Both share a single thread-safe `EventStore`
+
+If the HTTP server fails to start (e.g., port conflict), MCP tools still work via stdio — the dashboard is unavailable but a warning is logged to stderr.
+
+### MCP Tools
 
 - **`get_pipeline_status`** -- current state of all agents, interaction timeline, and delegation hierarchy
 - **`get_agent_events`** -- filtered event history for a specific agent (with optional label filter)
@@ -83,18 +87,30 @@ This exposes 3 tools:
 
 ## Architecture
 
-A single Python process serves four interfaces:
+A single process runs two transports in parallel:
 
-| Endpoint | Protocol | Purpose |
-| -------- | -------- | ------- |
-| `/` | HTTP (Starlette + Jinja2 + htmx + SSE) | Web dashboard |
-| `/api/events` (POST), `/api/state` (GET), `/api/events/stream` (SSE) | REST + SSE | Event ingestion and state API |
-| `/mcp` | MCP streamable HTTP (FastMCP) | Agent-facing tools |
+```
+plugin.json (mcpServers)
+        │
+        ▼
+  __main__.py
+   ├── daemon thread: uvicorn → Starlette app
+   │     ├── /           dashboard (Jinja2 + htmx + SSE)
+   │     ├── /api/*      event ingestion + state API
+   │     └── /mcp        MCP streamable HTTP (bonus)
+   │
+   └── main thread: mcp.run() → stdio MCP transport
+        │
+        └── shared EventStore (thread-safe, threading.Lock)
+```
 
-Two event sources feed the server:
+The `EventStore` uses `threading.Lock` for data protection and `call_soon_threadsafe` for cross-thread SSE broadcasting. MCP tool calls from either transport read/write the same store.
 
-1. **Hooks** (primary) -- zero-token-cost event forwarding from `SubagentStart`, `SubagentStop`, and `PostToolUse` hooks configured in project settings
-2. **PROGRESS.md file watcher** (fallback) -- watches `.ai-work/PROGRESS.md` for phase-transition lines appended by agents, covering subagent contexts where hooks may not fire
+### Event Sources
+
+1. **Hooks** (primary) -- zero-token-cost event forwarding from `SubagentStart`, `SubagentStop`, and `PostToolUse` hooks configured in project settings. Events POST to the HTTP API.
+2. **MCP tools** -- agents call `report_interaction` via stdio to record pipeline interactions
+3. **PROGRESS.md file watcher** (fallback) -- watches `.ai-work/PROGRESS.md` for phase-transition lines appended by agents, covering subagent contexts where hooks may not fire
 
 ## Hook Payload Reference
 

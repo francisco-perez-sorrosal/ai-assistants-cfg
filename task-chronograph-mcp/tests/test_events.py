@@ -109,38 +109,38 @@ class TestInteractionSerialization:
 
 class TestEventStoreAdd:
     async def test_add_stores_event(self, event_store: EventStore, sample_event: Event):
-        await event_store.add(sample_event)
+        event_store.add(sample_event)
         summary = event_store.get_pipeline_summary()
         assert summary["event_count"] == 1
 
     async def test_add_creates_agent_state_on_start(
         self, event_store: EventStore, sample_event: Event
     ):
-        await event_store.add(sample_event)
+        event_store.add(sample_event)
         summary = event_store.get_pipeline_summary()
         agent = summary["agents"]["agent-001"]
         assert agent["status"] == "running"
         assert agent["agent_type"] == "researcher"
 
     async def test_add_stop_marks_complete(self, event_store: EventStore, sample_event: Event):
-        await event_store.add(sample_event)
+        event_store.add(sample_event)
         stop_event = Event(
             event_type=EventType.AGENT_STOP,
             agent_type="researcher",
             agent_id="agent-001",
         )
-        await event_store.add(stop_event)
+        event_store.add(stop_event)
         summary = event_store.get_pipeline_summary()
         assert summary["agents"]["agent-001"]["status"] == "complete"
 
     async def test_add_stop_sets_stopped_at(self, event_store: EventStore, sample_event: Event):
-        await event_store.add(sample_event)
+        event_store.add(sample_event)
         stop_event = Event(
             event_type=EventType.AGENT_STOP,
             agent_type="researcher",
             agent_id="agent-001",
         )
-        await event_store.add(stop_event)
+        event_store.add(stop_event)
         agent = event_store.get_pipeline_summary()["agents"]["agent-001"]
         assert agent["stopped_at"] is not None
         assert agent["stopped_at"] == stop_event.timestamp.isoformat()
@@ -148,29 +148,29 @@ class TestEventStoreAdd:
     async def test_stopped_at_none_while_running(
         self, event_store: EventStore, sample_event: Event
     ):
-        await event_store.add(sample_event)
+        event_store.add(sample_event)
         agent = event_store.get_pipeline_summary()["agents"]["agent-001"]
         assert agent["stopped_at"] is None
 
     async def test_add_phase_transition_updates_state(
         self, event_store: EventStore, sample_event: Event, phase_event: Event
     ):
-        await event_store.add(sample_event)
-        await event_store.add(phase_event)
+        event_store.add(sample_event)
+        event_store.add(phase_event)
         agent = event_store.get_pipeline_summary()["agents"]["agent-001"]
         assert agent["current_phase"] == 2
         assert agent["total_phases"] == 5
         assert agent["phase_name"] == "analysis"
 
     async def test_add_error_marks_failed(self, event_store: EventStore, sample_event: Event):
-        await event_store.add(sample_event)
+        event_store.add(sample_event)
         error_event = Event(
             event_type=EventType.ERROR,
             agent_type="researcher",
             agent_id="agent-001",
             message="Something went wrong",
         )
-        await event_store.add(error_event)
+        event_store.add(error_event)
         agent = event_store.get_pipeline_summary()["agents"]["agent-001"]
         assert agent["status"] == "failed"
         assert agent["last_message"] == "Something went wrong"
@@ -178,7 +178,7 @@ class TestEventStoreAdd:
     async def test_phase_transition_updates_labels(
         self, event_store: EventStore, sample_event: Event
     ):
-        await event_store.add(sample_event)
+        event_store.add(sample_event)
         phase = Event(
             event_type=EventType.PHASE_TRANSITION,
             agent_type="researcher",
@@ -188,7 +188,7 @@ class TestEventStoreAdd:
             phase_name="gather",
             labels={"scope": "narrow"},
         )
-        await event_store.add(phase)
+        event_store.add(phase)
         agent = event_store.get_pipeline_summary()["agents"]["agent-001"]
         assert agent["labels"]["scope"] == "narrow"
         # Original label from start event should also be present
@@ -204,7 +204,7 @@ class TestEventStoreInteractions:
     async def test_add_interaction_stores(
         self, event_store: EventStore, sample_interaction: Interaction
     ):
-        iid = await event_store.add_interaction(sample_interaction)
+        iid = event_store.add_interaction(sample_interaction)
         assert iid == sample_interaction.interaction_id
         summary = event_store.get_pipeline_summary()
         assert len(summary["interactions"]) == 1
@@ -218,8 +218,8 @@ class TestEventStoreInteractions:
         child_start = Event(
             event_type=EventType.AGENT_START, agent_type="researcher", agent_id="researcher"
         )
-        await event_store.add(parent_start)
-        await event_store.add(child_start)
+        event_store.add(parent_start)
+        event_store.add(child_start)
 
         delegation = Interaction(
             source="main_agent",
@@ -227,7 +227,7 @@ class TestEventStoreInteractions:
             summary="Delegate research",
             interaction_type="delegation",
         )
-        await event_store.add_interaction(delegation)
+        event_store.add_interaction(delegation)
 
         summary = event_store.get_pipeline_summary()
         assert summary["agents"]["researcher"]["delegation_parent"] == "main_agent"
@@ -241,8 +241,8 @@ class TestEventStoreInteractions:
         child_start = Event(
             event_type=EventType.AGENT_START, agent_type="researcher", agent_id="researcher"
         )
-        await event_store.add(parent_start)
-        await event_store.add(child_start)
+        event_store.add(parent_start)
+        event_store.add(child_start)
 
         delegation = Interaction(
             source="main_agent",
@@ -250,7 +250,7 @@ class TestEventStoreInteractions:
             summary="Investigate auth library options",
             interaction_type="delegation",
         )
-        await event_store.add_interaction(delegation)
+        event_store.add_interaction(delegation)
 
         agent = event_store.get_pipeline_summary()["agents"]["researcher"]
         assert agent["task_summary"] == "Investigate auth library options"
@@ -260,7 +260,7 @@ class TestEventStoreInteractions:
         parent_start = Event(
             event_type=EventType.AGENT_START, agent_type="main_agent", agent_id="main_agent"
         )
-        await event_store.add(parent_start)
+        event_store.add(parent_start)
 
         delegation = Interaction(
             source="main_agent",
@@ -268,13 +268,13 @@ class TestEventStoreInteractions:
             summary="Delegate research",
             interaction_type="delegation",
         )
-        await event_store.add_interaction(delegation)
+        event_store.add_interaction(delegation)
 
         # Now the target agent starts -- _apply_pending_delegation should link it
         child_start = Event(
             event_type=EventType.AGENT_START, agent_type="researcher", agent_id="researcher"
         )
-        await event_store.add(child_start)
+        event_store.add(child_start)
 
         summary = event_store.get_pipeline_summary()
         assert summary["agents"]["researcher"]["delegation_parent"] == "main_agent"
@@ -285,7 +285,7 @@ class TestEventStoreInteractions:
         parent_start = Event(
             event_type=EventType.AGENT_START, agent_type="main_agent", agent_id="main_agent"
         )
-        await event_store.add(parent_start)
+        event_store.add(parent_start)
 
         delegation = Interaction(
             source="main_agent",
@@ -293,12 +293,12 @@ class TestEventStoreInteractions:
             summary="Audit database schema",
             interaction_type="delegation",
         )
-        await event_store.add_interaction(delegation)
+        event_store.add_interaction(delegation)
 
         child_start = Event(
             event_type=EventType.AGENT_START, agent_type="researcher", agent_id="researcher"
         )
-        await event_store.add(child_start)
+        event_store.add(child_start)
 
         agent = event_store.get_pipeline_summary()["agents"]["researcher"]
         assert agent["task_summary"] == "Audit database schema"
@@ -311,7 +311,7 @@ class TestEventStoreInteractions:
             summary="Delegate to nonexistent",
             interaction_type="delegation",
         )
-        await event_store.add_interaction(delegation)
+        event_store.add_interaction(delegation)
 
         summary = event_store.get_pipeline_summary()
         assert len(summary["interactions"]) == 1
@@ -332,8 +332,8 @@ class TestEventStoreInteractions:
         child_start = Event(
             event_type=EventType.AGENT_START, agent_type="researcher", agent_id="researcher"
         )
-        await event_store.add(parent_start)
-        await event_store.add(child_start)
+        event_store.add(parent_start)
+        event_store.add(child_start)
 
         for itype in ("query", "result", "decision", "response"):
             interaction = Interaction(
@@ -342,7 +342,7 @@ class TestEventStoreInteractions:
                 summary=f"Test {itype}",
                 interaction_type=itype,
             )
-            await event_store.add_interaction(interaction)
+            event_store.add_interaction(interaction)
 
         summary = event_store.get_pipeline_summary()
         assert summary["agents"]["researcher"]["delegation_parent"] == ""
@@ -356,7 +356,7 @@ class TestEventStoreInteractions:
             interaction = Interaction(
                 source="a", target="b", summary=f"Test {itype}", interaction_type=itype
             )
-            await event_store.add_interaction(interaction)
+            event_store.add_interaction(interaction)
 
         summary = event_store.get_pipeline_summary()
         assert len(summary["interactions"]) == len(interaction_types)
@@ -377,7 +377,7 @@ class TestDelegationChain:
             summary="Research auth options",
             interaction_type="delegation",
         )
-        await event_store.add_interaction(delegation)
+        event_store.add_interaction(delegation)
 
         chain = event_store.get_delegation_chain()
         assert len(chain) == 1
@@ -395,8 +395,8 @@ class TestDelegationChain:
             summary="Delegate",
             interaction_type="delegation",
         )
-        await event_store.add_interaction(query)
-        await event_store.add_interaction(delegation)
+        event_store.add_interaction(query)
+        event_store.add_interaction(delegation)
 
         chain = event_store.get_delegation_chain()
         assert len(chain) == 1
@@ -412,7 +412,7 @@ class TestSubscription:
     async def test_subscribe_receives_events(self, event_store: EventStore):
         queue = event_store.subscribe()
         event = Event(event_type=EventType.AGENT_START, agent_type="researcher")
-        await event_store.add(event)
+        event_store.add(event)
 
         received = await asyncio.wait_for(queue.get(), timeout=1.0)
         assert received.agent_type == "researcher"
@@ -422,7 +422,7 @@ class TestSubscription:
         event_store.unsubscribe(queue)
 
         event = Event(event_type=EventType.AGENT_START, agent_type="researcher")
-        await event_store.add(event)
+        event_store.add(event)
 
         assert queue.empty()
 
@@ -431,7 +431,7 @@ class TestSubscription:
         q2 = event_store.subscribe()
 
         event = Event(event_type=EventType.AGENT_START, agent_type="researcher")
-        await event_store.add(event)
+        event_store.add(event)
 
         r1 = await asyncio.wait_for(q1.get(), timeout=1.0)
         r2 = await asyncio.wait_for(q2.get(), timeout=1.0)
@@ -446,7 +446,7 @@ class TestSubscription:
             summary="Delegate",
             interaction_type="delegation",
         )
-        await event_store.add_interaction(interaction)
+        event_store.add_interaction(interaction)
 
         received = await asyncio.wait_for(queue.get(), timeout=1.0)
         assert received.event_type == EventType.TOOL_USE
@@ -468,14 +468,14 @@ class TestPipelineSummary:
         assert "recent_events" in summary
 
     async def test_summary_with_data(self, event_store: EventStore, sample_event: Event):
-        await event_store.add(sample_event)
+        event_store.add(sample_event)
         interaction = Interaction(
             source="main_agent",
             target="researcher",
             summary="Delegate",
             interaction_type="delegation",
         )
-        await event_store.add_interaction(interaction)
+        event_store.add_interaction(interaction)
 
         summary = event_store.get_pipeline_summary()
         assert len(summary["agents"]) == 1
@@ -494,8 +494,8 @@ class TestGetEventsByAgent:
     async def test_filters_by_agent_type(self, event_store: EventStore):
         e1 = Event(event_type=EventType.AGENT_START, agent_type="researcher")
         e2 = Event(event_type=EventType.AGENT_START, agent_type="architect")
-        await event_store.add(e1)
-        await event_store.add(e2)
+        event_store.add(e1)
+        event_store.add(e2)
 
         results = event_store.get_events_by_agent("researcher")
         assert len(results) == 1
@@ -508,7 +508,7 @@ class TestGetEventsByAgent:
                 agent_type="researcher",
                 phase=i,
             )
-            await event_store.add(e)
+            event_store.add(e)
 
         results = event_store.get_events_by_agent("researcher", limit=3)
         assert len(results) == 3
@@ -524,8 +524,8 @@ class TestGetEventsByAgent:
             agent_type="researcher",
             labels={"feature": "db"},
         )
-        await event_store.add(e1)
-        await event_store.add(e2)
+        event_store.add(e1)
+        event_store.add(e2)
 
         results = event_store.get_events_by_agent("researcher", label="feature=auth")
         assert len(results) == 1
@@ -542,8 +542,8 @@ class TestGetEventsByAgent:
             agent_type="researcher",
             labels={},
         )
-        await event_store.add(e1)
-        await event_store.add(e2)
+        event_store.add(e1)
+        event_store.add(e2)
 
         results = event_store.get_events_by_agent("researcher", label="observability")
         assert len(results) == 1
@@ -559,8 +559,8 @@ class TestGetEventsByAgent:
             agent_type="researcher",
             labels={},
         )
-        await event_store.add(e1)
-        await event_store.add(e2)
+        event_store.add(e1)
+        event_store.add(e2)
 
         results = event_store.get_events_by_agent("researcher", label=None)
         assert len(results) == 2
@@ -581,7 +581,7 @@ class TestBoundedDeque:
                 phase=i,
                 message=f"phase-{i}",
             )
-            await small_store.add(e)
+            small_store.add(e)
 
         summary = small_store.get_pipeline_summary()
         assert summary["event_count"] == 5

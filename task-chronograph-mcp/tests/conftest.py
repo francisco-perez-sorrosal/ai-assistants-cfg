@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
 from task_chronograph_mcp.events import (
@@ -14,9 +16,11 @@ from task_chronograph_mcp.events import (
 
 
 @pytest.fixture
-def event_store() -> EventStore:
-    """Fresh EventStore instance for each test."""
-    return EventStore()
+async def event_store() -> EventStore:
+    """Fresh EventStore with the test's event loop registered for broadcasting."""
+    store = EventStore()
+    store.set_loop(asyncio.get_running_loop())
+    return store
 
 
 @pytest.fixture
