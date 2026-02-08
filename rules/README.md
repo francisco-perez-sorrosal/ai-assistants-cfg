@@ -23,7 +23,7 @@ rules/
 | `swe/software-agents-usage.md` | Agent selection, coordination pipeline, parallel execution, and boundary discipline |
 | `swe/vcs/git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
 | `swe/vcs/git-commit-hygiene.md` | Git commit safety, staging discipline, and exclusions |
-| `writing/readme-style.md` | Precision-first technical writing style for README.md files |
+| `writing/readme-style.md` | Precision-first technical writing and structural integrity conventions for README.md files |
 
 ## How Rules Work
 

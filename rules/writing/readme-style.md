@@ -54,6 +54,23 @@ When a README grows beyond quick scanability:
 - Follow with a **table of contents** or navigation links if the document has more than 4-5 sections
 - Consider splitting into focused companion documents (`README_dev.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`) and linking from the main README — keep the main README as the entry point, not the encyclopedia
 
+### Structural Integrity
+
+Cross-reference and structural conventions for README.md files that serve as project catalogs or entry points:
+
+- Every filesystem path referenced in a README must point to an existing file or directory
+- Catalog READMEs (listing skills, agents, commands, rules) must include every artifact that exists on the filesystem — no phantom entries, no missing entries
+- Names in documentation must match actual filenames (hyphens vs. underscores, capitalization)
+- Counts stated in prose ("Seven agents") must match the actual number of items listed
+- When a README includes a structure tree, it must reflect the current filesystem state
+- Cross-references between documentation files must resolve (e.g., links to other READMEs, anchors)
+
+### Naming Consistency
+
+- Use the exact filename (minus extension) when referencing artifacts in documentation
+- Prefer the filesystem convention (kebab-case for this project) consistently
+- If an artifact was renamed, update all documentation references in the same change
+
 ### Writing Quality
 
 - Imperative mood for instructions ("Install the package", not "You should install the package")
@@ -65,6 +82,7 @@ When a README grows beyond quick scanability:
 ### Termination Criteria
 
 A README section is complete when the reader has:
+
 1. A direct answer to what they came for
 2. The minimum process knowledge to execute correctly, plus enough surrounding context to understand *why* — which may exceed the bare minimum when the topic demands it
 

@@ -13,6 +13,7 @@ Conventions for when and how to use the available software agents — autonomous
 | `context-engineer` | Context artifact domain expert and implementer — audits, architects, and optimizes context artifacts; collaborates at any pipeline stage when work involves context engineering | Audit report + artifact changes | Auditing quality, resolving conflicts, growing the context ecosystem, providing domain expertise during pipeline work involving context artifacts | Yes |
 | `implementer` | Executes individual implementation steps with skill-augmented coding and self-review | Code changes + WIP.md status update | Implementation plan ready with steps to execute | Yes |
 | `verifier` | Post-implementation review against acceptance criteria, conventions, and test coverage | `VERIFICATION_REPORT.md` | Validating completed implementation quality before committing | Yes |
+| `doc-engineer` | Project-facing documentation quality management (README.md, catalogs, architecture docs, changelogs) | Documentation quality report or direct file fixes | After implementation changes affecting documentation, when creating project documentation, when auditing documentation quality | Yes |
 | `sentinel` | Read-only ecosystem quality auditor scanning context artifacts across eight dimensions (seven per-artifact + ecosystem coherence as system-level composite) | `SENTINEL_REPORT.md` + `SENTINEL_LOG.md` (`.ai-state/`) | Ecosystem health checks, pre-pipeline baselines, post-change regression detection | Yes |
 
 ### Proactive Agent Usage
@@ -32,6 +33,8 @@ Spawn agents without waiting for the user to ask:
 - Ecosystem health check needed → `sentinel`
 - Before major pipeline runs (baseline quality) → `sentinel`
 - After large artifact changes (regression detection) → `sentinel`
+- After implementation changes that add/remove/rename files → `doc-engineer`
+- After context-engineer creates new artifacts that need catalog entries → `doc-engineer`
 - Promethean ideation requested → check `.ai-state/SENTINEL_LOG.md` first; if missing or stale (>7 days), run `sentinel` before `promethean`
 
 **Depth check:** Before spawning an agent that was recommended by another agent's output, confirm with the user if doing so would create a chain of 3+ agents from the original request.
@@ -160,6 +163,7 @@ Each agent has a defined responsibility — respect the boundaries:
 - **Context engineer does not implement features.** It manages the information architecture. In pipeline mode, it provides domain expertise (artifact placement, token budget, progressive disclosure) — not architectural decisions or implementation steps. It implements context artifacts directly or under planner supervision, but does not implement application features.
 - **Implementer does not plan.** It receives a step and implements it. It does not choose what to build, skip steps, reorder the plan, or make go/no-go decisions. It reports blockers with evidence rather than resolving them.
 - **Verifier does not fix.** It identifies issues and recommends corrective action through documents. Fixes go back to the implementation-planner (for pipeline work) or the user (for standalone review). It does not check plan adherence (that is Phase 7's job) or assess context artifact quality (that is the context-engineer's job).
+- **Doc-engineer does not manage context artifacts.** It maintains project-facing documentation (README.md, catalogs, architecture docs, changelogs). Context artifacts (CLAUDE.md, skills, rules, commands, agents) belong to the context-engineer. Ecosystem-wide auditing belongs to the sentinel.
 - **Sentinel does not fix.** It diagnoses and reports across the full ecosystem. Remediation goes to the context-engineer (for artifact fixes) or the user (for pipeline corrections). It never modifies the artifacts it audits.
 
 When an agent encounters work outside its boundary, it flags the need and recommends invoking the appropriate agent.
@@ -186,6 +190,9 @@ When deciding whether to use an agent vs. doing the work directly:
 | Quick review of a single-file change | — | Direct (or `code-review` skill) |
 | Full ecosystem health check or quality baseline | Agent (`sentinel`) | — |
 | Broad cross-reference or consistency audit | Agent (`sentinel`) | — |
+| Documentation quality audit across project | Agent (`doc-engineer`) | — |
+| Quick README edit with known content | — | Direct (or `manage-readme` command) |
+| Fix documentation cross-references after code changes | Agent (`doc-engineer`) | — |
 
 **Rule of thumb:** If the task benefits from a separate context window (large scope, multiple phases, structured output), use an agent. If it fits in the current conversation, work directly.
 

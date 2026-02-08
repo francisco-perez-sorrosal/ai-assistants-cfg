@@ -6,7 +6,7 @@ Custom agents for specialized workflows. Agents are autonomous subprocesses that
 
 ### Software Development Crew
 
-Eight agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The sentinel provides ecosystem health baselines that feed into the promethean's ideation. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts. The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate.
+Nine agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The sentinel provides ecosystem health baselines that feed into the promethean's ideation. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts. The doc-engineer maintains project-facing documentation quality (README.md files, catalogs, architecture docs). The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate.
 
 ```
  sentinel ──► SENTINEL_REPORT.md + SENTINEL_LOG.md (.ai-state/)
@@ -22,11 +22,11 @@ Eight agents that collaborate on software development tasks, each with a dedicat
      │                              │   at any stage)  │
      ▼                              └─────────────────┘
  implementation-planner ──► IMPLEMENTATION_PLAN.md (Steps), WIP.md, LEARNINGS.md
-     │
-     ▼
- implementer ───────────► code changes + WIP.md status (sequential or parallel)
-     │
-     ▼
+     │                              ┌──────────────┐
+     ▼                              │ doc-engineer  │
+ implementer ───────────► code      │  (standalone  │
+     │                    changes   │   doc quality)│
+     ▼                              └──────────────┘
  verifier ──────────────► VERIFICATION_REPORT.md (optional — when quality review needed)
 ```
 
@@ -39,6 +39,7 @@ Eight agents that collaborate on software development tasks, each with a dedicat
 | `context-engineer` | Audits, architects, and optimizes context artifacts (CLAUDE.md, skills, rules, commands, agents); collaborates with pipeline agents as domain expert for context engineering; implements context artifacts directly or under planner supervision | `skill-crafting`, `rule-crafting`, `command-crafting`, `agent-crafting` |
 | `implementer` | Implements individual plan steps with skill-augmented coding, self-reviews against conventions, and reports completion. Supports sequential and parallel execution | `software-planning`, `code-review`, `refactoring` |
 | `verifier` | Verifies completed implementation against acceptance criteria, coding conventions, and test coverage; produces `VERIFICATION_REPORT.md` with pass/fail/warn findings | `code-review` |
+| `doc-engineer` | Maintains project-facing documentation quality (README.md, catalogs, architecture docs, changelogs); validates cross-references, catalog completeness, naming consistency, and writing quality | `documentation` |
 | `sentinel` | Read-only ecosystem quality auditor scanning all context artifacts across eight dimensions (seven per-artifact + ecosystem coherence as system-level composite); produces `SENTINEL_REPORT.md` (overwritten each run) and `SENTINEL_LOG.md` (historical metrics) in `.ai-state/` | — |
 
 ## How Agents Work
@@ -114,6 +115,7 @@ Agents require explicit file paths in `plugin.json` (directory wildcards are not
   "./agents/systems-architect.md",
   "./agents/implementation-planner.md",
   "./agents/context-engineer.md",
+  "./agents/doc-engineer.md",
   "./agents/verifier.md",
   "./agents/implementer.md",
   "./agents/sentinel.md"
