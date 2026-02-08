@@ -53,7 +53,7 @@ Build a picture of what exists, using the project index to avoid redundant scann
 
 When seeded, focus discovery on the seed area but still review the full index — cross-cutting opportunities often emerge from adjacent domains.
 
-Summarize your discovery concisely: what the project does, what it has, and where the edges are.
+Summarize your discovery concisely: what the project does, what it has, and where the edges are. If the project-root `CLAUDE.md` has a `## Structure` section, compare it against the actual filesystem to detect structural drift — you will sync it in Phase 6.
 
 ### Phase 3 — Idea Generation
 
@@ -151,6 +151,16 @@ After writing the proposal, update `.ai-state/PROJECT_INDEX.md`:
 - Update the `Last updated` timestamp
 
 Create the `.ai-state/` directory and `PROJECT_INDEX.md` if they do not exist.
+
+**CLAUDE.md `## Structure` sync:**
+
+If the project-root `CLAUDE.md` exists and contains a `## Structure` section, sync it with the discovered filesystem state:
+
+1. Compare the section content against actual top-level directories — include only architectural directories (skip build artifacts, caches, and hidden tool directories like `.ai-work/`)
+2. If drift is detected, use `Edit` to update **only** the `## Structure` section — never modify other sections
+3. Match the existing format: bullet style, indentation, and description style
+4. If no `CLAUDE.md` exists or it has no `## Structure` section, skip silently
+5. Report what changed (or that no changes were needed) in the output summary
 
 ## Collaboration Points
 

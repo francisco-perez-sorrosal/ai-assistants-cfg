@@ -50,6 +50,8 @@ Discover and catalog all existing context artifacts:
 
 Build a mental map of what exists, what references what, and where the boundaries are.
 
+**Ownership boundary:** The `## Structure` section of project-root `CLAUDE.md` files is managed by the promethean agent (Phase 6 structural sync). During audits, skip `## Structure` when proposing edits — if you discover issues there, note them in findings but defer correction to the promethean.
+
 ### Phase 3 — Analysis
 
 Perform cross-artifact analysis across six dimensions:

@@ -6,7 +6,7 @@ Conventions for when and how to use the available software agents — autonomous
 
 | Agent | Purpose | Output | When to Use | Background Safe |
 |-------|---------|--------|-------------|-----------------|
-| `promethean` | Feature-level ideation from project state analysis | `IDEA_PROPOSAL.md` | Generating improvement ideas, exploring gaps, creative exploration of opportunities | No (foreground only -- dialog loop requires user input) |
+| `promethean` | Feature-level ideation from project state analysis | `IDEA_PROPOSAL.md` + `CLAUDE.md` `## Structure` sync | Generating improvement ideas, exploring gaps, creative exploration of opportunities | No (foreground only -- dialog loop requires user input) |
 | `researcher` | Codebase exploration, external docs, comparative analysis | `RESEARCH_FINDINGS.md` | Understanding a technology, evaluating options, gathering context | Yes |
 | `systems-architect` | Trade-off analysis, codebase readiness, system design | `SYSTEMS_PLAN.md` | Architectural decisions, structural assessment, technology selection | Yes |
 | `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Breaking architecture into increments, resuming multi-session work | Yes |
