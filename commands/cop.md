@@ -14,3 +14,4 @@ Create a commit for the current staged changes (or all changes if nothing is sta
 4. Craft the commit message following our commit conventions
 5. Create the commit
 6. Push to the remote repository
+7. If `.ai-work/` exists, ask the user whether to clean it up (`rm -rf .ai-work/`). Before deleting, check for `LEARNINGS.md` and remind the user to merge any valuable content into permanent locations first
