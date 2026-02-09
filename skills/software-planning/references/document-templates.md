@@ -1,0 +1,164 @@
+# Document Templates and Lifecycle
+
+Detailed templates for WIP.md and LEARNINGS.md, plus the end-of-feature workflow. Reference material for the [Software Planning](../SKILL.md) skill.
+
+## WIP.md Structure
+
+### Sequential Mode (default)
+
+```markdown
+# WIP: [Feature Name]
+
+## Current Step
+
+Step N of M: [Description]
+
+## Status
+
+[IMPLEMENTING] - Writing code
+[TESTING] - Writing/running tests
+[REVIEWING] - Checking quality
+[WAITING] - Awaiting commit approval
+[COMPLETE] - Step finished
+
+## Progress
+
+- [x] Step 1: [Description]
+- [x] Step 2: [Description]
+- [ ] Step 3: [Description] <- current
+- [ ] Step 4: [Description]
+
+## Blockers
+
+[None / List current blockers]
+
+## Next Action
+
+[Specific next thing to do]
+
+## Notes
+
+[Optional: Brief notes about current work]
+```
+
+### Parallel Mode
+
+When the plan contains steps annotated with `[parallel-group]`, use the parallel format for batches of concurrent steps. Switch back to sequential mode for non-parallel steps.
+
+```markdown
+# WIP: [Feature Name]
+
+## Current Batch
+
+Mode: parallel
+Steps: 3, 4
+Status: in-progress
+
+### Step 3 -- [Description]
+- Assignee: implementer-1
+- Status: [IN-PROGRESS]
+- Files: path/to/file1.md, path/to/file2.md
+
+### Step 4 -- [Description]
+- Assignee: implementer-2
+- Status: [IN-PROGRESS]
+- Files: path/to/file3.md
+
+## Progress
+
+- [x] Step 1: [Description]
+- [x] Step 2: [Description]
+- [~] Step 3: [Description] <- parallel batch
+- [~] Step 4: [Description] <- parallel batch
+- [ ] Step 5: [Description]
+
+## Blockers
+
+[None / List current blockers]
+
+## Next Action
+
+Wait for all parallel implementers to complete, then run coherence review.
+```
+
+**Parallel mode rules:**
+
+- Each implementer updates only its own step's `Status` field -- never another step's
+- The planner writes the `Current Batch` header, `Mode`, `Steps`, and `Assignee` fields
+- After all implementers report back, the planner runs a coherence review and advances to the next batch or step
+- Use `[~]` in the Progress checklist to indicate in-progress parallel steps
+
+### WIP Must Always Be Accurate
+
+Update WIP.md:
+
+- When starting a new step
+- When status changes
+- When blockers appear or resolve
+- After each commit
+- At end of each session
+
+**If WIP.md doesn't reflect reality, update it immediately.**
+
+## LEARNINGS.md Structure
+
+```markdown
+# Learnings: [Feature Name]
+
+## Gotchas
+- **[Title]**: Context, issue, solution
+
+## Patterns That Worked
+- **[Title]**: What, why it works, brief example
+
+## Decisions Made
+- **[Title]**: Options considered, decision, rationale, trade-offs
+
+## Edge Cases
+- [Edge case]: How we handled it
+
+## Technical Debt
+- [Item]: What was compromised, why, future improvement needed
+```
+
+### Capture Learnings As They Occur
+
+Don't wait until the end. When you discover something:
+
+1. Add it to LEARNINGS.md immediately
+2. Continue with current work
+3. At end of feature, learnings are ready to merge
+
+## End of Feature
+
+When all steps are complete:
+
+### 1. Verify Completion
+
+- All acceptance criteria met
+- System is working
+- Critical components tested
+- All steps marked complete in WIP.md
+
+### 2. Merge Learnings
+
+Review LEARNINGS.md and determine destination:
+
+| Learning Type | Destination | Notes |
+|---------------|-------------|-------|
+| Gotchas | CLAUDE.md | Add to relevant section |
+| Patterns | CLAUDE.md | Document successful approaches |
+| Architectural decisions | ADR or CLAUDE.md | Significant decisions get ADRs |
+| Technical debt | Issue tracker or CLAUDE.md | Track future improvements |
+| Domain knowledge | Project docs | Update relevant documentation |
+
+### 3. Delete Documents
+
+After learnings are merged, delete all planning documents (see [agent intermediate documents](../../../rules/swe/agent-intermediate-documents.md) for cleanup instructions).
+
+**The knowledge lives on in:**
+
+- CLAUDE.md (gotchas, patterns, decisions)
+- Git history (what was done)
+- Project documentation (if applicable)
+- Issue tracker (technical debt)

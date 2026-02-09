@@ -7,6 +7,11 @@ allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 
 Comprehensive guidance for Python development following pragmatic, production-ready practices.
 
+**Satellite files** (loaded on-demand):
+
+- [references/testing-and-tooling.md](references/testing-and-tooling.md) -- pytest patterns, pyproject.toml config, pre-commit setup
+- [references/patterns-and-examples.md](references/patterns-and-examples.md) -- dataclasses, Pydantic, protocols, context managers, pattern matching, async, error handling
+
 ## Core Principles
 
 **Pragmatic Python**: Write code that is clear, maintainable, and purposeful. Every line should have a reason to exist.
@@ -31,7 +36,7 @@ Comprehensive guidance for Python development following pragmatic, production-re
 
 ## Project Structure
 
-```
+```text
 project/
 ├── pyproject.toml          # Project metadata and dependencies
 ├── README.md              # Project documentation
@@ -96,289 +101,35 @@ indent-style = "space"
 
 ## Testing with pytest
 
-**Test structure**:
-```python
-import pytest
-from package_name.module import process_items
+Use pytest with clear test names that describe behavior. One test file per module, fixtures for shared setup, parametrize for multiple similar tests.
 
-def test_process_items_returns_limited_results():
-    items = ["a", "b", "c", "d", "e"]
-    result = process_items(items, limit=3)
-    assert result == ["a", "b", "c"]
-
-def test_process_items_handles_empty_input():
-    assert process_items([]) == []
-
-@pytest.fixture
-def sample_data():
-    return ["item1", "item2", "item3"]
-
-def test_with_fixture(sample_data):
-    result = process_items(sample_data, limit=2)
-    assert len(result) == 2
-```
-
-**Running tests**:
-```bash
-<tool> run pytest                    # Run all tests
-<tool> run pytest tests/test_module.py  # Specific file
-<tool> run pytest -v                 # Verbose
-<tool> run pytest --cov=src         # With coverage
-<tool> run pytest -k "test_name"    # Filter by name
-```
-
-**Test organization**:
-- One test file per module: `test_module.py` for `module.py`
-- Test names should describe behavior: `test_function_handles_edge_case`
-- Use fixtures for shared setup
-- Use parametrize for multiple similar tests
-
-```python
-@pytest.mark.parametrize("input_val,expected", [
-    ([], []),
-    (["a"], ["a"]),
-    (["a", "b", "c"], ["a", "b"]),
-])
-def test_process_items_with_various_inputs(input_val, expected):
-    assert process_items(input_val, limit=2) == expected
-```
+--> See [references/testing-and-tooling.md](references/testing-and-tooling.md) for detailed examples, parametrize patterns, and running commands.
 
 ## Common Patterns
 
-**Dataclasses** for simple data containers:
-```python
-from dataclasses import dataclass
+Key patterns: **dataclasses** (frozen) for internal data, **Pydantic** for external input validation, **Protocols** for structural typing, **context managers** for resource lifecycle, **structural pattern matching** (3.10+).
 
-@dataclass(frozen=True)  # Immutable
-class Config:
-    host: str
-    port: int
-    debug: bool = False
-```
+Use dataclasses for simple containers with no validation; Pydantic when parsing external input, needing type coercion, or building APIs.
 
-**Pydantic models** for data validation and parsing:
-```python
-from pydantic import BaseModel, Field, ConfigDict, field_validator
-
-class UserInput(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    email: str
-    age: int = Field(ge=0, le=150)
-    username: str = Field(min_length=3, max_length=50)
-
-    @field_validator("email")
-    @classmethod
-    def validate_email(cls, v: str) -> str:
-        if "@" not in v:
-            raise ValueError("Invalid email address")
-        return v.lower()
-
-# Automatic validation on instantiation
-user = UserInput(email="USER@EXAMPLE.COM", age=25, username="john")
-# user.email == "user@example.com"
-```
-
-**Dataclasses vs Pydantic: When to use each**
-
-Use **dataclasses** when:
-- Simple data containers with no validation needs
-- Internal data structures within your codebase
-- Performance-critical paths (dataclasses have less overhead)
-- No need for JSON/dict serialization/deserialization
-- Working with pure Python without external dependencies
-
-Use **Pydantic** when:
-- Parsing external input (API requests, config files, user input)
-- Complex validation rules are required
-- Need automatic type coercion (e.g., `"123"` → `123`)
-- Serialization to/from JSON or dicts is frequent
-- Working with settings/configuration management
-- Building APIs (FastAPI integration)
-
-```python
-# Example: Combining both approaches
-from dataclasses import dataclass
-from pydantic import BaseModel
-
-# Pydantic for external input validation
-class CreateUserRequest(BaseModel):
-    email: str
-    username: str
-    age: int
-
-# Dataclass for internal domain model
-@dataclass(frozen=True)
-class User:
-    id: int
-    email: str
-    username: str
-    age: int
-
-    @classmethod
-    def from_request(cls, user_id: int, request: CreateUserRequest) -> "User":
-        return cls(
-            id=user_id,
-            email=request.email,
-            username=request.username,
-            age=request.age,
-        )
-```
-
-**Protocols** for structural typing:
-```python
-from typing import Protocol
-
-class Serializable(Protocol):
-    def to_json(self) -> str: ...
-
-def save(obj: Serializable) -> None:
-    data = obj.to_json()
-    # ... save data
-```
-
-**Context managers** for resource management:
-```python
-from contextlib import contextmanager
-from typing import Iterator
-
-@contextmanager
-def managed_resource(name: str) -> Iterator[Resource]:
-    resource = acquire_resource(name)
-    try:
-        yield resource
-    finally:
-        resource.cleanup()
-```
-
-**Structural pattern matching** (Python 3.10+):
-```python
-from dataclasses import dataclass
-
-@dataclass
-class Command:
-    action: str
-    name: str = ""
-
-def handle_command(command: Command) -> str:
-    match command:
-        case Command(action="quit"):
-            return "Goodbye"
-        case Command(action="greet", name=name):
-            return f"Hello, {name}"
-        case _:
-            return "Unknown command"
-```
+--> See [references/patterns-and-examples.md](references/patterns-and-examples.md) for code examples and the full dataclasses-vs-Pydantic decision guide.
 
 ## Async Patterns
 
-**Basic async/await**:
-```python
-import asyncio
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+Use `async/await` with `httpx` for HTTP, `asynccontextmanager` for resource lifecycle. Test with `pytest-asyncio`. Common libraries: `asyncio`, `httpx`, `aiohttp`, `anyio`.
 
-import httpx
-
-async def fetch_data(url: str) -> dict:
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url)
-        return response.json()
-```
-
-**Async context managers** for resource lifecycle:
-```python
-@asynccontextmanager
-async def managed_connection(url: str) -> AsyncIterator[Connection]:
-    conn = await connect(url)
-    try:
-        yield conn
-    finally:
-        await conn.close()
-```
-
-**Testing**: Use `pytest-asyncio` for async test functions:
-```python
-import pytest
-
-@pytest.mark.asyncio
-async def test_fetch_data():
-    result = await fetch_data("https://api.example.com/data")
-    assert "id" in result
-```
-
-**Common async libraries**: `asyncio` (stdlib), `httpx` (async HTTP client), `aiohttp` (HTTP client/server), `anyio` (structured concurrency).
+--> See [references/patterns-and-examples.md](references/patterns-and-examples.md#async-patterns) for async code examples.
 
 ## Code Quality Tools
 
-**Essential tools** in `pyproject.toml`:
-```toml
-[project]
-requires-python = ">=3.11"
+Configure mypy (strict mode), pytest, and coverage in `pyproject.toml`. Use pre-commit hooks with ruff and mypy for automated quality gates.
 
-[tool.mypy]
-python_version = "3.11"
-strict = true
-warn_return_any = true
-warn_unused_configs = true
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_functions = ["test_*"]
-addopts = "-ra -q --strict-markers"
-
-[tool.coverage.run]
-source = ["src"]
-branch = true
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "if TYPE_CHECKING:",
-    "raise NotImplementedError",
-]
-```
-
-**Pre-commit hooks** (optional but recommended):
-```yaml
-# .pre-commit-config.yaml
-# Pin rev to the latest stable release — find current versions at each repo's releases page.
-# Specific versions are not pinned here to avoid staleness; the pattern matters, not the pin.
-repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: <version>  # https://github.com/astral-sh/ruff-pre-commit/releases
-    hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: <version>  # https://github.com/pre-commit/mirrors-mypy/tags
-    hooks:
-      - id: mypy
-        additional_dependencies: [types-requests]
-```
+--> See [references/testing-and-tooling.md](references/testing-and-tooling.md#code-quality-tools) for full `pyproject.toml` configuration and pre-commit setup.
 
 ## Error Handling
 
-**Be explicit** about error conditions:
-```python
-class InvalidConfigError(ValueError):
-    """Raised when configuration is invalid."""
-    pass
+Be explicit about error conditions. Create domain-specific exception classes, chain exceptions with `from`, and distinguish recoverable from fatal errors.
 
-def load_config(path: str) -> Config:
-    if not Path(path).exists():
-        raise FileNotFoundError(f"Config file not found: {path}")
-
-    try:
-        data = parse_config_file(path)
-    except ParseError as e:
-        raise InvalidConfigError(f"Invalid config format: {e}") from e
-
-    return Config(**data)
-```
+--> See [references/patterns-and-examples.md](references/patterns-and-examples.md#error-handling) for error handling examples.
 
 ## Development Workflow
 
@@ -405,4 +156,3 @@ For package management commands, see the [Python Project Management](../python-p
 <tool> run pytest -x                # Stop on first failure
 <tool> run pytest --lf              # Run last failed
 ```
-

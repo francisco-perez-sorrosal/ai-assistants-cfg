@@ -9,6 +9,13 @@ allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 **All work must be done in small, known-good increments.** Each increment leaves the codebase in a working state.
 Create and maintain planning documents (PLAN.md, WIP.md, LEARNINGS.md) following the [agent intermediate documents](../../rules/swe/agent-intermediate-documents.md) placement convention.
 
+**Satellite files** (loaded on-demand):
+
+- [references/document-templates.md](references/document-templates.md) -- WIP.md and LEARNINGS.md templates, parallel mode, end-of-feature workflow
+- [references/decomposition-guide.md](references/decomposition-guide.md) -- feature breakdown examples, spike steps, anti-patterns, Claude Code agent usage
+- [phases/refactoring.md](phases/refactoring.md) -- refactoring phase integration
+- [contexts/python.md](contexts/python.md) -- Python-specific quality gates and step templates
+
 ## Three-Document Model
 
 For significant work, maintain three documents:
@@ -21,7 +28,7 @@ For significant work, maintain three documents:
 
 ### Document Relationships
 
-```
+```text
 PLAN.md (static)          WIP.md (living)           LEARNINGS.md (temporary)
 ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
 │ Goal            │       │ Current step    │       │ Gotchas         │
@@ -44,6 +51,7 @@ When planning work in a specific language or tech stack, load the relevant **con
 | Python | [contexts/python.md](contexts/python.md) | [Python](../python-development/SKILL.md), [Python Project Management](../python-prj-mgmt/SKILL.md) |
 
 **How contexts integrate**:
+
 - **PLAN.md**: Add a `Tech Stack` field linking to the relevant context and skills
 - **Step templates**: Use language-specific templates for common step types (new module, add dependency, etc.)
 - **Quality gates**: Run language-specific checks (linter, type checker, tests) before each commit
@@ -62,6 +70,7 @@ Some plan steps delegate to a **specialized skill** for their methodology. A pha
 | Refactoring | [phases/refactoring.md](phases/refactoring.md) | [Refactoring](../refactoring/SKILL.md) |
 
 **How phases integrate**:
+
 - **Detection**: During plan creation, look for signals that a phase is needed (each phase doc lists its signals)
 - **Step marking**: Tag delegated steps with `[Phase: <Name>]` in the step title and a `Skill` field pointing to the delegated skill
 - **Entry/exit criteria**: Each phase defines what must be true before starting and after completing
@@ -189,134 +198,21 @@ Plans are not immutable, but changes must be explicit and approved.
 
 ## WIP.md Structure
 
-### Sequential Mode (default)
+Track current step, status (IMPLEMENTING/TESTING/REVIEWING/WAITING/COMPLETE), progress checklist, blockers, and next action. Supports sequential mode (default) and parallel mode for concurrent steps.
 
-```markdown
-# WIP: [Feature Name]
+**If WIP.md doesn't reflect reality, update it immediately.** Update when starting a step, when status changes, when blockers appear/resolve, after each commit, and at end of each session.
 
-## Current Step
-
-Step N of M: [Description]
-
-## Status
-
-[IMPLEMENTING] - Writing code
-[TESTING] - Writing/running tests
-[REVIEWING] - Checking quality
-[WAITING] - Awaiting commit approval
-[COMPLETE] - Step finished
-
-## Progress
-
-- [x] Step 1: [Description]
-- [x] Step 2: [Description]
-- [ ] Step 3: [Description] ← current
-- [ ] Step 4: [Description]
-
-## Blockers
-
-[None / List current blockers]
-
-## Next Action
-
-[Specific next thing to do]
-
-## Notes
-
-[Optional: Brief notes about current work]
-```
-
-### Parallel Mode
-
-When the plan contains steps annotated with `[parallel-group]`, use the parallel format for batches of concurrent steps. Switch back to sequential mode for non-parallel steps.
-
-```markdown
-# WIP: [Feature Name]
-
-## Current Batch
-
-Mode: parallel
-Steps: 3, 4
-Status: in-progress
-
-### Step 3 — [Description]
-- Assignee: implementer-1
-- Status: [IN-PROGRESS]
-- Files: path/to/file1.md, path/to/file2.md
-
-### Step 4 — [Description]
-- Assignee: implementer-2
-- Status: [IN-PROGRESS]
-- Files: path/to/file3.md
-
-## Progress
-
-- [x] Step 1: [Description]
-- [x] Step 2: [Description]
-- [~] Step 3: [Description] ← parallel batch
-- [~] Step 4: [Description] ← parallel batch
-- [ ] Step 5: [Description]
-
-## Blockers
-
-[None / List current blockers]
-
-## Next Action
-
-Wait for all parallel implementers to complete, then run coherence review.
-```
-
-**Parallel mode rules:**
-
-- Each implementer updates only its own step's `Status` field — never another step's
-- The planner writes the `Current Batch` header, `Mode`, `Steps`, and `Assignee` fields
-- After all implementers report back, the planner runs a coherence review and advances to the next batch or step
-- Use `[~]` in the Progress checklist to indicate in-progress parallel steps
-
-### WIP Must Always Be Accurate
-
-Update WIP.md:
-
-- When starting a new step
-- When status changes
-- When blockers appear or resolve
-- After each commit
-- At end of each session
-
-**If WIP.md doesn't reflect reality, update it immediately.**
+--> See [references/document-templates.md](references/document-templates.md) for full WIP.md templates (sequential and parallel modes).
 
 ## LEARNINGS.md Structure
 
-```markdown
-# Learnings: [Feature Name]
+Sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical Debt. Capture learnings immediately as they occur -- don't wait until the end.
 
-## Gotchas
-- **[Title]**: Context, issue, solution
-
-## Patterns That Worked
-- **[Title]**: What, why it works, brief example
-
-## Decisions Made
-- **[Title]**: Options considered, decision, rationale, trade-offs
-
-## Edge Cases
-- [Edge case]: How we handled it
-
-## Technical Debt
-- [Item]: What was compromised, why, future improvement needed
-```
-
-### Capture Learnings As They Occur
-
-Don't wait until the end. When you discover something:
-
-1. Add it to LEARNINGS.md immediately
-2. Continue with current work
-3. At end of feature, learnings are ready to merge
+--> See [references/document-templates.md](references/document-templates.md#learningsmd-structure) for the full template.
 
 ## Workflow
 
-```
+```text
 START: Create PLAN.md (get approval) + WIP.md + LEARNINGS.md
 
 FOR EACH STEP:
@@ -331,123 +227,25 @@ END: Verify all criteria met, merge learnings, delete all three docs
 
 ## End of Feature
 
-When all steps are complete:
+When all steps are complete: verify all acceptance criteria met, merge learnings to permanent locations (CLAUDE.md, ADRs, issue tracker), then delete all planning documents.
 
-### 1. Verify Completion
-
-- All acceptance criteria met
-- System is working
-- Critical components tested
-- All steps marked complete in WIP.md
-
-### 2. Merge Learnings
-
-Review LEARNINGS.md and determine destination:
-
-| Learning Type | Destination | Notes |
-|---------------|-------------|-------|
-| Gotchas | CLAUDE.md | Add to relevant section |
-| Patterns | CLAUDE.md | Document successful approaches |
-| Architectural decisions | ADR or CLAUDE.md | Significant decisions get ADRs |
-| Technical debt | Issue tracker or CLAUDE.md | Track future improvements |
-| Domain knowledge | Project docs | Update relevant documentation |
-
-### 3. Delete Documents
-
-After learnings are merged, delete all planning documents (see [agent intermediate documents](../../rules/swe/agent-intermediate-documents.md) for cleanup instructions).
-
-**The knowledge lives on in:**
-
-- CLAUDE.md (gotchas, patterns, decisions)
-- Git history (what was done)
-- Project documentation (if applicable)
-- Issue tracker (technical debt)
+--> See [references/document-templates.md](references/document-templates.md#end-of-feature) for the full verification, merge, and cleanup workflow.
 
 ## Breaking Down Complex Features
 
-### Start with the Goal
+Start with a specific goal (not vague), identify concrete acceptance criteria, then decompose by asking "What's the smallest change that moves toward the goal?" Validate each step can be described in one sentence and done in one session.
 
-**Bad**: "Improve user authentication"
-**Good**: "Add OAuth2 login alongside existing email/password authentication"
-
-### Identify Acceptance Criteria
-
-What does "done" look like?
-
-- [ ] Users can log in with Google OAuth2
-- [ ] Existing email/password login still works
-- [ ] User accounts are linked correctly
-- [ ] Error states are handled gracefully
-
-### Decompose into Steps
-
-Ask: "What's the smallest change that moves toward the goal?"
-
-Before listing feature steps, check for **phase signals** — does the current codebase need preparatory work (refactoring, migration, etc.) before the feature can be built cleanly? If yes, prepend a [phase delegation](#phase-delegations) to the step list.
-
-**Example breakdown:**
-
-1. Add OAuth2 library dependency
-2. Create OAuth2 configuration module
-3. Implement OAuth2 callback handler
-4. Add user account linking logic
-5. Update login UI to show OAuth2 option
-6. Add error handling for OAuth2 failures
-7. Test integration with Google OAuth2
-
-Each step is one commit, leaves system working.
-
-### Validate Step Size
-
-For each step, ask:
-
-- Can I describe this in one sentence? (yes)
-- Can I do this in one session? (yes)
-- Will the system still work after? (yes)
-- Is it obvious when I'm done? (yes)
-
-If any answer is "no", break it down further.
+--> See [references/decomposition-guide.md](references/decomposition-guide.md) for a full worked example with OAuth2, step validation checklist, and spike steps for unknowns.
 
 ## Handling Unknowns
 
-### Spike Steps
+Use timeboxed **spike steps** for exploratory work. Spikes must produce a decision documented in LEARNINGS.md, then update the plan.
 
-For exploratory work, add spike steps:
-
-```markdown
-### Step 2: Spike - Investigate OAuth2 library options
-
-**Implementation**: Research and test 2-3 OAuth2 libraries
-**Done when**: Decision made and documented in LEARNINGS.md
-**Timebox**: 1 hour max
-```
-
-**Spike characteristics:**
-
-- Timeboxed exploration
-- May not result in production code
-- Must produce a decision
-- Document findings in LEARNINGS.md
-
-After a spike, update the plan: document findings in LEARNINGS.md, propose plan changes, get approval, then continue.
+--> See [references/decomposition-guide.md](references/decomposition-guide.md#handling-unknowns) for spike step templates and characteristics.
 
 ## Anti-Patterns
 
-**Don't:** Commit without approval — always wait for explicit "yes" before committing
-
-**Don't:** Let steps span multiple commits — break down further until one step = one commit
-
-**Don't:** Use vague "done when" criteria — "when it works" is not specific enough. Be concrete: "When users can log in with Google and existing tests pass"
-
-**Don't:** Let WIP.md become stale — update immediately when reality changes
-
-**Don't:** Wait until end to capture learnings — add to LEARNINGS.md as discoveries occur
-
-**Don't:** Change plans silently — all plan changes require discussion and approval
-
-**Don't:** Keep planning docs after feature complete — delete them; knowledge is now in permanent locations
-
-**Don't:** Skip tests for complex logic — critical and complex components need tests; don't defer testing indefinitely
+--> See [references/decomposition-guide.md](references/decomposition-guide.md#anti-patterns) for the full list of planning anti-patterns to avoid.
 
 ## When to Use This Skill
 
@@ -472,24 +270,9 @@ For simple multi-step tasks, use the agent's built-in task tracking instead.
 
 ## Claude Code Usage
 
-When using this skill with Claude Code specifically:
+The `implementation-planner` agent uses this skill directly for step decomposition, document creation, and execution supervision. For manual planning without agents, use `Write` and `Edit` tools directly. For simple single-session tasks, use `TaskCreate`/`TaskUpdate`/`TaskList`.
 
-- The **development crew** (`researcher` → `systems-architect` → `implementation-planner`) splits the planning workflow into focused phases. The `implementation-planner` agent uses this skill directly — it owns step decomposition, document creation (`IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md`), and execution supervision.
-- The **`researcher` agent** gathers codebase and external information into `RESEARCH_FINDINGS.md`.
-- The **`systems-architect` agent** produces `SYSTEMS_PLAN.md` (Goal, Criteria, Architecture, Risks).
-- The **`implementation-planner` agent** produces `IMPLEMENTATION_PLAN.md` with incremental steps and maintains `WIP.md` and `LEARNINGS.md`.
-- For **manual planning** without agents, use `Write` and `Edit` tools to create and maintain PLAN.md, WIP.md, and LEARNINGS.md directly.
-- For simple multi-step tasks that don't warrant three-document planning, use `TaskCreate`/`TaskUpdate`/`TaskList` to track micro-tasks within a session.
-- Both approaches can coexist: task tools track current session's micro-tasks while PLAN.md tracks overall feature steps.
-
-| Use the agent crew when: | Use manual planning when: | Use Task Tools when: |
-|--------------------------|---------------------------|----------------------|
-| New feature or architectural change | Iterative plan refinement | Single-session task |
-| Need codebase analysis first | Plan already exists | Simple checklist |
-| Starting from scratch | Adjusting existing steps | Independent tasks |
-| Complex scope requiring risk assessment | User wants direct control | Clear requirements |
-| Trade-off analysis needed | Minor plan adjustments | No plan needed |
-| Supervising execution against a plan | — | — |
+--> See [references/decomposition-guide.md](references/decomposition-guide.md#claude-code-usage) for the full agent crew workflow and selection table.
 
 ## Quick Reference
 
@@ -514,4 +297,3 @@ When using this skill with Claude Code specifically:
 - [ ] WIP.md reflects current state
 - [ ] Learnings captured if any
 - [ ] Can describe change in one sentence
-

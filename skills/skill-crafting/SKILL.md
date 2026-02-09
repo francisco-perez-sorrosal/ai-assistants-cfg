@@ -11,6 +11,8 @@ Reference for developing effective Agent Skills. Official specification at [agen
 
 - [references/cross-agent-portability.md](references/cross-agent-portability.md) -- discovery paths per tool, portability guidance
 - [references/artifact-naming.md](references/artifact-naming.md) -- naming conventions for all artifact types (skills, agents, commands, rules)
+- [references/content-and-development.md](references/content-and-development.md) -- content type selection, feedback loops, evaluation-driven development, executable code practices
+- [references/patterns-and-troubleshooting.md](references/patterns-and-troubleshooting.md) -- skill type patterns (read-only, script-based, template-based), anti-patterns, troubleshooting
 
 ## Core Principles
 
@@ -140,156 +142,41 @@ For reference files over 100 lines, include a table of contents at the top so th
 
 **Consistent Terminology**: Choose one term per concept. Always "API endpoint," not mixing with "URL," "route," or "path."
 
-**Examples Over Description**: Provide input/output pairs showing desired style and detail level — more effective than prose descriptions alone.
+**Examples Over Description**: Provide input/output pairs showing desired style and detail level -- more effective than prose descriptions alone.
 
-**Templates**: Match strictness to requirements:
-
-- Strict: "ALWAYS use this exact template structure"
-- Flexible: "Sensible default, adapt as needed"
+**Templates**: Match strictness to requirements (strict = "ALWAYS use this exact template", flexible = "sensible default, adapt as needed").
 
 **Avoid Time-Sensitive Info**: Use "Old Patterns" sections with `<details>` for deprecated methods rather than date-based conditionals.
 
-### Choosing Content Type
+Choose content type by degree of freedom: **scripts** for deterministic operations, **worked examples** for pattern matching, **prose instructions** for judgment calls. Include validation loops for complex tasks.
 
-When deciding how to encode behavior in your skill, match the content type to the degree of freedom:
-
-| Content Type | When to Use | Agent Behavior |
-|---|---|---|
-| **Script** (`scripts/`) | Deterministic operations where consistency is critical (validation, transformation, migration) | Executes the script — doesn't generate its own |
-| **Worked example** | A pattern exists that the agent should follow (commit format, report structure, API response shape) | Pattern-matches the example |
-| **Prose instruction** | Multiple approaches are valid and context determines the best one (code review, architecture decisions) | Reasons about the situation |
-
-Prefer scripts for anything a linter, formatter, or validator could do — deterministic checks are cheaper and more reliable than LLM reasoning. Reserve prose instructions for decisions that genuinely require judgment.
-
-### Workflows with Feedback Loops
-
-For complex tasks, provide step-by-step checklists the agent can track:
-
-```markdown
-Task Progress:
-- [ ] Step 1: Analyze inputs (run analyze.py)
-- [ ] Step 2: Create mapping
-- [ ] Step 3: Validate mapping (run validate.py)
-- [ ] Step 4: Execute transformation
-- [ ] Step 5: Verify output
-```
-
-Include validation loops: run validator -> fix errors -> repeat. This dramatically improves output quality.
-
-For high-stakes operations, use the **plan-validate-execute** pattern: create a structured plan file, validate it with a script, then execute. Catches errors before they happen.
+--> See [references/content-and-development.md](references/content-and-development.md) for the content type decision table, feedback loop patterns, and executable code best practices.
 
 ## Development Workflow
 
-### Evaluation-Driven Development
+Start with a minimal SKILL.md addressing only observed gaps. Build evaluations (at least three test scenarios) BEFORE writing extensive documentation. Use the author-tester workflow: one instance writes, another tests in a fresh session.
 
-Start with a minimal SKILL.md addressing only observed gaps. Add content only when testing reveals the agent needs it — not preemptively.
-
-Build evaluations BEFORE writing extensive documentation:
-
-1. **Identify gaps**: Run the agent on representative tasks without the skill. Note specific failures
-2. **Create evaluations**: Define three test scenarios covering those gaps
-3. **Establish baseline**: Measure performance without the skill
-4. **Write minimal instructions**: Just enough to address gaps and pass evaluations
-5. **Iterate**: Execute evaluations, compare against baseline, refine
-
-### Iterative Author-Tester Workflow
-
-1. **Instance A** (author): Helps create/refine skill content
-2. **Instance B** (tester): Uses the skill on real tasks in a fresh session
-3. Observe Instance B's behavior — where it struggles, succeeds, or makes unexpected choices. Grade outcomes, not paths: agents may find valid approaches you didn't anticipate
-4. Bring observations back to Instance A for refinements
-5. Repeat until the skill reliably handles target scenarios
-
-### Observe Navigation Patterns
-
-Watch how the agent uses the skill:
-
-- Unexpected file access order -> structure isn't intuitive
-- Missed references -> links need to be more explicit
-- Overreliance on one file -> content should be in `SKILL.md`
-- Ignored files -> unnecessary or poorly signaled
+--> See [references/content-and-development.md](references/content-and-development.md#evaluation-driven-development) for the full evaluation-driven development process, author-tester workflow, and navigation pattern observation guide.
 
 ## Executable Code Best Practices
 
-**Solve, Don't Punt**: Handle error conditions explicitly rather than letting scripts fail for the agent to debug.
+Handle errors explicitly (don't punt to the agent), justify all constants, distinguish execution vs. reference intent, list package dependencies, and use fully qualified MCP tool names (`ServerName:tool_name`).
 
-**Justify Constants**: Document why values exist — no voodoo numbers:
-
-```python
-# Three retries balances reliability vs speed
-# Most intermittent failures resolve by second retry
-MAX_RETRIES = 3
-```
-
-**Execution vs Reference**: Be explicit about intent:
-
-- "Run `analyze_form.py` to extract fields" (execute)
-- "See `analyze_form.py` for the extraction algorithm" (read as reference)
-
-**Package Dependencies**: List required packages and verify availability.
-
-**MCP Tool Names**: Use fully qualified format: `ServerName:tool_name`
+--> See [references/content-and-development.md](references/content-and-development.md#executable-code-best-practices) for detailed guidance and examples.
 
 ## Common Patterns
 
-### Read-Only Reference Skills
+Three main skill types: **read-only reference** (`allowed-tools: [Read, Grep, Glob]`), **script-based** (`[Read, Bash, Write]`), and **template-based** (`[Read, Write, Edit]`).
 
-```yaml
-allowed-tools: [Read, Grep, Glob]
-```
-
-For documentation and code analysis.
-
-### Script-Based Skills
-
-```yaml
-allowed-tools: [Read, Bash, Write]
-```
-
-Reference scripts with forward slashes: `scripts/helper.py`
-
-### Template-Based Skills
-
-```yaml
-allowed-tools: [Read, Write, Edit]
-```
-
-Store templates in `assets/` directory.
+--> See [references/patterns-and-troubleshooting.md](references/patterns-and-troubleshooting.md) for pattern details and `allowed-tools` configurations.
 
 ## Anti-Patterns
 
-- Vague descriptions ("Helps with documents")
-- Over-explaining what the agent already knows
-- Windows-style paths — use forward slashes everywhere
-- Too many options — provide one default with escape hatches
-- Deeply nested references — keep one level from `SKILL.md`
-- Hard-referencing slash commands from skills — commands are tool-specific and break portability. Describe the workflow outcome ("commit the changes") and let the agent's discovery mechanism find the right command. Cross-reference other skills instead; list commands in project-level files like `CLAUDE.md`
-- Scripts that punt errors to the agent
-- Time-based conditionals
-- Voodoo constants without justification
-- Assuming tools/packages are installed without listing them
+--> See [references/patterns-and-troubleshooting.md](references/patterns-and-troubleshooting.md#anti-patterns) for the full list of anti-patterns to avoid (vague descriptions, over-explaining, deeply nested references, hard-referencing slash commands, etc.).
 
 ## Troubleshooting
 
-### Skill Not Activating
-
-1. Verify description includes specific trigger terms
-2. Check YAML syntax (spaces not tabs, proper `---` delimiters)
-3. If `name` is present, confirm it matches directory name exactly
-4. Test with explicit trigger phrases
-5. Consult the specific agent's documentation for skill-loading behavior
-
-### YAML Errors
-
-- Use spaces, never tabs
-- Quote strings with special characters
-- `---` delimiters on their own lines
-
-### Path Issues
-
-- Use forward slashes everywhere
-- Verify referenced paths exist
-- Use `~` for home directory in personal skills
+--> See [references/patterns-and-troubleshooting.md](references/patterns-and-troubleshooting.md#troubleshooting) for solutions to skill activation, YAML parsing, and path issues.
 
 ## Checklist
 
