@@ -12,7 +12,7 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - `commands/` — Shared slash commands
 - `agents/` — Shared agent definitions
 - `rules/` — Rules installed to `~/.claude/rules/` (auto-loaded unconditionally by Claude)
-- `.claude-plugin/` — Claude Code plugin manifest (`i-am`) and marketplace (`bit-agora`)
+- `.claude-plugin/` — Claude Code plugin manifest (`i-am`)
   - `plugin.json` — Plugin name, version, component paths
   - `PLUGIN_SCHEMA_NOTES.md` — Validator constraints reference
 - `.claude/` — Claude personal config (symlinked to `~/.claude/`)
@@ -32,7 +32,7 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - Follow commit conventions in `rules/` (auto-loaded by Claude when relevant)
 - **Never modify `~/.claude/plugins/cache/`** — it contains installed copies that get overwritten on reinstall; always edit source files in this repo instead
 - **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 8,500 tokens (~29,750 chars). Before adding a new rule, verify the budget. Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge
-- See `README.md` for full project documentation and `skills/README.md` for the skill catalog
+- See `README.md` for user-facing documentation, `README_DEV.md` for contributor conventions, and `skills/README.md` for the skill catalog
 
 ## Design Intent
 

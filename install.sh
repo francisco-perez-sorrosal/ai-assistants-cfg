@@ -249,19 +249,68 @@ check_plugin() {
     $healthy
 }
 
-# --- Plugin installation via local marketplace ---
+# --- Hook installation ---
+
+install_hooks() {
+    local settings_file="${HOME}/.claude/settings.json"
+    local hook_script="${THIS_DIR}/.claude-plugin/hooks/send_event.py"
+
+    if [ ! -f "$hook_script" ]; then
+        echo "  ! Hook script not found: ${hook_script}"
+        return 1
+    fi
+
+    echo ""
+    echo "Installing Task Chronograph hooks into ${settings_file}..."
+
+    python3 - "$settings_file" "$hook_script" << 'PYEOF'
+import json, sys
+
+settings_path, hook_script = sys.argv[1], sys.argv[2]
+
+try:
+    with open(settings_path) as f:
+        settings = json.load(f)
+except FileNotFoundError:
+    settings = {}
+
+hook_entry = lambda matcher="": {
+    "matcher": matcher,
+    "hooks": [{
+        "type": "command",
+        "command": f"python3 {hook_script}",
+        "timeout": 10,
+        "async": True,
+    }],
+}
+
+settings["hooks"] = {
+    "SubagentStart": [hook_entry()],
+    "SubagentStop": [hook_entry()],
+    "PostToolUse": [hook_entry("Write|Edit")],
+}
+
+with open(settings_path, "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+
+PYEOF
+
+    if [ $? -eq 0 ]; then
+        echo "  ✓ Hooks installed (SubagentStart, SubagentStop, PostToolUse)"
+    else
+        echo "  ! Failed to install hooks"
+        return 1
+    fi
+}
+
+# --- Plugin installation via GitHub marketplace ---
 
 install_plugin() {
     echo ""
-    echo "Installing i-am plugin via local marketplace..."
+    echo "Installing i-am plugin via GitHub marketplace..."
 
     require_claude_cli || return 1
-
-    # Validate the plugin manifest
-    if ! claude plugin validate "${THIS_DIR}" 2>&1; then
-        echo "  ! Plugin validation failed. Fix plugin.json before installing."
-        return 1
-    fi
 
     # Remove orphan marker if present (allows clean reinstall)
     if plugin_is_orphaned; then
@@ -273,8 +322,8 @@ install_plugin() {
 
     # Register marketplace (idempotent — re-register to ensure it's current)
     echo ""
-    echo "Registering local marketplace..."
-    if claude plugin marketplace add "${THIS_DIR}" 2>&1; then
+    echo "Registering GitHub marketplace..."
+    if claude plugin marketplace add francisco-perez-sorrosal/bit-agora 2>&1; then
         echo "  ✓ Marketplace registered"
     else
         echo "  ! Marketplace registration had warnings (may already exist)"
@@ -310,6 +359,8 @@ install_plugin() {
 
     echo ""
     if $ok; then
+        install_hooks
+        echo ""
         echo "✓ i-am plugin installed and verified. Skills and commands available in all sessions."
     else
         echo "✗ Installation completed but verification found issues. Check output above."

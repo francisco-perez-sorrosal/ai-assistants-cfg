@@ -1,189 +1,90 @@
 # ai-assistants
 
-Configuration repository for AI coding assistants. Centralizes and version-controls settings, skills, commands, and agents across different AI tools, sharing reusable pieces where possible.
-
-**Status**: Early stage — currently targeting **Claude Code** and **Claude Desktop** only.
-
-## Structure
-
-```
-skills/                              # Shared skill modules (assistant-agnostic)
-├── skill-crafting/                  # Creating and maintaining skills
-├── agent-crafting/                  # Building custom agents/subagents
-├── command-crafting/                # Creating slash commands
-├── mcp-crafting/                    # Building MCP servers in Python
-├── rule-crafting/                   # Creating and managing rules
-├── python-development/              # Python development best practices
-├── python-prj-mgmt/                # Project setup with pixi/uv
-├── refactoring/                     # Code restructuring patterns
-├── code-review/                     # Code review methodology with finding classification
-├── software-planning/               # Three-document planning model
-└── doc-management/                  # Documentation quality management (README.md, catalogs)
-commands/                            # Shared slash commands
-├── add-rules.md                     # /add-rules — add rules to a project
-├── co.md                            # /co — commit staged changes
-├── cop.md                           # /cop — commit and push
-├── create-simple-python-prj.md      # /create-simple-python-prj — scaffold project
-├── create-worktree.md               # /create-worktree — new git worktree
-├── manage-readme.md                 # /manage-readme — create or refine README.md files
-└── merge-worktree.md                # /merge-worktree — merge worktree branch
-agents/                              # Shared agent definitions
-├── promethean.md                    # Feature-level ideation from project state → IDEA_PROPOSAL.md
-├── researcher.md                    # Codebase exploration, external research → RESEARCH_FINDINGS.md
-├── systems-architect.md              # Trade-off analysis, system design → SYSTEMS_PLAN.md
-├── implementation-planner.md        # Step decomposition, execution supervision → IMPLEMENTATION_PLAN.md, WIP.md, LEARNINGS.md
-├── context-engineer.md              # Context artifact auditing, optimization, ecosystem management
-├── implementer.md                   # Step execution with skill-augmented coding and self-review
-├── verifier.md                      # Post-implementation review → VERIFICATION_REPORT.md
-├── doc-engineer.md                  # Documentation quality management → README.md audits and fixes
-└── sentinel.md                      # Independent ecosystem quality auditor → SENTINEL_REPORT_*.md
-rules/                               # Rules (installed to ~/.claude/rules/)
-├── swe/
-│   ├── agent-intermediate-documents.md # Agent document locations and lifecycle
-│   ├── coding-style.md              # Language-independent structural conventions
-│   ├── software-agents-usage.md     # Agent coordination, parallel execution, boundaries
-│   └── vcs/
-│       ├── git-commit-message-format.md # Commit message format and type prefixes
-│       └── git-commit-hygiene.md        # Git commit safety and hygiene rules
-└── writing/
-    └── readme-style.md              # Precision-first technical writing style
-.claude-plugin/                      # Claude Code plugin manifest
-├── plugin.json
-└── PLUGIN_SCHEMA_NOTES.md
-.claude/                             # Claude personal config (symlinked to ~/.claude/)
-├── CLAUDE.md                        # Global development guidelines
-├── claude_desktop_config.json       # Claude Desktop settings (MCP servers)
-├── userPreferences.txt              # Adaptive precision mode instructions
-└── settings.local.json              # Local permission settings (gitignored)
-install.sh                           # Multi-assistant installer
-```
+Configuration repository for AI coding assistants. Centralizes settings, skills, commands, agents, and rules -- currently targeting **Claude Code** and **Claude Desktop**.
 
 ## Installation
 
 ### Plugin (skills, commands, agents)
 
-The repo is packaged as a Claude Code plugin (`i-am`) distributed via the `bit-agora` marketplace. Install via the `/plugin` command or CLI:
+The repo is packaged as a Claude Code plugin (`i-am`) distributed via the [`bit-agora`](https://github.com/francisco-perez-sorrosal/bit-agora) marketplace.
 
 ```bash
-# Load directly for a single session (no install needed)
-claude --plugin-dir /path/to/ai-assistants
+# Add the marketplace and install
+claude plugin marketplace add francisco-perez-sorrosal/bit-agora
+claude plugin install i-am                    # user scope (all projects)
+claude plugin install i-am --scope project    # project scope only
+```
 
-# Or add as a marketplace and install persistently
-claude plugin marketplace add /path/to/ai-assistants
-claude plugin install i-am@bit-agora
+```bash
+# Or load directly for a single session (no install needed)
+claude --plugin-dir /path/to/ai-assistants
 ```
 
 When installed as a plugin, commands are namespaced: `/co` becomes `/i-am:co`.
 
-Use `claude plugin validate .` from the repo root to verify the plugin structure.
+### Personal config
 
-### Personal config (`install.sh`)
-
-Run `./install.sh` to symlink Claude personal config files to `~/.claude/` and install rules. The installer also prompts to install the `i-am` plugin via the marketplace.
+Run `./install.sh` to symlink Claude personal config files to `~/.claude/` and install rules. The installer also prompts to install the plugin via the marketplace.
 
 ```bash
-./install.sh          # Install Claude personal config (prompts for plugin)
+./install.sh          # Install Claude config, prompt for plugin
 ./install.sh --help   # Show all options
 ```
 
-**What gets installed:**
-
-
-| Source (`.claude/`)          | Target (`~/.claude/`)                   | Purpose                                                                  |
-| ---------------------------- | --------------------------------------- | ------------------------------------------------------------------------ |
-| `CLAUDE.md`                  | `~/.claude/CLAUDE.md`                   | Global development guidelines, code style, available skills and commands |
-| `claude_desktop_config.json` | `~/.claude/claude_desktop_config.json`  | Claude Desktop settings (MCP servers)                                    |
-| `userPreferences.txt`        | `~/.claude/userPreferences.txt`         | Adaptive precision mode — controls response style and verbosity          |
-| `settings.local.json`        | `~/.claude/settings.local.json`         | Local permission settings (gitignored)                                   |
-| `rules/*.md`                      | `~/.claude/rules/*.md`                      | Rules (auto-linked, auto-loaded by Claude when relevant)           |
-
-
-The installer also links `claude_desktop_config.json` to the official Claude Desktop location:
-
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Linux**: `~/.config/Claude/claude_desktop_config.json`
-
 ### User preferences on Claude Desktop / iOS
 
-On devices without filesystem access (e.g., Claude iOS app) or when using Claude Desktop without the CLI, you can load the same user preferences by pasting the following into the **User Preferences** field in Claude's settings:
+On devices without filesystem access (e.g., Claude iOS app) or when using Claude Desktop without the CLI, paste the following into the **User Preferences** field in Claude's settings:
 
 ```
 Read the user preferences from https://raw.githubusercontent.com/francisco-perez-sorrosal/ai-assistants-cfg/main/.claude/userPreferences.txt and follow them before any other interaction
 ```
 
-This tells Claude to fetch and apply the adaptive precision mode instructions at the start of each conversation, keeping behavior consistent across all clients.
+This tells Claude to fetch and apply the adaptive precision mode instructions at the start of each conversation.
 
 ## Skills
 
-Reusable knowledge modules that Claude loads automatically based on context. See `[skills/README.md](skills/README.md)` for the full catalog.
+Reusable knowledge modules loaded automatically based on context. See [`skills/README.md`](skills/README.md) for the full catalog.
 
-**Categories**: AI assistant crafting (skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting) · Software development (python-development, python-prj-mgmt, refactoring, code-review, software-planning, doc-management)
+| Category | Skills |
+|----------|--------|
+| AI Assistant Crafting | skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting |
+| Documentation | doc-management |
+| Software Development | python-development, python-prj-mgmt, refactoring, code-review, software-planning |
 
 ## Commands
 
-Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin, commands are namespaced as `/i-am:<name>`.
+Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin, use `/i-am:<name>`. See [`commands/README.md`](commands/README.md) for details.
 
-
-| Command                                                   | Description                                                |
-| --------------------------------------------------------- | ---------------------------------------------------------- |
-| `/add-rules [names... \| all]`                             | Copy rules into the current project for customization      |
-| `/co`                                                     | Create a commit for staged (or all) changes                |
-| `/cop`                                                    | Create a commit and push to remote                         |
-| `/create-worktree [branch]`                               | Create a new git worktree in `.trees/`                     |
-| `/merge-worktree [branch]`                                | Merge a worktree branch back into current branch           |
-| `/create-simple-python-prj [name] [desc] [pkg-mgr] [dir]` | Scaffold a Python project (defaults: pixi, `~/dev`)        |
-| `/manage-readme [file-paths...]`                           | Create or refine README.md files with precision-first style |
-
+| Command | Description |
+|---------|-------------|
+| `/add-rules [names... \| all]` | Copy rules into the current project for customization |
+| `/co` | Create a commit for staged (or all) changes |
+| `/cop` | Create a commit and push to remote |
+| `/create-worktree [branch]` | Create a new git worktree in `.trees/` |
+| `/merge-worktree [branch]` | Merge a worktree branch back into current branch |
+| `/create-simple-python-prj [name] [desc] [pkg-mgr] [dir]` | Scaffold a Python project (defaults: pixi, `~/dev`) |
+| `/manage-readme [file-paths...]` | Create or refine README.md files with precision-first style |
 
 ## Agents
 
-Autonomous subprocesses that Claude delegates complex tasks to. Each agent runs in its own context window with injected skills and scoped tool permissions.
+Nine autonomous agents that Claude delegates complex tasks to. Each runs in its own context window with injected skills and scoped tool permissions. See [`agents/README.md`](agents/README.md) for the pipeline diagram and usage patterns.
 
-### Software Development Crew
+| Agent | Description |
+|-------|-------------|
+| `promethean` | Feature-level ideation from project state |
+| `researcher` | Codebase exploration, external docs, alternative evaluation |
+| `systems-architect` | Trade-off analysis, system design |
+| `implementation-planner` | Step decomposition, execution supervision |
+| `context-engineer` | Context artifact auditing, optimization, ecosystem management |
+| `implementer` | Step execution with skill-augmented coding and self-review |
+| `verifier` | Post-implementation review against acceptance criteria |
+| `doc-engineer` | Documentation quality management (READMEs, catalogs, changelogs) |
+| `sentinel` | Independent ecosystem quality auditor |
 
-Nine agents that collaborate through shared documents (`IDEA_PROPOSAL.md` → `RESEARCH_FINDINGS.md` → `PLAN.md` → `WIP.md`, `LEARNINGS.md` → `VERIFICATION_REPORT.md`). Each can be invoked independently or in sequence. The promethean sits upstream as an optional ideation engine. The context-engineer can engage at any pipeline stage as a domain expert when the work involves context artifacts. The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate. The doc-engineer maintains project-facing documentation quality. The sentinel operates independently as an on-demand ecosystem auditor whose reports any agent can consume.
+## Rules
 
-| Agent | Description | Skills |
-|-------|-------------|--------|
-| `promethean` | Analyzes project state, generates improvement ideas through dialog → `IDEA_PROPOSAL.md` | — |
-| `researcher` | Explores codebases, gathers external docs, evaluates alternatives → `RESEARCH_FINDINGS.md` | — |
-| `systems-architect` | Trade-off analysis, codebase readiness, system design → `SYSTEMS_PLAN.md` | — |
-| `implementation-planner` | Step decomposition and execution supervision → `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | `software-planning` |
-| `context-engineer` | Audits, architects, and optimizes context artifacts; collaborates with pipeline agents as domain expert for context engineering; implements context artifacts directly or under planner supervision | `skill-crafting`, `rule-crafting`, `command-crafting`, `agent-crafting` |
-| `implementer` | Implements individual plan steps with skill-augmented coding and self-review; supports sequential and parallel execution | `software-planning`, `code-review`, `refactoring` |
-| `verifier` | Verifies completed implementation against acceptance criteria, conventions, and test coverage → `VERIFICATION_REPORT.md` | `code-review` |
-| `doc-engineer` | Maintains project-facing documentation quality (README.md, catalogs, architecture docs, changelogs); validates cross-references, catalog completeness, naming consistency, and writing quality | `doc-management` |
-| `sentinel` | Independent read-only ecosystem quality auditor scanning all context artifacts across eight dimensions; produces timestamped `SENTINEL_REPORT_*.md` and `SENTINEL_LOG.md` in `.ai-state/` | — |
+Contextual domain knowledge files loaded automatically by Claude when relevant. See [`rules/README.md`](rules/README.md) for the full catalog, writing guidelines, and the rules-vs-skills-vs-CLAUDE.md decision model.
 
-Agents activate automatically based on their description triggers, or can be invoked explicitly. See [`agents/README.md`](agents/README.md) for details.
+---
 
-## How Rules Interact with Commands
-
-Rules do **not** need to be referenced from slash commands. When `/co` triggers a commit workflow, Claude automatically loads relevant rules from `~/.claude/rules/` based on the task context — no explicit binding required.
-
-Commands can use **semantic hints** to help Claude disambiguate when multiple overlapping rules exist:
-
-```
-"Commit following our conventional commits standard."
-```
-
-Never reference rule filenames directly in commands — filenames have no special meaning to the command system.
-
-See [`rules/README.md`](rules/README.md) for the full rule specification, writing guidelines, and the rules-vs-skills-vs-CLAUDE.md decision model.
-
-## Design Intent
-
-- **Assistant-agnostic shared assets**: `skills/`, `commands/`, `agents/` live at the repo root, reusable across any AI assistant
-- **Assistant-specific config**: Personal settings live in assistant directories (`.claude/` for Claude, future `.chatgpt/` etc.)
-- **Plugin distribution**: Skills, commands, and agents are installed via Claude Code's plugin system (`.claude-plugin/plugin.json`)
-- **Symlink for personal config**: `install.sh` symlinks assistant-specific config to the expected locations
-- **Progressive disclosure**: Skills load metadata at startup, full content on activation, reference files on demand
-- **CLAUDE.md stays lean**: Skills, commands, agents, and rules are auto-discovered by Claude via filesystem scanning — listing them in `CLAUDE.md` wastes always-loaded tokens and creates a sync burden. This README and per-directory READMEs serve as the human-facing catalogs
-
-## References
-
-- [Claude Code Plugins](https://code.claude.com/docs/en/plugins)
-- [Claude Code Sub-agents](https://code.claude.com/docs/en/sub-agents)
-- [Agent Skills Best Practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices.md)
-- [bendrucker/claude config](https://github.com/bendrucker/claude/blob/main/.claude/)
-- [citypaul/.dotfiles claude config](https://github.com/citypaul/.dotfiles/blob/main/claude)
+For contributor and developer documentation, see [`README_DEV.md`](README_DEV.md).
