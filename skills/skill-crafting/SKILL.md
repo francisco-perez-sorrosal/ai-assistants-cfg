@@ -7,6 +7,11 @@ allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, WebFetch(domain:agentskills
 
 Reference for developing effective Agent Skills. Official specification at [agentskills.io](https://agentskills.io). Authoring guidance at [Anthropic's best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices).
 
+**Satellite files** (loaded on-demand):
+
+- [references/cross-agent-portability.md](references/cross-agent-portability.md) -- discovery paths per tool, portability guidance
+- [references/artifact-naming.md](references/artifact-naming.md) -- naming conventions for all artifact types (skills, agents, commands, rules)
+
 ## Core Principles
 
 **The context window is a public good.** Your skill shares it with system prompts, conversation history, other skills' metadata, and the user's request. Every token must earn its place.

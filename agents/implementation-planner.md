@@ -63,14 +63,7 @@ Break the architecture into incremental implementation steps.
 - Happy path before error handling
 - Each step leaves the system in a working state
 
-**Step validation** — every step must:
-
-- Be describable in one sentence
-- Leave the system in a working state
-- Be independently testable
-- Have clear done criteria
-- Fit in a single commit
-- Include a `Files` field listing expected write targets (required for parallel steps, recommended for all)
+**Step validation** — every step must be describable in one sentence, leave the system working, be independently testable, have clear done criteria, fit in a single commit, and include a `Files` field. Validate against the known-good increment criteria in the software-planning skill for full details.
 
 **If you can't describe a step in one sentence, break it down further.**
 
@@ -85,20 +78,7 @@ Before marking steps as parallel, verify **file disjointness**: no two steps in 
 
 ### Step Size Heuristics
 
-**Too big if:**
-
-- Takes more than one session
-- Requires multiple commits
-- Has multiple "and"s in description
-- Involves more than 3-5 files
-- Tests would be too complex to write
-
-**Right size if:**
-
-- One clear objective
-- One logical change
-- Obvious when done
-- Single responsibility
+Apply the step size heuristics from the software-planning skill. Quick test: if a step has multiple "and"s, involves more than 3-5 files, or requires multiple commits, break it down further.
 
 ### Phase 4 — Testing Strategy
 
@@ -189,59 +169,9 @@ None
 [Specific next thing to do]
 ```
 
-Parallel Mode (when parallel groups exist):
+Parallel Mode (when parallel groups exist): Use the WIP.md parallel format from the software-planning skill. Key fields: `Mode: parallel`, `Steps: [list]`, per-step `Assignee`, `Status`, and `Files`.
 
-```markdown
-# WIP: [Feature Name]
-
-## Current Batch
-
-Mode: parallel
-Steps: 3, 4
-Status: in-progress
-
-### Step 3 — [Description]
-- Assignee: implementer-1
-- Status: [IN-PROGRESS]
-- Files: [list from IMPLEMENTATION_PLAN.md]
-
-### Step 4 — [Description]
-- Assignee: implementer-2
-- Status: [IN-PROGRESS]
-- Files: [list from IMPLEMENTATION_PLAN.md]
-
-## Progress
-
-- [x] Step 1: [Description]
-- [x] Step 2: [Description]
-- [~] Step 3: [Description] ← parallel batch
-- [~] Step 4: [Description] ← parallel batch
-- [ ] Step 5: [Description]
-
-## Blockers
-
-None
-
-## Next Action
-
-Wait for all parallel implementers to complete, then run coherence review.
-```
-
-**LEARNINGS.md** — seed with anything discovered:
-
-```markdown
-# Learnings: [Feature Name]
-
-## Gotchas
-
-## Patterns That Worked
-
-## Decisions Made
-
-## Edge Cases
-
-## Technical Debt
-```
+**LEARNINGS.md** — initialize using the structure from the software-planning skill (sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical Debt).
 
 ### Phase 7 — Execution Supervision
 

@@ -15,6 +15,7 @@ Guide for creating effective, contextual rules.
 
 **Satellite files** (loaded on-demand):
 - [REFERENCE.md](REFERENCE.md) -- complete rule examples, path-specific patterns, migration strategies
+- [../skill-crafting/references/artifact-naming.md](../skill-crafting/references/artifact-naming.md) -- naming conventions for all artifact types
 
 ## What Are Rules
 
@@ -186,6 +187,7 @@ Step 3: Make sure to use snake_case
 - **Include examples** — show correct and incorrect patterns when clarity demands it
 - **Explain the _why_** — when a constraint isn't self-evident, briefly state the rationale
 - **Verbose is fine** — rules load only when relevant, so depth is welcome
+- **Token budget awareness** — rules are always-loaded, adding to the baseline token cost of every conversation and agent spawn. The ecosystem target is 8,500 tokens for all always-loaded content. Prefer skills for procedural workflows and reference files for detailed protocols
 
 ### Customization Sections
 

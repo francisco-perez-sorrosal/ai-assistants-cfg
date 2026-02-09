@@ -45,18 +45,3 @@ feat: Add retry logic for API calls
 Transient network failures were causing silent data loss.
 Retry up to 3 times with exponential backoff before failing.
 ```
-
-### [CUSTOMIZE] Type Prefixes
-<!-- Override or extend the default type prefixes for this project:
-- Additional types (e.g., perf, ci, build, style, revert)
-- Whether the type prefix is required or optional (default: optional)
-- Scope convention if used: feat(auth), fix(api) — list accepted scopes
--->
-
-### [CUSTOMIZE] Issue References
-<!-- Define how commits reference issues and tickets:
-- Format: Fixes #123, JIRA-456, LINEAR-789
-- Placement: footer, subject line, or body
-- Whether issue references are required or optional
--->
-

@@ -69,7 +69,7 @@ Reference file for the sentinel agent's Pass 1 (automated) and Pass 2 (LLM judgm
 | ID | Type | Rule | Pass Condition |
 |----|------|------|----------------|
 | T01 | auto | Skill `SKILL.md` line count within guideline | Each SKILL.md is under 500 lines (warn at 400, fail at 600) |
-| T02 | auto | Combined always-loaded content size | Total estimated tokens for CLAUDE.md + all rules under 6,000 (heuristic: chars / 3.5) |
+| T02 | auto | Combined always-loaded content size | Total estimated tokens for CLAUDE.md + all rules under 8,500 (heuristic: chars / 3.5) |
 | T03 | auto | Agent prompt size within range | Each agent `.md` under 400 lines (warn at 300, fail at 500) |
 | T04 | auto | Individual reference file sizes | No single reference file exceeds 800 lines |
 | T05 | llm | Content uses progressive disclosure where appropriate | Monolithic artifacts that could split core vs. reference material without losing coherence |

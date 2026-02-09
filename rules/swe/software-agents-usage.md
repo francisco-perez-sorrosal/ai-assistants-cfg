@@ -6,15 +6,15 @@ Conventions for when and how to use the available software agents — autonomous
 
 | Agent | Purpose | Output | When to Use | Background Safe |
 |-------|---------|--------|-------------|-----------------|
-| `promethean` | Feature-level ideation from project state analysis, optionally consuming sentinel reports for health context | `IDEA_PROPOSAL.md` (`.ai-work/`), `IDEA_LEDGER_*.md` (`.ai-state/`) + `CLAUDE.md` `## Structure` sync | Generating improvement ideas, exploring gaps, creative exploration of opportunities | No (foreground only -- dialog loop requires user input) |
+| `promethean` | Feature-level ideation from project state, optionally consuming sentinel reports | `IDEA_PROPOSAL.md` (`.ai-work/`), `IDEA_LEDGER_*.md` (`.ai-state/`) | Generating improvement ideas, exploring gaps and opportunities | No (foreground only) |
 | `researcher` | Codebase exploration, external docs, comparative analysis | `RESEARCH_FINDINGS.md` | Understanding a technology, evaluating options, gathering context | Yes |
 | `systems-architect` | Trade-off analysis, codebase readiness, system design | `SYSTEMS_PLAN.md` | Architectural decisions, structural assessment, technology selection | Yes |
 | `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Breaking architecture into increments, resuming multi-session work | Yes |
-| `context-engineer` | Context artifact domain expert and implementer — audits, architects, and optimizes context artifacts; collaborates at any pipeline stage when work involves context engineering | Audit report + artifact changes | Auditing quality, resolving conflicts, growing the context ecosystem, providing domain expertise during pipeline work involving context artifacts | Yes |
+| `context-engineer` | Context artifact domain expert — audits, architects, optimizes; collaborates at any pipeline stage | Audit report + artifact changes | Auditing quality, resolving conflicts, growing ecosystem, domain expertise in pipeline work | Yes |
 | `implementer` | Executes individual implementation steps with skill-augmented coding and self-review | Code changes + WIP.md status update | Implementation plan ready with steps to execute | Yes |
 | `verifier` | Post-implementation review against acceptance criteria, conventions, and test coverage | `VERIFICATION_REPORT.md` | Validating completed implementation quality before committing | Yes |
-| `doc-engineer` | Project-facing documentation quality management (README.md, catalogs, architecture docs, changelogs) | Documentation quality report or direct file fixes | After implementation changes affecting documentation, when creating project documentation, when auditing documentation quality | Yes |
-| `sentinel` | Read-only ecosystem quality auditor scanning context artifacts across eight dimensions (seven per-artifact + ecosystem coherence as system-level composite). Operates independently — not a pipeline stage | `SENTINEL_REPORT_*.md` + `SENTINEL_LOG.md` (`.ai-state/`) | Ecosystem health checks, pre-pipeline baselines, post-change regression detection | Yes |
+| `doc-engineer` | Project-facing documentation quality management (README.md, catalogs, architecture docs, changelogs) | Documentation quality report or direct file fixes | After implementation changes, when creating or auditing documentation | Yes |
+| `sentinel` | Read-only ecosystem quality auditor across eight dimensions. Independent — not a pipeline stage | `SENTINEL_REPORT_*.md` + `SENTINEL_LOG.md` (`.ai-state/`) | Ecosystem health checks, pre-pipeline baselines, post-change regression detection | Yes |
 
 ### Proactive Agent Usage
 
@@ -25,27 +25,20 @@ Spawn agents without waiting for the user to ask:
 - Architecture approved and ready for steps → `implementation-planner`
 - Context artifacts growing stale or conflicting → `context-engineer`
 - Resuming multi-session work → `implementation-planner` to re-assess `WIP.md`
-- Research involving context engineering → `researcher` + `context-engineer` in parallel (researcher gathers info, context-engineer provides artifact domain expertise)
-- Architecture for context-based systems → `context-engineer` alongside `systems-architect` (context-engineer provides artifact placement, token budget, and progressive disclosure constraints)
+- Context engineering research or architecture → `context-engineer` in parallel with `researcher` or `systems-architect`
 - Implementation plan touching context artifacts → `context-engineer` reviews step ordering and crafting spec compliance
 - Implementation plan ready with steps to execute → `implementer`
 - Implementation complete and plan adherence confirmed → `verifier`
 - Ecosystem health check needed → `sentinel`
 - Before major pipeline runs (baseline quality) → `sentinel`
 - After large artifact changes (regression detection) → `sentinel`
-- Sentinel report may be stale → check `.ai-state/SENTINEL_LOG.md` last entry timestamp against the latest `git log -1 --format=%ci`; if commits exist after the last report, run `sentinel` proactively. If no new commits but another agent needs the report (e.g., promethean for ideation), ask the user whether a fresh report is warranted before triggering
+- Sentinel report may be stale → check `.ai-state/SENTINEL_LOG.md` vs `git log -1 --format=%ci`; run `sentinel` if commits exist after last report
 - After implementation changes that add/remove/rename files → `doc-engineer`
 - After context-engineer creates new artifacts that need catalog entries → `doc-engineer`
 
 **Depth check:** Before spawning an agent that was recommended by another agent's output, confirm with the user if doing so would create a chain of 3+ agents from the original request.
 
-**Interaction reporting:** When the Task Chronograph MCP server is registered, call `report_interaction` at these key moments:
-
-1. Receiving a user query: `report_interaction(source="user", target="main_agent", summary="...", interaction_type="query")`
-2. Delegating to an agent: `report_interaction(source="main_agent", target="{agent_type}", summary="...", interaction_type="delegation")`
-3. Receiving an agent's result: `report_interaction(source="{agent_type}", target="main_agent", summary="...", interaction_type="result")`
-4. Making a pipeline decision: `report_interaction(source="main_agent", target="main_agent", summary="...", interaction_type="decision")`
-5. Responding to the user: `report_interaction(source="main_agent", target="user", summary="...", interaction_type="response")`
+For interaction reporting protocol (Task Chronograph), see `rules/swe/references/agent-coordination-protocols.md`.
 
 ### Coordination Pipeline
 
@@ -74,130 +67,38 @@ verifier → VERIFICATION_REPORT.md  │  (independent    │
 - **The context-engineer is a domain expert** that can collaborate at any pipeline stage when the work involves context artifacts. It also operates independently for standalone audits.
 - **The sentinel is an independent audit tool** that runs on demand. Its reports (`SENTINEL_REPORT_*.md`) are public — any agent or user can consume them. The promethean may read them as input for ideation, but that is the promethean's choice, not a pipeline handoff from the sentinel.
 
-**Context-Engineer Pipeline Engagement:**
+For context-engineer engagement details at each pipeline stage, see `rules/swe/references/agent-coordination-protocols.md`. For small-scope context work (single artifact), the context-engineer implements directly; for large-scope (3+ artifacts), use the full pipeline.
 
-| Pipeline Stage | Context-Engineer Role | Engagement Trigger |
-|----------------|----------------------|-------------------|
-| Research | Provides domain expertise on context artifacts, evaluates findings through artifact placement lens | Research questions involve context engineering topics |
-| Architecture | Supplies artifact type selection, token budget, and progressive disclosure constraints | Architecture affects context artifacts or introduces new conventions |
-| Implementation Planning | Reviews step ordering for artifact dependencies, validates crafting spec compliance | Implementation plan includes steps that create, modify, or restructure context artifacts |
-| Implementation Execution | Executes artifact steps (create/update/restructure) using crafting skills; planner supervises | Large-scope context work (3+ artifacts, restructuring, ecosystem-wide changes) |
-| Verification | N/A — verifier checks code quality and acceptance criteria, not context artifacts | Verifier discovers that planned context artifact updates were skipped (completeness finding routed to context-engineer) |
-
-**Scale-dependent implementation:** For small-scope context work (single artifact — e.g., create one skill, update a rule), the context-engineer implements directly using its crafting skills, no pipeline needed. For large-scope context work (3+ artifacts, restructuring, ecosystem-wide changes), use the full pipeline — the context-engineer executes artifact steps while the implementation-planner supervises.
-
-### Parallel Execution
-
-Launch independent agents concurrently whenever possible:
-
-```
-# GOOD — parallel when independent
-Launch in parallel:
-  1. researcher: investigate authentication library options
-  2. researcher: audit current database schema patterns
-
-# GOOD — context-engineer alongside pipeline agent
-Launch in parallel:
-  1. researcher: investigate skill activation patterns
-  2. context-engineer: assess current skill ecosystem for conflicts and gaps
-
-# GOOD — domain expertise alongside architecture
-Launch in parallel:
-  1. systems-architect: design new rule organization
-  2. context-engineer: provide artifact placement and token budget constraints
-
-# BAD — sequential when unnecessary
-First research auth, then research database (no dependency between them)
-```
-
-**Parallelize when:**
-
-- Multiple independent research questions exist
-- Different parts of the codebase need separate analysis
-- A context audit can run alongside development planning
-
-**Do not parallelize when:**
-
-- One agent's output is the next agent's input (the pipeline)
-- Two agents would analyze and modify the same files
-
-### Intra-Stage Parallelism
-
-Multiple instances of the same agent type can run concurrently on disjoint work units within a single pipeline stage. This is distinct from cross-agent parallelism (different agent types running independently).
-
-**When to use:**
-
-- Implementation steps in the same `[parallel-group]` with disjoint file sets
-- No shared mutable state between the concurrent steps
-
-**Batch size:** Limit to 2-3 concurrent agents. More increases coordination overhead without proportional throughput gain.
-
-**Coordination protocol:**
-
-1. The implementation-planner prepares WIP.md in parallel mode with per-step assignees and file lists
-2. The user spawns N implementer agents concurrently, each assigned one step
-3. Each implementer updates only its own step's status in WIP.md
-4. After all implementers report back, the planner runs a coherence review (re-reads all modified files, verifies integration, merges step-specific learnings)
-
-**Conflict avoidance:**
-
-- The planner verifies file disjointness before marking steps as parallel
-- If an implementer discovers it needs a file outside its declared set, it stops and reports `[CONFLICT]`
-
-### Multi-Perspective Analysis
-
-For complex or high-risk decisions, use parallel agents with distinct review lenses:
-
-- **Correctness reviewer** — does the design satisfy requirements?
-- **Security reviewer** — does the design introduce vulnerabilities?
-- **Performance reviewer** — does the design introduce bottlenecks?
-- **Maintainability reviewer** — can the team evolve this over time?
-
-Reserve multi-perspective analysis for decisions with significant blast radius. Most tasks need only the standard pipeline.
+For parallel execution protocols and examples, see `rules/swe/references/agent-coordination-protocols.md`.
 
 ### Boundary Discipline
 
-Each agent has a defined responsibility — respect the boundaries:
-
-- **Promethean does not research or design.** It ideates — generating and refining ideas through dialog, then writing a proposal. External research and architecture are downstream responsibilities.
-- **Researcher does not recommend.** It presents options with trade-offs.
-- **Architect does not plan steps.** It designs structure and makes decisions.
-- **Implementation planner does not redesign.** It decomposes and supervises.
-- **Context engineer does not implement features.** It manages the information architecture. In pipeline mode, it provides domain expertise (artifact placement, token budget, progressive disclosure) — not architectural decisions or implementation steps. It implements context artifacts directly or under planner supervision, but does not implement application features.
-- **Implementer does not plan.** It receives a step and implements it. It does not choose what to build, skip steps, reorder the plan, or make go/no-go decisions. It reports blockers with evidence rather than resolving them.
-- **Verifier does not fix.** It identifies issues and recommends corrective action through documents. Fixes go back to the implementation-planner (for pipeline work) or the user (for standalone review). It does not check plan adherence (that is Phase 7's job) or assess context artifact quality (that is the context-engineer's job).
-- **Doc-engineer does not manage context artifacts.** It maintains project-facing documentation (README.md, catalogs, architecture docs, changelogs). Context artifacts (CLAUDE.md, skills, rules, commands, agents) belong to the context-engineer. Ecosystem-wide auditing belongs to the sentinel.
-- **Sentinel does not fix.** It diagnoses and reports across the full ecosystem. Remediation goes to the context-engineer (for artifact fixes) or the user (for pipeline corrections). It never modifies the artifacts it audits.
+| Agent | Does | Does NOT |
+|-------|------|----------|
+| Promethean | Ideates through dialog, writes proposals | Research, design |
+| Researcher | Presents options with trade-offs | Recommend |
+| Architect | Designs structure, makes decisions | Plan steps |
+| Planner | Decomposes and supervises | Redesign |
+| Context Engineer | Manages information architecture, implements context artifacts | Implement features |
+| Implementer | Receives and implements steps | Plan, skip, reorder steps |
+| Verifier | Identifies issues, recommends actions | Fix issues |
+| Doc-engineer | Maintains project documentation | Manage context artifacts |
+| Sentinel | Diagnoses and reports across ecosystem | Fix artifacts |
 
 When an agent encounters work outside its boundary, it flags the need and recommends invoking the appropriate agent.
 
 ### Agent Selection Criteria
 
-When deciding whether to use an agent vs. doing the work directly:
+**Rule of thumb:** Use an agent when the task benefits from a separate context window (large scope, multiple phases, structured output). Work directly when it fits in the current conversation.
 
-| Situation | Agent | Direct |
-|-----------|-------|--------|
-| Generating feature-level improvement ideas | Agent (`promethean`) | — |
-| Multi-source research with synthesis needed | Agent | — |
-| Quick lookup in one file | — | Direct |
-| Architecture affecting 3+ components | Agent | — |
-| Simple function addition with clear placement | — | Direct |
-| Breaking a large feature into incremental steps | Agent | — |
-| One-step obvious change | — | Direct |
-| Context artifact audit or ecosystem restructuring | Agent (`context-engineer`) | — |
-| Single context artifact creation or update | — | Direct (or `context-engineer` for spec compliance) |
-| Pipeline work involving 3+ context artifacts | Agent (`context-engineer` + pipeline) | — |
-| Multi-file implementation step from a plan | Agent (`implementer`) | — |
-| Single obvious code change with clear placement | — | Direct |
-| Post-implementation quality review of a complex feature | Agent (`verifier`) | — |
-| Quick review of a single-file change | — | Direct (or `code-review` skill) |
-| Full ecosystem health check or quality baseline | Agent (`sentinel`) | — |
-| Broad cross-reference or consistency audit | Agent (`sentinel`) | — |
-| Documentation quality audit across project | Agent (`doc-engineer`) | — |
-| Quick README edit with known content | — | Direct (or `manage-readme` command) |
-| Fix documentation cross-references after code changes | Agent (`doc-engineer`) | — |
-
-**Rule of thumb:** If the task benefits from a separate context window (large scope, multiple phases, structured output), use an agent. If it fits in the current conversation, work directly.
+| Situation | Use |
+|-----------|-----|
+| Multi-source research, architecture affecting 3+ components, breaking large features into steps | Agent |
+| Quick lookup, single obvious change, one-step edit | Direct |
+| Ecosystem audit or 3+ context artifacts | Agent (`context-engineer` or `sentinel`) |
+| Post-implementation quality review | Agent (`verifier`) |
+| Documentation audit or cross-reference fixes | Agent (`doc-engineer`) |
+| Feature-level ideation from project state | Agent (`promethean`) |
 
 ### Background Agents
 
@@ -209,29 +110,12 @@ Run agents in the background when their output is not immediately needed:
 
 Never launch a foreground-only agent in the background. Check the Background Safety column in the Available Agents table before using `run_in_background`.
 
-Check background agent output before proceeding with work that depends on their findings. After launching a background agent, periodically check `.ai-work/PROGRESS.md` for status updates.
+Check background agent output before proceeding with dependent work. Monitor `.ai-work/PROGRESS.md` for status.
 
 ### Delegation Depth
 
-Track how many agent spawns separate a task from the original user request:
+- **Depth 0-1:** Standard — main agent handles directly or spawns one agent.
+- **Depth 2:** A depth-1 agent's output recommends another agent; main agent decides whether to proceed.
+- **Depth 3+:** Requires explicit user confirmation before proceeding.
 
-- **Depth 0:** User request handled directly by the main agent — no delegation.
-- **Depth 1:** Main agent spawns an agent (e.g., researcher). This is the standard pipeline.
-- **Depth 2:** A depth-1 agent's output recommends spawning another agent; the main agent decides whether to proceed. This is the deepest level of automatic chaining.
-- **Depth 3+:** Requires explicit user confirmation before proceeding. The main agent presents the recommendation and waits for approval.
-
-**Constraint:** Agents at depth 1 can recommend further agents, but the main agent must not automatically chain to depth 3+ without user confirmation. When in doubt about the current depth, count the number of agent spawns between the original user request and the proposed new agent.
-
-### [CUSTOMIZE] Custom Agents
-<!-- Add project-specific agents beyond the standard five:
-- Agent name, purpose, output artifact, and when to use
-- Where it fits in the coordination pipeline (before/after which stage)
-- Whether it can run in parallel with standard agents
--->
-
-### [CUSTOMIZE] Pipeline Overrides
-<!-- Adjust coordination pipeline behavior for this project:
-- Stages that can be skipped (e.g., skip research when domain is well-known)
-- Additional review lenses for multi-perspective analysis
-- Project-specific triggers for proactive agent spawning
--->
+Agents at depth 1 can recommend further agents, but never auto-chain to depth 3+ without user confirmation.

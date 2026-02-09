@@ -163,6 +163,7 @@ install_claude() {
         local rel_path="${rule#"$rules_src"/}"
         local rel_dir="$(dirname "$rel_path")"
         [[ "$(basename "$rule")" == "README.md" ]] && continue
+        [[ "$rel_path" == */references/* ]] && continue
         [ "$rel_dir" != "." ] && mkdir -p "${rules_dir}/${rel_dir}"
         link_item "$rule" "${rules_dir}/${rel_path}" "${rel_path} → rules/"
     done < <(find "$rules_src" -name '*.md' -type f | sort)

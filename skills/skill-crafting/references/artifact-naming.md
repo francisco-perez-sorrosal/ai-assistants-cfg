@@ -120,14 +120,3 @@ When a skill, agent, and command relate to the same domain, align their names:
 | Planning | `software-planning` | `implementation-planner` | (none) |
 
 The names do not need to be identical -- each follows its own type's pattern -- but they should share enough vocabulary that the relationship is obvious.
-
-### Known Violations
-
-None. All current artifacts follow these conventions.
-
-### [CUSTOMIZE] Project-Specific Naming
-<!-- Add naming patterns specific to this project:
-- Prefix conventions (e.g., all skills for a framework share a prefix)
-- Abbreviation glossary (accepted short forms)
-- Domain vocabulary (canonical terms for project concepts)
--->

@@ -31,6 +31,7 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - When adding or modifying rules, load the `rule-crafting` skill
 - Follow commit conventions in `rules/` (auto-loaded by Claude when relevant)
 - **Never modify `~/.claude/plugins/cache/`** — it contains installed copies that get overwritten on reinstall; always edit source files in this repo instead
+- **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 8,500 tokens (~29,750 chars). Before adding a new rule, verify the budget. Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge
 - See `README.md` for full project documentation and `skills/README.md` for the skill catalog
 
 ## Design Intent

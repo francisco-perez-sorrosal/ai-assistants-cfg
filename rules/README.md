@@ -6,12 +6,12 @@ Rules are **contextual domain knowledge files** that Claude loads automatically 
 
 ```
 rules/
-├── context-engineering/
-│   └── artifact-naming.md
 ├── swe/
 │   ├── agent-intermediate-documents.md
 │   ├── coding-style.md
 │   ├── software-agents-usage.md
+│   ├── references/
+│   │   └── agent-coordination-protocols.md
 │   └── vcs/
 │       ├── git-commit-hygiene.md
 │       └── git-commit-message-format.md
@@ -22,7 +22,6 @@ rules/
 
 | File | Purpose |
 | ---- | ------- |
-| `context-engineering/artifact-naming.md` | Naming conventions for skills, agents, commands, and rules |
 | `swe/agent-intermediate-documents.md` | Agent document locations (`.ai-work/` ephemeral, `.ai-state/` persistent), lifecycle tiers, cleanup |
 | `swe/coding-style.md` | Immutability, function/file size, nesting, error handling, naming, validation |
 | `swe/software-agents-usage.md` | Agent selection, coordination pipeline, parallel execution, and boundary discipline |
@@ -161,6 +160,22 @@ Keep universal and custom content clearly separated — never mix `[CUSTOMIZE]` 
 - **Don't over-split** — two closely related topics (e.g., commit format + commit rules) can coexist or split based on reuse patterns
 - **Skip generic names** — `important.md`, `notes.md`, `stuff.md` hurt relevance matching
 
+### Reference Files (Progressive Disclosure)
+
+Rule directories may contain `references/` subdirectories for on-demand supplementary material. Files in `references/` are **not** installed as always-loaded rules -- they are loaded on-demand when a rule explicitly points to them.
+
+This supports progressive disclosure for rules: core constraints live in the rule file (loaded automatically by relevance), while detailed protocols, examples, and extended reference material live in `references/` (loaded only when the rule or a skill directs Claude to read them).
+
+```
+rules/swe/
+├── software-agents-usage.md              # Always-loaded rule (core conventions)
+├── references/
+│   └── agent-coordination-protocols.md   # On-demand detail (loaded when referenced)
+└── ...
+```
+
+The installer (`install.sh`) symlinks rule files but skips `references/` directories -- they remain accessible via relative paths from the rule files that reference them.
+
 ### Naming Conventions
 
 Naming directly affects Claude's relevance scoring. Use:
@@ -198,7 +213,6 @@ Two mechanisms, each serving a different purpose:
 `install.sh` symlinks all rules from this repo to `~/.claude/rules/`. Personal rules load automatically for **every project** when contextually relevant — no per-project setup needed.
 
 ```
-rules/context-engineering/artifact-naming.md →  ~/.claude/rules/context-engineering/artifact-naming.md
 rules/swe/agent-intermediate-documents.md    →  ~/.claude/rules/swe/agent-intermediate-documents.md
 rules/swe/coding-style.md                   →  ~/.claude/rules/swe/coding-style.md
 rules/swe/software-agents-usage.md          →  ~/.claude/rules/swe/software-agents-usage.md

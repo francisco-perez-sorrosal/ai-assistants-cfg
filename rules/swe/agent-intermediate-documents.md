@@ -84,22 +84,3 @@ rm -rf .ai-work/
 ```
 
 Before deleting, merge any `LEARNINGS.md` content into permanent locations (CLAUDE.md, ADRs, project docs).
-
-### [CUSTOMIZE] Directory Name
-<!-- Override the default `.ai-work/` name if this project uses a different convention:
-- Alternative name (e.g., `.ai-scratch/`, `.agent-work/`)
-- Reason for the override
--->
-
-### [CUSTOMIZE] Additional Document Types
-<!-- List project-specific intermediate documents stored in `.ai-work/`:
-- Document name, producing agent, and lifecycle tier
-- Whether it follows ephemeral or session-persistent cleanup rules
--->
-
-### [CUSTOMIZE] Cleanup Automation
-<!-- Define hooks or scripts that automate cleanup:
-- Git hooks that warn on accidental staging of `.ai-work/` contents
-- Post-merge scripts that clean up completed pipeline artifacts
-- CI checks that fail if `.ai-work/` is committed
--->

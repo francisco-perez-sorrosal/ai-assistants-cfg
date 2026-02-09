@@ -10,6 +10,7 @@ Guide for creating effective, reusable slash commands.
 
 **Satellite files** (loaded on-demand):
 - [REFERENCE.md](REFERENCE.md) -- command patterns, full examples, organization strategies
+- [../skill-crafting/references/artifact-naming.md](../skill-crafting/references/artifact-naming.md) -- naming conventions for all artifact types
 
 ## What Are Slash Commands
 

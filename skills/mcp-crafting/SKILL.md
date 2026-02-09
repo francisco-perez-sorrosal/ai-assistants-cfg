@@ -7,6 +7,12 @@ allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 
 Build [Model Context Protocol](https://modelcontextprotocol.io) servers that expose tools, resources, and prompts to LLM applications.
 
+**Satellite files** (loaded on-demand):
+
+- [references/resources.md](references/resources.md) -- full manifest specification, bundle structures, advanced examples
+- [references/python-resources.md](references/python-resources.md) -- Python-specific FastMCP patterns and examples
+- [../skill-crafting/references/artifact-naming.md](../skill-crafting/references/artifact-naming.md) -- naming conventions for all artifact types
+
 ## Table of Contents
 
 - [Language Contexts](#language-contexts)

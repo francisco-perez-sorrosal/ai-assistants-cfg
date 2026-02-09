@@ -48,11 +48,8 @@ Utility over cognitive overload:
 
 ### Scaling Long READMEs
 
-When a README grows beyond quick scanability:
-
-- Add a **TL;DR** section at the top summarizing the happy path (install → configure → run)
-- Follow with a **table of contents** or navigation links if the document has more than 4-5 sections
-- Consider splitting into focused companion documents (`README_dev.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`) and linking from the main README — keep the main README as the entry point, not the encyclopedia
+- Add a **TL;DR** + **table of contents** when the document exceeds 4-5 sections
+- Split into companion documents (`ARCHITECTURE.md`, `CONTRIBUTING.md`) and link from the main README when depth exceeds entry-point scope
 
 ### Structural Integrity
 
@@ -87,17 +84,3 @@ A README section is complete when the reader has:
 2. The minimum process knowledge to execute correctly, plus enough surrounding context to understand *why* — which may exceed the bare minimum when the topic demands it
 
 If both conditions are met, stop writing. Additional content dilutes signal.
-
-### [CUSTOMIZE] Required Sections
-<!-- Define sections that every README in this project must include:
-- Project-specific sections (e.g., Deployment, API Reference, Architecture)
-- Required badges (CI status, coverage, version)
-- License section style or standard footer
--->
-
-### [CUSTOMIZE] Emoji and Badge Policy
-<!-- Override the default utility-based policy if this project has a preference:
-- Emoji style: none, minimal (headers only), or section markers
-- Required badges with URLs/shields.io patterns
-- Badge ordering convention
--->

@@ -18,14 +18,6 @@ Formatting, linting rules, and language idioms belong to each language's toolcha
 
 Create new objects instead of mutating existing ones. When a language provides immutable alternatives, prefer them.
 
-```
-// Wrong — mutates in place
-config["timeout"] = 30
-
-// Right — produces a new copy with the change
-new_config = copy(config, timeout = 30)
-```
-
 Rationale: immutable data prevents hidden side effects, simplifies debugging, and enables safe concurrency.
 
 Exceptions: performance-critical inner loops where allocation cost is measured and significant, or when the language idiom strongly favors mutation (e.g., builder patterns).
@@ -98,19 +90,6 @@ Use schema-based validation where available. Fail fast with clear error messages
 - No hardcoded literals in logic — extract to named constants or configuration
 - Exception: trivially obvious values (`0`, `1`, `""`, `true/false`) where meaning is self-evident in context
 
-```
-// Wrong
-if retries > 3:
-    sleep(0.5)
-
-// Right
-MAX_RETRIES = 3
-RETRY_DELAY_SECONDS = 0.5
-
-if retries > MAX_RETRIES:
-    sleep(RETRY_DELAY_SECONDS)
-```
-
 ### Timestamp Formatting
 
 Use the appropriate format for the context:
@@ -134,38 +113,3 @@ Always store and transmit in UTC. Convert to local time only at the presentation
 - Collections: plural nouns (`users`, `pending_tasks`)
 - Functions: verb phrases (`fetch_user`, `validate_input`, `calculate_total`)
 
-### Code Quality Checklist
-
-Before marking implementation complete:
-
-- [ ] Functions are small and single-purpose
-- [ ] Files are focused and within size targets
-- [ ] No deep nesting (>4 levels)
-- [ ] Errors are handled explicitly
-- [ ] No hardcoded magic values
-- [ ] Immutable patterns used where applicable
-- [ ] Names are descriptive and consistent
-
-### [CUSTOMIZE] Project Naming Conventions
-<!-- Add project-specific naming patterns here:
-- Prefix conventions for modules/packages
-- Domain-specific naming (e.g., database models, API routes, component names)
-- Abbreviations accepted in this codebase
-- File naming convention (kebab-case, snake_case, PascalCase)
--->
-
-### [CUSTOMIZE] Size Thresholds
-<!-- Override default size targets if this project requires different limits:
-- File size target and ceiling (defaults: 200-400 / 800 lines)
-- Function size target and ceiling (defaults: 30 / 50 lines)
-- Nesting depth limit (default: 4 levels)
--->
-
-### [CUSTOMIZE] Language-Specific Tooling
-<!-- List the formatting and linting tools used in this project:
-- Python: ruff, black, mypy, pyright
-- JS/TS: prettier, eslint, biome
-- Rust: rustfmt, clippy
-- Go: gofmt, golangci-lint
-- Add tool configuration file locations if non-standard
--->
