@@ -2,11 +2,38 @@
 
 Advanced coordination protocols for multi-agent execution. These protocols are loaded on demand when parallel execution, intra-stage parallelism, multi-perspective analysis, or context-engineer pipeline engagement is needed.
 
+## Pipeline Diagram
+
+```text
+promethean → IDEA_PROPOSAL.md + IDEA_LEDGER_*.md
+    ↓
+researcher → RESEARCH_FINDINGS.md
+    ↓                              ┌─────────────────┐
+systems-architect → SYSTEMS_PLAN.md    │ context-engineer │
+    ↓                              │  (domain expert  │
+implementation-planner → IMPL...   │   at any stage)  │
+    ↓                              └─────────────────┘
+implementer → code changes         ┌─────────────────┐
+    ↓                              │    sentinel      │
+verifier → VERIFICATION_REPORT.md  │  (independent    │
+                                   │   audit — any    │
+                                   │   agent/user can │
+                                   │   read reports)  │
+                                   └─────────────────┘
+```
+
+### Pipeline Rules
+
+- **Do not skip stages.** If a task needs architecture, it needs research first (unless the codebase context is already sufficient).
+- **Re-invoke upstream agents** when a downstream agent discovers the input is incomplete — e.g., the implementation-planner finds the architecture can't be decomposed incrementally.
+- **The context-engineer is a domain expert** that can collaborate at any pipeline stage when the work involves context artifacts. It also operates independently for standalone audits.
+- **The sentinel is an independent audit tool** that runs on demand. Its reports (`SENTINEL_REPORT_*.md`) are public — any agent or user can consume them. The promethean may read them as input for ideation, but that is the promethean's choice, not a pipeline handoff from the sentinel.
+
 ## Parallel Execution
 
 Launch independent agents concurrently whenever possible:
 
-```
+```text
 # GOOD — parallel when independent
 Launch in parallel:
   1. researcher: investigate authentication library options

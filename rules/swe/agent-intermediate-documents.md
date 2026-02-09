@@ -46,41 +46,21 @@ Not stored here:
 - Committed to git — versioned, shareable, accumulates value over time
 - Created on first use — agents create `.ai-state/` when writing their first persistent document
 
-`IDEA_LEDGER_*.md` are the promethean's timestamped records of ideation outcomes. Each run produces a new file carrying forward all previous entries:
-- **Sentinel baseline** — reference to the sentinel report that informed ideation
-- **Implemented / Pending / Discarded** — idea tracking with dates and rationale
-- **Future Paths** — directional possibilities for where the project could go (compatible or mutually exclusive)
+`IDEA_LEDGER_*.md` — promethean's timestamped ideation records (sentinel baseline, implemented/pending/discarded ideas, future paths). Each run carries forward all previous entries.
 
-Artifact inventory is not stored here — it is derivable from the filesystem and audited by the sentinel.
+`SENTINEL_REPORT_*.md` — timestamped audit reports (`SENTINEL_REPORT_YYYY-MM-DD_HH-MM-SS.md`). `SENTINEL_LOG.md` — append-only run summary table (timestamp, report file, health grade, finding counts, coherence grade).
 
-`SENTINEL_REPORT_*.md` are the sentinel's timestamped audit reports (one per run, accumulate like `IDEA_LEDGER_*.md`). Each filename includes the run timestamp in filesystem-safe format: `SENTINEL_REPORT_YYYY-MM-DD_HH-MM-SS.md`. `SENTINEL_LOG.md` is an append-only table of sentinel run summaries (timestamp, report file, health grade, finding counts, ecosystem coherence grade) providing historical metric tracking and linking to specific report files.
-
-Agents that update `.ai-state/`: promethean (idea ledger, future paths), sentinel (report, log).
+Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log). Artifact inventory is not stored here — it is derivable from the filesystem.
 
 ### Document Lifecycle
 
-| Tier | Location | Documents | Lifetime | Cleanup |
-|------|----------|-----------|----------|---------|
-| Ephemeral | `.ai-work/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md`, `VERIFICATION_REPORT.md`, `PROGRESS.md` | Single pipeline run | Delete after downstream agent consumes them; merge recurring patterns from `VERIFICATION_REPORT.md` into `LEARNINGS.md` first |
-| Session-persistent | `.ai-work/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions | Merge learnings into permanent locations, then delete at feature end |
-| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md` | Project lifetime | Committed to git; `SENTINEL_REPORT_*.md` timestamped per run (accumulates), `SENTINEL_LOG.md` append-only, `IDEA_LEDGER_*.md` timestamped per run |
+| Tier | Location | Documents | Lifetime |
+|------|----------|-----------|----------|
+| Ephemeral | `.ai-work/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md`, `VERIFICATION_REPORT.md`, `PROGRESS.md` | Single pipeline run — delete after downstream consumption (merge `VERIFICATION_REPORT.md` patterns into `LEARNINGS.md` first) |
+| Session-persistent | `.ai-work/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions — merge learnings into permanent locations at feature end |
+| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md` | Project lifetime — committed to git, timestamped per run |
 
-### Version Control
+### Version Control and Cleanup
 
-Never commit `.ai-work/` or its contents — these are drafts and intermediate artifacts:
-
-```
-.ai-work/
-```
-
-Always commit `.ai-state/` — it contains persistent project intelligence that accumulates value over time.
-
-### Cleanup
-
-Remove the entire directory when pipeline work is complete:
-
-```bash
-rm -rf .ai-work/
-```
-
-Before deleting, merge any `LEARNINGS.md` content into permanent locations (CLAUDE.md, ADRs, project docs).
+- **Never commit `.ai-work/`** — add to `.gitignore`. **Always commit `.ai-state/`**.
+- Clean up with `rm -rf .ai-work/` after pipeline completion. Merge `LEARNINGS.md` into permanent locations first.

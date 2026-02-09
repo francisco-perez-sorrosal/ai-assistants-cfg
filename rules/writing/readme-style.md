@@ -23,19 +23,12 @@ Match content depth to complexity:
 
 ### Mandatory Exclusions
 
-- No social filler — "Welcome to...", "We're excited...", "Feel free to..."
-- No hedging — "might", "perhaps", "you could try"
-- No encouragement — "Great job!", "You're all set!"
-- No satisfaction checks — "Hope this helps!", "Let us know if..."
+- No social filler, hedging, encouragement, or satisfaction checks
 - No redundant sections — if a section adds nothing the reader needs, omit it
 
 ### Emojis and Badges
 
-Utility over cognitive overload:
-
-- Emojis are acceptable when they reduce cognitive load or help the reader visually follow a long sequential or parallel process
-- Badges are acceptable under the same criteria — if a badge conveys useful status at a glance (CI, version, coverage), include it
-- Avoid decorative emojis and vanity badges that add visual noise without aiding comprehension
+Acceptable only when they reduce cognitive load (visual flow for sequences, status-at-a-glance badges). Avoid decorative emojis and vanity badges.
 
 ### Structure Conventions
 
@@ -48,25 +41,15 @@ Utility over cognitive overload:
 
 ### Scaling Long READMEs
 
-- Add a **TL;DR** + **table of contents** when the document exceeds 4-5 sections
-- Split into companion documents (`ARCHITECTURE.md`, `CONTRIBUTING.md`) and link from the main README when depth exceeds entry-point scope
+Add TL;DR + table of contents at 4-5+ sections. Split into companion documents (`ARCHITECTURE.md`, `CONTRIBUTING.md`) when depth exceeds entry-point scope.
 
-### Structural Integrity
+### Structural Integrity and Naming
 
-Cross-reference and structural conventions for README.md files that serve as project catalogs or entry points:
-
-- Every filesystem path referenced in a README must point to an existing file or directory
-- Catalog READMEs (listing skills, agents, commands, rules) must include every artifact that exists on the filesystem — no phantom entries, no missing entries
-- Names in documentation must match actual filenames (hyphens vs. underscores, capitalization)
-- Counts stated in prose ("Seven agents") must match the actual number of items listed
-- When a README includes a structure tree, it must reflect the current filesystem state
-- Cross-references between documentation files must resolve (e.g., links to other READMEs, anchors)
-
-### Naming Consistency
-
-- Use the exact filename (minus extension) when referencing artifacts in documentation
-- Prefer the filesystem convention (kebab-case for this project) consistently
-- If an artifact was renamed, update all documentation references in the same change
+- All filesystem paths, links, and cross-references must resolve to existing targets
+- Catalog READMEs must list every artifact on the filesystem — no phantom or missing entries
+- Counts in prose must match actual item counts; structure trees must match current filesystem
+- Use exact filenames (minus extension), follow the project's naming convention consistently
+- When an artifact is renamed, update all documentation references in the same change
 
 ### Writing Quality
 
@@ -78,9 +61,4 @@ Cross-reference and structural conventions for README.md files that serve as pro
 
 ### Termination Criteria
 
-A README section is complete when the reader has:
-
-1. A direct answer to what they came for
-2. The minimum process knowledge to execute correctly, plus enough surrounding context to understand *why* — which may exceed the bare minimum when the topic demands it
-
-If both conditions are met, stop writing. Additional content dilutes signal.
+A section is complete when the reader has a direct answer and enough process knowledge to execute correctly (including *why* when the topic demands it). Stop there — additional content dilutes signal.
