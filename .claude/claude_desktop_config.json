@@ -43,6 +43,6 @@
   "preferences": {
     "quickEntryDictationShortcut": "capslock",
     "coworkScheduledTasksEnabled": false,
-    "sidebarMode": "code"
+    "sidebarMode": "chat"
   }
 }
