@@ -1,382 +1,187 @@
 ---
-description: Building MCP (Model Context Protocol) servers in Python using the official SDK and FastMCP. Covers tools, resources, prompts, transports (stdio, streamable HTTP), bundles (.mcpb), testing with pytest and MCP Inspector, deployment, Claude Desktop/Code integration, logging, and error handling. Use when creating MCP servers, defining tools or resources, configuring MCP transports, packaging MCP bundles, testing MCP servers, or integrating with Claude Desktop or Claude Code.
+description: Building MCP (Model Context Protocol) servers using official SDKs. Covers protocol concepts (tools, resources, prompts), transports (stdio, streamable HTTP), bundles (.mcpb), testing with MCP Inspector, client integration with Claude Desktop and Claude Code, logging, error handling, and security principles. Language modules available for Python (with FastMCP). Use when creating MCP servers, defining tools or resources, configuring transports, packaging bundles, testing MCP servers, or integrating with Claude.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
-# MCP Server Development in Python
+# MCP Server Development
 
 Build [Model Context Protocol](https://modelcontextprotocol.io) servers that expose tools, resources, and prompts to LLM applications.
 
-**Python Coding**: See the [Python Development](../python-development/SKILL.md) skill for type hints, testing patterns, code quality, and language best practices.
+## Table of Contents
 
-**Project Setup**: See the [Python Project Management](../python-prj-mgmt/SKILL.md) skill for environment setup and dependency management. The MCP SDK recommends **uv** for project management.
+- [Language Contexts](#language-contexts)
+- [Core Primitives](#core-primitives)
+- [Transports](#transports)
+- [Logging](#logging)
+- [Client Integration](#client-integration)
+- [Error Handling](#error-handling)
+- [Testing](#testing)
+- [Bundles (.mcpb)](#bundles-mcpb----packaging-for-distribution)
+- [Common Pitfalls](#common-pitfalls)
+- [Resources](#resources)
 
-## SDK Landscape
+## Language Contexts
 
-Two options for building MCP servers in Python:
+| Language | Context File | Related Skills |
+|----------|-------------|----------------|
+| Python   | [contexts/python.md](contexts/python.md) | python-development, python-prj-mgmt |
 
-| Option | Package | When to Use |
-|--------|---------|-------------|
-| **Official SDK** | `mcp[cli]` | Default choice. Bundled FastMCP at `mcp.server.fastmcp` |
-| **FastMCP standalone** | `fastmcp` | Need composition, proxying, or advanced features beyond the SDK |
-
-**Version pinning** (production):
-```toml
-# Official SDK v1.x (recommended for production)
-dependencies = ["mcp[cli]>=1.25,<2"]
-
-# FastMCP standalone v2 (stable)
-dependencies = ["fastmcp<3"]
-```
-
-The SDK requires **Python 3.10+**. Target **3.13+** for new projects.
-
-## Quickstart
-
-```bash
-uv init --package mcp-server-demo
-cd mcp-server-demo
-uv add "mcp[cli]"
-```
-
-```python
-from mcp.server.fastmcp import FastMCP
-
-mcp = FastMCP("Demo")
-
-@mcp.tool()
-def add(a: int, b: int) -> int:
-    """Add two numbers."""
-    return a + b
-
-@mcp.resource("greeting://{name}")
-def get_greeting(name: str) -> str:
-    """Get a personalized greeting."""
-    return f"Hello, {name}!"
-
-@mcp.prompt()
-def review_code(code: str, language: str = "python") -> str:
-    """Generate a code review prompt."""
-    return f"Please review this {language} code:\n\n```{language}\n{code}\n```"
-
-if __name__ == "__main__":
-    mcp.run(transport="streamable-http")
-```
-
-Run and test:
-```bash
-uv run mcp dev src/server.py          # Inspector at localhost:6274
-uv run mcp run src/server.py          # Direct execution (stdio)
-```
+When working in a specific language, load the corresponding context for SDK setup, code examples, testing, and deployment patterns.
 
 ## Core Primitives
 
-### Tools — Executable Functions
+### Tools -- Executable Functions
 
-Tools perform computation and side effects. The LLM invokes them.
+Tools perform computation and side effects. The LLM invokes them. Define parameters with types, defaults, and descriptions so the LLM understands how to call the tool.
 
-```python
-from mcp.server.fastmcp import Context, FastMCP
-from mcp.server.session import ServerSession
+    Tool "search_database":
+      Parameters:
+        query: string (required) -- search query
+        limit: integer (default: 10) -- max results
+      Returns: array of objects
 
-mcp = FastMCP("Tools Example")
+    Tool "long_task":
+      Parameters:
+        name: string (required) -- task identifier
+        steps: integer (default: 5) -- number of steps
+      Returns: string (completion message)
+      Behavior: reports progress after each step
 
-@mcp.tool()
-def search_database(query: str, limit: int = 10) -> list[dict]:
-    """Search the database with a query string."""
-    return db.execute(query, limit=limit)
+Use tools for: computation, side effects, actions on external systems, anything that changes state.
 
-@mcp.tool()
-async def long_task(name: str, ctx: Context[ServerSession, None], steps: int = 5) -> str:
-    """Task with progress reporting."""
-    for i in range(steps):
-        await ctx.report_progress(progress=(i + 1) / steps, total=1.0)
-        await ctx.info(f"Step {i + 1}/{steps}")
-    return f"Task '{name}' completed"
-```
+### Resources -- Data Exposure
 
-**Structured output** — return Pydantic models, TypedDicts, or dataclasses for typed results:
+Resources provide data to LLMs (like GET endpoints). No significant side effects. Identified by URI templates.
 
-```python
-from pydantic import BaseModel, Field
+    Resource "config://settings":
+      Returns: string (JSON)
 
-class WeatherData(BaseModel):
-    temperature: float = Field(description="Temperature in Celsius")
-    humidity: float = Field(description="Humidity percentage")
-    condition: str
+    Resource "file://docs/{path}":
+      Parameters:
+        path: string (URI template variable)
+      Returns: string (file content)
 
-@mcp.tool()
-def get_weather(city: str) -> WeatherData:
-    """Get weather for a city."""
-    return WeatherData(temperature=22.5, humidity=45.0, condition="sunny")
-```
+Use resources for: read-only data, configuration, file access, database lookups without mutations.
 
-### Resources — Data Exposure
+### Prompts -- Reusable Templates
 
-Resources provide data to LLMs (like GET endpoints). No significant side effects.
+Prompts define structured interaction patterns for LLMs. They accept parameters and return formatted text.
 
-```python
-@mcp.resource("config://settings")
-def get_settings() -> str:
-    """Application settings."""
-    return '{"theme": "dark", "debug": false}'
+    Prompt "analyze_data":
+      Parameters:
+        dataset: string (required)
+        focus: string (default: "trends")
+      Returns: string (prompt text)
 
-@mcp.resource("file://docs/{path}")
-def read_doc(path: str) -> str:
-    """Read a document by path."""
-    return Path(f"docs/{path}").read_text()
-```
+Use prompts for: standardized analysis requests, review templates, multi-step workflows.
 
-### Prompts — Reusable Templates
+**Do not mix primitives.** Tools execute logic (side effects OK). Resources expose data (no side effects). Prompts template interactions. If a function reads data and mutates state, make it a tool.
 
-Prompts define structured interaction patterns for LLMs.
-
-```python
-@mcp.prompt()
-def analyze_data(dataset: str, focus: str = "trends") -> str:
-    """Generate a data analysis prompt."""
-    return f"Analyze the '{dataset}' dataset, focusing on {focus}."
-```
+See language context for SDK-specific decorator syntax and code examples.
 
 ## Transports
 
-| Transport | Use Case | Command |
-|-----------|----------|---------|
-| **stdio** | Local development, Claude Desktop | `mcp.run()` (default) |
-| **Streamable HTTP** | Production, remote clients | `mcp.run(transport="streamable-http")` |
+| Transport | Use Case |
+|-----------|----------|
+| **stdio** | Local development, Claude Desktop |
+| **Streamable HTTP** | Production, remote clients |
 
-**SSE is deprecated.** Use streamable HTTP for all new HTTP-based servers.
+SSE is deprecated. Use streamable HTTP for all new HTTP-based servers.
 
-### Mounting on Starlette (Multiple Servers)
+See language context for transport configuration code.
 
-```python
-from starlette.applications import Starlette
-from starlette.routing import Mount
+## Logging
 
-app = Starlette(routes=[
-    Mount("/api", api_mcp.streamable_http_app()),
-    Mount("/admin", admin_mcp.streamable_http_app()),
-])
-```
+**Universal rule**: never print to stdout in stdio servers -- it corrupts JSON-RPC messages. Direct all logging output to stderr.
 
-## Lifespan — Startup/Shutdown Resources
+For HTTP servers, standard output logging is acceptable.
 
-```python
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
-
-@dataclass
-class AppContext:
-    db: Database
-
-@asynccontextmanager
-async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
-    db = await Database.connect()
-    try:
-        yield AppContext(db=db)
-    finally:
-        await db.disconnect()
-
-mcp = FastMCP("My App", lifespan=app_lifespan)
-
-@mcp.tool()
-def query(ctx: Context[ServerSession, AppContext]) -> str:
-    """Query using the shared database connection."""
-    return ctx.request_context.lifespan_context.db.query()
-```
-
-## Logging — Never Print to Stdout
-
-For **stdio servers**, `print()` corrupts JSON-RPC messages. Always log to stderr:
-
-```python
-import logging
-import sys
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    stream=sys.stderr,
-)
-logger = logging.getLogger(__name__)
-```
-
-For HTTP servers, standard output logging is fine.
-
-## Testing
-
-### pytest with In-Memory Client (Primary)
-
-Test tools directly without subprocess overhead:
-
-```python
-import pytest
-from mcp.server.fastmcp import FastMCP
-
-@pytest.fixture
-async def client():
-    from fastmcp import Client  # or test with call_tool directly
-    async with Client(mcp) as c:
-        yield c
-
-@pytest.mark.asyncio
-async def test_add_tool(client):
-    result = await client.call_tool("add", {"a": 2, "b": 3})
-    assert result[0].text == "5"
-```
-
-Add to `pyproject.toml`:
-```toml
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-```
-
-### MCP Inspector (Interactive)
-
-```bash
-uv run mcp dev src/server.py                    # Bundled Inspector
-npx -y @modelcontextprotocol/inspector          # Standalone Inspector
-```
+See language context for logging setup code.
 
 ## Client Integration
 
 ### Claude Desktop
 
-**Automatic:**
-```bash
-uv run mcp install src/server.py --name "My Server"
-```
+Configure servers in the Claude Desktop config file (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
-**Manual** (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 ```json
 {
   "mcpServers": {
     "my-server": {
-      "command": "uv",
-      "args": ["run", "--directory", "/path/to/server", "mcp", "run", "server.py"]
+      "command": "RUNTIME_COMMAND",
+      "args": ["RUNTIME_ARGS"]
     }
   }
 }
 ```
 
+See your language context for the `command` and `args` values appropriate to your runtime.
+
 ### Claude Code
 
 ```bash
-# HTTP server
+# HTTP server (language-agnostic)
 claude mcp add --transport http my-server http://localhost:8000/mcp
 
-# stdio server
-claude mcp add my-server -- uv run /path/to/server.py
-
 # Scope: user (all projects), local (default, this project), project (.mcp.json, shareable)
-claude mcp add my-server --scope project -- uv run server.py
+claude mcp add my-server --scope project -- RUNTIME_COMMAND RUNTIME_ARGS
 ```
+
+See your language context for the stdio launch command.
 
 ## Error Handling
 
-- Validate inputs early — check types, ranges, required fields before processing
+- Validate inputs early -- check types, ranges, required fields before processing
 - Catch specific exceptions with targeted responses, fall back to generic handlers
 - Return `isError: true` in `CallToolResult` for tool-level failures
 - Log full error details to stderr; sanitize responses to avoid leaking internals
-- Provide context-aware messages that help the LLM recover ("column 'xyz' not found — did you mean 'xy'?")
+- Provide context-aware messages that help the LLM recover ("column 'xyz' not found -- did you mean 'xy'?")
 
-## Project Structure
+## Testing
 
-```
-mcp-server-myproject/
-├── pyproject.toml
-├── README.md
-├── src/
-│   └── mcp_server_myproject/
-│       ├── __init__.py
-│       ├── server.py          # FastMCP instance + primitives
-│       └── py.typed
-└── tests/
-    ├── conftest.py
-    └── test_server.py
-```
+### MCP Inspector
 
-**pyproject.toml essentials:**
-```toml
-[project]
-name = "mcp-server-myproject"
-version = "0.1.0"
-requires-python = ">=3.11"
-dependencies = ["mcp[cli]>=1.25,<2"]
-
-[project.scripts]
-mcp-server-myproject = "mcp_server_myproject.server:main"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[dependency-groups]
-dev = ["pytest>=8.0", "pytest-asyncio>=0.24", "ruff>=0.7", "pyright>=1.1"]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-```
-
-## CLI Quick Reference
+The [MCP Inspector](https://github.com/modelcontextprotocol/inspector) provides interactive testing for any MCP server, regardless of language:
 
 ```bash
-uv run mcp dev server.py             # Dev mode with Inspector
-uv run mcp run server.py             # Run directly (stdio)
-uv run mcp install server.py         # Register with Claude Desktop
+npx -y @modelcontextprotocol/inspector          # Standalone Inspector
 ```
 
-## Bundles (`.mcpb`) — Packaging for Distribution
+Connect to a running server or launch one directly. The Inspector lets you invoke tools, read resources, and test prompts through a web UI at `localhost:6274`.
+
+See language context for in-memory / programmatic testing patterns.
+
+## Bundles (.mcpb) -- Packaging for Distribution
 
 MCP Bundles are ZIP archives (`.mcpb` extension) containing a server and a `manifest.json`. They enable one-click installation in Claude Desktop (double-click, drag-and-drop, or Developer menu). Formerly called DXT (Desktop Extensions).
 
 **Repository**: [modelcontextprotocol/mcpb](https://github.com/modelcontextprotocol/mcpb)
 
-### Python Bundle (uv runtime — recommended)
+### Manifest Overview
 
-```text
-my-server.mcpb (ZIP)
-├── manifest.json
-├── pyproject.toml        # Dependencies declared here
-└── src/
-    └── server.py
-```
+Every bundle requires a `manifest.json` with at minimum:
 
-**manifest.json:**
+    Manifest fields (required):
+      manifest_version: string -- currently "0.4"
+      name: string -- unique identifier (lowercase, hyphens)
+      version: string -- semver
+      description: string -- what the server does
+      server:
+        type: string -- one of: node, uv, python, binary
+        entry_point: string -- path to server entry file
 
-```json
-{
-  "manifest_version": "0.4",
-  "name": "my-mcp-server",
-  "version": "1.0.0",
-  "description": "My MCP server",
-  "author": { "name": "Your Name" },
-  "server": {
-    "type": "uv",
-    "entry_point": "src/server.py"
-  }
-}
-```
-
-The `uv` server type lets the host manage Python and dependencies automatically — no need to bundle packages. For compiled dependencies, this is the only portable Python option.
-
-### CLI
-
-```bash
-npm install -g @anthropic-ai/mcpb
-mcpb init                   # Generate manifest.json interactively
-mcpb pack                   # Package into .mcpb file
-mcpb pack examples/hello-world-uv  # Pack a specific directory
-```
+    Manifest fields (optional):
+      author: { name, url, email }
+      user_config: object -- declares user-configurable fields
+      mcp_config: object -- environment variables for the server
 
 ### Server Types
 
 | Type     | When to Use                                                            |
 | -------- | ---------------------------------------------------------------------- |
-| `node`   | **Recommended** — ships with Claude Desktop, zero install friction     |
-| `uv`     | Python servers — host manages Python/deps via uv (experimental)        |
-| `python` | Python with pre-bundled deps — limited portability for compiled pkgs   |
+| `node`   | **Recommended** -- ships with Claude Desktop, zero install friction    |
+| `uv`     | Python servers -- host manages Python/deps via uv (experimental)       |
+| `python` | Python with pre-bundled deps -- limited portability for compiled pkgs  |
 | `binary` | Pre-compiled executables                                               |
 
 ### User Configuration
@@ -398,23 +203,31 @@ Declare config fields and Claude Desktop auto-generates a settings UI:
 
 Reference via `${user_config.api_key}` in `mcp_config.env`.
 
-See [references/resources.md](references/resources.md) for the full manifest specification and examples.
+### CLI
+
+```bash
+npm install -g @anthropic-ai/mcpb
+mcpb init                   # Generate manifest.json interactively
+mcpb pack                   # Package into .mcpb file
+mcpb pack examples/hello-world-uv  # Pack a specific directory
+```
+
+See [references/resources.md](references/resources.md) for the full manifest specification, bundle directory structures, and advanced examples. See language context for language-specific bundle patterns.
 
 ## Common Pitfalls
 
-- **Printing to stdout** in stdio servers — corrupts JSON-RPC. Use `logging` to stderr
-- **Using SSE transport** — deprecated. Use streamable HTTP
-- **Missing type hints** — LLMs cannot understand tool parameters without annotations
-- **Mixing primitives** — tools execute logic (side effects OK), resources expose data (no side effects)
-- **Overly broad permissions** — start read-only, whitelist operations, restrict filesystem paths
-- **Not testing** — use pytest with in-memory clients, not manual chat testing
+- **Printing to stdout** in stdio servers -- corrupts JSON-RPC. Log to stderr
+- **Using SSE transport** -- deprecated. Use streamable HTTP
+- **Missing type annotations** -- LLMs cannot understand tool parameters without annotations
+- **Mixing primitives** -- tools execute logic (side effects OK), resources expose data (no side effects)
+- **Overly broad permissions** -- start read-only, whitelist operations, restrict filesystem paths
+
+See language context for language-specific pitfalls.
 
 ## Resources
 
-- [MCP Specification](https://modelcontextprotocol.io/specification/2025-06-18) — Official protocol spec
-- [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) — Official SDK repository
-- [FastMCP](https://gofastmcp.com/) — Standalone framework documentation
-- [Build a Server Tutorial](https://modelcontextprotocol.io/docs/develop/build-server) — Official quickstart
-- [MCP Inspector](https://github.com/modelcontextprotocol/inspector) — Interactive testing tool
-- [Security Best Practices](https://modelcontextprotocol.io/specification/draft/basic/security_best_practices) — Official security guidance
-- See [references/resources.md](references/resources.md) for advanced patterns, deployment, and community guides
+- [MCP Specification](https://modelcontextprotocol.io/specification/2025-06-18) -- Official protocol spec
+- [MCP Inspector](https://github.com/modelcontextprotocol/inspector) -- Interactive testing tool
+- [Security Best Practices](https://modelcontextprotocol.io/specification/draft/basic/security_best_practices) -- Official security guidance
+- See language context for SDK-specific resources
+- See [references/resources.md](references/resources.md) for advanced patterns, security deep-dives, and community guides
