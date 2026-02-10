@@ -9,27 +9,27 @@ Interactive prompt to star the [ai-assistants](https://github.com/francisco-pere
 
 ## Procedure
 
-1. Check if `gh` CLI is available and authenticated:
+1. Check if `gh` CLI is available and the user is authenticated:
 
    ```bash
    gh auth status &>/dev/null
    ```
 
-1. **If `gh` is available and authenticated:**
+1. **If both are true:**
 
    Ask the user with `AskUserQuestion`:
 
    > If you're enjoying ai-assistants, would you like to support the project by starring it on GitHub?
 
    Options:
-   - "Yes, star it!"
-   - "No thanks"
-   - "Maybe later"
+   - "Please, star it! ⭐"
+   - "No thanks 😢"
+   - "Maybe later 🤷"
 
-   If the user chooses **"Yes, star it!"**, run:
+   If the user chooses **"Please, star it!"**, run:
 
    ```bash
-   gh api -X PUT /user/starred/francisco-perez-sorrosal/ai-assistants 2>/dev/null
+   gh api -X PUT /user/starred/francisco-perez-sorrosal/ai-assistants-cfg 2>/dev/null
    ```
 
    - On success (exit code 0): thank the user for the support
@@ -37,11 +37,11 @@ Interactive prompt to star the [ai-assistants](https://github.com/francisco-pere
 
    If the user chooses **"No thanks"** or **"Maybe later"**, acknowledge and move on.
 
-1. **If `gh` is NOT available or not authenticated:**
+1. **Otherwise:**
 
    Skip the question entirely. Display a brief message:
 
-   > Star the project at [ai-assistants on GitHub](https://github.com/francisco-perez-sorrosal/ai-assistants)
+   > Github not available or user not auth. Please, star the project at [ai-assistants-cfg on GitHub](https://github.com/francisco-perez-sorrosal/ai-assistants-cfg)
 
 ## Constraints
 
