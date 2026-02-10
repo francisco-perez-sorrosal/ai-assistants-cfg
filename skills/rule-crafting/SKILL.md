@@ -22,10 +22,11 @@ Guide for creating effective, contextual rules.
 **Rules** are contextual domain knowledge files that Claude loads automatically based on relevance — no explicit invocation needed.
 
 - Loaded opportunistically by task, active files, and semantic matching
+- **All-or-nothing loading** — when a rule is triggered, its entire file content is injected into context. There is no partial or progressive loading within a single rule file. This is why keeping each file focused matters
 - Declarative (constraints and conventions), not procedural (workflows)
 - One `.md` file per coherent domain area
 - Project or personal scope
-- Verbose content is fine — rules load only when relevant
+- Keep rules concise — they share the always-loaded token budget with CLAUDE.md
 
 ## File Locations
 
@@ -186,8 +187,7 @@ Step 3: Make sure to use snake_case
 - **Group by domain** — one file per coherent domain area
 - **Include examples** — show correct and incorrect patterns when clarity demands it
 - **Explain the _why_** — when a constraint isn't self-evident, briefly state the rationale
-- **Verbose is fine** — rules load only when relevant, so depth is welcome
-- **Token budget awareness** — rules are always-loaded, adding to the baseline token cost of every conversation and agent spawn. The ecosystem target is 8,500 tokens for all always-loaded content. If a rule is too large, compress it or move procedural content to a skill — but never split into main + reference files (see Self-Containment Constraint below)
+- **Token budget awareness** — rules are eagerly loaded within scope (personal = all projects, project = that project), adding to the baseline token cost of every conversation and agent spawn. The ecosystem target is 8,500 tokens for all always-loaded content (CLAUDE.md files + rules). Keep rules concise; if one grows too large, compress it (tables over prose, remove redundancy) or move procedural content to a skill — but never split into main + reference files (see Self-Containment Constraint below)
 
 ### Customization Sections
 
@@ -267,6 +267,8 @@ Ask: **"Is this something Claude should _know_, or something Claude should _do_?
 - Do not use "see `<path>` for details" patterns that point to non-rule files
 - If a rule is too large, compress it (tables over prose, remove redundancy) or split it into two independent rules by domain — never into main + supplement
 - Skills can use reference files (they control their own loading); rules cannot
+
+**Escape hatch:** Rules can point to skill reference files for supplementary depth. Skills have base path injection on activation, making their reference files resolvable cross-project. A rule can say "When working on UI components, load the `ui-change` skill" — the rule stays lean and the heavy instructions live in the skill's progressively-disclosed reference files. This is the recommended pattern when a rule needs supporting material that exceeds self-containment limits
 
 ## Anti-Patterns
 

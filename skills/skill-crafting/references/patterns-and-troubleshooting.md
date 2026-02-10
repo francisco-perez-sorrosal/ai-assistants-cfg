@@ -40,6 +40,7 @@ Store templates in `assets/` directory.
 - Time-based conditionals
 - Voodoo constants without justification
 - Assuming tools/packages are installed without listing them
+- Duplicating rule content in skills -- if a rule covers commit conventions, the skill should not repeat them. Claude loads both when relevant; duplication wastes tokens and creates sync divergence
 
 ## Troubleshooting
 
@@ -62,3 +63,24 @@ Store templates in `assets/` directory.
 - Use forward slashes everywhere
 - Verify referenced paths exist
 - Use `~` for home directory in personal skills
+
+### Plugin Reference File Permissions
+
+**Symptom:** Claude prompts for permission every time it tries to read a satellite file from a plugin skill, or previously approved paths stop working after a plugin update.
+
+**Cause:** `allowed-tools: [Read]` in frontmatter grants tool permission (Claude can use the Read tool) but not filesystem path permission. Plugin reference files live in `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/...` — a path outside the project directory. Claude treats reads to this path as requiring explicit approval. When the plugin updates, the version segment changes, invalidating all prior approvals.
+
+**Fix:** Add a wildcard allowlist so Claude can read any file in the plugin cache without prompting:
+
+```json
+// settings.json or settings.local.json
+{
+  "permissions": {
+    "additionalDirectories": ["~/.claude/plugins/**"]
+  }
+}
+```
+
+This grants read access to all installed plugin files. The wildcard covers version changes, so approvals survive plugin updates.
+
+**Verification:** After adding the allowlist, activate a plugin skill and trigger a reference file read. Use `/context` to confirm the reference file was loaded without a permission prompt.

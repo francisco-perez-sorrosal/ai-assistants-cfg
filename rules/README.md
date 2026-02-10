@@ -43,7 +43,7 @@ When Claude executes a `/co` (commit) command, it automatically picks up `git-co
 
 - Rules are **not callable** — there is no syntax to invoke a rule by name
 - Rules are **not procedural** — they don't contain step-by-step workflows (that's what Skills are for)
-- Rules are **not always loaded** — unlike `CLAUDE.md`, rules load only when relevant
+- Rules are **not invoked** — there is no syntax to trigger a specific rule; Claude loads them based on scope (personal = all projects, project = that project) and optional `paths` filters
 - Rules are **not executable** — they contain knowledge, not code
 
 ## Rules vs Skills vs CLAUDE.md
@@ -69,7 +69,7 @@ Ask: **"Is this something Claude should _know_, or something Claude should _do_?
 | **Content type** | Short, opinionated directives | Deep constraints and reference material | Step-by-step procedures, optionally with code |
 | **Invocation** | Automatic (always present) | Automatic (relevance-based) | Automatic (context-triggered) or explicit |
 | **Execution** | N/A (passive context) | N/A (passive knowledge) | Can execute code and scripts |
-| **Verbosity** | Concise — keep it lean | Verbose is fine — loaded only when needed | Progressive disclosure — metadata first |
+| **Verbosity** | Concise — keep it lean | Concise — shares token budget with CLAUDE.md | Progressive disclosure — metadata first |
 | **Scope** | Project-wide | Domain-scoped (SQL, security, git, etc.) | Task-scoped (commit, deploy, scaffold, etc.) |
 
 ### Concrete Examples

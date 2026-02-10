@@ -131,6 +131,17 @@ Three tiers of context loading:
 
 This is unique to skills. Rules and agents do NOT receive a base path, so they cannot use satellite files for progressive disclosure. See `README_DEV.md` for the full cross-artifact comparison.
 
+**How lazy loading works:** Markdown links in SKILL.md act as navigational cues. Claude sees the links, evaluates whether each reference is relevant to the current task, and issues `Read` tool calls only for the files it needs. Scripts in `scripts/` are executed (via `Bash`), not loaded into context — keeping token cost proportional to output, not source size.
+
+**Plugin permission caveat:** `allowed-tools: [Read]` grants tool permission but not filesystem path permission. For plugin skills, reference files live in `~/.claude/plugins/cache/...` which requires explicit path access. Without it, Claude prompts for permission on every reference file read, and path approvals break on plugin updates (new version = new cache path). Add a wildcard allowlist to avoid this:
+
+```json
+// In settings.json or settings.local.json
+{ "permissions": { "additionalDirectories": ["~/.claude/plugins/**"] } }
+```
+
+**Debugging tip:** Use `/context` to inspect what's currently loaded in the context window, including which skills and reference files have been read. Useful for verifying progressive disclosure is working as intended.
+
 ### Storage Locations
 
 - **Personal**: `~/.claude/skills/` (user-specific)

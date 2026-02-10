@@ -78,22 +78,84 @@ install.sh                           # Multi-assistant installer
 
 ## Progressive Disclosure and Satellite Files
 
-Skills, agents, and rules handle satellite/reference files differently when distributed via the plugin system. This affects whether you can split content across multiple files.
+Skills, agents, and rules each have a distinct execution model that determines how they load, resolve file references, and interact with the sandbox. Understanding these differences is essential for deciding where to place content and how to structure large instruction sets.
 
-| Artifact | Base Path Injected? | Satellite Files Work Cross-Project? | Strategy |
-|----------|--------------------|------------------------------------|----------|
-| **Skills** | Yes — on activation | Yes — LLM combines base path + relative refs | Use `references/` subdirectories freely |
-| **Agents** | No — CWD is project root | No — `Read` resolves to project CWD, not plugin cache | Keep agent definitions self-contained |
-| **Rules** | No — content injected inline | No — `install.sh` skips `references/` dirs; files never reach `~/.claude/rules/` | Keep rules self-contained |
+### Execution Models
 
-**Skills** are the only artifact type that supports progressive disclosure across projects. When Claude Code activates a skill, it provides the skill's absolute directory path (the "base path"), allowing the LLM to resolve relative references to satellite files regardless of where the skill is installed.
+| Artifact | Loading | Path Resolution | Satellite Files Cross-Project? | Strategy |
+|----------|---------|-----------------|-------------------------------|----------|
+| **Skills** | Lazy — metadata at startup, full SKILL.md on activation, reference files on demand | Base path injected on activation; LLM resolves relative refs to absolute paths | Yes | Use `references/` subdirectories freely |
+| **Agents** | Eager — full `.md` definition loaded into the sub-agent's CLAUDE.md at spawn | CWD is the project root; `Read` resolves against CWD, not plugin cache | No | Keep definitions self-contained |
+| **Rules** | Eager within scope — all personal rules load every session; project rules load in that project; `paths`-filtered rules load only for matching files | No path context; raw markdown appended to system prompt | No | Keep rules self-contained and concise (share token budget with CLAUDE.md) |
 
-**Agents and rules** must be fully self-contained. Never split them into a main file plus reference/satellite files — the references will be unreachable in projects other than this source repository. If content is too large, compress it (tables over prose, remove redundancy) or split into independent files by domain.
+**Skills** are the only artifact type that supports progressive disclosure across projects. When Claude Code activates a skill, it provides the skill's absolute directory path (the "base path"), allowing the LLM to resolve relative references to satellite files regardless of where the skill is installed — project directory, personal `~/.claude/skills/`, or plugin cache.
 
-**Sources:**
-- [Extend Claude with skills](https://code.claude.com/docs/en/skills) — official docs; see "Add supporting files" section for the satellite file pattern and directory layout
+**Agents** receive their entire definition as part of the sub-agent's system prompt at spawn time. The sub-agent's working directory is the project root, not the plugin cache. Any `Read` calls resolve against the project, so references to sibling files in the plugin cache fail silently. Keep agent definitions self-contained. If content is too large, compress it (tables over prose, remove redundancy) or split into independent agent files by domain.
+
+**Rules** are injected as inline text — Claude never sees a file path or directory context for them. The `install.sh` installer symlinks rule `.md` files to `~/.claude/rules/` but explicitly skips `references/` subdirectories. Reference files never reach the rules directory. Rules that need supporting material can point to skill reference files (the skill's base path makes them resolvable), but the rule itself must be self-contained.
+
+### Security and Permissions
+
+All artifact types execute within Claude Code's shared sandbox. The permission model applies uniformly:
+
+- **Read access** is the default. Skills, agents, and rules can all trigger `Read` tool calls against project files without approval.
+- **Write access** requires user approval (or `acceptEdits` permission mode for agents). The `allowed-tools` field in skill frontmatter pre-approves specific tools but does not bypass filesystem path restrictions.
+- **Plugin cache reads** require explicit directory whitelisting. Skill reference files installed via the plugin system live in `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/...` — outside the project directory. Without a wildcard allowlist, Claude prompts for permission on every reference file read, and plugin version changes invalidate prior approvals.
+
+Add the wildcard allowlist to grant read access across plugin updates:
+
+```json
+// In ~/.claude/settings.json or ~/.claude/settings.local.json
+{
+  "permissions": {
+    "additionalDirectories": ["~/.claude/plugins/**"]
+  }
+}
+```
+
+The installer (`install.sh`) configures this automatically during plugin installation.
+
+### Structuring Large Instruction Sets
+
+The token budget constraint (8,500 tokens for always-loaded content) drives a clear allocation strategy:
+
+| Content Type | Where to Put It | Why |
+|---|---|---|
+| Global directives, short conventions | `CLAUDE.md` | Always loaded — keep lean |
+| Domain knowledge, constraints, reference material | Rules | Eagerly loaded within scope — keep concise (shares token budget with CLAUDE.md) |
+| Multi-step workflows, procedures with code | Skills | Lazy-loaded with progressive disclosure — satellite files absorb depth |
+| Sub-agent behavior definitions | Agents | Loaded at spawn — self-contained by necessity |
+
+Best practices for keeping the core small:
+
+1. **Favor skills for complex workflows.** A skill's three-tier loading (metadata -> instructions -> references) keeps startup cost at ~100 tokens per skill while allowing thousands of tokens on demand.
+2. **Use reference files for depth, not breadth.** Each reference file should cover one coherent topic. Keep references one level deep from `SKILL.md` — avoid nested chains.
+3. **Reserve rules for declarative knowledge.** Rules state what should be true, not how to do it. If you find yourself writing steps, it belongs in a skill.
+4. **Compress agent definitions aggressively.** Tables, bullet lists, and imperative statements over prose. Agents cannot offload to satellite files, so every token counts.
+5. **Do not duplicate across layers.** If a rule covers commit conventions, the commit skill should not repeat them — Claude loads both when relevant.
+
+### Decision Framework: Rules vs Skills vs Agent Instructions
+
+| Question | If Yes | Use |
+|----------|--------|-----|
+| Must Claude always know this, every session? | Yes | `CLAUDE.md` |
+| Is this domain knowledge Claude should apply contextually? | Yes | Rule |
+| Is this a multi-step workflow or procedure? | Yes | Skill |
+| Does this define a sub-agent's role and behavior? | Yes | Agent definition |
+| Does it need satellite files for depth? | Yes | Skill (only artifact type that supports them cross-project) |
+
+See [`rules/README.md`](rules/README.md#rules-vs-skills-vs-claudemd) for the detailed comparison table with concrete examples.
+
+### Debugging
+
+Run `/context` inside Claude Code to inspect which skills and reference files are loaded in the current context window. Use this to verify progressive disclosure is working correctly after installation.
+
+### Sources
+
+- [Extend Claude with skills](https://code.claude.com/docs/en/skills) — official docs; see "Add supporting files" for the satellite file pattern
 - [Inside Claude Code Skills](https://mikhail.io/2025/10/claude-code-skills/) — Mikhail Shilkov's reverse-engineering showing base path injection on skill activation
 - [Claude Code memory](https://code.claude.com/docs/en/memory#rules) — official docs; rules are loaded inline with no path context
+- [Reddit: Claude Code plugin permissions](https://www.reddit.com/r/ClaudeAI/) — plugin cache permission issues with `additionalDirectories` workaround
 
 ## How Rules Interact with Commands
 
@@ -109,31 +171,34 @@ Never reference rule filenames directly in commands -- filenames have no special
 
 See [`rules/README.md`](rules/README.md) for the full rule specification, writing guidelines, and the rules-vs-skills-vs-CLAUDE.md decision model.
 
-## install.sh
+## Development Setup
 
-The installer handles two concerns: personal config and plugin installation.
+For user-facing installation instructions, see [`README.md`](README.md#installation).
+
+### Local testing (recommended for development)
+
+Load the plugin directly from the cloned repo for a single session. Changes to skills, commands, and agents are reflected immediately — no reinstall needed.
 
 ```bash
-./install.sh              # Install Claude config, prompt for plugin
-./install.sh --plugin     # Re-register marketplace and reinstall plugin
-./install.sh --check      # Verify plugin health without modifying anything
-./install.sh --help       # Show all options
+claude --plugin-dir /path/to/ai-assistants
 ```
 
-**What gets installed:**
+Personal config and rules are **not** loaded. Use `./install.sh` if you also need those.
 
-| Source (`.claude/`) | Target (`~/.claude/`) | Purpose |
-|---------------------|----------------------|---------|
-| `CLAUDE.md` | `~/.claude/CLAUDE.md` | Global development guidelines, code style, available skills and commands |
-| `claude_desktop_config.json` | `~/.claude/claude_desktop_config.json` | Claude Desktop settings (MCP servers) |
-| `userPreferences.txt` | `~/.claude/userPreferences.txt` | Adaptive precision mode -- controls response style and verbosity |
-| `settings.local.json` | `~/.claude/settings.local.json` | Local permission settings (gitignored) |
-| `rules/*.md` | `~/.claude/rules/*.md` | Rules (auto-linked, auto-loaded by Claude when relevant) |
+### Updating the plugin cache
 
-The installer also links `claude_desktop_config.json` to the official Claude Desktop location:
+After modifying the plugin manifest or adding new components, update the installed copy:
 
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+```bash
+./install.sh                   # Re-run installer, choose "Install plugin" at Step 3
+claude plugin install i-am@bit-agora --scope user   # Or install directly
+```
+
+### Verifying changes
+
+- `./install.sh --check` — confirms all symlinks, plugin, hooks, and permissions are healthy
+- `/context` inside Claude Code — shows which skills and reference files are loaded in the current context window
+- `claude plugin list` — verifies the plugin is registered and its version
 
 ## Plugin Development
 
@@ -142,12 +207,6 @@ The plugin manifest lives in `.claude-plugin/plugin.json`. Key constraints:
 - See `.claude-plugin/PLUGIN_SCHEMA_NOTES.md` for validator constraints
 - The plugin is distributed via the [`bit-agora`](https://github.com/francisco-perez-sorrosal/bit-agora) GitHub marketplace
 - When installed, commands are namespaced as `/i-am:<name>`
-
-To test locally without installing:
-
-```bash
-claude --plugin-dir /path/to/ai-assistants
-```
 
 ## References
 

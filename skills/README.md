@@ -13,7 +13,7 @@ Reusable skill modules for Claude Code. Each skill is a self-contained directory
 | **[agent-crafting](agent-crafting/)**     | Building custom agents (subagents) with prompt writing, tool configuration, and lifecycle management.                                                      | Building custom agents, designing agent workflows, spawning subagents, delegating tasks to agents.                       |
 | **[command-crafting](command-crafting/)** | Creating slash commands with proper syntax, arguments, frontmatter, and best practices.                                                                    | Creating custom slash commands, debugging command behavior, converting prompts to reusable commands.                     |
 | **[mcp-crafting](mcp-crafting/)**         | Building MCP servers in Python with FastMCP. Covers tools, resources, prompts, transports, testing, and deployment.                                        | Creating MCP servers, defining tools/resources, configuring transports, testing, integrating with Claude.                |
-| **[rule-crafting](rule-crafting/)**       | Creating and managing rules — contextual domain knowledge files loaded automatically based on relevance.                                                   | Creating new rules, updating existing rules, debugging rule loading, organizing rule files, layer placement decisions.   |
+| **[rule-crafting](rule-crafting/)**       | Creating and managing rules — domain knowledge files eagerly loaded within scope (personal = all projects, project = that project).                        | Creating new rules, updating existing rules, debugging rule loading, organizing rule files, layer placement decisions.   |
 
 
 ### Documentation

@@ -4,38 +4,48 @@ Configuration repository for AI coding assistants. Centralizes settings, skills,
 
 ## Installation
 
-### Plugin (skills, commands, agents)
-
-The repo is packaged as a Claude Code plugin (`i-am`) distributed via the [`bit-agora`](https://github.com/francisco-perez-sorrosal/bit-agora) marketplace.
+Run the interactive installer — it walks through each choice, defaulting to the recommended option at each step.
 
 ```bash
-# Add the marketplace and install
+./install.sh              # Claude Code (default)
+./install.sh desktop      # Claude Desktop
+./install.sh --check      # Verify installation health
+./install.sh --uninstall  # Remove installation
+```
+
+### Claude Code (`./install.sh` or `./install.sh code`)
+
+| Step | What | Interactive? |
+|------|------|-------------|
+| 1 | Personal config (CLAUDE.md, userPreferences.txt, settings.local.json) → `~/.claude/` | No — always installed |
+| 2 | Rules → `~/.claude/rules/` (auto-loaded by Claude when relevant) | No — always installed |
+| 3 | i-am plugin via [`bit-agora`](https://github.com/francisco-perez-sorrosal/bit-agora) marketplace (scope: user or project) | Yes — recommended |
+| 4 | Task Chronograph hooks (agent lifecycle observability) | Yes — recommended |
+| 5 | Claude Desktop config link to official Desktop location | Yes — skip by default |
+
+When installed as a plugin, commands are namespaced: `/co` becomes `/i-am:co`. Plugin permissions for skill reference files are auto-configured at Step 3. See [`README_DEV.md`](README_DEV.md#progressive-disclosure-and-satellite-files) for how progressive disclosure works with plugin-installed skills.
+
+**Manual plugin install** (without the interactive installer):
+
+```bash
 claude plugin marketplace add francisco-perez-sorrosal/bit-agora
-claude plugin install i-am                    # user scope (all projects)
-claude plugin install i-am --scope project    # project scope only
+claude plugin install i-am@bit-agora --scope user
 ```
 
-```bash
-# Or load directly for a single session (no install needed)
-claude --plugin-dir /path/to/ai-assistants
-```
+### Claude Desktop (`./install.sh desktop`)
 
-When installed as a plugin, commands are namespaced: `/co` becomes `/i-am:co`.
+Links `claude_desktop_config.json` to the official Desktop location:
 
-### Personal config
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
-Run `./install.sh` to symlink Claude personal config files to `~/.claude/` and install rules. The installer also prompts to install the plugin via the marketplace.
+Skills, commands, and agents are Claude Code features — run `./install.sh code` for the full feature set.
 
-```bash
-./install.sh          # Install Claude config, prompt for plugin
-./install.sh --help   # Show all options
-```
-
-### User preferences on Claude Desktop / iOS
+### User preferences (Claude Desktop / iOS)
 
 On devices without filesystem access (e.g., Claude iOS app) or when using Claude Desktop without the CLI, paste the following into the **User Preferences** field in Claude's settings:
 
-```
+```text
 Read the user preferences from https://raw.githubusercontent.com/francisco-perez-sorrosal/ai-assistants-cfg/main/.claude/userPreferences.txt and follow them before any other interaction
 ```
 
@@ -83,7 +93,7 @@ Nine autonomous agents that Claude delegates complex tasks to. Each runs in its 
 
 ## Rules
 
-Contextual domain knowledge files loaded automatically by Claude when relevant. See [`rules/README.md`](rules/README.md) for the full catalog, writing guidelines, and the rules-vs-skills-vs-CLAUDE.md decision model.
+Domain knowledge files eagerly loaded by Claude within scope (personal rules for all projects, project rules for that project). See [`rules/README.md`](rules/README.md) for the full catalog, writing guidelines, and the rules-vs-skills-vs-CLAUDE.md decision model.
 
 ---
 
