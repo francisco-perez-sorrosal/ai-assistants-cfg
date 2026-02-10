@@ -13,6 +13,7 @@ Reusable slash commands for Claude Code. Each `.md` file becomes a `/command-nam
 | `/create-simple-python-prj` | Create a basic Python project with pixi or uv |
 | `/add-rules` | Copy rules into the current project for customization |
 | `/manage-readme` | Create or refine README.md files |
+| `/star-repo` | Star the ai-assistants-cfg repo on GitHub |
 
 ## How Commands Work
 
