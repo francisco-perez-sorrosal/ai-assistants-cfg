@@ -107,7 +107,7 @@ Rules are contextual knowledge loaded by relevance. The filename directly affect
 | `coding-style.md` | `style.md` | Domain is explicit |
 | `git-commit-hygiene.md` | `git.md` | Specific intent, not catch-all |
 | `artifact-naming.md` | `naming.md` | Scoped to artifacts, not generic |
-| `software-agents-usage.md` | `agents.md` | Distinguishes from agent definitions |
+| `swe-agent-coordination-protocol.md` | `agents.md` | Distinguishes from agent definitions |
 
 ### Cross-Artifact Consistency
 

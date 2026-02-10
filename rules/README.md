@@ -9,9 +9,7 @@ rules/
 ├── swe/
 │   ├── agent-intermediate-documents.md
 │   ├── coding-style.md
-│   ├── software-agents-usage.md
-│   ├── references/
-│   │   └── agent-coordination-protocols.md
+│   ├── swe-agent-coordination-protocol.md
 │   └── vcs/
 │       ├── git-commit-hygiene.md
 │       └── git-commit-message-format.md
@@ -24,7 +22,7 @@ rules/
 | ---- | ------- |
 | `swe/agent-intermediate-documents.md` | Agent document locations (`.ai-work/` ephemeral, `.ai-state/` persistent), lifecycle tiers, cleanup |
 | `swe/coding-style.md` | Immutability, function/file size, nesting, error handling, naming, validation |
-| `swe/software-agents-usage.md` | Agent selection, coordination pipeline, parallel execution, and boundary discipline |
+| `swe/swe-agent-coordination-protocol.md` | Agent selection, coordination pipeline, parallel execution, and boundary discipline |
 | `swe/vcs/git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
 | `swe/vcs/git-commit-hygiene.md` | Git commit safety, staging discipline, and exclusions |
 | `writing/readme-style.md` | Precision-first technical writing and structural integrity conventions for README.md files |
@@ -166,14 +164,6 @@ Rule directories may contain `references/` subdirectories for on-demand suppleme
 
 This supports progressive disclosure for rules: core constraints live in the rule file (loaded automatically by relevance), while detailed protocols, examples, and extended reference material live in `references/` (loaded only when the rule or a skill directs Claude to read them).
 
-```
-rules/swe/
-├── software-agents-usage.md              # Always-loaded rule (core conventions)
-├── references/
-│   └── agent-coordination-protocols.md   # On-demand detail (loaded when referenced)
-└── ...
-```
-
 The installer (`install.sh`) symlinks rule files but skips `references/` directories -- they remain accessible via relative paths from the rule files that reference them.
 
 ### Naming Conventions
@@ -215,7 +205,7 @@ Two mechanisms, each serving a different purpose:
 ```
 rules/swe/agent-intermediate-documents.md    →  ~/.claude/rules/swe/agent-intermediate-documents.md
 rules/swe/coding-style.md                   →  ~/.claude/rules/swe/coding-style.md
-rules/swe/software-agents-usage.md          →  ~/.claude/rules/swe/software-agents-usage.md
+rules/swe/swe-agent-coordination-protocol.md  →  ~/.claude/rules/swe/swe-agent-coordination-protocol.md
 rules/swe/vcs/git-commit-hygiene.md         →  ~/.claude/rules/swe/vcs/git-commit-hygiene.md
 rules/swe/vcs/git-commit-message-format.md  →  ~/.claude/rules/swe/vcs/git-commit-message-format.md
 rules/writing/readme-style.md               →  ~/.claude/rules/writing/readme-style.md

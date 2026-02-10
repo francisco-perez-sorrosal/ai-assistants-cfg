@@ -26,7 +26,7 @@ Agent documents live in two locations based on their lifecycle:
 - Flat structure — all documents at directory root, no per-agent subdirectories
 - Created on first use — agents create `.ai-work/` when writing their first document
 
-Scope: **exclusively for agent coordination pipeline documents** — the outputs defined in the [software agent usage](software-agents-usage.md) rule.
+Scope: **exclusively for agent coordination pipeline documents** — the outputs defined in the [SWE agent coordination protocol](swe-agent-coordination-protocol.md) rule.
 
 Not stored here:
 - Command scratch files or skill working files

@@ -127,10 +127,15 @@ Three tiers of context loading:
 2. **Instructions** (<5000 tokens recommended): Full `SKILL.md` body loaded on activation
 3. **Resources** (as needed): Referenced files loaded only when required
 
+**Why this works from plugins:** When Claude Code activates a skill, it injects the skill's **base path** (the absolute directory where the skill resides) alongside the SKILL.md content. This allows the LLM to resolve relative references like `[references/details.md](references/details.md)` to absolute paths — regardless of whether the skill lives in the project (`.claude/skills/`), personal directory (`~/.claude/skills/`), or plugin cache (`~/.claude/plugins/cache/...`).
+
+This is unique to skills. Rules and agents do NOT receive a base path, so they cannot use satellite files for progressive disclosure. See `README_DEV.md` for the full cross-artifact comparison.
+
 ### Storage Locations
 
 - **Personal**: `~/.claude/skills/` (user-specific)
 - **Project**: `.claude/skills/` (shared via git)
+- **Plugin**: `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/skills/` (installed via plugin system)
 
 ### File References
 

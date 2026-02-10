@@ -187,7 +187,7 @@ Step 3: Make sure to use snake_case
 - **Include examples** — show correct and incorrect patterns when clarity demands it
 - **Explain the _why_** — when a constraint isn't self-evident, briefly state the rationale
 - **Verbose is fine** — rules load only when relevant, so depth is welcome
-- **Token budget awareness** — rules are always-loaded, adding to the baseline token cost of every conversation and agent spawn. The ecosystem target is 8,500 tokens for all always-loaded content. Prefer skills for procedural workflows and reference files for detailed protocols
+- **Token budget awareness** — rules are always-loaded, adding to the baseline token cost of every conversation and agent spawn. The ecosystem target is 8,500 tokens for all always-loaded content. If a rule is too large, compress it or move procedural content to a skill — but never split into main + reference files (see Self-Containment Constraint below)
 
 ### Customization Sections
 
@@ -256,6 +256,18 @@ Ask: **"Is this something Claude should _know_, or something Claude should _do_?
 7. **Verify** — use `/memory` to confirm the rule loads in the expected context
 8. **Iterate** — refine based on Claude's behavior; adjust scope, naming, or content
 
+## Self-Containment Constraint
+
+**Rules must be fully self-contained.** Each rule file must carry all its content — never split a rule into a main file plus a reference/satellite file.
+
+**Why:** Only `.md` files directly in `~/.claude/rules/` (and its subdirectories) are loaded by Claude. If a rule references a companion file (e.g., `references/details.md`) that isn't installed alongside it, that content is unreachable in every project except the source repository. The reference becomes a dangling link and the rule loses semantics.
+
+**What this means in practice:**
+- Do not create `references/` subdirectories under rules
+- Do not use "see `<path>` for details" patterns that point to non-rule files
+- If a rule is too large, compress it (tables over prose, remove redundancy) or split it into two independent rules by domain — never into main + supplement
+- Skills can use reference files (they control their own loading); rules cannot
+
 ## Anti-Patterns
 
 | Anti-Pattern | Problem | Fix |
@@ -264,6 +276,7 @@ Ask: **"Is this something Claude should _know_, or something Claude should _do_?
 | Procedural content (step-by-step) | Rules are knowledge, not workflows | Move to a Skill or Command |
 | Overly broad rules (everything in one file) | Loads unnecessary context | Split by domain |
 | Over-splitting (one constraint per file) | File proliferation, hard to maintain | Group related constraints |
+| Splitting into main + reference file | Reference file won't be installed; content lost in other projects | Keep rules self-contained |
 | "Always do X" directives | Belongs in always-loaded context | Move to `CLAUDE.md` |
 | Duplicating CLAUDE.md content | Redundant, may conflict | Keep in one place only |
 | Referencing rule filenames in commands | Filenames aren't invocable | Use semantic hints instead |

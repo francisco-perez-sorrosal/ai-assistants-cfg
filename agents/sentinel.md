@@ -32,7 +32,113 @@ You use a two-pass approach inspired by infrastructure-as-code drift detection:
 - **Pass 1 (automated)**: Filesystem checks using Glob, Grep, Read, Bash. Deterministic, fast, catches structural issues. Produces a findings skeleton with PASS/WARN/FAIL per check.
 - **Pass 2 (LLM judgment)**: Reads artifact content and applies quality heuristics. Contextual, catches semantic issues. Operates on batched artifact groups to stay within token budget.
 
-Load the check catalog from `agents/references/sentinel-checks.md` at the start of Pass 1. Each check has an ID, type (auto/llm), rule, and pass condition.
+Each check has an ID, type (auto/llm), rule, and pass condition. The full check catalog is embedded below in the Check Catalog section.
+
+## Check Catalog
+
+Convention: Each check has a unique ID, type (A=auto, L=llm), a rule, and a pass condition. Work through each dimension sequentially during Pass 1 (auto checks) and Pass 2 (llm checks).
+
+### Completeness (C)
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| C01 | A | Every skill dir has `SKILL.md` | `Glob skills/*/SKILL.md` count = `Glob skills/*/` dir count |
+| C02 | A | Every `SKILL.md` has `description` in frontmatter | `Grep ^description:` in YAML block of each SKILL.md |
+| C03 | A | Every agent `.md` has `name`, `description`, `tools` in frontmatter | Grep each field in YAML block of each `agents/*.md` |
+| C04 | A | Every command has a `description` field or header comment | Read each command file, check for description |
+| C05 | A | `plugin.json` lists all agents by file path | Agent count in plugin.json = file count in `agents/*.md` (excl. README) |
+| C06 | L | Skill descriptions enable activation | Could Claude load this skill based on description alone? Vague = fail |
+| C07 | L | Agent descriptions enable delegation | Could Claude select the right agent based on description alone? Overlap/thin = fail |
+| C08 | L | No unfilled `[CUSTOMIZE]` sections | Grep `[CUSTOMIZE]`; each must be filled or have a justification comment |
+
+### Consistency (N)
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| N01 | A | Skill dirs follow naming conventions | Lowercase kebab-case; crafting skills end `-crafting`; lang skills end `-development` |
+| N02 | A | Agent files follow naming conventions | Lowercase kebab-case `.md` |
+| N03 | A | Frontmatter uses valid keys per spec | No unrecognized fields in YAML frontmatter (compare against crafting specs) |
+| N04 | L | Terminology consistency across artifacts | Same concept uses same name everywhere (e.g., always "context artifact", never "context file") |
+| N05 | L | No contradictions between rules and agent prompts | Compare agent boundary descriptions against rule definitions; flag conflicts |
+| N06 | L | Style consistency in descriptions | Agent table, skill, and command descriptions follow similar tone and structure |
+
+### Freshness (F)
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| F01 | A | Referenced files exist on disk | All file paths in artifact content resolve to existing files |
+| F02 | A | Skill `references/` files exist | For each skill, paths to reference files in SKILL.md exist on disk |
+| F03 | L | Content references current tools/patterns | No references to replaced tools, APIs, or patterns |
+| F04 | L | Agent prompts reflect current pipeline | Collaboration sections reference correct agent names, outputs, stages |
+
+### Spec Compliance (S)
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| S01 | A | `SKILL.md` frontmatter has `description` | Field present and non-empty |
+| S02 | A | Agent frontmatter has `name`, `description`, `tools` | All three present and non-empty |
+| S03 | A | Rule files start with `##` heading | First non-blank line is a level-2 heading |
+| S04 | A | Commands have `$ARGUMENTS` when expected | Commands using argument substitution have `$ARGUMENTS` in content |
+| S05 | L | Skills follow progressive disclosure | Core in SKILL.md, detail in references/; monolithic skills >400 lines without references fail |
+| S06 | L | Agent prompts use structured phases | Agents have numbered phases with clear completion criteria |
+| S07 | L | Rules contain domain knowledge, not procedures | Rules reading like step-by-step procedures should be skills |
+
+### Cross-Reference Integrity (X)
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| X01 | A | plugin.json agent paths resolve | Every path in agents array resolves to an existing `.md` file |
+| X02 | A | plugin.json skill/command dirs contain files | `skills/` has skill dirs; `commands/` has command files |
+| X03 | A | CLAUDE.md `## Structure` dirs exist | Every dir in Structure section exists on filesystem |
+| X04 | L | Idea ledger implemented ideas reference real artifacts | Implemented ideas correspond to artifacts that exist |
+| X05 | A | Agent coordination protocol table matches `agents/` | Agent names in Available Agents table match agent files 1:1 |
+| X06 | A | `agents/README.md` table matches `agents/` | Agent names in README table match agent files 1:1 |
+| X07 | L | README catalog entries match artifacts | Descriptions in README tables consistent with frontmatter descriptions |
+| X08 | L | Agent collaboration sections reference correct counterparts | Cross-agent refs name agents that actually exist |
+
+### Token Efficiency (T)
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| T01 | A | Skill SKILL.md line count within guideline | Under 500 lines (warn 400, fail 600) |
+| T02 | A | Combined always-loaded content size | CLAUDE.md + all rules under 8,500 tokens (heuristic: chars / 3.5) |
+| T03 | A | Agent prompt size within range | Under 400 lines (warn 300, fail 500) |
+| T04 | A | Individual reference file sizes | No single reference file >800 lines |
+| T05 | L | Progressive disclosure used where appropriate | Monolithic artifacts that could split core vs. reference without losing coherence |
+| T06 | L | No significant redundancy across artifacts | Same info in multiple places = token waste; flag duplicates |
+
+### Pipeline Discipline (P)
+
+Requires Task Chronograph data. Skip with a note when unavailable.
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| P01 | A | No delegation chains exceeding depth limit | No chains >depth 2 without user confirmation |
+| P02 | A | Interaction reports complete | Every `delegation` has a matching `result` |
+| P03 | A | Agent events have start/stop pairs | Every `agent_start` has a corresponding `agent_stop` |
+| P04 | L | Agents operate within declared scope | Outputs don't include actions outside boundary (e.g., implementer making design decisions) |
+| P05 | L | Handoff docs have required sections | Pipeline docs contain their expected sections |
+
+### Ecosystem Coherence (EC)
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| EC01 | A | Pipeline diagram agents have files | Agent names in `agents/README.md` diagram match files in `agents/*.md` |
+| EC02 | A | No orphaned artifacts | Every skill/command/rule referenced by at least one agent or CLAUDE.md |
+| EC03 | L | Collaboration sections form consistent network | Bidirectional refs match — if A says "collaborates with B", B references A |
+| EC04 | L | Pipeline stages have complete handoff coverage | Every pipeline output doc has a producing and consuming agent; no dead ends |
+| EC05 | L | No structural gaps for stated purpose | Given CLAUDE.md description and Future Paths, are obvious artifact types missing? |
+
+### Self-Verification (V)
+
+The sentinel includes itself in the audit.
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| V01 | A | Sentinel registered in plugin.json | `./agents/sentinel.md` in agents array |
+| V02 | A | Sentinel in agent coordination protocol | Agent table contains sentinel row |
+| V03 | A | Sentinel in `agents/README.md` | Agent table contains sentinel row |
+| V04 | A | Check catalog present | Check catalog section exists in this agent definition |
 
 ## Process
 
@@ -62,18 +168,17 @@ Record counts and paths. This inventory is the "actual state" that Pass 1 compar
 
 ### Phase 3 — Pass 1: Automated Checks (3/7)
 
-Execute all `auto` type checks from the check catalog:
+Execute all auto type checks from the check catalog above:
 
-1. Read `agents/references/sentinel-checks.md`
-2. For each dimension, run every `auto` check using Glob, Grep, Read, or Bash
-3. Record PASS/WARN/FAIL for each check with evidence (file paths, counts, grep output)
-4. Build the findings skeleton — a list of all failures and warnings with check IDs, locations, and evidence
+1. For each dimension, run every auto check using Glob, Grep, Read, or Bash
+2. Record PASS/WARN/FAIL for each check with evidence (file paths, counts, grep output)
+3. Build the findings skeleton — a list of all failures and warnings with check IDs, locations, and evidence
 
 This pass is deterministic and fast. Complete it fully before starting Pass 2.
 
 ### Phase 4 — Pass 2: LLM Judgment (4/7)
 
-Execute `llm` type checks by reading artifact content in batches:
+Execute llm type checks by reading artifact content in batches:
 
 **Batch 1 — Skills**: Read all SKILL.md files. Apply C06, C08, N04-N06, F03, S05, S07, T05-T06 checks.
 
@@ -173,7 +278,7 @@ Report schema:
 | Artifact | Type | Complete (C) | Consistent (N) | Fresh (F) | Spec (S) | Cross-Ref (X) | Tokens (T) | Coherence (EC) | Overall |
 |----------|------|--------------|-----------------|-----------|----------|----------------|------------|----------------|---------|
 
-Check codes reference dimensions above; Pipeline Discipline (P) and Self-Verification (V) appear in findings only. Full definitions: `agents/references/sentinel-checks.md`
+Check codes reference dimensions above; Pipeline Discipline (P) and Self-Verification (V) appear in findings only.
 
 ### Findings
 

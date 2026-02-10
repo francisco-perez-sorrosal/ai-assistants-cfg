@@ -39,7 +39,7 @@ rules/                               # Rules (installed to ~/.claude/rules/)
 ├── swe/
 │   ├── agent-intermediate-documents.md
 │   ├── coding-style.md
-│   ├── software-agents-usage.md
+│   ├── swe-agent-coordination-protocol.md
 │   └── vcs/
 │       ├── git-commit-message-format.md
 │       └── git-commit-hygiene.md
@@ -75,6 +75,25 @@ install.sh                           # Multi-assistant installer
 - **Symlink for personal config**: `install.sh` symlinks assistant-specific config to the expected locations
 - **Progressive disclosure**: Skills load metadata at startup, full content on activation, reference files on demand
 - **CLAUDE.md stays lean**: Skills, commands, agents, and rules are auto-discovered by Claude via filesystem scanning -- listing them in `CLAUDE.md` wastes always-loaded tokens and creates a sync burden. `README.md` and per-directory READMEs serve as the human-facing catalogs
+
+## Progressive Disclosure and Satellite Files
+
+Skills, agents, and rules handle satellite/reference files differently when distributed via the plugin system. This affects whether you can split content across multiple files.
+
+| Artifact | Base Path Injected? | Satellite Files Work Cross-Project? | Strategy |
+|----------|--------------------|------------------------------------|----------|
+| **Skills** | Yes — on activation | Yes — LLM combines base path + relative refs | Use `references/` subdirectories freely |
+| **Agents** | No — CWD is project root | No — `Read` resolves to project CWD, not plugin cache | Keep agent definitions self-contained |
+| **Rules** | No — content injected inline | No — `install.sh` skips `references/` dirs; files never reach `~/.claude/rules/` | Keep rules self-contained |
+
+**Skills** are the only artifact type that supports progressive disclosure across projects. When Claude Code activates a skill, it provides the skill's absolute directory path (the "base path"), allowing the LLM to resolve relative references to satellite files regardless of where the skill is installed.
+
+**Agents and rules** must be fully self-contained. Never split them into a main file plus reference/satellite files — the references will be unreachable in projects other than this source repository. If content is too large, compress it (tables over prose, remove redundancy) or split into independent files by domain.
+
+**Sources:**
+- [Extend Claude with skills](https://code.claude.com/docs/en/skills) — official docs; see "Add supporting files" section for the satellite file pattern and directory layout
+- [Inside Claude Code Skills](https://mikhail.io/2025/10/claude-code-skills/) — Mikhail Shilkov's reverse-engineering showing base path injection on skill activation
+- [Claude Code memory](https://code.claude.com/docs/en/memory#rules) — official docs; rules are loaded inline with no path context
 
 ## How Rules Interact with Commands
 

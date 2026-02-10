@@ -36,7 +36,7 @@ Rules live in `rules/` (this repo) and are installed to `~/.claude/rules/` via `
 | Rule | Purpose |
 |------|---------|
 | `swe/coding-style.md` | Language-independent structural and design conventions |
-| `swe/software-agents-usage.md` | When and how to use the available software agents |
+| `swe/swe-agent-coordination-protocol.md` | Agent coordination, pipeline execution, parallel protocols, boundary discipline |
 | `swe/agent-intermediate-documents.md` | Placement and lifecycle of agent pipeline documents |
 | `swe/vcs/git-commit-hygiene.md` | Git commit safety and hygiene (one logical change, no secrets) |
 | `swe/vcs/git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
