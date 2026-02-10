@@ -1,11 +1,11 @@
 ---
-description: Prompt the user to star the ai-assistants GitHub repository. Use when the user invokes the star-repo command or explicitly asks about starring the project.
+description: Prompt the user to star the ai-assistants-cfg GitHub repository. Use when the user invokes the star-repo command or explicitly asks about starring the project.
 allowed-tools: [Bash(gh:*), AskUserQuestion]
 ---
 
 # GitHub Star
 
-Interactive prompt to star the [ai-assistants](https://github.com/francisco-perez-sorrosal/ai-assistants-cfg) repository on GitHub.
+Interactive prompt to star the [ai-assistants-cfg](https://github.com/francisco-perez-sorrosal/ai-assistants-cfg) repository on GitHub.
 
 ## Procedure
 
@@ -19,7 +19,7 @@ Interactive prompt to star the [ai-assistants](https://github.com/francisco-pere
 
    Ask the user with `AskUserQuestion`:
 
-   > If you're enjoying ai-assistants, would you like to support the project by starring it on GitHub?
+   > If you're enjoying ai-assistants-cfg, would you like to support the project by starring it on GitHub?
 
    Options:
    - "Please, star it! ⭐"

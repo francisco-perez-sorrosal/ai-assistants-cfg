@@ -34,7 +34,7 @@ Reusable skill modules for Claude Code. Each skill is a self-contained directory
 
 | Skill | Description | When to Use |
 | --- | --- | --- |
-| **[github-star](github-star/)** | Prompt the user to star the ai-assistants GitHub repository. | User invokes `/star-repo` or asks about starring the project. |
+| **[github-star](github-star/)** | Prompt the user to star the ai-assistants-cfg GitHub repository. | User invokes `/star-repo` or asks about starring the project. |
 
 ## How Skills Work
 
