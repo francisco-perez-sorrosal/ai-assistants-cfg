@@ -33,7 +33,7 @@ Early stage. Currently targeting **Claude Code** and **Claude Desktop** only.
 - **Never modify `~/.claude/plugins/cache/`** — it contains installed copies that get overwritten on reinstall; always edit source files in this repo instead
 - **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 8,500 tokens (~29,750 chars). Before adding a new rule, verify the budget. Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge
 - See `README.md` for user-facing documentation, `README_DEV.md` for contributor conventions, and `skills/README.md` for the skill catalog
-- **Session memory**: At the start of each session, read `.ai-state/memory.json` to load context about the user, project conventions, and past learnings. If `memories.assistant.name` is missing, pick a random name for yourself and store it immediately. Use the `memory` skill proactively to store discoveries during the session. Be curious about the user -- learn their interests, background, and working style over time
+- **Session memory**: At the start of each session, call the `session_start` memory MCP tool to load context about the user, project conventions, and past learnings. If `memories.assistant.name` is missing, pick a random name and call `remember` to store it immediately. Use the memory MCP tools proactively to store discoveries during the session. Be curious about the user -- learn their interests, background, and working style over time
 
 ## Design Intent
 

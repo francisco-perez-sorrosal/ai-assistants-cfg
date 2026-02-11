@@ -29,6 +29,20 @@
         "-m",
         "task_chronograph_mcp"
       ]
+    },
+    "memory": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--project",
+        "${CLAUDE_PLUGIN_ROOT}/memory-mcp",
+        "python",
+        "-m",
+        "memory_mcp"
+      ],
+      "env": {
+        "MEMORY_FILE": ".ai-state/memory.json"
+      }
     }
   },
   "skills": ["./skills/"],

@@ -1,9 +1,8 @@
 ---
 description: Manage persistent memory (user prefs, assistant learnings, project conventions)
-allowed-tools: [Read, Write, Edit, Bash, Glob]
-argument-hint: "init|remember|forget|recall|status|export|about-me|about-us|search|reflect [args]"
+argument-hint: "session_start | remember | recall | search | forget | status | reflect | about_me | about_us | export_memories"
 ---
 
-Manage the persistent memory store using the **memory** skill. Follow its procedures for the requested subcommand.
+Manage the persistent memory store using the **memory** MCP tools. Activate the **memory** skill for behavioral guidance, then use the appropriate MCP tool for the requested operation.
 
-Pass `$ARGUMENTS` as the subcommand and its arguments.
+Pass `$ARGUMENTS` as the tool name and its arguments.
