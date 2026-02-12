@@ -26,18 +26,27 @@ Trigger explicitly by asking about "agent skills," "creating a skill," or refere
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Core reference: spec fields, naming, structure, progressive disclosure, content guidelines, choosing content type, development workflow, cross-agent portability, anti-patterns, checklist |
+| `SKILL.md` | Core reference: creation process, anatomy, progressive disclosure, principles, portability, checklist |
 | `README.md` | This file — overview and usage guide |
-| `references/cross-agent-portability.md` | Detailed portability guide: adopter list, discovery paths per tool, portable vs. tool-specific elements, skills vs. project instruction files |
+| `references/cross-agent-portability.md` | Adopter list, discovery paths, portable vs. tool-specific |
+| `references/artifact-naming.md` | Naming conventions for skills, agents, commands, rules |
+| `references/content-and-development.md` | Content type selection, feedback loops, evaluation-driven development |
+| `references/output-patterns.md` | Template and examples patterns for skill output |
+| `references/workflows.md` | Sequential and conditional workflow patterns |
+| `references/plugin-and-troubleshooting.md` | Plugin mechanics, anti-patterns, troubleshooting |
+| `scripts/init_skill.py` | Scaffold a new skill directory from template |
+| `scripts/package_skill.py` | Create a distributable .skill archive (validates first) |
+| `scripts/validate.py` | Quick validation of skill structure and frontmatter |
 
 ## Quick Start
 
 1. **Load the skill**: reference `skill-crafting` when starting skill authoring work
-2. **Create the directory**: `skill-name/SKILL.md` with required `name` and `description` frontmatter
-3. **Write instructions**: concise body content — only what the agent doesn't already know
-4. **Add supporting files** (optional): `scripts/`, `references/`, `assets/` as needed
-5. **Test**: use the author-tester workflow (one instance writes, another tests on real tasks)
-6. **Validate**: run through the deployment checklist in `SKILL.md`
+2. **Understand the domain**: describe the skill's use cases with concrete examples
+3. **Plan contents**: identify what scripts, references, and assets to include
+4. **Create the skill**: `skill-name/SKILL.md` with `name` and `description` frontmatter
+5. **Write content**: instructions, then bundle resources as needed
+6. **Validate**: run `scripts/validate.py` and the deployment checklist
+7. **Iterate**: test with real tasks using the author-tester workflow
 
 ## Related Skills
 
@@ -66,8 +75,8 @@ Trigger explicitly by asking about "agent skills," "creating a skill," or refere
 **Validate a skill you've built:**
 
 ```bash
-# Use the skills-ref CLI if available
-skills-ref validate ./my-skill
+# Run the validation script on a skill directory
+python skills/skill-crafting/scripts/validate.py ./my-skill
 
 # Or manually check against the checklist in SKILL.md
 ```

@@ -1,30 +1,41 @@
 ---
-description: Creating, updating, and optimizing Agent Skills for Claude Code, Cursor, and other compatible agents. Covers activation patterns, content structure, progressive disclosure, and development workflows. Use when creating new skills, updating or modernizing existing skills, converting memory files to skills, debugging skill activation, or understanding skill architecture and best practices.
-allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, WebFetch(domain:agentskills.io), WebFetch(domain:platform.claude.com)]
+name: skill-crafting
+description: Creating, updating, and optimizing Agent Skills for Claude Code,
+  Cursor, and other compatible agents. Covers the skill creation process, anatomy,
+  progressive disclosure, and development workflows. Use when creating new skills,
+  updating or modernizing existing skills, converting memory files to skills,
+  debugging skill activation, or understanding skill architecture and best practices.
+allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
-# Agent Skills Development
+# Skill Creator
 
-Reference for developing effective Agent Skills. Official specification at [agentskills.io](https://agentskills.io). Authoring guidance at [Anthropic's best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices).
+Guide for creating effective Agent Skills. Official specification at [agentskills.io](https://agentskills.io). Authoring guidance at [Anthropic's best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices).
 
 **Satellite files** (loaded on-demand):
 
 - [references/cross-agent-portability.md](references/cross-agent-portability.md) -- discovery paths per tool, portability guidance
-- [references/artifact-naming.md](references/artifact-naming.md) -- naming conventions for all artifact types (skills, agents, commands, rules)
-- [references/content-and-development.md](references/content-and-development.md) -- content type selection, feedback loops, evaluation-driven development, executable code practices
-- [references/patterns-and-troubleshooting.md](references/patterns-and-troubleshooting.md) -- skill type patterns (read-only, script-based, template-based), anti-patterns, troubleshooting
+- [references/artifact-naming.md](references/artifact-naming.md) -- naming conventions for all artifact types
+- [references/content-and-development.md](references/content-and-development.md) -- content type selection, feedback loops, evaluation-driven development
+- [references/output-patterns.md](references/output-patterns.md) -- template and examples patterns for skill output
+- [references/workflows.md](references/workflows.md) -- sequential and conditional workflow patterns
+- [references/plugin-and-troubleshooting.md](references/plugin-and-troubleshooting.md) -- plugin mechanics, anti-patterns, troubleshooting
+
+## About Skills
+
+Skills are modular, self-contained packages that extend agent capabilities with specialized workflows, tool integrations, domain expertise, and bundled resources. Each skill is a directory containing a `SKILL.md` file with instructions and optional scripts, references, and assets. Skills activate on-demand when the agent determines they are relevant, keeping the base context lean.
 
 ## Core Principles
 
-**The context window is a public good.** Your skill shares it with system prompts, conversation history, other skills' metadata, and the user's request. Every token must earn its place.
+**The context window is a public good.** A skill shares the context window with system prompts, conversation history, other skills' metadata, and the user's request. Every token must earn its place.
 
-**The agent is already smart.** Only include information the model doesn't possess. Challenge each piece: "Does the agent really need this?" If in doubt, leave it out.
+**The agent is already smart.** Only include information the model does not possess. Challenge each piece: "Does the agent really need this?" If in doubt, leave it out.
 
-**But not all agents are equally capable.** Skills may be consumed by agents with varying model capabilities. Avoid explaining universal knowledge (basic syntax, common idioms), but do include enough context — concrete examples, complete workflows, and explicit decision criteria — so your specific conventions can be followed correctly by less capable agents too. Examples and workflows are robust across the capability spectrum: they guide weaker agents without burdening stronger ones.
+**But not all agents are equally capable.** Skills may be consumed by agents with varying model capabilities. Avoid explaining universal knowledge (basic syntax, common idioms), but include enough context -- concrete examples, complete workflows, and explicit decision criteria -- so specific conventions can be followed correctly by less capable agents too. Examples and workflows are robust across the capability spectrum: they guide weaker agents without burdening stronger ones.
 
-**Conciseness**: Aim to keep `SKILL.md` concise (500 lines is a good guideline, not a hard limit). Use progressive disclosure — split detailed content into separate files loaded on-demand. Remember that once your skill is activated, its tokens compete for attention with other skills' metadata, the system prompt, and conversation history. Every instruction you add dilutes the weight of every other instruction — in your skill and in others.
+**Conciseness.** Aim to keep SKILL.md concise (500 lines is a good guideline, not a hard limit). Use progressive disclosure -- split detailed content into separate files loaded on-demand. Every instruction added dilutes the weight of every other instruction, in the skill and in others.
 
-**Appropriate Degrees of Freedom**: Match specificity to the task's fragility:
+**Appropriate Degrees of Freedom.** Match specificity to the task's fragility:
 
 - **High freedom** (text instructions): Multiple valid approaches, context-dependent decisions
 - **Medium freedom** (pseudocode/parameterized scripts): Preferred pattern exists, some variation acceptable
@@ -32,41 +43,37 @@ Reference for developing effective Agent Skills. Official specification at [agen
 
 Think of it as a path: an open field (many valid routes, give general direction) vs. a narrow bridge over a cliff (one safe way, provide exact guardrails).
 
-## Specification
+## Anatomy of a Skill
 
-### Frontmatter (required)
-
-```yaml
----
-description: What the skill does and when to use it. Include specific trigger terms.
----
+```text
+skill-name/
+├── SKILL.md              # Required: instructions + metadata
+├── scripts/              # Optional: executable utilities
+├── references/           # Optional: detailed docs loaded on-demand
+└── assets/               # Optional: templates, schemas, data files
 ```
 
-Optional fields:
+### SKILL.md
 
-```yaml
----
-name: pdf-processing
-description: Extract text and tables from PDF files, fill forms, merge documents.
-license: Apache-2.0
-compatibility: Requires git, docker, and internet access
-metadata:
-  author: example-org
-  version: "1.0"
-allowed-tools: [Read, Write, Bash]
----
-```
+Every SKILL.md consists of two parts:
+
+- **Frontmatter** (YAML): Required metadata. The `description` field is the PRIMARY triggering mechanism -- it is what the agent reads to decide whether to activate the skill. Include ALL "when to use" information in the description, NOT in the body. The body is only loaded after triggering, so "When to Use This Skill" sections in the body are not helpful.
+- **Body** (Markdown): Instructions loaded AFTER the skill triggers.
+
+Write the body in imperative/infinitive form ("Extract text", "Run the script", not "Extracting text" or "You should extract text").
+
+#### Frontmatter Fields
 
 | Field           | Required | Constraints                                                              |
 | --------------- | -------- | ------------------------------------------------------------------------ |
-| `name`          | No       | 1-64 chars. Lowercase alphanumeric + hyphens. Claude Code infers from directory name; omit to avoid plugin install conflicts. |
+| `name`          | Yes      | 1-64 chars. Lowercase alphanumeric + hyphens. Must match directory name. No consecutive hyphens, no leading/trailing hyphens. |
 | `description`   | Yes      | 1-1024 chars. What it does + when to use it + trigger terms.             |
 | `license`       | No       | License name or reference to bundled file.                               |
 | `compatibility` | No       | Max 500 chars. Environment requirements.                                 |
 | `metadata`      | No       | Arbitrary key-value pairs for additional info.                           |
 | `allowed-tools` | No       | Pre-approved tools the skill may use. (Experimental)                     |
 
-### Directory Name Constraints
+#### Directory Name Constraints
 
 The directory name is the skill's identity (Claude Code infers the name from it):
 
@@ -76,172 +83,213 @@ The directory name is the skill's identity (Claude Code infers the name from it)
 - Prefer gerund form (`processing-pdfs`) or noun phrases (`pdf-processing`)
 - Avoid vague names: `helper`, `utils`, `tools`
 
-### Description Best Practices
+--> See [references/artifact-naming.md](references/artifact-naming.md) for naming conventions across all artifact types.
 
-Write in third person — the description is injected into the system prompt.
+#### Description Best Practices
 
-- "Extracts text from PDF files, fills forms, merges documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction."
-- Not: "I can help you process PDFs..."
-- Not: "You can use this to process PDFs..."
-- Not: "Helps with documents."
+Write in third person -- the description is injected into the system prompt. Include what the skill does, specific trigger terms, and key use cases.
 
-Include: what the skill does, specific trigger terms, key use cases.
+### Bundled Resources
 
-## Skill Structure
+- **`scripts/`** -- Executable code, run via Bash (not loaded into context)
+- **`references/`** -- Documentation loaded on-demand (one level deep, TOC for 100+ lines)
+- **`assets/`** -- Files used in output (templates, images, boilerplate), not loaded into context
 
-### Directory Layout
+Run `scripts/init_skill.py` to scaffold a new skill with detailed guidance and examples for each resource type.
 
-```
-skill-name/
-├── SKILL.md              # Required: instructions + metadata
-├── README.md             # Recommended: overview, usage guide, skill contents
-├── scripts/              # Optional: executable utilities
-├── references/           # Optional: detailed docs loaded on-demand
-└── assets/               # Optional: templates, schemas, data files
-```
+### What to Not Include
 
-### README Section Order
+A skill should only contain essential files. Do NOT create:
 
-READMEs are human-facing documentation (not loaded into Claude's context). Use this section order:
+- INSTALLATION_GUIDE.md, QUICK_REFERENCE.md, CHANGELOG.md
+- Setup/testing procedures, user-facing documentation
+- Files about the process that went into creating the skill
 
-1. `## When to Use` — bullet list of scenarios (required)
-2. `## Activation` — how the skill gets triggered (required)
-3. `## Skill Contents` — table of files in the skill directory (required)
-4. `## Quick Start` — minimal usage example (optional)
-5. `## Testing` — how to verify the skill works (optional)
-6. `## Related Skills` — cross-references to other skills (optional)
-
-Meta-crafting skills (those governing an artifact type) may add an artifact catalog section after Skill Contents.
-
-### SKILL.md Section Ordering
-
-No prescribed section order — structure should follow the skill's content and domain. A python skill and a refactoring skill will naturally have different sections. Keep related concepts grouped and use progressive disclosure (satellite files) for depth.
-
-Satellite files can live at the skill root (e.g., `REFERENCE.md`, `pixi.md`) or inside subdirectories (e.g., `references/patterns.md`). Both conventions are valid. A common guideline: use root-level files when there are only one or two satellites; use subdirectories when there are three or more to keep the directory tidy.
-
-### Progressive Disclosure
-
-Three tiers of context loading:
-
-1. **Metadata** (~100 tokens): `name` + `description` loaded at startup for all skills
-2. **Instructions** (<5000 tokens recommended): Full `SKILL.md` body loaded on activation
-3. **Resources** (as needed): Referenced files loaded only when required
-
-**Why this works from plugins:** When Claude Code activates a skill, it injects the skill's **base path** (the absolute directory where the skill resides) alongside the SKILL.md content. This allows the LLM to resolve relative references like `[references/details.md](references/details.md)` to absolute paths — regardless of whether the skill lives in the project (`.claude/skills/`), personal directory (`~/.claude/skills/`), or plugin cache (`~/.claude/plugins/cache/...`).
-
-This is unique to skills. Rules and agents do NOT receive a base path, so they cannot use satellite files for progressive disclosure. See `README_DEV.md` for the full cross-artifact comparison.
-
-**How lazy loading works:** Markdown links in SKILL.md act as navigational cues. Claude sees the links, evaluates whether each reference is relevant to the current task, and issues `Read` tool calls only for the files it needs. Scripts in `scripts/` are executed (via `Bash`), not loaded into context — keeping token cost proportional to output, not source size.
-
-**Plugin permission caveat:** `allowed-tools: [Read]` grants tool permission but not filesystem path permission. For plugin skills, reference files live in `~/.claude/plugins/cache/...` which requires explicit path access. Without it, Claude prompts for permission on every reference file read, and path approvals break on plugin updates (new version = new cache path). Add a wildcard allowlist to avoid this:
-
-```json
-// In settings.json or settings.local.json
-{ "permissions": { "additionalDirectories": ["~/.claude/plugins/**"] } }
-```
-
-**Debugging tip:** Use `/context` to inspect what's currently loaded in the context window, including which skills and reference files have been read. Useful for verifying progressive disclosure is working as intended.
+**Note on README.md**: The Agent Skills standard does not include README.md in skills. In this plugin ecosystem, each skill has a README.md as a human-facing catalog entry (not loaded into the agent's context). This is a project convention, not part of the standard. README section order: When to Use, Activation, Skill Contents, Quick Start (optional), Testing (optional), Related Skills (optional).
 
 ### Storage Locations
 
 - **Personal**: `~/.claude/skills/` (user-specific)
 - **Project**: `.claude/skills/` (shared via git)
-- **Plugin**: `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/skills/` (installed via plugin system)
+- **Plugin**: `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/skills/` (installed via plugin)
 
-### File References
+## Progressive Disclosure
 
-Keep one level deep from `SKILL.md`. Avoid nested reference chains — agents may partially read deeply nested files.
+Three tiers of context loading:
 
-For reference files over 100 lines, include a table of contents at the top so the agent can see scope even with partial reads.
+1. **Metadata** (~100 tokens): `name` + `description` loaded at startup for all skills
+2. **Instructions** (<5000 tokens recommended): Full SKILL.md body loaded on activation
+3. **Resources** (as needed): Referenced files loaded only when required
 
-## Content Guidelines
+### Design Patterns
 
-**Consistent Terminology**: Choose one term per concept. Always "API endpoint," not mixing with "URL," "route," or "path."
+#### Pattern 1: High-level guide with references
 
-**Examples Over Description**: Provide input/output pairs showing desired style and detail level -- more effective than prose descriptions alone.
+```markdown
+# PDF Processing
 
-**Templates**: Match strictness to requirements (strict = "ALWAYS use this exact template", flexible = "sensible default, adapt as needed").
+## Quick start
+Extract text with pdfplumber: [code example]
 
-**Avoid Time-Sensitive Info**: Use "Old Patterns" sections with `<details>` for deprecated methods rather than date-based conditionals.
+## Advanced features
+- **Form filling**: See [FORMS.md](FORMS.md) for complete guide
+- **API reference**: See [REFERENCE.md](REFERENCE.md) for all methods
+```
 
-Choose content type by degree of freedom: **scripts** for deterministic operations, **worked examples** for pattern matching, **prose instructions** for judgment calls. Include validation loops for complex tasks.
+#### Pattern 2: Domain-specific organization
 
---> See [references/content-and-development.md](references/content-and-development.md) for the content type decision table, feedback loop patterns, and executable code best practices.
+Organize by domain when a skill covers multiple areas. The agent only reads the relevant domain file:
 
-## Development Workflow
+```text
+bigquery-skill/
+├── SKILL.md (overview and navigation)
+└── references/
+    ├── finance.md, sales.md, product.md, marketing.md
+```
 
-Start with a minimal SKILL.md addressing only observed gaps. Build evaluations (at least three test scenarios) BEFORE writing extensive documentation. Use the author-tester workflow: one instance writes, another tests in a fresh session.
+#### Pattern 3: Conditional details
 
---> See [references/content-and-development.md](references/content-and-development.md#evaluation-driven-development) for the full evaluation-driven development process, author-tester workflow, and navigation pattern observation guide.
+Show basic content, link to advanced:
 
-## Executable Code Best Practices
+```markdown
+## Creating documents
+Use docx-js. See [DOCX-JS.md](DOCX-JS.md).
 
-Handle errors explicitly (don't punt to the agent), justify all constants, distinguish execution vs. reference intent, list package dependencies, and use fully qualified MCP tool names (`ServerName:tool_name`).
+## Editing documents
+For simple edits, modify XML directly.
+**For tracked changes**: See [REDLINING.md](REDLINING.md)
+```
 
---> See [references/content-and-development.md](references/content-and-development.md#executable-code-best-practices) for detailed guidance and examples.
+--> See [references/plugin-and-troubleshooting.md](references/plugin-and-troubleshooting.md) for plugin-specific progressive disclosure mechanics (base path injection, permission caveats, debugging).
 
-## Common Patterns
+## Skill Creation Process
 
-Three main skill types: **read-only reference** (`allowed-tools: [Read, Grep, Glob]`), **script-based** (`[Read, Bash, Write]`), and **template-based** (`[Read, Write, Edit]`).
+Creating a skill involves these steps:
 
---> See [references/patterns-and-troubleshooting.md](references/patterns-and-troubleshooting.md) for pattern details and `allowed-tools` configurations.
+1. Understand the skill with concrete examples
+2. Plan reusable contents
+3. Create the skill directory and SKILL.md
+4. Write the skill content
+5. Validate
+6. Iterate based on real usage
 
-## Anti-Patterns
+Follow these steps in order, skipping only with clear reason.
 
---> See [references/patterns-and-troubleshooting.md](references/patterns-and-troubleshooting.md#anti-patterns) for the full list of anti-patterns to avoid (vague descriptions, over-explaining, deeply nested references, hard-referencing slash commands, etc.).
+### Step 1: Understand the Skill with Concrete Examples
 
-## Troubleshooting
+Skip only when usage patterns are already clearly understood.
 
---> See [references/patterns-and-troubleshooting.md](references/patterns-and-troubleshooting.md#troubleshooting) for solutions to skill activation, YAML parsing, and path issues.
+Understand concrete examples of how the skill will be used. Ask questions like:
 
-## Checklist
+- "What functionality should this skill support?"
+- "Can you give examples of how it would be used?"
+- "What would a user say that should trigger this skill?"
 
-Before deploying a skill:
+Avoid overwhelming -- start with the most important questions and follow up as needed. Conclude when there is a clear sense of the functionality to support.
 
-**Core Quality**
+### Step 2: Plan Reusable Contents
 
-- [ ] Third-person description with specific trigger terms (what + when)
-- [ ] If `name` is present, it matches directory name (lowercase, hyphens only)
-- [ ] `README.md` with overview, activation triggers, and skill contents table
-- [ ] `SKILL.md` is concise (aim for ~500 lines, use progressive disclosure for longer content)
-- [ ] One-level-deep file references
-- [ ] Consistent terminology throughout
-- [ ] Concrete examples provided
-- [ ] Progressive disclosure (metadata -> instructions -> resources)
-- [ ] No time-sensitive information
-- [ ] Clear workflows with steps and feedback loops
+Analyze each example by:
 
-**Code & Scripts** (if applicable)
+1. Considering how to execute it from scratch
+2. Identifying what scripts, references, and assets would help when executing repeatedly
 
-- [ ] Scripts handle errors explicitly (solve, don't punt)
-- [ ] No voodoo constants — all values justified
-- [ ] Required packages listed and verified
-- [ ] Forward slashes in all paths
-- [ ] Validation/verification for critical operations
+Example analyses:
 
-**Testing**
+- Rotating PDFs requires rewriting the same code each time --> `scripts/rotate_pdf.py`
+- Building webapps needs the same boilerplate --> `assets/hello-world/` template
+- Querying BigQuery requires rediscovering schemas --> `references/schema.md`
 
-- [ ] At least three evaluation scenarios created
-- [ ] Tested across target models
-- [ ] Real-world scenario validation
+### Step 3: Create the Skill
+
+Run the initializer to scaffold the skill directory:
+
+```bash
+python scripts/init_skill.py <skill-name> --path <output-directory>
+```
+
+This creates the directory with a SKILL.md template containing the required frontmatter (`name`, `description`) and a minimal body with TODO placeholders. Complete the TODOs and add resource directories (`scripts/`, `references/`, `assets/`) as needed.
+
+### Step 4: Write the Skill Content
+
+Start with the reusable resources identified in Step 2 (scripts, references, assets). Test added scripts by running them. Then update the SKILL.md body.
+
+Consult these guides for content patterns:
+
+- **Output format requirements**: See [references/output-patterns.md](references/output-patterns.md) for template and examples patterns
+- **Multi-step processes**: See [references/workflows.md](references/workflows.md) for sequential and conditional patterns
+- **Content type selection**: See [references/content-and-development.md](references/content-and-development.md) for choosing between scripts, worked examples, and prose instructions
+
+### Step 5: Validate and Package
+
+Package the skill into a distributable `.skill` file (validates automatically before packaging):
+
+```bash
+python scripts/package_skill.py <path/to/skill-folder> [output-directory]
+```
+
+To validate without packaging, run `scripts/validate.py` directly. Then check the deployment checklist at the end of this document.
+
+### Step 6: Iterate
+
+Use the skill on real tasks. Observe behavior -- where it struggles, succeeds, or makes unexpected choices.
+
+**Author-tester workflow**: One instance (author) writes/refines the skill. Another instance (tester) uses it on real tasks in a fresh session. Grade outcomes, not paths -- agents may find valid approaches you did not anticipate.
+
+**Observe navigation patterns**: Watch how the agent uses the skill. Unexpected file access order means structure is not intuitive. Missed references means links need to be more explicit. Overreliance on one file means content should be in SKILL.md.
+
+--> See [references/content-and-development.md](references/content-and-development.md#evaluation-driven-development) for the full evaluation-driven development process.
 
 ## Cross-Agent Portability
 
-The [Agent Skills standard](https://agentskills.io) is adopted by 25+ tools including Claude Code, Cursor, VS Code/Copilot, OpenAI Codex, Gemini CLI, Roo Code, Goose, Amp, and others. A well-authored SKILL.md works across all of them.
+The [Agent Skills standard](https://agentskills.io) is adopted by 25+ tools including Claude Code, Cursor, VS Code/Copilot, OpenAI Codex, Gemini CLI, Roo Code, Goose, Amp, and others.
 
-**What's portable**: The SKILL.md format (frontmatter + markdown body), directory structure (`scripts/`, `references/`, `assets/`), and progressive disclosure model.
+**What's portable**: SKILL.md format, directory structure, progressive disclosure model.
 
-**What's tool-specific**: `allowed-tools` names, MCP tool references (`ServerName:tool_name`), `compatibility` field values, and tool-specific frontmatter extensions (e.g., Claude Code's `context: fork`, `disable-model-invocation`).
+**What's tool-specific**: `allowed-tools` names, MCP tool references, `compatibility` values, Claude Code extensions (`context: fork`, `disable-model-invocation`).
 
-To maximize portability, keep the SKILL.md body in standard markdown and isolate tool-specific instructions behind clear headings. See [references/cross-agent-portability.md](references/cross-agent-portability.md) for discovery paths per tool, the relationship between skills and project instruction files (`AGENTS.md`, `CLAUDE.md`), and detailed guidance.
+Keep SKILL.md body in standard markdown. Isolate tool-specific instructions behind clear headings.
+
+--> See [references/cross-agent-portability.md](references/cross-agent-portability.md) for discovery paths per tool, portable vs. tool-specific breakdown, and skills vs. project instruction files.
 
 ## Resources
 
 - [Agent Skills Specification](https://agentskills.io/specification)
 - [Authoring Best Practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)
-- [Example Skills](https://github.com/anthropics/skills) — Anthropic's official reference implementations
+- [Example Skills](https://github.com/anthropics/skills) -- Anthropic's official reference implementations
 - [Validation Library (skills-ref)](https://github.com/agentskills/agentskills/tree/main/skills-ref)
-- [Awesome Agent Skills](https://github.com/VoltAgent/awesome-agent-skills) — Curated collection of 200+ skills from Anthropic, Google Labs, Vercel, Stripe, Cloudflare, and others
-- [Vercel Labs Skills](https://github.com/vercel-labs/agent-skills) — Reference implementations from Vercel
-- [Claude Skills Deep Dive](https://leehanchung.github.io/blogs/2025/10/26/claude-skills-deep-dive/) — Lee Han Chung's architectural analysis of how skills work
-- [Agent Skills Course](https://www.deeplearning.ai/short-courses/agent-skills-with-anthropic/) — DeepLearning.AI hands-on course on skill creation
+- [Awesome Agent Skills](https://github.com/VoltAgent/awesome-agent-skills) -- Curated collection of 200+ skills
+- [Vercel Labs Skills](https://github.com/vercel-labs/agent-skills) -- Reference implementations from Vercel
+- [Claude Skills Deep Dive](https://leehanchung.github.io/blogs/2025/10/26/claude-skills-deep-dive/) -- Architectural analysis
+- [Agent Skills Course](https://www.deeplearning.ai/short-courses/agent-skills-with-anthropic/) -- DeepLearning.AI hands-on course
+
+## Checklist
+
+Before deploying a skill:
+
+### Core Quality
+
+- [ ] `name` present, matches directory name (lowercase, hyphens only, 1-64 chars)
+- [ ] Third-person description with specific trigger terms (what + when), 1-1024 chars
+- [ ] SKILL.md is concise (aim for ~500 lines, use progressive disclosure for longer content)
+- [ ] One-level-deep file references
+- [ ] Consistent terminology throughout
+- [ ] Concrete examples provided
+- [ ] Progressive disclosure (metadata --> instructions --> resources)
+- [ ] No time-sensitive information
+- [ ] No duplication between SKILL.md and reference files
+- [ ] Writing uses imperative/infinitive form
+
+### Code and Scripts (if applicable)
+
+- [ ] Scripts handle errors explicitly (solve, do not punt)
+- [ ] No magic constants -- all values justified
+- [ ] Required packages listed and verified
+- [ ] Forward slashes in all paths
+- [ ] Validation/verification for critical operations
+
+### Testing
+
+- [ ] At least three evaluation scenarios created
+- [ ] Tested across target models
+- [ ] Real-world scenario validation

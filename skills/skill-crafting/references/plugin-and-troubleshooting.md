@@ -1,32 +1,33 @@
-# Common Patterns and Troubleshooting
+# Plugin Mechanics and Troubleshooting
 
-Reference patterns for different skill types, anti-patterns to avoid, and troubleshooting common issues. Reference material for the [Agent Skills Development](../SKILL.md) skill.
+Plugin-specific operational knowledge, anti-patterns to avoid, and troubleshooting common issues. Reference material for the [Skill Creator](../SKILL.md) skill.
 
-## Common Patterns
+## Plugin-Specific Progressive Disclosure
 
-### Read-Only Reference Skills
+### How It Works from Plugins
 
-```yaml
-allowed-tools: [Read, Grep, Glob]
+When Claude Code activates a skill, it injects the skill's **base path** (the absolute directory where the skill resides) alongside the SKILL.md content. This allows the LLM to resolve relative references like `[references/details.md](references/details.md)` to absolute paths — regardless of whether the skill lives in the project (`.claude/skills/`), personal directory (`~/.claude/skills/`), or plugin cache (`~/.claude/plugins/cache/...`).
+
+This is unique to skills. Rules and agents do NOT receive a base path, so they cannot use satellite files for progressive disclosure.
+
+### How Lazy Loading Works
+
+Markdown links in SKILL.md act as navigational cues. Claude sees the links, evaluates whether each reference is relevant to the current task, and issues `Read` tool calls only for the files it needs. Scripts in `scripts/` are executed (via `Bash`), not loaded into context — keeping token cost proportional to output, not source size.
+
+### Permission Caveat
+
+`allowed-tools: [Read]` in frontmatter grants tool permission but not filesystem path permission. For plugin skills, reference files live in `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/...` — a path outside the project directory. Without explicit path access, Claude prompts for permission on every reference file read, and path approvals break on plugin updates (new version = new cache path).
+
+Add a wildcard allowlist to avoid this:
+
+```json
+// In settings.json or settings.local.json
+{ "permissions": { "additionalDirectories": ["~/.claude/plugins/**"] } }
 ```
 
-For documentation and code analysis.
+### Debugging Tip
 
-### Script-Based Skills
-
-```yaml
-allowed-tools: [Read, Bash, Write]
-```
-
-Reference scripts with forward slashes: `scripts/helper.py`
-
-### Template-Based Skills
-
-```yaml
-allowed-tools: [Read, Write, Edit]
-```
-
-Store templates in `assets/` directory.
+Use `/context` to inspect what's currently loaded in the context window, including which skills and reference files have been read. Useful for verifying progressive disclosure is working as intended.
 
 ## Anti-Patterns
 

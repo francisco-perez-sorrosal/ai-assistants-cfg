@@ -1,6 +1,6 @@
 # Content Guidelines and Development Workflow
 
-Detailed guidance on choosing content types, building workflows with feedback loops, and developing skills through evaluation-driven iteration. Reference material for the [Agent Skills Development](../SKILL.md) skill.
+Detailed guidance on choosing content types, building workflows with feedback loops, and developing skills through evaluation-driven iteration. Reference material for the [Skill Creator](../SKILL.md) skill.
 
 ## Choosing Content Type
 
