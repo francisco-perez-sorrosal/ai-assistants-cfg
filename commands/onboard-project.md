@@ -30,7 +30,7 @@ If `.gitignore` does not exist, create it with the required entries. If it exist
 
 Check whether the i-am plugin is installed and accessible:
 
-- Run `claude plugin list 2>/dev/null` and look for lines containing `i-am`
+- Run `claude plugin list 2>/dev/null | grep -i "i-am" || echo "NOT_FOUND"`
 - If not found, warn: "The i-am plugin is not installed. Run install.sh from the ai-assistants repo to install it."
 - If installed, inform the user about it and ask him if he wants to try to update it with `claude plugin install --scope user i-am`
 
