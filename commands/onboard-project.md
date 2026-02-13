@@ -1,6 +1,6 @@
 ---
 description: Onboard the current project to work with the ai-assistants plugin ecosystem
-allowed-tools: [Bash(git:*), Bash(grep:*), Bash(claude:*), Read, Write, Edit, Glob, Grep, AskUserQuestion]
+allowed-tools: [Bash(git:*), Bash(grep:*), Read, Write, Edit, Glob, Grep, AskUserQuestion]
 ---
 
 Onboard the current project directory to work cleanly with the ai-assistants plugin (i-am). Run checks and apply fixes for `.gitignore` hygiene, plugin installation, and project-level configuration.
@@ -28,11 +28,10 @@ If `.gitignore` does not exist, create it with the required entries. If it exist
 
 ### 3. Plugin installation
 
-Check whether the i-am plugin is installed and accessible:
+Check whether the i-am plugin is installed by looking for `i-am@bit-agora` in `~/.claude/plugins/installed_plugins.json`:
 
-- Run `claude plugin list 2>/dev/null | grep -i "i-am" || echo "NOT_FOUND"`
-- If not found, warn: "The i-am plugin is not installed. Run install.sh from the ai-assistants repo to install it."
-- If installed, inform the user about it and ask him if he wants to try to update it with `claude plugin install --scope user i-am`
+- If the file does not exist or does not contain `i-am@bit-agora`, warn: "The i-am plugin is not installed. Run install.sh from the ai-assistants repo to install it."
+- If installed, report the version and install path from the JSON entry
 
 ### 4. Project CLAUDE.md
 
