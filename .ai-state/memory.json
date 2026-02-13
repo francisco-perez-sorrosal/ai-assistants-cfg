@@ -1,64 +1,160 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.2",
   "memories": {
     "user": {
       "first_name": {
         "value": "Francisco",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["personal", "identity"],
-        "confidence": null
+        "tags": [
+          "personal",
+          "identity"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       },
       "last_name": {
         "value": "Perez Sorrosal",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["personal", "identity"],
-        "confidence": null
+        "tags": [
+          "personal",
+          "identity"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       },
       "username": {
         "value": "@fperezsorrosal",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["personal", "identity", "alias"],
-        "confidence": null
+        "tags": [
+          "personal",
+          "identity",
+          "alias"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       },
       "email": {
         "value": "fperezsorrosal@gmail.com",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["personal", "identity"],
-        "confidence": null
+        "tags": [
+          "personal",
+          "identity"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       },
       "github_url": {
         "value": "https://github.com/francisco-perez-sorrosal",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["personal", "identity"],
-        "confidence": null
+        "tags": [
+          "personal",
+          "identity"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       },
       "coding_philosophy": {
         "value": "Pragmatism is non-negotiable. Clean, testable code through small bold increments. Simplicity over cleverness.",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["preference", "philosophy"],
-        "confidence": null
+        "tags": [
+          "preference",
+          "philosophy"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       },
       "response_style_preference": {
         "value": "Concise and direct. Add detail only for complexity, obscurity, or explicit request.",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["preference", "communication"],
-        "confidence": null
+        "tags": [
+          "preference",
+          "communication"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       }
     },
     "assistant": {
       "name": {
-        "value": "Kael",
+        "value": "FuzzyFuzz",
         "created_at": "2026-02-09T00:00:00Z",
-        "updated_at": "2026-02-09T00:00:00Z",
-        "tags": ["identity"],
-        "confidence": null
+        "updated_at": "2026-02-11T05:37:53.996369Z",
+        "tags": [
+          "identity"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 3,
+        "last_accessed": "2026-02-12T04:13:12.630419Z",
+        "status": "active",
+        "links": []
       }
     },
     "project": {
@@ -66,15 +162,38 @@
         "value": "ai-assistants-cfg (GitHub) / ai-assistants (local) -- configuration repository for AI coding assistants (Claude Code, Claude Desktop)",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["identity"],
-        "confidence": null
+        "tags": [
+          "identity"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       },
       "skill_convention": {
         "value": "Skills use progressive disclosure: metadata at startup, full SKILL.md on activation, references/ on demand. Aim for ~500 lines.",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["convention", "architecture"],
-        "confidence": null
+        "tags": [
+          "convention",
+          "architecture"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       }
     },
     "relationships": {
@@ -82,8 +201,20 @@
         "value": "Pragmatic, direct, values bold incremental changes. Prefers proactive agent usage and minimal unnecessary explanation.",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["user-facing", "collaboration"],
-        "confidence": 0.85
+        "tags": [
+          "user-facing",
+          "collaboration"
+        ],
+        "confidence": 0.85,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       }
     },
     "tools": {
@@ -91,15 +222,40 @@
         "value": "pbcopy / pbpaste for clipboard interaction",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["user-preference", "cli"],
-        "confidence": null
+        "tags": [
+          "user-preference",
+          "cli"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       },
       "version_control": {
         "value": "git with gh CLI. Commit conventions: imperative mood, type prefix (feat/fix/refactor/docs/test/chore), under 50 chars.",
         "created_at": "2026-02-10T06:35:00Z",
         "updated_at": "2026-02-10T06:35:00Z",
-        "tags": ["user-preference", "cli", "configuration"],
-        "confidence": null
+        "tags": [
+          "user-preference",
+          "cli",
+          "configuration"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       }
     },
     "learnings": {
@@ -107,9 +263,84 @@
         "value": "Always read memory.json at session start BEFORE any interaction. Check stored context before asking questions — the answer may already be in memory. Memory-first, ask-second.",
         "created_at": "2026-02-09T00:00:00Z",
         "updated_at": "2026-02-09T00:00:00Z",
-        "tags": ["self-improvement", "workflow", "critical"],
-        "confidence": 1.0
+        "tags": [
+          "self-improvement",
+          "workflow",
+          "critical"
+        ],
+        "confidence": 1.0,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
+      },
+      "skill-crafting-reengineering": {
+        "value": "Reengineered skill-crafting using official Anthropic skill-creator as guide. Key patterns: (1) Move creation-time guidance to init_skill.py template to save SKILL.md tokens -- template is only \"spent\" once during scaffolding. (2) Stdlib-only YAML parsing works for skill frontmatter (flat key-value pairs, no nested structures needed) -- regex handles single-line, folded scalar >, literal scalar |, indented continuations. (3) Content type table (scripts/worked examples/prose) is complementary to bundled resources (scripts/references/assets) -- different axes, not redundant. (4) Reference file header convention: \"# Title\" + one-line description + back-link \"Reference material for the [Skill Name](../SKILL.md) skill.\" (5) Rename files with git mv + update all references in same commit to avoid broken links at any commit boundary.",
+        "created_at": "2026-02-12T00:33:59.114147Z",
+        "updated_at": "2026-02-12T00:33:59.114147Z",
+        "tags": [
+          "init-template",
+          "patterns",
+          "reengineering",
+          "skill-crafting"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
+      },
+      "user-overrides-over-research": {
+        "value": "Always check for explicit user overrides before following research/plan recommendations. In the skill-crafting reengineering, research recommended keeping name field optional (K5, R2) but user explicitly overrode this to require name, matching the official standard. The override simplified implementation and eliminated a reconciliation point.",
+        "created_at": "2026-02-12T00:34:01.801785Z",
+        "updated_at": "2026-02-12T00:34:01.801785Z",
+        "tags": [
+          "planning",
+          "user-preferences",
+          "workflow"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
+      },
+      "line-count-estimates-rough": {
+        "value": "Line count estimates for markdown files are rough guides, not targets. Plan estimated ~55 lines for output-patterns.md (actual: 85) and ~40 for workflows.md (actual: 48). Extra lines from richer examples add practical value -- don't trim useful content to match an estimate.",
+        "created_at": "2026-02-12T00:34:04.005779Z",
+        "updated_at": "2026-02-12T00:34:04.005779Z",
+        "tags": [
+          "documentation",
+          "estimation",
+          "planning"
+        ],
+        "confidence": null,
+        "importance": 4,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       }
     }
-  }
+  },
+  "session_count": 1
 }
