@@ -6,6 +6,7 @@ description: >
   architecture design, system design, trade-off analysis, technology selection,
   or structural assessment of a codebase before implementation.
 tools: Read, Glob, Grep, Bash, Write, Edit
+skills: claude-ecosystem
 permissionMode: acceptEdits
 memory: user
 ---

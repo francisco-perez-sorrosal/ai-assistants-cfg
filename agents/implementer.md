@@ -35,7 +35,7 @@ Before implementing, detect the project language to load the right conventions:
 3. Read the corresponding language skill: `skills/python-development/SKILL.md`, `skills/typescript-development/SKILL.md`, etc.
 4. Apply language-specific conventions from the loaded skill during implementation
 
-The three statically-injected skills (`software-planning`, `code-review`, `refactoring`) are always available. Language skills are loaded on demand based on the project.
+The three statically-injected skills (`software-planning`, `code-review`, `refactoring`) are always available. Language skills are loaded on demand based on the project. If the step involves Claude API integration, also load `skills/claude-ecosystem/SKILL.md` for SDK patterns and API feature reference.
 
 ## Execution Workflow
 

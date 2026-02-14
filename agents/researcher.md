@@ -7,6 +7,7 @@ description: >
   a codebase area, or gather context before architectural or implementation
   decisions.
 tools: Read, Glob, Grep, Bash, WebSearch, WebFetch
+skills: claude-ecosystem
 permissionMode: default
 memory: user
 ---
