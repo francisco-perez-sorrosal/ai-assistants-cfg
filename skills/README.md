@@ -14,6 +14,12 @@ Reusable skill modules for Claude Code. Each skill is a self-contained directory
 | **[mcp-crafting](mcp-crafting/)**         | Building MCP servers in Python with FastMCP. Covers tools, resources, prompts, transports, testing, and deployment.                                        | Creating MCP servers, defining tools/resources, configuring transports, testing, integrating with Claude.                |
 | **[rule-crafting](rule-crafting/)**       | Creating and managing rules — domain knowledge files eagerly loaded within scope (personal = all projects, project = that project).                        | Creating new rules, updating existing rules, debugging rule loading, organizing rule files, layer placement decisions.   |
 
+### Platform Knowledge
+
+| Skill | Description | When to Use |
+| --- | --- | --- |
+| **[claude-ecosystem](claude-ecosystem/)** | Anthropic Claude platform knowledge -- models, API features, SDKs, and documentation navigation. | Choosing models, using Messages API features, integrating Anthropic SDKs, navigating Anthropic docs. |
+
 ### Documentation
 
 | Skill | Description | When to Use |
