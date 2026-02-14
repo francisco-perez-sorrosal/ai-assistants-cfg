@@ -15,6 +15,7 @@ Conventions for when and how to use the available software agents -- autonomous 
 | `verifier` | Post-implementation review against acceptance criteria | `VERIFICATION_REPORT.md` | Yes |
 | `doc-engineer` | Documentation quality (READMEs, catalogs, changelogs) | Doc report or file fixes | Yes |
 | `sentinel` | Read-only ecosystem auditor (independent, not a pipeline stage) | `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md` | Yes |
+| `skill-genesis` | Learning triage, artifact proposal from experience | `SKILL_GENESIS_REPORT.md` | No |
 
 ### Proactive Agent Usage
 
@@ -26,6 +27,7 @@ Spawn agents without waiting for the user to ask:
 - Context artifacts stale/conflicting or plan touches them --> `context-engineer` (parallel with `researcher`/`systems-architect`)
 - Ecosystem health or regression check --> `sentinel`; stale check: `.ai-state/SENTINEL_LOG.md` vs `git log -1 --format=%ci`
 - Files added/removed/renamed or catalogs need updates --> `doc-engineer`
+- Pipeline complete + LEARNINGS.md has content --> `skill-genesis`
 
 **Depth check:** Before spawning an agent recommended by another agent's output, confirm with the user if doing so would create a chain of 3+ agents from the original request.
 
@@ -59,6 +61,7 @@ promethean --> researcher --> systems-architect --> implementation-planner --> i
 | Verifier | Identifies issues, recommends actions | Fix issues |
 | Doc-engineer | Maintains project documentation | Manage context artifacts |
 | Sentinel | Diagnoses and reports across ecosystem | Fix artifacts |
+| Skill-Genesis | Triages learnings into artifact proposals, delegates creation | Ideate features, audit ecosystem, create artifacts |
 
 When an agent encounters work outside its boundary, it flags the need and recommends invoking the appropriate agent.
 
@@ -73,6 +76,7 @@ Use an agent when the task benefits from a separate context window (large scope,
 | Post-implementation quality review | `verifier` |
 | Documentation audit or cross-reference fixes | `doc-engineer` |
 | Feature-level ideation from project state | `promethean` |
+| Post-pipeline learning harvest or 3+ accumulated LEARNINGS.md entries | `skill-genesis` |
 
 ### Background Agents
 

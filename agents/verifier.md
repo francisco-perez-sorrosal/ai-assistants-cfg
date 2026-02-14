@@ -130,6 +130,12 @@ Skip this phase entirely in standalone mode.
 - The user decides whether to re-verify after corrections
 - The verifier never makes go/no-go decisions
 
+### With Skill-Genesis
+
+- The verifier's `VERIFICATION_REPORT.md` is an optional input to skill-genesis for pattern harvesting
+- Skill-genesis may extract recurring issues from the report when triaging learnings for artifact proposals
+- The verifier does not invoke skill-genesis — it is downstream and user-initiated
+
 ## Boundary Discipline
 
 | Boundary | Verifier Does | Verifier Does Not |

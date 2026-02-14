@@ -339,8 +339,50 @@
         "last_accessed": null,
         "status": "active",
         "links": []
+      },
+      "skill-implementation-patterns": {
+        "value": "Patterns from building claude-ecosystem skill via full pipeline: (1) Place satellite file listing immediately after intro, before content sections. (2) Use sub-headed tables (### per category) instead of one giant table for scannable API feature maps. (3) Run validate.py early to catch frontmatter issues. (4) Add explicit Boundary notes at top of reference files to prevent overlap with adjacent skills. (5) For SDK references, combine code examples (init + message + streaming in one block) and note \"same API shape\" for TS to avoid duplication — cut 357 to 198 lines. (6) Docs maps work best as \"I need to...\" / \"Go to\" intent-mapping tables. (7) Split operations vs features across reference files (what parameters vs how to run efficiently) with cross-references.",
+        "created_at": "2026-02-14T00:36:52.505419Z",
+        "updated_at": "2026-02-14T00:36:52.505419Z",
+        "tags": [
+          "implementation",
+          "patterns",
+          "progressive-disclosure",
+          "skills"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
+      },
+      "parallel-implementer-workflow": {
+        "value": "When running multiple implementer agents in parallel: (1) Steps with content dependencies must be sequential (api-features before sdk-patterns, since SDK patterns reference API features). (2) Steps with disjoint file sets and no shared content can run in parallel (docs-map and platform-services). (3) WIP.md tracking breaks when main agent does final steps directly instead of via implementer — update WIP.md manually or skip steps 6-7 in the plan.",
+        "created_at": "2026-02-14T00:36:56.679650Z",
+        "updated_at": "2026-02-14T00:36:56.679650Z",
+        "tags": [
+          "agents",
+          "parallel",
+          "pipeline",
+          "workflow"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": []
       }
     }
   },
-  "session_count": 1
+  "session_count": 2
 }

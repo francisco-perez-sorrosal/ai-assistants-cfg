@@ -6,7 +6,7 @@ Custom agents for specialized workflows. Agents are autonomous subprocesses that
 
 ### Software Development Crew
 
-Nine agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The sentinel and context-engineer operate independently alongside the pipeline -- the sentinel as an on-demand ecosystem auditor whose reports any agent can consume, and the context-engineer as a domain expert at any pipeline stage. The doc-engineer maintains project-facing documentation quality (README.md files, catalogs, architecture docs). The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate.
+Ten agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The sentinel and context-engineer operate independently alongside the pipeline -- the sentinel as an on-demand ecosystem auditor whose reports any agent can consume, and the context-engineer as a domain expert at any pipeline stage. The doc-engineer maintains project-facing documentation quality (README.md files, catalogs, architecture docs). The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate. The skill-genesis agent harvests patterns from implementation learnings and proposes new artifacts (memory entries, rules, skills, agent definitions) for persistent curation.
 
 ```
  promethean ──► IDEA_PROPOSAL.md + IDEA_LEDGER_*.md
@@ -25,6 +25,9 @@ Nine agents that collaborate on software development tasks, each with a dedicate
      │                    changes   │   doc quality)│
      ▼                              └──────────────┘
  verifier ──────────────► VERIFICATION_REPORT.md (optional — when quality review needed)
+     │
+     ▼ (optional)
+ skill-genesis ────────► SKILL_GENESIS_REPORT.md (harvest learnings → artifact proposals)
 
  ┌──────────────────────────────────────────────────────────────────┐
  │ sentinel ──► SENTINEL_REPORT_*.md + SENTINEL_LOG.md (.ai-state/)│
@@ -43,6 +46,7 @@ Nine agents that collaborate on software development tasks, each with a dedicate
 | `verifier` | Verifies completed implementation against acceptance criteria, coding conventions, and test coverage; produces `VERIFICATION_REPORT.md` with pass/fail/warn findings | `code-review` |
 | `doc-engineer` | Maintains project-facing documentation quality (README.md, catalogs, architecture docs, changelogs); validates cross-references, catalog completeness, naming consistency, and writing quality | `doc-management` |
 | `sentinel` | Independent read-only ecosystem quality auditor scanning all context artifacts across eight dimensions (seven per-artifact + ecosystem coherence as system-level composite); produces timestamped `SENTINEL_REPORT_*.md` (accumulates) and `SENTINEL_LOG.md` (historical metrics) in `.ai-state/` — any agent or user can consume its reports | — |
+| `skill-genesis` | Post-implementation learning harvester that triages entries from `LEARNINGS.md` and `VERIFICATION_REPORT.md`, deduplicates patterns, proposes artifacts (memory entries, rules, skills, agent definitions) through interactive dialog, and produces `SKILL_GENESIS_REPORT.md` with artifact specifications ready for handoff | `skill-crafting`, `rule-crafting` |
 
 ## How Agents Work
 
@@ -120,7 +124,8 @@ Agents require explicit file paths in `plugin.json` (directory wildcards are not
   "./agents/doc-engineer.md",
   "./agents/verifier.md",
   "./agents/implementer.md",
-  "./agents/sentinel.md"
+  "./agents/sentinel.md",
+  "./agents/skill-genesis.md"
 ]
 ```
 
