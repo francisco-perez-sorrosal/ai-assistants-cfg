@@ -1,5 +1,4 @@
 ---
-name: skill-crafting
 description: Creating, updating, and optimizing Agent Skills for Claude Code,
   Cursor, and other compatible agents. Covers the skill creation process, anatomy,
   progressive disclosure, and development workflows. Use when creating new skills,

@@ -1,5 +1,4 @@
 ---
-name: mcp-crafting
 description: Building MCP (Model Context Protocol) servers using official SDKs. Covers protocol concepts (tools, resources, prompts), transports (stdio, streamable HTTP), bundles (.mcpb), testing with MCP Inspector, client integration with Claude Desktop and Claude Code, logging, error handling, and security principles. Language modules available for Python (with FastMCP). Use when creating MCP servers, defining tools or resources, configuring transports, packaging bundles, testing MCP servers, or integrating with Claude.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
