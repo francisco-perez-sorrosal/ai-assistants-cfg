@@ -6,7 +6,7 @@ description: >
   architecture design, system design, trade-off analysis, technology selection,
   or structural assessment of a codebase before implementation.
 tools: Read, Glob, Grep, Bash, Write, Edit
-skills: [claude-ecosystem, agentic-sdks]
+skills: [claude-ecosystem, agentic-sdks, communicating-agents]
 permissionMode: acceptEdits
 memory: user
 ---

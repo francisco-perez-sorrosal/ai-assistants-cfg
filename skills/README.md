@@ -20,6 +20,7 @@ Reusable skill modules for Claude Code. Each skill is a self-contained directory
 | --- | --- | --- |
 | **[claude-ecosystem](claude-ecosystem/)** | Anthropic Claude platform knowledge -- models, API features, SDKs, and documentation navigation. | Choosing models, using Messages API features, integrating Anthropic SDKs, navigating Anthropic docs. |
 | **[agentic-sdks](agentic-sdks/)** | Building AI agents with OpenAI Agents SDK and Claude Agent SDK. Covers agent architecture, tools, multi-agent orchestration, safety, and MCP integration. Language modules for Python and TypeScript. | Building autonomous agents, choosing between agent frameworks, implementing multi-agent workflows, integrating tools or MCP servers. |
+| **[communicating-agents](communicating-agents/)** | Agent-to-agent communication protocols for multi-agent interoperability. Covers A2A protocol -- Agent Cards, task-based messaging, discovery, streaming, and SDK implementation. Language modules for Python and TypeScript. | Building multi-agent systems across frameworks, exposing agents via A2A, implementing agent discovery, integrating A2A with AI frameworks. |
 
 ### Documentation
 
