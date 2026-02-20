@@ -19,6 +19,7 @@ Reusable skill modules for Claude Code. Each skill is a self-contained directory
 | Skill | Description | When to Use |
 | --- | --- | --- |
 | **[claude-ecosystem](claude-ecosystem/)** | Anthropic Claude platform knowledge -- models, API features, SDKs, and documentation navigation. | Choosing models, using Messages API features, integrating Anthropic SDKs, navigating Anthropic docs. |
+| **[agentic-sdks](agentic-sdks/)** | Building AI agents with OpenAI Agents SDK and Claude Agent SDK. Covers agent architecture, tools, multi-agent orchestration, safety, and MCP integration. Language modules for Python and TypeScript. | Building autonomous agents, choosing between agent frameworks, implementing multi-agent workflows, integrating tools or MCP servers. |
 
 ### Documentation
 

@@ -117,11 +117,9 @@ catch (error) {
 
 Tool use and extended thinking follow the same structure as Python (camelCase keys, `as const` for type literals in `input_schema`).
 
-## Agent SDK (Python)
+## Agent SDK
 
-Package: `claude-agent-sdk`. Python 3.10+. Install: `pip install claude-agent-sdk`.
-
-The Agent SDK powers Claude Code. Use it instead of the raw Messages API for agentic applications that need tool loops, conversation state, or MCP server connections.
+Package: `claude-agent-sdk` (Python) / `@anthropic-ai/claude-agent-sdk` (TypeScript). The Agent SDK powers Claude Code -- use it instead of the raw Messages API for agentic applications that need tool loops, conversation state, or MCP server connections.
 
 ### When to Use Agent SDK vs Messages API
 
@@ -133,42 +131,7 @@ The Agent SDK powers Claude Code. Use it instead of the raw Messages API for age
 | Maximum API control | Messages API |
 | Building a coding agent | Agent SDK (bash, editor, file tools built in) |
 
-### Core Patterns
-
-```python
-from claude_agent_sdk import Agent, Tool, MCPServer
-
-def get_weather(location: str) -> str:
-    """Get current weather for a location."""  # docstring becomes tool description
-    return f"Weather in {location}: 72F, sunny"
-
-agent = Agent(
-    model="claude-sonnet-4-5-20250514",
-    tools=[Tool.from_function(get_weather)],
-    system_prompt="You are a helpful assistant.",
-    max_turns=10,
-)
-result = agent.run("What's the weather in Tokyo?")  # handles tool call loop automatically
-print(result.text)
-
-# MCP integration -- tools auto-discovered from connected servers
-agent = Agent(model="claude-sonnet-4-5-20250514", mcp_servers=[
-    MCPServer(command="npx", args=["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]),
-])
-```
-
-## Agent SDK (TypeScript)
-
-Package: `@anthropic-ai/claude-agent-sdk-typescript`. Mirrors the Python Agent SDK with camelCase naming (`systemPrompt`, `maxTurns`). See the [Agent SDK TS repo](https://github.com/anthropics/claude-agent-sdk-typescript) for TypeScript-specific details.
-
-```typescript
-import { Agent } from "@anthropic-ai/claude-agent-sdk";
-const agent = new Agent({
-  model: "claude-sonnet-4-5-20250514", tools: [...],
-  systemPrompt: "You are a helpful assistant.", maxTurns: 10,
-});
-const result = await agent.run("What's the weather in Tokyo?");
-```
+**For Agent SDK implementation patterns** (tools, hooks, subagents, sessions, MCP integration, code examples), load the [agentic-sdks](../../agentic-sdks/SKILL.md) skill which covers both Claude Agent SDK and OpenAI Agents SDK with language-specific contexts for Python and TypeScript.
 
 ## Version Compatibility
 

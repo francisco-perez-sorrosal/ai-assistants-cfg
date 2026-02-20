@@ -3,8 +3,8 @@ description: Anthropic Claude platform knowledge -- Claude API features, Anthrop
   usage patterns, model selection guidance, extended thinking, batch processing, prompt
   caching, structured outputs, token counting, Files API, and ecosystem navigation.
   Use when building applications with the Claude Messages API, choosing between Claude
-  models, integrating Anthropic SDKs (Python or TypeScript), using Agent SDKs, or
-  navigating Anthropic documentation.
+  models, integrating Anthropic client SDKs (Python or TypeScript), choosing between
+  Agent SDK and Messages API, or navigating Anthropic documentation.
 allowed-tools: [Read, Glob, Grep]
 ---
 
@@ -127,11 +127,12 @@ This skill provides the **platform knowledge layer** -- what the Claude API offe
 
 | Skill/Agent | Owns | claude-ecosystem Provides |
 | --- | --- | --- |
+| [agentic-sdks](../agentic-sdks/SKILL.md) | Building agents with OpenAI Agents SDK and Claude Agent SDK (implementation patterns, tools, multi-agent, hooks) | Model selection, SDK selection guidance, API features |
 | [mcp-crafting](../mcp-crafting/SKILL.md) | Building MCP servers (transports, tools, resources, prompts) | MCP connector API feature, protocol context |
 | claude-code-guide (subagent) | Claude Code operations (hooks, plugins, settings, CLI) | Messages API, SDK patterns underlying Claude Code |
-| [python-development](../python-development/SKILL.md) | Python coding patterns, testing, tooling | Anthropic Python SDK specifics, Agent SDK patterns |
+| [python-development](../python-development/SKILL.md) | Python coding patterns, testing, tooling | Anthropic Python SDK specifics |
 
-**Rule of thumb:** If the question is "How do I use feature X in the Claude API?" -- consult this skill. If it is "How do I build an MCP server?" -- consult `mcp-crafting`. If it is "How do I configure Claude Code hooks?" -- consult `claude-code-guide`.
+**Rule of thumb:** If the question is "How do I use feature X in the Claude API?" -- consult this skill. If it is "How do I build an agent with the Claude Agent SDK or OpenAI Agents SDK?" -- consult `agentic-sdks`. If it is "How do I build an MCP server?" -- consult `mcp-crafting`. If it is "How do I configure Claude Code hooks?" -- consult `claude-code-guide`.
 
 ## Resources
 

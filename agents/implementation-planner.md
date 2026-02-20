@@ -105,11 +105,14 @@ Check if any steps should be delegated to specialized methodologies:
 
 **Refactoring phases:** If the systems-architect flagged structural issues requiring preparatory work, tag those steps with `[Phase: Refactoring]` and reference the refactoring skill.
 
+**Agentic SDK phases:** If steps involve building agents with the Claude Agent SDK or OpenAI Agents SDK, tag them with `[Skill: agentic-sdks]` and reference the agentic-sdks skill with the relevant framework and language context (e.g., `contexts/claude-agent-python.md`).
+
 **Detection signals:**
 
 - Architect's "Codebase Readiness" section lists structural issues
 - Steps involve restructuring existing code before adding new functionality
 - Code duplication needs elimination before the feature can be built cleanly
+- Steps involve agent creation, tool integration, multi-agent orchestration, or MCP server setup using an agentic SDK
 
 ### Phase 6 — Document Completion
 
