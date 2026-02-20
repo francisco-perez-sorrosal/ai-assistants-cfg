@@ -381,8 +381,34 @@
         "last_accessed": null,
         "status": "active",
         "links": []
+      },
+      "architecture-gap-registration-files": {
+        "value": "Systems plans can miss downstream registration files. When adding a new agent or artifact that produces output documents, check: (1) plugin.json agents array, (2) coordination protocol tables (4 places), (3) agent-intermediate-documents.md (file tree + lifecycle table), (4) agents/README.md (count, diagram, table, plugin example). The implementation planner caught the agent-intermediate-documents.md gap for skill-genesis.",
+        "created_at": "2026-02-14T08:14:35.551611Z",
+        "updated_at": "2026-02-14T08:14:35.551611Z",
+        "tags": [
+          "agents",
+          "architecture",
+          "pipeline",
+          "registration"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.parallel-implementer-workflow",
+            "relation": "related-to"
+          }
+        ]
       }
     }
   },
-  "session_count": 2
+  "session_count": 3
 }

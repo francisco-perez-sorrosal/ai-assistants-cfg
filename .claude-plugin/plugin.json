@@ -16,7 +16,9 @@
     "python",
     "mcp",
     "refactoring",
-    "planning"
+    "planning",
+    "cicd",
+    "github-actions"
   ],
   "mcpServers": {
     "task-chronograph": {
@@ -57,6 +59,7 @@
     "./agents/verifier.md",
     "./agents/implementer.md",
     "./agents/sentinel.md",
-    "./agents/skill-genesis.md"
+    "./agents/skill-genesis.md",
+    "./agents/cicd-engineer.md"
   ]
 }
