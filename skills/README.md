@@ -37,12 +37,14 @@ Reusable skill modules for AI coding assistants. Each skill is a self-contained 
 | **[refactoring](refactoring/)**             | Pragmatic refactoring emphasizing modularity, low coupling, high cohesion, and incremental improvement.          | Restructuring code, improving design, reducing coupling, organizing codebases, eliminating code smells. |
 | **[code-review](code-review/)**             | Structured code review methodology with finding classification (PASS/FAIL/WARN), language adaptation, and report templates. | Reviewing code for convention compliance, post-implementation verification, reviewing PRs, ad-hoc quality assessments. |
 | **[software-planning](software-planning/)** | Three-document planning model (PLAN.md, WIP.md, LEARNINGS.md) for tracking work in small, known-good increments. | Starting significant software work, breaking down complex tasks, multi-step development efforts.        |
+| **[cicd](cicd/)**                           | CI/CD pipeline design, GitHub Actions workflows, deployment strategies, caching, secrets management, and security hardening. | Creating CI/CD pipelines, writing GitHub Actions workflows, debugging workflow failures, optimizing pipeline performance. |
 
 ### Project
 
 | Skill | Description | When to Use |
 | --- | --- | --- |
 | **[github-star](github-star/)** | Prompt the user to star the ai-assistants-cfg GitHub repository. | User invokes `/star-repo` or asks about starring the project. |
+| **[memory](memory/)** | Persistent, structured memory system tracking user preferences, assistant learnings, project conventions, and relationship dynamics across sessions. | Remembering user preferences, storing project decisions, recalling past interactions, session context loading. |
 
 ## How Skills Work
 

@@ -11,20 +11,30 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── command-crafting/
 ├── mcp-crafting/
 ├── rule-crafting/
+├── claude-ecosystem/
+├── agentic-sdks/
+├── communicating-agents/
 ├── python-development/
 ├── python-prj-mgmt/
 ├── refactoring/
 ├── code-review/
 ├── software-planning/
-└── doc-management/
+├── doc-management/
+├── cicd/
+├── memory/
+└── github-star/
 commands/                            # Shared slash commands
 ├── add-rules.md
+├── clean-work.md
 ├── co.md
 ├── cop.md
 ├── create-simple-python-prj.md
 ├── create-worktree.md
 ├── manage-readme.md
-└── merge-worktree.md
+├── memory.md
+├── merge-worktree.md
+├── onboard-project.md
+└── star-repo.md
 agents/                              # Shared agent definitions
 ├── promethean.md
 ├── researcher.md
@@ -34,8 +44,10 @@ agents/                              # Shared agent definitions
 ├── implementer.md
 ├── verifier.md
 ├── doc-engineer.md
-└── sentinel.md
-rules/                               # Rules (installed to ~/.claude/rules/)
+├── sentinel.md
+├── skill-genesis.md
+└── cicd-engineer.md
+rules/                               # Rules (installed to ~/.claude/rules/ or .cursor/rules/)
 ├── swe/
 │   ├── agent-intermediate-documents.md
 │   ├── coding-style.md
@@ -48,13 +60,27 @@ rules/                               # Rules (installed to ~/.claude/rules/)
 .claude-plugin/                      # Claude Code plugin manifest
 ├── plugin.json
 └── PLUGIN_SCHEMA_NOTES.md
-.claude/                             # Claude personal config (symlinked to ~/.claude/)
+claude/config/                       # Claude personal config (symlinked to ~/.claude/)
 ├── CLAUDE.md
 ├── claude_desktop_config.json
 ├── userPreferences.txt
+├── config_items.txt
+├── stale_symlinks.txt
 └── settings.local.json              # gitignored
+cursor/config/                       # Cursor installer config
+├── mcp.json.template
+├── expected-mcp-servers.txt
+├── export-cursor-commands.py
+├── export-cursor-rules.py
+└── README.md
+docs/                                # Cross-cutting documentation
+└── cursor-compat.md
 task-chronograph-mcp/                # Pipeline observability MCP server
-install.sh                           # Multi-assistant installer
+memory-mcp/                          # Persistent memory MCP server
+install.sh                           # Installer router
+install_claude.sh                    # Claude Code / Desktop installer
+install_cursor.sh                    # Cursor installer
+Makefile                             # Development targets
 ```
 
 ## Working on this Repo
@@ -70,9 +96,9 @@ install.sh                           # Multi-assistant installer
 ## Design Intent
 
 - **Assistant-agnostic shared assets**: `skills/`, `commands/`, `agents/` live at the repo root, reusable across any AI assistant
-- **Assistant-specific config**: Personal settings live in assistant directories (`.claude/` for Claude, future `.chatgpt/` etc.)
+- **Assistant-specific config**: Personal settings live in config directories (`claude/config/` for Claude, `cursor/config/` for Cursor)
 - **Plugin distribution**: Skills, commands, and agents are installed via Claude Code's plugin system (`.claude-plugin/plugin.json`)
-- **Symlink for personal config**: `install.sh` symlinks assistant-specific config to the expected locations
+- **Symlink for personal config**: `install_claude.sh` symlinks Claude config to `~/.claude/`; `install_cursor.sh` symlinks skills and rules into `.cursor/` or `~/.cursor/`
 - **Progressive disclosure**: Skills load metadata at startup, full content on activation, reference files on demand
 - **CLAUDE.md stays lean**: Skills, commands, agents, and rules are auto-discovered by Claude via filesystem scanning -- listing them in `CLAUDE.md` wastes always-loaded tokens and creates a sync burden. `README.md` and per-directory READMEs serve as the human-facing catalogs
 

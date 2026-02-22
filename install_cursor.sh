@@ -2,23 +2,20 @@
 # Install Cursor-facing artifacts from this repo.
 # Repo remains source of truth; this script creates symlinks and generated files.
 #
-# Usage (from this repo root; when invoked via install.sh, first arg is "cursor"):
-#   ./install_cursor.sh [cursor] [path]              # Install (user or path)
-#   ./install_cursor.sh [cursor] [path] --dry-run   # Show what would be installed
-#   ./install_cursor.sh [cursor] [path] --check     # Verify installation health
-#   ./install_cursor.sh [cursor] [path] --uninstall # Message only (remove .cursor/ manually)
+# Usage (from this repo root, or via install.sh):
+#   ./install_cursor.sh [path]              # Install (user or path)
+#   ./install_cursor.sh [path] --dry-run   # Show what would be installed
+#   ./install_cursor.sh [path] --check     # Verify installation health
+#   ./install_cursor.sh [path] --uninstall # Message only (remove .cursor/ manually)
 #   --dry-run and --status are equivalent (dry-run is canonical).
 #
 # MCP servers in mcp.json always point at this repo (task-chronograph, memory, agents).
 
-set -e
+set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$SCRIPT_DIR"
 CURSOR_CONFIG_DIR="$REPO_ROOT/cursor/config"
-
-# Optional leading "cursor" when invoked from install.sh
-[ "$1" = "cursor" ] && shift
 
 # Terminal formatting
 if [ -t 1 ]; then
@@ -33,9 +30,8 @@ step() { printf "  %s\n" "$*"; }
 
 show_usage() {
     cat <<EOF
-Usage: $(basename "$0") [cursor] [path] [--check] [--dry-run] [--uninstall] [--help]
+Usage: $(basename "$0") [path] [--check] [--dry-run] [--uninstall] [--help]
 
-  cursor       Optional; used when invoked from install.sh
   path         Per-project install at path/.cursor/ (default: user profile ~/.cursor/)
   --check      Verify installation health
   --dry-run    Show what would be installed (no writes)
@@ -88,8 +84,8 @@ REPO_ROOT_FOR_MCP="${CURSOR_REPO_ROOT:-$REPO_ROOT}"
 # --uninstall: no-op with message (symmetric with code/desktop)
 if $DO_UNINSTALL; then
     warn "Cursor mode has no automated uninstall; remove the directory manually if desired:"
-    step "  rm -rf $CURSOR_DIR"
-    exit 1
+    step "  rm -rf \"$CURSOR_DIR\""
+    exit 0
 fi
 
 # --dry-run: show what would be installed
@@ -201,20 +197,37 @@ mkdir -p "$CURSOR_DIR/skills"
 for d in skills/*/; do
     name="${d%/}"
     name="${name#skills/}"
-    [ "$name" = "" ] && continue
+    [ -z "$name" ] && continue
+    src="$REPO_ROOT/skills/$name"
     target="$CURSOR_DIR/skills/$name"
-    if [ -L "$target" ] && [ "$(readlink "$target")" = "$REPO_ROOT/$d" ]; then
+    if [ -L "$target" ] && [ "$(readlink "$target")" = "$src" ]; then
         :
     else
-        ln -sf "$REPO_ROOT/$d" "$target"
+        ln -sf "$src" "$target"
     fi
 done
 info "Skills linked ($(ls -1 "$CURSOR_DIR/skills" 2>/dev/null | wc -l | tr -d ' ') skills)"
 
-# 2. Rules: export with frontmatter (description, alwaysApply) for Cursor "Apply Intelligently"
-step "Exporting rules..."
-python3 "$CURSOR_CONFIG_DIR/export-cursor-rules.py" "$REPO_ROOT" "$CURSOR_DIR/rules"
-info "Rules exported"
+# 2. Rules: symlink each rule file (preserving directory structure)
+step "Linking rules..."
+mkdir -p "$CURSOR_DIR/rules"
+rules_count=0
+while IFS= read -r rule; do
+    rel_path="${rule#"$REPO_ROOT/rules"/}"
+    rel_dir="$(dirname "$rel_path")"
+    [[ "$(basename "$rule")" == "README.md" ]] && continue
+    [[ "$rel_path" == */references/* ]] && continue
+    [ "$rel_dir" != "." ] && mkdir -p "$CURSOR_DIR/rules/$rel_dir"
+    src="$REPO_ROOT/rules/$rel_path"
+    target="$CURSOR_DIR/rules/$rel_path"
+    if [ -L "$target" ] && [ "$(readlink "$target")" = "$src" ]; then
+        :
+    else
+        ln -sf "$src" "$target"
+    fi
+    rules_count=$((rules_count + 1))
+done < <(find "$REPO_ROOT/rules" -name '*.md' -type f | sort)
+info "Rules linked ($rules_count rules)"
 
 # 3. Commands: export plain .md into TARGET/commands/
 step "Exporting commands..."

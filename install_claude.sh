@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ai-assistants — Claude Code / Claude Desktop installer
 #
 # Installs personal config, rules, and the i-am plugin into Claude Code or

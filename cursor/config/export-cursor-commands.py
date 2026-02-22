@@ -8,6 +8,8 @@ optionally prepending Description and Arguments from frontmatter.
 Source of truth remains commands/*.md; run from repo root.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 import re
 import sys
@@ -40,6 +42,13 @@ def export_commands(repo_root: Path, out_dir: Path) -> None:
     if not commands_dir.is_dir():
         sys.exit("commands/ not found")
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Remove stale exports (commands deleted from repo)
+    source_names = {p.name for p in commands_dir.glob("*.md") if p.name.lower() != "readme.md"}
+    for existing in out_dir.glob("*.md"):
+        if existing.name not in source_names:
+            existing.unlink()
+            print(f"  Removed stale: {existing.name}")
 
     for path in sorted(commands_dir.glob("*.md")):
         if path.name.lower() == "readme.md":

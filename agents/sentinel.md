@@ -162,7 +162,7 @@ Build a filesystem map of all artifacts:
 2. **Agents**: `Glob agents/*.md` — count and list (exclude README.md)
 3. **Rules**: `Glob rules/**/*.md` — count and list
 4. **Commands**: `Glob commands/*` — count and list
-5. **Config files**: Read `CLAUDE.md`, `.claude/CLAUDE.md`, `.claude-plugin/plugin.json`, latest `.ai-state/IDEA_LEDGER_*.md` (by timestamp in filename)
+5. **Config files**: Read `CLAUDE.md`, `claude/config/CLAUDE.md`, `.claude-plugin/plugin.json`, latest `.ai-state/IDEA_LEDGER_*.md` (by timestamp in filename)
 
 Record counts and paths. This inventory is the "actual state" that Pass 1 compares against the "desired state" (specs and cross-references).
 

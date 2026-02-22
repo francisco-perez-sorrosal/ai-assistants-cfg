@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 CLAUDE := $(HOME)/.local/bin/claude
 
-.PHONY: validate run install install-claude install-claude-code install-cursor dry-run dry-run-claude dry-run-cursor help
+.PHONY: validate run install install-desktop install-cursor dry-run dry-run-cursor help
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-18s %s\n", $$1, $$2}'
@@ -12,23 +12,17 @@ validate: ## Validate the plugin manifest
 run: validate ## Start Claude Code with the plugin (dev mode, no API key)
 	unset ANTHROPIC_API_KEY && $(CLAUDE) --plugin-dir $(CURDIR)
 
-install: ## Default: Claude config + plugin via local marketplace (interactive)
+install: ## Install Claude config + plugin via local marketplace (interactive)
 	./install.sh
 
-install-claude: ## Install Claude config + plugin via local marketplace
-	./install.sh
+install-desktop: ## Install for Claude Desktop (MCP servers)
+	./install.sh desktop
 
-install-claude-code: ## Install for Claude Code (./install.sh code)
-	./install.sh code
-
-install-cursor: ## Install for Cursor (user profile ~/.cursor/ or pass path)
+install-cursor: ## Install for Cursor (user profile; use ./install.sh cursor PATH for per-project)
 	./install.sh cursor
 
-dry-run: ## Dry-run for default target (Claude Code): show what would be installed
+dry-run: ## Dry-run: show what would be installed (Claude Code)
 	./install.sh code --dry-run
 
-dry-run-claude: ## Dry-run: show what would be installed for Claude (code)
-	./install.sh code --dry-run
-
-dry-run-cursor: ## Dry-run: show what would be installed for Cursor
+dry-run-cursor: ## Dry-run: show what would be installed (Cursor)
 	./install.sh cursor --dry-run

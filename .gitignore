@@ -1,7 +1,6 @@
 .trees/
 
-.claude/settings.local.json
-.claude/hooks/logs/
+claude/config/settings.local.json
 
 .cursor/
 

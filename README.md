@@ -81,15 +81,17 @@ All three install paths support the same flags: `--check`, `--dry-run`, `--unins
 | What | How |
 |------|-----|
 | Skills | Symlinks to this repo’s `skills/<name>/`. |
-| Rules | Exported with frontmatter (`description`, `alwaysApply: false`) for Cursor “Apply Intelligently”. |
+| Rules | Symlinks to this repo's `rules/` (preserving directory structure). |
 | Commands | Exported from `commands/*.md` (frontmatter stripped to plain Markdown). |
 | MCP | `mcp.json` with task-chronograph, memory, and **sub-agents** ([sub-agents-mcp](https://github.com/shinpr/sub-agents-mcp)); server paths always point at **this repo** (override with `CURSOR_REPO_ROOT`). |
 
 MCP: task-chronograph and memory require `uv`; sub-agents requires **Node/npx**. Re-run the install after cloning this repo or when you want to refresh. For **per-project** installs, the target repo’s `.cursor/` is usually gitignored so each clone runs the installer; for **user profile**, `~/.cursor/` is persistent.
 
+**Agents prerequisite**: sub-agents-mcp uses `cursor-agent` as its backend. Run `cursor-agent login` to authenticate before using agents in Cursor.
+
 **Agents** — Installed with the rest: one script configures [sub-agents-mcp](https://github.com/shinpr/sub-agents-mcp) so Cursor uses this repo’s `agents/*.md`. Run `./install.sh cursor` (or `make install-cursor`); agents appear in Cursor once the MCP server is running. Requires Node/npx.
 
-**Dry-run** — See what would be installed without writing: `./install.sh code --dry-run`, `./install.sh cursor --dry-run`, or `make dry-run-cursor` (and `make dry-run-claude` for Claude Code).
+**Dry-run** — See what would be installed without writing: `./install.sh code --dry-run`, `./install.sh cursor --dry-run`, or `make dry-run-cursor` (and `make dry-run` for Claude Code).
 
 **Verification** — Run a health check:
 
@@ -117,8 +119,10 @@ Reusable knowledge modules loaded automatically based on context. See [`skills/R
 | Category | Skills |
 |----------|--------|
 | AI Assistant Crafting | skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting |
+| Platform Knowledge | claude-ecosystem, agentic-sdks, communicating-agents |
 | Documentation | doc-management |
-| Software Development | python-development, python-prj-mgmt, refactoring, code-review, software-planning |
+| Software Development | python-development, python-prj-mgmt, refactoring, code-review, software-planning, cicd |
+| Project | memory, github-star |
 
 ## Commands
 
@@ -133,10 +137,16 @@ Slash commands invoked with `/<name>`. In Claude Code (plugin) use `/i-am:<name>
 | `/merge-worktree [branch]` | Merge a worktree branch back into current branch |
 | `/create-simple-python-prj [name] [desc] [pkg-mgr] [dir]` | Scaffold a Python project (defaults: pixi, `~/dev`) |
 | `/manage-readme [file-paths...]` | Create or refine README.md files with precision-first style |
+| `/clean-work` | Clean the `.ai-work/` directory after pipeline completion |
+| `/memory` | Manage persistent memory (user prefs, learnings, conventions) |
+| `/onboard-project` | Onboard the current project to work with the ai-assistants ecosystem |
+| `/star-repo` | Star the ai-assistants-cfg repo on GitHub |
+
+See [`commands/README.md`](commands/README.md) for the full list and authoring guidance.
 
 ## Agents
 
-Nine autonomous agents for complex, multi-step tasks; each runs in its own context with skills and scoped tools. Available in Claude Code (plugin) and Cursor (via sub-agents-mcp). See [`agents/README.md`](agents/README.md) for the pipeline diagram and usage patterns.
+Eleven autonomous agents for complex, multi-step tasks; each runs in its own context with skills and scoped tools. Available in Claude Code (plugin) and Cursor (via sub-agents-mcp). See [`agents/README.md`](agents/README.md) for the pipeline diagram and usage patterns.
 
 | Agent | Description |
 |-------|-------------|
@@ -149,6 +159,8 @@ Nine autonomous agents for complex, multi-step tasks; each runs in its own conte
 | `verifier` | Post-implementation review against acceptance criteria |
 | `doc-engineer` | Documentation quality management (READMEs, catalogs, changelogs) |
 | `sentinel` | Independent ecosystem quality auditor |
+| `skill-genesis` | Post-pipeline learning harvest and artifact proposal |
+| `cicd-engineer` | CI/CD pipeline design, GitHub Actions, deployment automation |
 
 ## Rules
 

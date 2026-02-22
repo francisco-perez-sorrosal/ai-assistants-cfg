@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ai-assistants Installer — Entry point
 #
 # Routes to install_claude.sh (Claude Code / Claude Desktop) or
@@ -20,15 +20,6 @@ info()  { printf "  ✓ %s\n" "$*"; }
 warn()  { printf "  ⚠ %s\n" "$*"; }
 fail()  { printf "  ✗ %s\n" "$*" >&2; exit 1; }
 header() { printf "\n${B}%s${R}\n" "$*"; }
-
-# Build optional flag args for delegate scripts (at most one of check/dry-run/uninstall).
-build_flags() {
-    local flags=""
-    $CHECK    && flags="--check"
-    $DRY_RUN  && flags="--dry-run"
-    $UNINSTALL && flags="--uninstall"
-    echo "$flags"
-}
 
 # =============================================================================
 # Overview banner
@@ -133,29 +124,22 @@ fi
 
 show_overview "$MODE"
 
-FLAGS="$(build_flags)"
+# Build delegate args as array
+delegate_args=()
 
 case "$MODE" in
-    code)
-        if [ -n "$FLAGS" ]; then
-            exec "$SCRIPT_DIR/install_claude.sh" code $FLAGS
-        else
-            exec "$SCRIPT_DIR/install_claude.sh" code
-        fi
-        ;;
-    desktop)
-        if [ -n "$FLAGS" ]; then
-            exec "$SCRIPT_DIR/install_claude.sh" desktop $FLAGS
-        else
-            exec "$SCRIPT_DIR/install_claude.sh" desktop
-        fi
+    code|desktop)
+        delegate_args+=("$MODE")
+        $CHECK     && delegate_args+=(--check)
+        $DRY_RUN   && delegate_args+=(--dry-run)
+        $UNINSTALL && delegate_args+=(--uninstall)
+        exec "$SCRIPT_DIR/install_claude.sh" "${delegate_args[@]}"
         ;;
     cursor)
-        cursor_args=(cursor)
-        [ -n "$CURSOR_TARGET" ] && cursor_args+=("$CURSOR_TARGET")
-        $CHECK    && cursor_args+=(--check)
-        $DRY_RUN  && cursor_args+=(--dry-run)
-        $UNINSTALL && cursor_args+=(--uninstall)
-        exec "$SCRIPT_DIR/install_cursor.sh" "${cursor_args[@]}"
+        [ -n "$CURSOR_TARGET" ] && delegate_args+=("$CURSOR_TARGET")
+        $CHECK     && delegate_args+=(--check)
+        $DRY_RUN   && delegate_args+=(--dry-run)
+        $UNINSTALL && delegate_args+=(--uninstall)
+        exec "$SCRIPT_DIR/install_cursor.sh" "${delegate_args[@]}"
         ;;
 esac
