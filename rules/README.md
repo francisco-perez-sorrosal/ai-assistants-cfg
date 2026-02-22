@@ -1,6 +1,6 @@
 # Rules
 
-Rules are **contextual domain knowledge files** that Claude loads automatically based on relevance. They encode constraints, conventions, and reference material that Claude should apply when working in specific contexts — without requiring explicit invocation.
+Rules are **contextual domain knowledge files** that AI assistants load automatically based on relevance. They encode constraints, conventions, and reference material to apply in specific contexts — without explicit invocation. **Tool-agnostic:** compatible with **Claude** (Code/Desktop) and **Cursor**; Claude uses `~/.claude/rules/`, Cursor uses `.cursor/rules/` (exported with frontmatter by `./install.sh cursor`).
 
 ## Current Rules
 
@@ -31,24 +31,24 @@ rules/
 
 ### Loading Mechanism
 
-Rules are **not invoked explicitly**. Claude scans `.claude/rules/` and loads rules opportunistically based on:
+Rules are **not invoked explicitly**. The tool scans its rules directory (e.g. Claude: `.claude/rules/`, Cursor: `.cursor/rules/`) and loads rules opportunistically based on:
 
 1. **Current task** — what the user asked Claude to do
 2. **Files being read or edited** — the code or config Claude is working with
 3. **Semantic relevance** — filename and content matching against the current context
 
-When Claude executes a `/co` (commit) command, it automatically picks up `git-commit-message-format.md` and `git-commit-hygiene.md` because the task is semantically related. No `@`-reference or explicit import is needed.
+When you run a commit-related command, the assistant automatically picks up `git-commit-message-format.md` and `git-commit-hygiene.md` when the task is semantically related. No `@`-reference or explicit import is needed.
 
 ### What Rules Are NOT
 
 - Rules are **not callable** — there is no syntax to invoke a rule by name
 - Rules are **not procedural** — they don't contain step-by-step workflows (that's what Skills are for)
-- Rules are **not invoked** — there is no syntax to trigger a specific rule; Claude loads them based on scope (personal = all projects, project = that project) and optional `paths` filters
+- Rules are **not invoked** — there is no syntax to trigger a specific rule; the assistant loads them based on scope (personal = all projects, project = that project) and optional path/globs filters
 - Rules are **not executable** — they contain knowledge, not code
 
 ## Rules vs Skills vs CLAUDE.md
 
-Understanding when to use each configuration layer is critical for effective Claude setup.
+Understanding when to use each configuration layer is critical for effective assistant setup (Claude, Cursor, or similar).
 
 ### Decision Model
 

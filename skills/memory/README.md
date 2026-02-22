@@ -2,7 +2,7 @@
 
 Persistent, structured memory system that tracks user preferences, assistant learnings, project conventions, and relationship dynamics across sessions. Stores data in `.ai-state/memory.json` as a categorized, queryable JSON document.
 
-Complements Claude Code's built-in `MEMORY.md` (unstructured, auto-managed) with explicit categories, tags, confidence levels, and subcommands for retrieval and introspection.
+Complements built-in memory (e.g. Claude Code's `MEMORY.md`) with explicit categories, tags, confidence levels, and subcommands. Used via memory MCP in both Claude Code and Cursor (see main repo README).
 
 ## When to Use
 

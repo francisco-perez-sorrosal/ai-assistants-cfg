@@ -1,6 +1,6 @@
 # Commands
 
-Reusable slash commands for Claude Code. Each `.md` file becomes a `/command-name` invocable during interactive sessions.
+Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/command-name` invocable during interactive sessions. **Tool-agnostic:** compatible with Claude Code (plugin) and Cursor (exported as plain Markdown by `./install.sh cursor`).
 
 ## Available Commands
 
@@ -20,6 +20,7 @@ Reusable slash commands for Claude Code. Each `.md` file becomes a `/command-nam
 
 ## How Commands Work
 
-Commands are loaded automatically from `commands/` (plugin), `.claude/commands/` (project), or `~/.claude/commands/` (personal). Invoke with `/` prefix during interactive sessions.
+- **Claude Code**: Loaded from plugin `commands/`, `.claude/commands/` (project), or `~/.claude/commands/` (personal). Invoke with `/` (plugin commands may be namespaced, e.g. `/i-am:co`).
+- **Cursor**: Exported to `.cursor/commands/` or `~/.cursor/commands/` by `./install.sh cursor` (frontmatter stripped). Invoke with `/`.
 
 For authoring guidance, see the [`command-crafting`](../skills/command-crafting/) skill.

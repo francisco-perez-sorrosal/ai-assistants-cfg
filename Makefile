@@ -1,10 +1,10 @@
 SHELL := /bin/bash
 CLAUDE := $(HOME)/.local/bin/claude
 
-.PHONY: validate run install help
+.PHONY: validate run install install-claude install-claude-code install-cursor dry-run dry-run-claude dry-run-cursor help
 
 help: ## Show available targets
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-18s %s\n", $$1, $$2}'
 
 validate: ## Validate the plugin manifest
 	$(CLAUDE) plugin validate .
@@ -12,17 +12,23 @@ validate: ## Validate the plugin manifest
 run: validate ## Start Claude Code with the plugin (dev mode, no API key)
 	unset ANTHROPIC_API_KEY && $(CLAUDE) --plugin-dir $(CURDIR)
 
-install: ## Install Claude config + plugin via local marketplace
+install: ## Default: Claude config + plugin via local marketplace (interactive)
 	./install.sh
 
-status: ## Show what would be installed
-	@echo "Plugin: i-am v$$(jq -r .version .claude-plugin/plugin.json)"
-	@echo ""
-	@echo "Skills:"
-	@ls -1d skills/*/SKILL.md 2>/dev/null | sed 's|skills/\(.*\)/SKILL.md|  \1|'
-	@echo ""
-	@echo "Commands:"
-	@ls -1 commands/*.md 2>/dev/null | sed 's|commands/\(.*\)\.md|  /\1|'
-	@echo ""
-	@echo "Agents:"
-	@ls -1 agents/*.md 2>/dev/null | grep -v README.md | sed 's|agents/\(.*\)\.md|  \1|' || echo "  (none)"
+install-claude: ## Install Claude config + plugin via local marketplace
+	./install.sh
+
+install-claude-code: ## Install for Claude Code (./install.sh code)
+	./install.sh code
+
+install-cursor: ## Install for Cursor (user profile ~/.cursor/ or pass path)
+	./install.sh cursor
+
+dry-run: ## Dry-run for default target (Claude Code): show what would be installed
+	./install.sh code --dry-run
+
+dry-run-claude: ## Dry-run: show what would be installed for Claude (code)
+	./install.sh code --dry-run
+
+dry-run-cursor: ## Dry-run: show what would be installed for Cursor
+	./install.sh cursor --dry-run

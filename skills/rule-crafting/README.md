@@ -1,6 +1,6 @@
 # Rule Crafting Skill
 
-Skill for creating and managing rules — contextual domain knowledge files that Claude loads automatically based on relevance.
+Skill for creating and managing rules — contextual domain knowledge files that assistants (Claude, Cursor) load automatically based on relevance.
 
 ## When to Use
 
@@ -12,7 +12,7 @@ Skill for creating and managing rules — contextual domain knowledge files that
 
 ## Activation
 
-The skill activates automatically when Claude detects tasks related to:
+The skill activates automatically when the assistant detects tasks related to:
 
 - Creating or updating rules
 - Debugging rule loading or relevance matching

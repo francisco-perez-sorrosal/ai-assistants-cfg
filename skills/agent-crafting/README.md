@@ -1,6 +1,6 @@
 # Agent Crafting Skill
 
-Skill for creating and managing Claude Code agents (subagents) -- specialized AI assistants that run in separate context windows to handle specific workflows.
+Skill for creating and managing agents (subagents) — specialized AI assistants that run in separate context windows. Compatible with Claude Code and Cursor (see main repo README for install).
 
 ## When to Use
 

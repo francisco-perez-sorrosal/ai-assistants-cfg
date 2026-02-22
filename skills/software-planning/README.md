@@ -12,7 +12,7 @@ For simple tasks (bug fixes, single-module changes), skip this skill and use Tas
 
 ## Activation
 
-Load explicitly with `software-planning` or reference the three-document model. The skill activates when Claude detects significant development work that benefits from structured planning.
+Load explicitly with `software-planning` or reference the three-document model. The skill activates when the assistant detects significant development work that benefits from structured planning.
 
 ## Skill Contents
 

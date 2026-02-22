@@ -1,17 +1,29 @@
 # ai-assistants
 
-Configuration repository for AI coding assistants. Centralizes settings, skills, commands, agents, and rules -- currently targeting **Claude Code** and **Claude Desktop**.
+Configuration repository for AI coding assistants. Centralizes settings, skills, commands, agents, and rules in one **tool-agnostic** repo. Compatible with **Claude Desktop**, **Claude Code**, and **Cursor**; each tool uses its own install path (see Installation below).
 
 ## Installation
 
-Run the interactive installer — it walks through each choice, defaulting to the recommended option at each step.
+The main entry point is `install.sh`, which routes to `install_claude.sh` (Claude Code/Desktop) or `install_cursor.sh` (Cursor). Run the interactive installer — it walks through each choice, defaulting to the recommended option at each step.
 
 ```bash
-./install.sh              # Claude Code (default)
-./install.sh desktop      # Claude Desktop
-./install.sh --check      # Verify installation health
-./install.sh --uninstall  # Remove installation
+./install.sh                    # Claude Code (default)
+./install.sh desktop            # Claude Desktop
+./install.sh cursor             # Cursor → user profile ~/.cursor/
+./install.sh cursor /path/repo  # Cursor → per-project at /path/repo/.cursor/
+./install.sh cursor --check     # Verify Cursor install (user profile)
+./install.sh cursor /path --check  # Verify Cursor install (per-project)
+./install.sh code --dry-run     # Dry-run: show what would be installed (Claude Code)
+./install.sh cursor --dry-run   # Dry-run: show what would be installed (Cursor)
+./install.sh --check            # Verify installation health (code or desktop)
+./install.sh --uninstall        # Remove installation (code or desktop)
 ```
+
+For **Claude Code vs Cursor** differences (formats, discovery paths), see [docs/cursor-compat.md](docs/cursor-compat.md).
+
+**Config directories** — Installer resources live in tool-specific dirs so scripts stay clean and you can edit config without touching code:
+- **claude/config/** — Personal config files (CLAUDE.md, userPreferences.txt, claude_desktop_config.json) and lists (config_items.txt, stale_symlinks.txt). Install links these into `~/.claude/`. See [claude/config/README.md](claude/config/README.md).
+- **cursor/config/** — MCP template and expected servers: mcp.json.template (placeholders `{{MCP_ROOT}}`, `{{AGENTS_DIR_ABS}}`, `{{MEMORY_FILE}}`) and expected-mcp-servers.txt for `--check`. See [cursor/config/README.md](cursor/config/README.md).
 
 ### Claude Code (`./install.sh` or `./install.sh code`)
 
@@ -41,12 +53,59 @@ Links `claude_desktop_config.json` to the official Desktop location:
 
 Skills, commands, and agents are Claude Code features — run `./install.sh code` for the full feature set.
 
+### Cursor (`./install.sh cursor`)
+
+Installs skills, rules, commands, and MCP into Cursor’s discovery paths. Run from **this repo** (ai-assistants) root.
+
+**Two targets:**
+
+| Target | Command | Result |
+|--------|---------|--------|
+| **User profile (default)** | `./install.sh cursor` or `make install-cursor` | Installs into `~/.cursor/`. Skills, rules, commands, and MCP are available in **every** Cursor project. |
+| **Per project** | `./install.sh cursor /path/to/your/repo` | Installs into `/path/to/your/repo/.cursor/`. Only that project sees these artifacts when opened in Cursor. The path must be an existing directory. |
+
+Direct script usage (same repo root):
+
+```bash
+./install_claude.sh code                  # Claude Code (bypass router)
+./install_claude.sh desktop --check       # Claude Desktop health check
+./install_cursor.sh              # user profile ~/.cursor/
+./install_cursor.sh /path/to/repo # that repo’s .cursor/
+./install_cursor.sh --check       # Cursor health check
+./install_cursor.sh --dry-run     # Cursor dry-run (or use install.sh cursor --dry-run)
+```
+All three install paths support the same flags: `--check`, `--dry-run`, `--uninstall`.
+
+**What gets installed**
+
+| What | How |
+|------|-----|
+| Skills | Symlinks to this repo’s `skills/<name>/`. |
+| Rules | Exported with frontmatter (`description`, `alwaysApply: false`) for Cursor “Apply Intelligently”. |
+| Commands | Exported from `commands/*.md` (frontmatter stripped to plain Markdown). |
+| MCP | `mcp.json` with task-chronograph, memory, and **sub-agents** ([sub-agents-mcp](https://github.com/shinpr/sub-agents-mcp)); server paths always point at **this repo** (override with `CURSOR_REPO_ROOT`). |
+
+MCP: task-chronograph and memory require `uv`; sub-agents requires **Node/npx**. Re-run the install after cloning this repo or when you want to refresh. For **per-project** installs, the target repo’s `.cursor/` is usually gitignored so each clone runs the installer; for **user profile**, `~/.cursor/` is persistent.
+
+**Agents** — Installed with the rest: one script configures [sub-agents-mcp](https://github.com/shinpr/sub-agents-mcp) so Cursor uses this repo’s `agents/*.md`. Run `./install.sh cursor` (or `make install-cursor`); agents appear in Cursor once the MCP server is running. Requires Node/npx.
+
+**Dry-run** — See what would be installed without writing: `./install.sh code --dry-run`, `./install.sh cursor --dry-run`, or `make dry-run-cursor` (and `make dry-run-claude` for Claude Code).
+
+**Verification** — Run a health check:
+
+```bash
+./install.sh cursor --check           # user profile ~/.cursor/
+./install.sh cursor /path/to/repo --check   # per-project
+```
+
+The check verifies `skills/`, `rules/`, `commands/`, and `mcp.json` (with task-chronograph, memory, sub-agents). In Cursor, confirm **Settings → Tools & MCP** lists the MCP servers.
+
 ### User preferences (Claude Desktop / iOS)
 
 On devices without filesystem access (e.g., Claude iOS app) or when using Claude Desktop without the CLI, paste the following into the **User Preferences** field in Claude's settings:
 
 ```text
-Read the user preferences from https://raw.githubusercontent.com/francisco-perez-sorrosal/ai-assistants-cfg/main/.claude/userPreferences.txt and follow them before any other interaction
+Read the user preferences from https://raw.githubusercontent.com/francisco-perez-sorrosal/ai-assistants-cfg/main/claude/config/userPreferences.txt and follow them before any other interaction
 ```
 
 This tells Claude to fetch and apply the adaptive precision mode instructions at the start of each conversation.
@@ -63,7 +122,7 @@ Reusable knowledge modules loaded automatically based on context. See [`skills/R
 
 ## Commands
 
-Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin, use `/i-am:<name>`. See [`commands/README.md`](commands/README.md) for details.
+Slash commands invoked with `/<name>`. In Claude Code (plugin) use `/i-am:<name>`; in Cursor they are exported to `.cursor/commands/`. See [`commands/README.md`](commands/README.md) for details.
 
 | Command | Description |
 |---------|-------------|
@@ -77,7 +136,7 @@ Slash commands invoked with `/<name>` in Claude Code. When installed as a plugin
 
 ## Agents
 
-Nine autonomous agents that Claude delegates complex tasks to. Each runs in its own context window with injected skills and scoped tool permissions. See [`agents/README.md`](agents/README.md) for the pipeline diagram and usage patterns.
+Nine autonomous agents for complex, multi-step tasks; each runs in its own context with skills and scoped tools. Available in Claude Code (plugin) and Cursor (via sub-agents-mcp). See [`agents/README.md`](agents/README.md) for the pipeline diagram and usage patterns.
 
 | Agent | Description |
 |-------|-------------|
@@ -93,7 +152,7 @@ Nine autonomous agents that Claude delegates complex tasks to. Each runs in its 
 
 ## Rules
 
-Domain knowledge files eagerly loaded by Claude within scope (personal rules for all projects, project rules for that project). See [`rules/README.md`](rules/README.md) for the full catalog, writing guidelines, and the rules-vs-skills-vs-CLAUDE.md decision model.
+Domain knowledge files loaded by the assistant within scope (personal = all projects, project = that project). Compatible with Claude and Cursor; see [`rules/README.md`](rules/README.md) for the full catalog, writing guidelines, and the rules-vs-skills decision model.
 
 ---
 

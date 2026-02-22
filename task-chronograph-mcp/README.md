@@ -1,6 +1,6 @@
 # Task Chronograph
 
-Real-time observability for Claude Code agent pipelines. The web dashboard shows an **interaction timeline** -- the full story of what happens between a user query and the final response, with all delegations, results, and decisions visible -- alongside **agent status cards** tracking each agent's phase progress and health.
+Real-time observability for agent pipelines. Used by **Claude Code** (plugin) and **Cursor** (via `./install.sh cursor`). The web dashboard shows an **interaction timeline** -- the full story of what happens between a user query and the final response, with all delegations, results, and decisions visible -- alongside **agent status cards** tracking each agent's phase progress and health.
 
 ## Quick Start
 

@@ -1,0 +1,4 @@
+CLAUDE.md
+claude_desktop_config.json
+userPreferences.txt
+settings.local.json

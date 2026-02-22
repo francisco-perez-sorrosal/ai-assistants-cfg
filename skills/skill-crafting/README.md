@@ -1,6 +1,6 @@
 # Skill Crafting Skill
 
-Meta-skill for creating and optimizing Agent Skills — the open format for extending AI agents with specialized knowledge and workflows.
+Meta-skill for creating and optimizing Agent Skills — the open format for extending AI agents with specialized knowledge and workflows. Compatible with Claude Code, Cursor, and other Agent Skills–compatible tools.
 
 ## When to Use
 

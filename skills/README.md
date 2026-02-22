@@ -1,6 +1,6 @@
 # Skills
 
-Reusable skill modules for Claude Code. Each skill is a self-contained directory with a `SKILL.md` that Claude loads automatically based on activation triggers.
+Reusable skill modules for AI coding assistants. Each skill is a self-contained directory with a `SKILL.md` (Agent Skills standard). **Tool-agnostic:** compatible with Claude Code, Cursor, and other tools that support the standard; load automatically based on activation triggers.
 
 ## Available Skills
 
@@ -46,12 +46,12 @@ Reusable skill modules for Claude Code. Each skill is a self-contained directory
 
 ## How Skills Work
 
-Skills are loaded automatically when Claude detects a matching context based on each skill's `description` field in its frontmatter. You can also reference them explicitly (e.g., "load the `refactoring` skill").
+Skills are loaded automatically when the assistant detects a matching context based on each skill's `description` field in its frontmatter. You can also reference them explicitly (e.g., "load the `refactoring` skill").
 
 ### Activation
 
-- **Automatic**: Claude matches your task context against skill `description` triggers
-- **Explicit**: Reference a skill by name in conversation or from `CLAUDE.md`
+- **Automatic**: The tool matches your task context against skill `description` triggers
+- **Explicit**: Reference a skill by name in conversation or from project instructions (`CLAUDE.md`, `AGENTS.md`, etc.)
 
 ### Structure
 
@@ -64,6 +64,6 @@ Larger skills use **progressive disclosure** with supporting files (`REFERENCE.m
 
 ### Storage Locations
 
-- **This repository**: `skills/` at the root (distributed as a plugin)
-- **Consumer projects** (shared via git): `.claude/skills/`
-- **Personal** (user-specific): `~/.claude/skills/`
+- **This repository**: `skills/` at the root (source of truth)
+- **Claude Code**: Plugin install copies to cache; also `.claude/skills/` (project), `~/.claude/skills/` (personal)
+- **Cursor**: `.cursor/skills/` or `.claude/skills/` (project), `~/.cursor/skills/` or `~/.claude/skills/` (personal). Install via `./install.sh cursor`

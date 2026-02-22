@@ -3,6 +3,8 @@
 .claude/settings.local.json
 .claude/hooks/logs/
 
+.cursor/
+
 # The following skills belong to another project.
 skills/ticker
 skills/stock-clusters

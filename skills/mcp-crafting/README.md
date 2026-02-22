@@ -8,7 +8,7 @@ Guidance for building [Model Context Protocol](https://modelcontextprotocol.io) 
 - Defining tools, resources, or prompts for an MCP server
 - Configuring transports (stdio, streamable HTTP)
 - Testing MCP servers with the MCP Inspector or language-specific test frameworks
-- Integrating with Claude Desktop or Claude Code
+- Integrating with Claude Desktop, Claude Code, or Cursor
 - Packaging MCP servers as bundles (`.mcpb`) for distribution
 - Deploying MCP servers (Docker, containers, package registries)
 - Debugging MCP server issues (logging, error handling, stdout corruption)

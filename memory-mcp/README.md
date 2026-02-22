@@ -1,6 +1,6 @@
 # Memory MCP Server
 
-Persistent, intelligent memory for AI coding assistants. An MCP server that stores memories in a JSON file with deduplication-on-write, access tracking, ranked search, lifecycle analysis, and cross-reference links.
+Persistent, intelligent memory for AI coding assistants. **Tool-agnostic:** used by **Claude Code** (plugin) and **Cursor** (via `./install.sh cursor`). Stores memories in a JSON file with deduplication-on-write, access tracking, ranked search, lifecycle analysis, and cross-reference links.
 
 ## Quick Start
 

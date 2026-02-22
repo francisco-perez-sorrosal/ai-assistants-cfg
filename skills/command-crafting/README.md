@@ -1,6 +1,6 @@
 # Command Crafting Skill
 
-Skill for creating and managing slash commands — reusable, user-invoked prompts stored as Markdown files.
+Skill for creating and managing slash commands — reusable, user-invoked prompts stored as Markdown files. Compatible with Claude Code and Cursor (see main repo README).
 
 ## When to Use
 
@@ -11,7 +11,7 @@ Skill for creating and managing slash commands — reusable, user-invoked prompt
 
 ## Activation
 
-The skill activates automatically when Claude detects tasks related to:
+The skill activates automatically when the assistant detects tasks related to:
 
 - Creating custom slash commands
 - Debugging command behavior or argument handling
