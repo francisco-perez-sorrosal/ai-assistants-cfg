@@ -44,11 +44,12 @@ For your assigned step:
 1. **Understand scope** — read the step's Implementation and Done when fields. Identify the files you will create or modify. If in parallel mode, verify your step's `Files` field does not overlap with other concurrent steps.
 2. **Read existing code** — before modifying any file, read it first. Understand the patterns, conventions, and structure already in place.
 3. **Implement** — write the code described in the step. Follow existing patterns and conventions. Keep changes focused on the step's scope.
-4. **Run verification** — execute tests, linters, or validation commands specified in the step's Testing field. If no testing field exists, run available project-level checks (e.g., `ruff check`, `mypy`, `pytest`).
-5. **Self-review** — check your changes against the coding-style conventions (see below).
-6. **Update WIP.md** — mark your step as complete (see WIP.md Update Protocol).
-7. **Update LEARNINGS.md** — record any discoveries (see LEARNINGS.md Protocol).
-8. **Report** — stop and report one of: `[COMPLETE]`, `[BLOCKED]`, or `[CONFLICT]`.
+4. **Format and lint** — after implementation, run all project formatters and linters in fix mode to auto-correct style and lint violations. Detect tools from config files (`pyproject.toml`, `package.json`, `.prettierrc`, etc.) and run them. Common examples: `ruff format && ruff check --fix` (Python), `prettier --write && eslint --fix` (JS/TS), `rustfmt` (Rust), `gofmt` (Go). Fix any remaining violations that auto-fix cannot resolve.
+5. **Run tests** — execute tests or validation commands specified in the step's Testing field. If no testing field exists, run available project-level checks (e.g., `pytest`, `mypy`, `tsc --noEmit`).
+6. **Self-review** — check your changes against the coding-style conventions (see below).
+7. **Update WIP.md** — mark your step as complete (see WIP.md Update Protocol).
+8. **Update LEARNINGS.md** — record any discoveries (see LEARNINGS.md Protocol).
+9. **Report** — stop and report one of: `[COMPLETE]`, `[BLOCKED]`, or `[CONFLICT]`.
 
 ## Self-Review
 
@@ -111,7 +112,8 @@ Record anything that would help future steps: unexpected file structures, gotcha
 | --- | --- |
 | Implement a single plan step | Choose which step to implement next |
 | Write production code and tests | Redesign architecture or modify the plan |
-| Run tests and linters | Make go/no-go decisions on the feature |
+| Apply formatters and linters in fix mode | Make go/no-go decisions on the feature |
+| Run tests and type checkers | Skip formatting or linting steps |
 | Self-review using coding-style conventions | Skip steps or reorder the plan |
 | Update WIP.md with step completion status | Decide whether to invoke the verifier |
 | Report blockers with evidence | Fix blockers that require plan changes |
@@ -122,7 +124,7 @@ Record anything that would help future steps: unexpected file structures, gotcha
 At each phase transition, append a single line to `.ai-work/PROGRESS.md` (create the file and `.ai-work/` directory if they do not exist):
 
 ```
-[TIMESTAMP] [implementer] Phase N/8: [phase-name] -- [one-line summary of what was done or found]
+[TIMESTAMP] [implementer] Phase N/9: [phase-name] -- [one-line summary of what was done or found]
 ```
 
 Write the line immediately upon entering each new phase. Include optional hashtag labels at the end for categorization (e.g., `#observability #feature=auth`).
