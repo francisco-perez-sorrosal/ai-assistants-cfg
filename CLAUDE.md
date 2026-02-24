@@ -1,50 +1,33 @@
 # ai-assistants
 
-Configuration repository for AI coding assistants. The goal is to centralize and version-control settings, skills, commands, and agents across different AI tools (Claude Code, Claude Desktop, Cursor, ChatGPT, etc.), sharing reusable pieces where possible.
+The operational infrastructure for the development philosophy defined in `~/.claude/CLAUDE.md`. This repo provides the skills, agents, rules, commands, and MCP servers that make the philosophy actionable across projects.
 
-## Status
+## How the Ecosystem Serves the Philosophy
 
-Early stage. Currently targeting **Claude Code**, **Claude Desktop**, and **Cursor**.
+| Principle | Operationalized By |
+|---|---|
+| **Context engineering** | Skills — right domain knowledge loaded on demand via progressive disclosure |
+| **Understand, Plan, Verify** | Agent pipeline — from ideation through verification, each agent owning one phase |
+| **Conventions and consistency** | Rules — coding style, git hygiene, coordination protocols enforced automatically |
+| **Learning loop** | Memory MCP + `LEARNINGS.md` — persistent knowledge across sessions, ephemeral within pipelines |
+| **Frequent workflows** | Commands — commits, worktrees, scaffolding, memory management as repeatable actions |
 
-## Structure
+The ecosystem is auto-discovered. Skills, agents, rules, and commands are never enumerated in always-loaded context — Claude finds them via filesystem scanning. `README.md` and per-directory READMEs are the human-facing catalogs.
 
-- `skills/` — Shared skill modules (assistant-agnostic)
-- `commands/` — Shared slash commands
-- `agents/` — Shared agent definitions
-- `rules/` — Rules installed to `~/.claude/rules/` or `.cursor/rules/` (auto-loaded by the assistant)
-- `.claude-plugin/` — Claude Code plugin manifest (`i-am`)
-  - `plugin.json` — Plugin name, version, component paths
-  - `PLUGIN_SCHEMA_NOTES.md` — Validator constraints reference
-- `claude/config/` — Claude personal config (symlinked to `~/.claude/` by `install_claude.sh`)
-  - `CLAUDE.md` — Global development guidelines
-  - `claude_desktop_config.json` — Claude Desktop settings (MCP servers)
-  - `userPreferences.txt` — Adaptive precision mode instructions
-  - `settings.local.json` — Local permission settings (gitignored)
-- `cursor/config/` — Cursor installer config (MCP template, export scripts)
-- `docs/` — Cross-cutting documentation (cursor-compat.md)
-- `task-chronograph-mcp/` — Pipeline observability MCP server (agent lifecycle, interactions, dashboard)
-- `memory-mcp/` — Persistent memory MCP server
-- `install.sh` — Installer router; delegates to `install_claude.sh` or `install_cursor.sh`
-- `install_claude.sh` — Claude Code / Desktop installer
-- `install_cursor.sh` — Cursor installer
+## Working Here
 
-## Working on this Repo
+- Load the matching crafting skill before modifying any component: `skill-crafting` for skills, `agent-crafting` for agents, `command-crafting` for commands, `rule-crafting` for rules
+- **Never modify `~/.claude/plugins/cache/`** — edit source files in this repo; installed copies get overwritten on reinstall
+- **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 8,500 tokens (~29,750 chars). Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge
+- See `README.md` for user-facing docs, `README_DEV.md` for contributor conventions, `skills/README.md` for the skill catalog
 
-- When adding or modifying skills, load the `skill-crafting` skill for spec compliance
-- When adding or modifying commands, load the `command-crafting` skill
-- When adding or modifying agents, load the `agent-crafting` skill
-- When adding or modifying rules, load the `rule-crafting` skill
-- Follow commit conventions in `rules/` (auto-loaded by Claude when relevant)
-- **Never modify `~/.claude/plugins/cache/`** — it contains installed copies that get overwritten on reinstall; always edit source files in this repo instead
-- **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 8,500 tokens (~29,750 chars). Before adding a new rule, verify the budget. Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge
-- See `README.md` for user-facing documentation, `README_DEV.md` for contributor conventions, and `skills/README.md` for the skill catalog
-- **Session memory**: At the start of each session, call the `session_start` memory MCP tool to load context about the user, project conventions, and past learnings. If `memories.assistant.name` is missing, pick a random name and call `remember` to store it immediately. Use the memory MCP tools proactively to store discoveries during the session. Be curious about the user -- learn their interests, background, and working style over time
+## Session Protocol
 
-## Design Intent
+At session start, call `session_start` on the memory MCP to load context about the user, project conventions, and past learnings. If `memories.assistant.name` is missing, pick a random name and store it immediately. Use memory MCP tools proactively during the session to store discoveries. Be curious about the user — learn their interests, background, and working style over time.
 
-- **Shared assets at the root**: `skills/`, `commands/`, `agents/` are assistant-agnostic
+## Design Principles
+
+- **Assistant-agnostic shared assets**: `skills/`, `commands/`, `agents/` at the repo root, reusable across tools
 - **Assistant-specific config in subdirectories**: `claude/config/` for Claude, `cursor/config/` for Cursor
-- **Plugin distribution**: Skills, commands, and agents installed via Claude Code plugin system
-- **Personal config via symlinks**: `install_claude.sh` symlinks `claude/config/` files to `~/.claude/`; `install_cursor.sh` symlinks skills and rules into `.cursor/` or `~/.cursor/`
-- Skills use progressive disclosure: metadata at startup, full content on activation, reference files on demand
-- **Do not list skills, commands, agents, or rules in CLAUDE.md** — Claude auto-discovers all of them via filesystem scanning (plugin directories, `~/.claude/rules/`). Enumerating them in always-loaded context wastes tokens and creates sync burden. The `README.md` and per-directory READMEs serve as human-facing catalogs instead
+- **Progressive disclosure**: Skills load metadata at startup, full content on activation, reference files on demand — keeping token cost minimal
+- **Auto-discovery over enumeration**: Components discovered via filesystem scanning; enumerating them in always-loaded context wastes tokens and creates sync burden
