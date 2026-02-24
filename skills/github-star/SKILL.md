@@ -1,6 +1,7 @@
 ---
 description: Prompt the user to star the ai-assistants-cfg GitHub repository. Use when the user invokes the star-repo command or explicitly asks about starring the project.
 allowed-tools: [Bash(gh:*), AskUserQuestion]
+compatibility: Claude Code
 ---
 
 # GitHub Star

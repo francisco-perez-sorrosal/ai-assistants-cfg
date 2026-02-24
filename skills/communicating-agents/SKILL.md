@@ -6,6 +6,7 @@ description: Agent-to-agent communication protocols for multi-agent interoperabi
   organizations, exposing agents via A2A endpoints, implementing agent discovery,
   or integrating A2A with AI frameworks (ADK, LangGraph, CrewAI, Pydantic AI).
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
+compatibility: Claude Code
 ---
 
 # Communicating Agents

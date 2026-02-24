@@ -1,5 +1,5 @@
 ---
-description: Creating and managing Claude Code rules -- contextual domain knowledge
+description: Creating and managing rules -- contextual domain knowledge
   files loaded automatically based on relevance. Covers rule structure, path-specific
   rules, naming for relevance matching, content guidelines, and the rules-vs-skills-vs-CLAUDE.md
   decision model. Use when creating new rules, updating existing rules, debugging

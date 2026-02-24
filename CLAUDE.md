@@ -4,15 +4,7 @@ The operational infrastructure for the development philosophy defined in `~/.cla
 
 ## How the Ecosystem Serves the Philosophy
 
-| Principle | Operationalized By |
-|---|---|
-| **Context engineering** | Skills — right domain knowledge loaded on demand via progressive disclosure |
-| **Understand, Plan, Verify** | Agent pipeline — from ideation through verification, each agent owning one phase |
-| **Conventions and consistency** | Rules — coding style, git hygiene, coordination protocols enforced automatically |
-| **Learning loop** | Memory MCP + `LEARNINGS.md` — persistent knowledge across sessions, ephemeral within pipelines |
-| **Frequent workflows** | Commands — commits, worktrees, scaffolding, memory management as repeatable actions |
-
-The ecosystem is auto-discovered. Skills, agents, rules, and commands are never enumerated in always-loaded context — Claude finds them via filesystem scanning. `README.md` and per-directory READMEs are the human-facing catalogs.
+See the mapping table in `~/.claude/CLAUDE.md` under "The Ecosystem as Philosophy's Implementation." This repo is where those components live — skills, agents, rules, commands, and MCP servers are all authored and maintained here.
 
 ## Working Here
 
@@ -23,11 +15,12 @@ The ecosystem is auto-discovered. Skills, agents, rules, and commands are never 
 
 ## Session Protocol
 
-At session start, call `session_start` on the memory MCP to load context about the user, project conventions, and past learnings. If `memories.assistant.name` is missing, pick a random name and store it immediately. Use memory MCP tools proactively during the session to store discoveries. Be curious about the user — learn their interests, background, and working style over time.
+At session start, call `session_start` on the memory MCP to load context about the user, project conventions, and past learnings (Recall). Store discoveries proactively during the session (Learn). Apply past insights to current tasks (Apply). This implements the Learning Loop from the global philosophy.
+
+If `memories.assistant.name` is missing, pick a random name and store it immediately. Be curious about the user — learn their interests, background, and working style over time.
 
 ## Design Principles
 
 - **Assistant-agnostic shared assets**: `skills/`, `commands/`, `agents/` at the repo root, reusable across tools
 - **Assistant-specific config in subdirectories**: `claude/config/` for Claude, `cursor/config/` for Cursor
 - **Progressive disclosure**: Skills load metadata at startup, full content on activation, reference files on demand — keeping token cost minimal
-- **Auto-discovery over enumeration**: Components discovered via filesystem scanning; enumerating them in always-loaded context wastes tokens and creates sync burden

@@ -40,6 +40,12 @@ Agents live in `agents/` (this repo) or `.claude/agents/` (consumer projects). I
 | `systems-architect` | Trade-off analysis, codebase readiness, system design |
 | `implementation-planner` | Step decomposition, execution supervision |
 | `context-engineer` | Context artifact auditing, architecture, and optimization |
+| `implementer` | Step execution with skill-augmented coding and self-review |
+| `verifier` | Post-implementation review against acceptance criteria |
+| `doc-engineer` | Documentation quality management (READMEs, catalogs, changelogs) |
+| `sentinel` | Independent ecosystem quality auditor |
+| `skill-genesis` | Post-pipeline learning harvest and artifact proposal |
+| `cicd-engineer` | CI/CD pipeline design, GitHub Actions, deployment automation |
 
 ## Related Skills
 

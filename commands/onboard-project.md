@@ -41,7 +41,7 @@ Check whether a `CLAUDE.md` file exists at the project root.
 - After `claude init` completes (or if `CLAUDE.md` already exists), append this line if not already present:
 
 ```
-Prefer delegating to specialized agents (researcher, context-engineer, implementer, etc.) over doing multi-step work directly.
+Follow the Understand, Plan, Verify methodology. Spawn specialized agents for multi-step work — each has a distinct specialty.
 ```
 
 ### 5. Existing `.ai-work/` leftovers

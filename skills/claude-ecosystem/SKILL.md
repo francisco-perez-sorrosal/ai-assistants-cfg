@@ -6,6 +6,7 @@ description: Anthropic Claude platform knowledge -- Claude API features, Anthrop
   models, integrating Anthropic client SDKs (Python or TypeScript), choosing between
   Agent SDK and Messages API, or navigating Anthropic documentation.
 allowed-tools: [Read, Glob, Grep]
+compatibility: Claude Code
 ---
 
 # Claude Ecosystem

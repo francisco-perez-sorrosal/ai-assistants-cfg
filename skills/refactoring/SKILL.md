@@ -1,6 +1,7 @@
 ---
 description: Pragmatic refactoring practices emphasizing modularity, low coupling, high cohesion, and incremental improvement. Use when restructuring code, improving design, reducing coupling, organizing codebases, extracting modules, eliminating code smells, or discussing refactoring patterns and code organization.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
+compatibility: Claude Code
 ---
 
 # Pragmatic Refactoring
@@ -11,7 +12,7 @@ Systematic approach to refactoring that prioritizes modularity, low coupling, hi
 
 **Pragmatism First**: Every refactoring must have a clear purpose. Never refactor for the sake of refactoring.
 
-**Small, Bold Steps**: Make incremental changes that keep the system working. Each step should be independently committable.
+**Small, Safe Steps**: Make incremental changes that keep the system working. Each step should be independently committable.
 
 **Behavior Preservation**: Refactoring changes structure, not behavior. Tests should pass before and after.
 

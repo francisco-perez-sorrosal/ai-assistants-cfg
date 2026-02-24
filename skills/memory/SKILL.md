@@ -1,6 +1,7 @@
 ---
 description: Persistent memory system for tracking user preferences, assistant learnings, project conventions, and relationship dynamics across sessions. Use when remembering user preferences, storing project decisions, recalling past interactions, managing assistant self-knowledge, or when starting a new session to load context about the user.
 argument-hint: "session_start | remember | recall | search | forget | status | reflect | about_me | about_us | export_memories"
+compatibility: Claude Code
 ---
 
 # Persistent Memory

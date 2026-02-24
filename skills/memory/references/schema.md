@@ -245,7 +245,7 @@ A complete v1.2 example showing entries across all categories:
     },
     "relationships": {
       "collaboration_style": {
-        "value": "Pragmatic, direct, values bold incremental changes. Prefers proactive agent usage.",
+        "value": "Pragmatic, direct, values purposeful incremental evolution. Prefers proactive agent usage.",
         "created_at": "2026-02-09T14:00:00Z",
         "updated_at": "2026-02-09T14:00:00Z",
         "tags": ["user-facing", "collaboration"],

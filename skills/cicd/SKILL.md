@@ -6,6 +6,7 @@ description: CI/CD pipeline design and GitHub Actions workflow authoring. Covers
   automation, debugging workflow failures, optimizing pipeline performance, or reviewing
   CI/CD configuration for security and correctness.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
+compatibility: Claude Code
 ---
 
 # CI/CD Pipeline Development

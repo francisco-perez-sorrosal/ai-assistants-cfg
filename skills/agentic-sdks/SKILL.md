@@ -6,6 +6,7 @@ description: Building AI agents with production SDKs -- OpenAI Agents SDK and Cl
   between agent frameworks, integrating tools or MCP servers, or implementing agent
   safety patterns. Language modules available for Python and TypeScript.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
+compatibility: Claude Code
 ---
 
 # Agentic SDKs

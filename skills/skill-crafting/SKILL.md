@@ -5,6 +5,7 @@ description: Creating, updating, and optimizing Agent Skills for Claude Code,
   updating or modernizing existing skills, converting memory files to skills,
   debugging skill activation, or understanding skill architecture and best practices.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
+compatibility: Claude Code
 ---
 
 # Skill Creator

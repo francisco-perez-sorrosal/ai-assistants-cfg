@@ -16,6 +16,7 @@ Conventions for when and how to use the available software agents -- autonomous 
 | `doc-engineer` | Documentation quality (READMEs, catalogs, changelogs) | Doc report or file fixes | Yes |
 | `sentinel` | Read-only ecosystem auditor (independent, not a pipeline stage) | `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md` | Yes |
 | `skill-genesis` | Learning triage, artifact proposal from experience | `SKILL_GENESIS_REPORT.md` | No |
+| `cicd-engineer` | CI/CD pipeline design, GitHub Actions, deployment automation | Workflow files + pipeline config | Yes |
 
 ### Proactive Agent Usage
 
@@ -62,6 +63,7 @@ promethean --> researcher --> systems-architect --> implementation-planner --> i
 | Doc-engineer | Maintains project documentation | Manage context artifacts |
 | Sentinel | Diagnoses and reports across ecosystem | Fix artifacts |
 | Skill-Genesis | Triages learnings into artifact proposals, delegates creation | Ideate features, audit ecosystem, create artifacts |
+| CI/CD Engineer | Designs and writes CI/CD pipelines, optimizes and debugs workflows | Modify application code, manage infrastructure |
 
 When an agent encounters work outside its boundary, it flags the need and recommends invoking the appropriate agent.
 

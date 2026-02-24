@@ -5,6 +5,7 @@ description: >
   compliance, conducting post-implementation verification, reviewing pull requests,
   or performing ad-hoc code quality assessments.
 allowed-tools: [Read, Glob, Grep, Bash]
+compatibility: Claude Code
 ---
 
 # Code Review

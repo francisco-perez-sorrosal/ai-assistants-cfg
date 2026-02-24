@@ -1,5 +1,5 @@
 ---
-description: Creating and managing slash commands for Claude Code -- reusable user-invoked prompts with arguments, tool permissions, and dynamic context. Use when creating custom slash commands, debugging command behavior, fixing argument substitution, converting prompts to reusable commands, or organizing commands with namespacing.
+description: Creating and managing slash commands -- reusable user-invoked prompts with arguments, tool permissions, and dynamic context. Use when creating custom slash commands, debugging command behavior, fixing argument substitution, converting prompts to reusable commands, or organizing commands with namespacing.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 compatibility: Claude Code
 ---
