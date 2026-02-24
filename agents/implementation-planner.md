@@ -177,7 +177,7 @@ None
 
 Parallel Mode (when parallel groups exist): Use the WIP.md parallel format from the software-planning skill. Key fields: `Mode: parallel`, `Steps: [list]`, per-step `Assignee`, `Status`, and `Files`.
 
-**LEARNINGS.md** — initialize using the structure from the software-planning skill (sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical Debt).
+**LEARNINGS.md** — initialize using the structure from the software-planning skill (sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical Debt). Every entry must be prefixed with the source agent in brackets (e.g., `**[implementation-planner]**`). Tag your own entries with `[implementation-planner]`.
 
 ### Phase 7 — Execution Supervision
 

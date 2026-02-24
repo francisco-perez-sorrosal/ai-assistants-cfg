@@ -106,26 +106,31 @@ Update WIP.md:
 # Learnings: [Feature Name]
 
 ## Gotchas
-- **[Title]**: Context, issue, solution
+- **[implementation-planner] [Title]**: Context, issue, solution
+- **[implementer] [Title]**: Context, issue, solution
 
 ## Patterns That Worked
-- **[Title]**: What, why it works, brief example
+- **[implementer] [Title]**: What, why it works, brief example
 
 ## Decisions Made
-- **[Title]**: Options considered, decision, rationale, trade-offs
+- **[implementation-planner] [Title]**: Options considered, decision, rationale, trade-offs
 
 ## Edge Cases
-- [Edge case]: How we handled it
+- **[implementer]** [Edge case]: How we handled it
 
 ## Technical Debt
-- [Item]: What was compromised, why, future improvement needed
+- **[verifier]** [Item]: What was compromised, why, future improvement needed
 ```
+
+### Attribution Convention
+
+Every entry must be prefixed with the source agent or actor in brackets: `**[agent-name]**`. This makes authorship unambiguous when multiple agents write to the same file. Common sources: `[implementation-planner]`, `[implementer]`, `[verifier]`, `[main-agent]`.
 
 ### Capture Learnings As They Occur
 
 Don't wait until the end. When you discover something:
 
-1. Add it to LEARNINGS.md immediately
+1. Add it to LEARNINGS.md immediately with your `**[agent-name]**` tag
 2. Continue with current work
 3. At end of feature, learnings are ready to merge
 

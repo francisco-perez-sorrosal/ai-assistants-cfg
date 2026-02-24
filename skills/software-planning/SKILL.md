@@ -206,7 +206,7 @@ Track current step, status (IMPLEMENTING/TESTING/REVIEWING/WAITING/COMPLETE), pr
 
 ## LEARNINGS.md Structure
 
-Sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical Debt. Capture learnings immediately as they occur -- don't wait until the end.
+Sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical Debt. Capture learnings immediately as they occur -- don't wait until the end. Every entry must be tagged with the source: `**[agent-name]**` (e.g., `[implementation-planner]`, `[implementer]`, `[verifier]`, `[main-agent]`).
 
 --> See [references/document-templates.md](references/document-templates.md#learningsmd-structure) for the full template.
 

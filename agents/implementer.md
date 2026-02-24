@@ -86,6 +86,8 @@ You write ONLY to your own step's fields:
 - **Sequential mode**: write directly to topic-based sections (`Gotchas`, `Patterns That Worked`, `Decisions Made`, etc.)
 - **Parallel mode**: write to a step-specific section (`### Step N Learnings`). The planner merges these into topic-based sections during coherence review.
 
+**Attribution**: prefix every entry with `**[implementer]**` so authorship is unambiguous. Example: `- **[implementer] Unexpected config path**: The settings file is loaded from...`
+
 Record anything that would help future steps: unexpected file structures, gotchas, patterns that worked, decisions made and why.
 
 ## Collaboration Points

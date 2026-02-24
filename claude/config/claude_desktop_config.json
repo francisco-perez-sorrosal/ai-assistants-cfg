@@ -10,14 +10,6 @@
         "~/dev/ai-assistants/"
       ]
     },
-    "dash-api": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/Kapeli/dash-mcp-server.git",
-        "dash-mcp-server"
-      ]
-    },
     "synx_mcp_fps": {
       "command": "npx",
       "args": [

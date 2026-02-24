@@ -102,7 +102,7 @@ Skip this phase entirely in standalone mode.
    - **FAIL** -- any acceptance criterion not met, or FAIL findings in convention compliance
 3. Write `VERIFICATION_REPORT.md` to `.ai-work/`
 4. Include the disclaimer: "Automated review complements but does not replace human judgment."
-5. Include the merge-to-LEARNINGS reminder: "Before deleting this report, merge recurring patterns and systemic quality issues into LEARNINGS.md."
+5. Include the merge-to-LEARNINGS reminder: "Before deleting this report, merge recurring patterns and systemic quality issues into LEARNINGS.md. Tag merged entries with `**[verifier]**` for attribution."
 
 ## Collaboration Points
 
