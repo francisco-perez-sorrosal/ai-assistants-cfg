@@ -32,6 +32,8 @@ Spawn agents without waiting for the user to ask:
 
 **Depth check:** Before spawning an agent recommended by another agent's output, confirm with the user if doing so would create a chain of 3+ agents from the original request.
 
+**Multiplicity check:** Before spawning any Bg Safe agent, check whether the work decomposes into N independent targets with disjoint file sets. If so, spawn N instances (up to the concurrency limit in Intra-Stage Parallelism) rather than one sequential agent.
+
 ### Coordination Pipeline
 
 Agents communicate through shared documents, not direct invocation.
@@ -98,22 +100,28 @@ Launch independent agents concurrently whenever possible.
 | Multiple independent research questions | One agent's output feeds the next (pipeline dependency) |
 | Separate codebase areas needing analysis | Two agents analyzing and modifying the same files |
 | Context audit alongside development planning | |
+| N same-type agents on disjoint work units (see Intra-Stage Parallelism) | Same-type agents whose file sets overlap |
 | Context-engineer alongside researcher or systems-architect | |
 
 ### Intra-Stage Parallelism
 
-Multiple instances of the same agent type can run concurrently on disjoint work units within a single pipeline stage. Distinct from cross-agent parallelism above.
+Multiple instances of the same agent type can run concurrently on disjoint work units within a single pipeline stage. Distinct from cross-agent parallelism above. Limit to 2-3 concurrent agents.
 
-**When to use:** Implementation steps in the same `[parallel-group]` with disjoint file sets and no shared mutable state. Limit to 2-3 concurrent agents.
+**Direct-supervised** (any Bg Safe agent):
 
-**Protocol:**
+1. Main agent identifies N independent work units with disjoint file sets
+2. Spawns N instances, each scoped to its target via the task prompt
+3. Each instance reports independently
+4. Main agent reviews all outputs for coherence
+
+**Planner-supervised** (implementer under implementation-planner):
 
 1. Planner prepares `WIP.md` in parallel mode with per-step assignees and file lists
-2. User spawns N implementer agents, each assigned one step
+2. Main agent spawns N implementer agents, each assigned one step
 3. Each implementer updates only its own step status in `WIP.md`
 4. After all report back, planner runs coherence review (re-reads modified files, verifies integration, merges learnings)
 
-**Conflict avoidance:** Planner verifies file disjointness before marking steps as parallel. If an implementer needs a file outside its declared set, it stops and reports `[CONFLICT]`.
+**Conflict avoidance:** Before spawning parallel instances, verify file disjointness across all work units. If an agent needs a file outside its declared set, it stops and reports `[CONFLICT]`.
 
 ### Multi-Perspective Analysis
 
