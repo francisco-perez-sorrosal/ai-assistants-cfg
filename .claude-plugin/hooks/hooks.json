@@ -38,6 +38,19 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/precompact_state.py",
+            "timeout": 15,
+            "async": false
+          }
+        ]
+      }
     ]
   }
 }

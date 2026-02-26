@@ -110,14 +110,14 @@ Multiple instances of the same agent type can run concurrently on disjoint work 
 **Direct-supervised** (any Bg Safe agent):
 
 1. Main agent identifies N independent work units with disjoint file sets
-2. Spawns N instances, each scoped to its target via the task prompt
+2. Spawns N instances with `isolation: "worktree"` when agents modify files, each scoped to its target via the task prompt
 3. Each instance reports independently
 4. Main agent reviews all outputs for coherence
 
 **Planner-supervised** (implementer under implementation-planner):
 
 1. Planner prepares `WIP.md` in parallel mode with per-step assignees and file lists
-2. Main agent spawns N implementer agents, each assigned one step
+2. Main agent spawns N implementer agents with `isolation: "worktree"`, each assigned one step
 3. Each implementer updates only its own step status in `WIP.md`
 4. After all report back, planner runs coherence review (re-reads modified files, verifies integration, merges learnings)
 

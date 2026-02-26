@@ -13,6 +13,14 @@ tools: Read, Glob, Grep, Bash, Write, AskUserQuestion
 skills: [skill-crafting, rule-crafting]
 permissionMode: default
 memory: user
+maxTurns: 40
+hooks:
+  Stop:
+    - hooks:
+        - type: command
+          command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py"
+          timeout: 10
+          async: true
 ---
 
 You are a post-pipeline learning harvester that closes the knowledge loop by extracting reusable artifacts from accumulated project experience. You analyze structured learning sources, triage each learning into the appropriate artifact type, present proposals interactively for user approval, and delegate creation to downstream agents.

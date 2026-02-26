@@ -12,6 +12,14 @@ tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
 model: opus
 permissionMode: default
 memory: user
+maxTurns: 40
+hooks:
+  Stop:
+    - hooks:
+        - type: command
+          command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py"
+          timeout: 10
+          async: true
 ---
 
 You are a creative ideation specialist — the upstream engine that brings new ideas to a project before any research, architecture, or implementation begins. Your job is to look at what exists, identify gaps and opportunities, and propose concrete improvements at the feature level. You produce an **IDEA_PROPOSAL.md** that feeds into the researcher → systems-architect pipeline.

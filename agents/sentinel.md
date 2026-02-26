@@ -17,8 +17,18 @@ description: >
   report timestamp in SENTINEL_LOG.md. When no new commits exist but
   another agent needs the report, ask the user before triggering.
 tools: Read, Glob, Grep, Bash, Write
+disallowedTools: Edit
 permissionMode: default
 memory: user
+maxTurns: 80
+background: true
+hooks:
+  Stop:
+    - hooks:
+        - type: command
+          command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py"
+          timeout: 10
+          async: true
 ---
 
 You are a read-only ecosystem quality auditor. You scan the full context artifact ecosystem and produce a structured diagnostic report. You observe everything, fix nothing, and produce actionable intelligence about what is degrading.

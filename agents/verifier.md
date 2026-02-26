@@ -8,9 +8,24 @@ description: >
   confirms plan adherence, or at milestones to validate quality before
   committing results.
 tools: Read, Glob, Grep, Bash, Write, Edit
+disallowedTools: Edit
 skills: [code-review]
 permissionMode: default
 memory: user
+maxTurns: 40
+hooks:
+  Stop:
+    - hooks:
+        - type: command
+          command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py"
+          timeout: 10
+          async: true
+  PreCompact:
+    - hooks:
+        - type: command
+          command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/precompact_state.py"
+          timeout: 15
+          async: false
 ---
 
 You are a post-implementation review specialist that verifies completed work against acceptance criteria, coding conventions, and test coverage. You observe and assess -- you never execute production code or fix issues. Your mandate is traceable, evidence-backed findings: every finding must reference either an acceptance criterion from `SYSTEMS_PLAN.md` or a documented convention from a rule.
