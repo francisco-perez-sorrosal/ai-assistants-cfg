@@ -91,12 +91,12 @@ Rules are contextual knowledge loaded by relevance. The filename directly affect
 |-------|-----------|----------|
 | Directory | Domain category (broad) | `swe/`, `writing/`, `context-engineering/` |
 | Subdirectory | Sub-domain (when needed) | `swe/vcs/` for version control rules |
-| File | `{domain}-{intent}.md` | `coding-style.md`, `git-commit-hygiene.md`, `readme-style.md` |
+| File | `{domain}-{intent}.md` | `coding-style.md`, `git-conventions.md`, `readme-style.md` |
 
 **Naming principles:**
 
-- The domain prefix aids relevance matching -- `git-commit-message-format.md` loads when Claude works on commits
-- Be specific -- `git-commit-message-format.md` (not `commit.md`)
+- The domain prefix aids relevance matching -- `git-conventions.md` loads when Claude works on commits
+- Be specific -- `git-conventions.md` (not `commit.md`)
 - Domain-oriented, not action-oriented -- rules describe what to know, not what to do
 - Directory names are broad categories; filenames are specific domains within them
 
@@ -105,7 +105,7 @@ Rules are contextual knowledge loaded by relevance. The filename directly affect
 | Good | Bad | Why |
 |------|-----|-----|
 | `coding-style.md` | `style.md` | Domain is explicit |
-| `git-commit-hygiene.md` | `git.md` | Specific intent, not catch-all |
+| `git-conventions.md` | `git.md` | Specific intent, not catch-all |
 | `artifact-naming.md` | `naming.md` | Scoped to artifacts, not generic |
 | `swe-agent-coordination-protocol.md` | `agents.md` | Distinguishes from agent definitions |
 

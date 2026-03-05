@@ -1,5 +1,6 @@
 ---
-description: Planning complex software tasks using a three-document model (PLAN.md, WIP.md, LEARNINGS.md) for tracking work in small, known-good increments. Use when starting significant development work, breaking down complex features, doing architecture planning, managing multi-session projects, or when the user mentions feature breakdown, work planning, or incremental development.
+name: software-planning
+description: Planning complex software tasks using a three-document model (IMPLEMENTATION_PLAN.md, WIP.md, LEARNINGS.md) for tracking work in small, known-good increments. Use when starting significant development work, breaking down complex features, doing architecture planning, managing multi-session projects, or when the user mentions feature breakdown, work planning, or incremental development.
 compatibility: Claude Code
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
@@ -7,12 +8,13 @@ allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 # Software Planning in Small Increments
 
 **All work must be done in small, known-good increments.** Each increment leaves the codebase in a working state.
-Create and maintain planning documents (PLAN.md, WIP.md, LEARNINGS.md) following the [agent intermediate documents](../../rules/swe/agent-intermediate-documents.md) placement convention.
+Create and maintain planning documents (IMPLEMENTATION_PLAN.md, WIP.md, LEARNINGS.md) following the [agent intermediate documents](../../rules/swe/agent-intermediate-documents.md) placement convention.
 
 **Satellite files** (loaded on-demand):
 
 - [references/document-templates.md](references/document-templates.md) -- WIP.md and LEARNINGS.md templates, parallel mode, end-of-feature workflow
 - [references/decomposition-guide.md](references/decomposition-guide.md) -- feature breakdown examples, spike steps, anti-patterns, Claude Code agent usage
+- [references/agent-pipeline-details.md](references/agent-pipeline-details.md) -- boundary discipline, parallel execution, intra-stage parallelism, pipeline engagement tables
 - [phases/refactoring.md](phases/refactoring.md) -- refactoring phase integration
 - [contexts/python.md](contexts/python.md) -- Python-specific quality gates and step templates
 
@@ -22,14 +24,14 @@ For significant work, maintain three documents:
 
 | Document | Purpose | Lifecycle |
 |----------|---------|-----------|
-| **PLAN.md** | What we're doing | Created at start, changes need approval |
+| **IMPLEMENTATION_PLAN.md** | What we're doing | Created at start, changes need approval |
 | **WIP.md** | Where we are now | Updated constantly, always accurate |
 | **LEARNINGS.md** | What we discovered | Temporary, merged at end then deleted |
 
 ### Document Relationships
 
 ```text
-PLAN.md (static)          WIP.md (living)           LEARNINGS.md (temporary)
+IMPLEMENTATION_PLAN.md (static)          WIP.md (living)           LEARNINGS.md (temporary)
 ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
 │ Goal            │       │ Current step    │       │ Gotchas         │
 │ Acceptance      │  ──►  │ Status          │  ──►  │ Patterns        │
@@ -52,7 +54,7 @@ When planning work in a specific language or tech stack, load the relevant **con
 
 **How contexts integrate**:
 
-- **PLAN.md**: Add a `Tech Stack` field linking to the relevant context and skills
+- **IMPLEMENTATION_PLAN.md**: Add a `Tech Stack` field linking to the relevant context and skills
 - **Step templates**: Use language-specific templates for common step types (new module, add dependency, etc.)
 - **Quality gates**: Run language-specific format → lint → type check → test before each commit
 - **Testing field**: Choose testing approach based on language-specific patterns
@@ -158,7 +160,7 @@ After completing a step:
 
 Only proceed with commit after explicit approval.
 
-## PLAN.md Structure
+## IMPLEMENTATION_PLAN.md Structure
 
 ```markdown
 # Plan: [Feature Name]
@@ -219,7 +221,7 @@ Sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical D
 ## Workflow
 
 ```text
-START: Create PLAN.md (get approval) + WIP.md + LEARNINGS.md
+START: Create IMPLEMENTATION_PLAN.md (get approval) + WIP.md + LEARNINGS.md
 
 FOR EACH STEP:
   1. Update WIP.md (IMPLEMENTING)
@@ -291,7 +293,7 @@ The `implementation-planner` agent uses this skill directly for step decompositi
 | Make decision | LEARNINGS.md decisions section |
 | Complete step | WIP.md progress checklist |
 | Hit blocker | WIP.md blockers section |
-| Plan changes | PLAN.md + get approval |
+| Plan changes | IMPLEMENTATION_PLAN.md + get approval |
 | End of session | WIP.md next action |
 
 ### Checklist Before Commit Approval

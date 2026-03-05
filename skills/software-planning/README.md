@@ -1,6 +1,6 @@
 # Software Planning Skill
 
-Plan complex software tasks using a three-document model (PLAN.md, WIP.md, LEARNINGS.md) that tracks work in small, known-good increments.
+Plan complex software tasks using a three-document model (IMPLEMENTATION_PLAN.md, WIP.md, LEARNINGS.md) that tracks work in small, known-good increments.
 
 ## When to Use
 
@@ -51,7 +51,7 @@ software-planning/
 ## Quick Start
 
 1. **Load the skill**: reference `software-planning` when starting significant work
-2. **Create PLAN.md**: define goal, tech stack, acceptance criteria, and steps
+2. **Create IMPLEMENTATION_PLAN.md**: define goal, tech stack, acceptance criteria, and steps
 3. **Add context** (optional): if working in Python, reference `contexts/python.md` for quality gates
 4. **Check for phases** (optional): if existing code needs restructuring, prepend a refactoring phase from `phases/refactoring.md`
 5. **Execute**: one step at a time, one commit per step, keeping WIP.md accurate

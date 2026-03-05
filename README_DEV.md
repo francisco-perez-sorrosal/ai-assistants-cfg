@@ -53,8 +53,7 @@ rules/                               # Rules (installed to ~/.claude/rules/ or .
 │   ├── coding-style.md
 │   ├── swe-agent-coordination-protocol.md
 │   └── vcs/
-│       ├── git-commit-message-format.md
-│       └── git-commit-hygiene.md
+│       └── git-conventions.md
 └── writing/
     └── readme-style.md
 .claude-plugin/                      # Claude Code plugin manifest

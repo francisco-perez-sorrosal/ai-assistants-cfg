@@ -96,9 +96,9 @@ When using this skill with Claude Code specifically:
 - The **`researcher` agent** gathers codebase and external information into `RESEARCH_FINDINGS.md`.
 - The **`systems-architect` agent** produces `SYSTEMS_PLAN.md` (Goal, Criteria, Architecture, Risks).
 - The **`implementation-planner` agent** produces `IMPLEMENTATION_PLAN.md` with incremental steps and maintains `WIP.md` and `LEARNINGS.md`.
-- For **manual planning** without agents, use `Write` and `Edit` tools to create and maintain PLAN.md, WIP.md, and LEARNINGS.md directly.
+- For **manual planning** without agents, use `Write` and `Edit` tools to create and maintain IMPLEMENTATION_PLAN.md, WIP.md, and LEARNINGS.md directly.
 - For simple multi-step tasks that don't warrant three-document planning, use `TaskCreate`/`TaskUpdate`/`TaskList` to track micro-tasks within a session.
-- Both approaches can coexist: task tools track current session's micro-tasks while PLAN.md tracks overall feature steps.
+- Both approaches can coexist: task tools track current session's micro-tasks while IMPLEMENTATION_PLAN.md tracks overall feature steps.
 
 | Use the agent crew when: | Use manual planning when: | Use Task Tools when: |
 |--------------------------|---------------------------|----------------------|

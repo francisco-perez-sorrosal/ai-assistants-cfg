@@ -1,4 +1,5 @@
 ---
+name: python-prj-mgmt
 description: Python project management with pixi and uv package managers. Covers project initialization, dependency management, pyproject.toml configuration, lockfiles, virtual environments, workspaces, and CI/CD integration. Use when setting up Python projects, managing dependencies, configuring conda or PyPI packages, choosing between package managers, or working with pixi.lock or uv.lock. Defaults to pixi unless uv is explicitly requested.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 compatibility: Claude Code
@@ -13,8 +14,8 @@ Managing Python projects with modern package managers and dependency tools. **De
 **Python Coding**: See the [Python Development](../python-development/SKILL.md) skill for type hints, testing patterns, code quality, and language best practices.
 
 **Package Managers**:
-- [pixi](pixi.md) - **Default** - conda+PyPI ecosystem, tasks, multi-language support
-- [uv](uv.md) - Extremely fast PyPI-only installer and resolver
+- [pixi](references/pixi.md) - **Default** - conda+PyPI ecosystem, tasks, multi-language support
+- [uv](references/uv.md) - Extremely fast PyPI-only installer and resolver
 
 ## Default Behavior
 
@@ -193,7 +194,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 ```
 
-For tool-specific `pyproject.toml` sections (`[tool.pixi.*]`, `[tool.uv]`), see the corresponding reference files: [pixi.md](pixi.md) and [uv.md](uv.md).
+For tool-specific `pyproject.toml` sections (`[tool.pixi.*]`, `[tool.uv]`), see the corresponding reference files: [pixi.md](references/pixi.md) and [uv.md](references/uv.md).
 
 ## Package Manager Comparison
 
@@ -212,7 +213,7 @@ For tool-specific `pyproject.toml` sections (`[tool.pixi.*]`, `[tool.uv]`), see 
 
 ## Command Quick Reference
 
-For complete command references, see [pixi.md](pixi.md) and [uv.md](uv.md). The most common commands:
+For complete command references, see [pixi.md](references/pixi.md) and [uv.md](references/uv.md). The most common commands:
 
 | Task | pixi | uv |
 |------|------|-----|
@@ -252,5 +253,5 @@ For complete command references, see [pixi.md](pixi.md) and [uv.md](uv.md). The 
 
 ## Reference Files
 
-- [pixi Reference](pixi.md) — Complete pixi guide: environments, tasks, ML workflows, troubleshooting
-- [uv Reference](uv.md) — Complete uv guide: workspaces, build/publish, Python version management
+- [pixi Reference](references/pixi.md) — Complete pixi guide: environments, tasks, ML workflows, troubleshooting
+- [uv Reference](references/uv.md) — Complete uv guide: workspaces, build/publish, Python version management

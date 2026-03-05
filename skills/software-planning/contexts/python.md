@@ -12,8 +12,8 @@ When a plan involves creating or initializing a Python project, include an early
 
 | Need | Tool | Reference |
 |------|------|-----------|
-| ML/data science, conda packages, compiled libs | pixi (default) | [pixi docs](../../python-prj-mgmt/pixi.md) |
-| Pure Python, fast installs, minimal setup | uv | [uv docs](../../python-prj-mgmt/uv.md) |
+| ML/data science, conda packages, compiled libs | pixi (default) | [pixi docs](../../python-prj-mgmt/references/pixi.md) |
+| Pure Python, fast installs, minimal setup | uv | [uv docs](../../python-prj-mgmt/references/uv.md) |
 
 **Typical setup step**:
 

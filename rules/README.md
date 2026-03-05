@@ -11,8 +11,7 @@ rules/
 │   ├── coding-style.md
 │   ├── swe-agent-coordination-protocol.md
 │   └── vcs/
-│       ├── git-commit-hygiene.md
-│       └── git-commit-message-format.md
+│       └── git-conventions.md
 ├── writing/
 │   └── readme-style.md
 └── README.md
@@ -22,9 +21,8 @@ rules/
 | ---- | ------- |
 | `swe/agent-intermediate-documents.md` | Agent document locations (`.ai-work/` ephemeral, `.ai-state/` persistent), lifecycle tiers, cleanup |
 | `swe/coding-style.md` | Immutability, function/file size, nesting, error handling, naming, validation |
-| `swe/swe-agent-coordination-protocol.md` | Agent selection, coordination pipeline, parallel execution, and boundary discipline |
-| `swe/vcs/git-commit-message-format.md` | Commit message structure, type prefixes, subject/body conventions |
-| `swe/vcs/git-commit-hygiene.md` | Git commit safety, staging discipline, and exclusions |
+| `swe/swe-agent-coordination-protocol.md` | Agent selection, coordination pipeline, parallel execution — detailed tables in `software-planning` skill reference |
+| `swe/vcs/git-conventions.md` | Commit scope, staging discipline, secrets, exclusions, message format |
 | `writing/readme-style.md` | Precision-first technical writing and structural integrity conventions for README.md files |
 
 ## How Rules Work
@@ -37,7 +35,7 @@ Rules are **not invoked explicitly**. The tool scans its rules directory (e.g. C
 2. **Files being read or edited** — the code or config Claude is working with
 3. **Semantic relevance** — filename and content matching against the current context
 
-When you run a commit-related command, the assistant automatically picks up `git-commit-message-format.md` and `git-commit-hygiene.md` when the task is semantically related. No `@`-reference or explicit import is needed.
+When you run a commit-related command, the assistant automatically picks up `git-conventions.md` when the task is semantically related. No `@`-reference or explicit import is needed.
 
 ### What Rules Are NOT
 
@@ -178,7 +176,7 @@ Naming directly affects Claude's relevance scoring. Use:
 | ---- | --- | --- |
 | `sql.md` | `rules1.md` | Domain name aids relevance matching |
 | `security.md` | `important.md` | Specific domain, not subjective importance |
-| `git-commit-message-format.md` | `commit.md` | Precise scope, not ambiguous |
+| `git-conventions.md` | `commit.md` | Precise scope, not ambiguous |
 | `frontend.md` | `stuff.md` | Meaningful, discoverable |
 | `design-system.md` | `company_rules.md` | Domain-scoped, not org-scoped |
 
@@ -203,12 +201,11 @@ Two mechanisms, each serving a different purpose:
 `install.sh` symlinks all rules from this repo to `~/.claude/rules/`. Personal rules load automatically for **every project** when contextually relevant — no per-project setup needed.
 
 ```
-rules/swe/agent-intermediate-documents.md    →  ~/.claude/rules/swe/agent-intermediate-documents.md
-rules/swe/coding-style.md                   →  ~/.claude/rules/swe/coding-style.md
+rules/swe/agent-intermediate-documents.md      →  ~/.claude/rules/swe/agent-intermediate-documents.md
+rules/swe/coding-style.md                     →  ~/.claude/rules/swe/coding-style.md
 rules/swe/swe-agent-coordination-protocol.md  →  ~/.claude/rules/swe/swe-agent-coordination-protocol.md
-rules/swe/vcs/git-commit-hygiene.md         →  ~/.claude/rules/swe/vcs/git-commit-hygiene.md
-rules/swe/vcs/git-commit-message-format.md  →  ~/.claude/rules/swe/vcs/git-commit-message-format.md
-rules/writing/readme-style.md               →  ~/.claude/rules/writing/readme-style.md
+rules/swe/vcs/git-conventions.md              →  ~/.claude/rules/swe/vcs/git-conventions.md
+rules/writing/readme-style.md                 →  ~/.claude/rules/writing/readme-style.md
 ```
 
 Adding a new rule file here and re-running `install.sh` is all that's needed.
@@ -221,7 +218,7 @@ The `/add-rules` command automates this:
 
 ```bash
 /add-rules coding-style                     # Copy one rule for customization
-/add-rules coding-style git-commit-hygiene  # Copy several
+/add-rules coding-style git-conventions     # Copy several
 /add-rules all                              # Copy all rules
 ```
 

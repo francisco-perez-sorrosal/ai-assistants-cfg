@@ -14,7 +14,7 @@ Detection signals during plan analysis:
 
 If none of these signals are present, skip the refactoring phase and proceed directly with feature steps.
 
-## Phase Structure in PLAN.md
+## Phase Structure in IMPLEMENTATION_PLAN.md
 
 A refactoring phase is a **group of consecutive plan steps** marked with `[Phase: Refactoring]`. Each step within the phase follows the refactoring skill's safe refactoring workflow (green bar → small change → run tests → commit).
 

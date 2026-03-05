@@ -11,7 +11,7 @@ Copy rules from the personal library (`~/.claude/rules/`) into this project's `.
 ## Arguments
 
 - `$ARGUMENTS` — Space-separated rule names (filename stem without `.md`) or `all`
-- Examples: `/add-rules coding-style git-commit-hygiene`, `/add-rules all`
+- Examples: `/add-rules coding-style git-conventions`, `/add-rules all`
 
 ## Process
 

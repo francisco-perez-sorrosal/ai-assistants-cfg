@@ -1,4 +1,5 @@
 ---
+name: rule-crafting
 description: Creating and managing rules -- contextual domain knowledge
   files loaded automatically based on relevance. Covers rule structure, path-specific
   rules, naming for relevance matching, content guidelines, and the rules-vs-skills-vs-CLAUDE.md
@@ -158,7 +159,7 @@ Research:     citation-format.md, data-collection-ethics.md
 **Naming principles**:
 - Lowercase, hyphen-separated
 - Domain-oriented — describe the subject area, not the action
-- Specific — `git-commit-message-format.md` not `commit.md`
+- Specific — `git-conventions.md` not `commit.md`
 - No generic names — `important.md`, `notes.md`, `stuff.md` hurt relevance matching
 
 ## Writing Rule Content
