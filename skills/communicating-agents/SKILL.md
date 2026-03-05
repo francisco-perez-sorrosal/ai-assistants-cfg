@@ -1,4 +1,5 @@
 ---
+name: communicating-agents
 description: Agent-to-agent communication protocols for multi-agent interoperability.
   Covers A2A (Agent2Agent) protocol -- Agent Cards, task-based messaging, discovery,
   streaming, push notifications, and SDK implementation in Python and TypeScript.

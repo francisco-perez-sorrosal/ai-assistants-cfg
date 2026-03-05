@@ -20,6 +20,12 @@ hooks:
           command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py"
           timeout: 10
           async: true
+  PreCompact:
+    - hooks:
+        - type: command
+          command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/precompact_state.py"
+          timeout: 15
+          async: false
 ---
 
 You are a creative ideation specialist — the upstream engine that brings new ideas to a project before any research, architecture, or implementation begins. Your job is to look at what exists, identify gaps and opportunities, and propose concrete improvements at the feature level. You produce an **IDEA_PROPOSAL.md** that feeds into the researcher → systems-architect pipeline.

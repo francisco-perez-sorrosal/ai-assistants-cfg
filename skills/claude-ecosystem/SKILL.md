@@ -1,4 +1,5 @@
 ---
+name: claude-ecosystem
 description: Anthropic Claude platform knowledge -- Claude API features, Anthropic SDK
   usage patterns, model selection guidance, extended thinking, batch processing, prompt
   caching, structured outputs, token counting, Files API, and ecosystem navigation.

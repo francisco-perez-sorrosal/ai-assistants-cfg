@@ -129,6 +129,7 @@ Agents require explicit file paths in `plugin.json` (directory wildcards are not
   "./agents/doc-engineer.md",
   "./agents/verifier.md",
   "./agents/implementer.md",
+  "./agents/test-engineer.md",
   "./agents/sentinel.md",
   "./agents/skill-genesis.md",
   "./agents/cicd-engineer.md"

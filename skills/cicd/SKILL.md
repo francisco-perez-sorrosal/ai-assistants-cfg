@@ -1,4 +1,5 @@
 ---
+name: cicd
 description: CI/CD pipeline design and GitHub Actions workflow authoring. Covers pipeline
   architecture, testing stages, deployment strategies, caching, secrets management,
   security hardening, and performance optimization. Use when creating CI/CD pipelines,

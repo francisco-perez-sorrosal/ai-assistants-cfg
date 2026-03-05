@@ -1,4 +1,5 @@
 ---
+name: agentic-sdks
 description: Building AI agents with production SDKs -- OpenAI Agents SDK and Claude
   Agent SDK. Covers agent architecture, tool integration, multi-agent orchestration,
   safety guardrails, tracing, context management, streaming, and MCP integration.

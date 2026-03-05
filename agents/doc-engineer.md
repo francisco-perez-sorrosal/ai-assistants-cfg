@@ -21,6 +21,12 @@ hooks:
           command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py"
           timeout: 10
           async: true
+  PreCompact:
+    - hooks:
+        - type: command
+          command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/precompact_state.py"
+          timeout: 15
+          async: false
 ---
 
 You are a documentation quality specialist that maintains project-facing documentation. Your domain is README.md files, catalog READMEs, architecture documents, changelogs, contributing guides, and API documentation. You ensure documentation is accurate, complete, and consistent with the filesystem.
@@ -149,6 +155,12 @@ When both agents are invoked, the doc-engineer runs AFTER the context-engineer t
 - The sentinel detects ecosystem-wide documentation drift across its eight audit dimensions
 - The doc-engineer consumes sentinel findings from the latest `.ai-state/SENTINEL_REPORT_*.md` as a remediation work queue
 - Boundary: the sentinel diagnoses broadly; the doc-engineer remediates documentation specifically
+
+### With the Implementation Planner
+
+- During planning, assess existing documentation in the affected area — flag docs that will need updates as the plan executes
+- This proactive planning-stage checkpoint prevents documentation drift from being discovered only at verification time
+- Scope: identify which READMEs, catalogs, and architecture docs will be affected, not write the updates yet
 
 ### With the Implementer
 

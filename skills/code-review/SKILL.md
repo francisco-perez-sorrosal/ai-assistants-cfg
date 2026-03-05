@@ -1,4 +1,5 @@
 ---
+name: code-review
 description: >
   Structured code review methodology with finding classification (PASS/FAIL/WARN),
   language adaptation, and report templates. Use when reviewing code for convention

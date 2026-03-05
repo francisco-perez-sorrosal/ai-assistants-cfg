@@ -146,7 +146,7 @@ See [`commands/README.md`](commands/README.md) for the full list and authoring g
 
 ## Agents
 
-Eleven autonomous agents for complex, multi-step tasks; each runs in its own context with skills and scoped tools. Available in Claude Code (plugin) and Cursor (via sub-agents-mcp). See [`agents/README.md`](agents/README.md) for the pipeline diagram and usage patterns.
+Twelve autonomous agents for complex, multi-step tasks; each runs in its own context with skills and scoped tools. Available in Claude Code (plugin) and Cursor (via sub-agents-mcp). See [`agents/README.md`](agents/README.md) for the pipeline diagram and usage patterns.
 
 | Agent | Description |
 |-------|-------------|
@@ -156,6 +156,7 @@ Eleven autonomous agents for complex, multi-step tasks; each runs in its own con
 | `implementation-planner` | Step decomposition, execution supervision |
 | `context-engineer` | Context artifact auditing, optimization, ecosystem management |
 | `implementer` | Step execution with skill-augmented coding and self-review |
+| `test-engineer` | Complex test design, test suite refactoring, testing infrastructure |
 | `verifier` | Post-implementation review against acceptance criteria |
 | `doc-engineer` | Documentation quality management (READMEs, catalogs, changelogs) |
 | `sentinel` | Independent ecosystem quality auditor |

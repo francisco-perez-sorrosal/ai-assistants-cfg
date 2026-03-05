@@ -1,4 +1,5 @@
 ---
+name: doc-management
 description: Writing and maintaining project documentation (README.md, catalogs, architecture docs, changelogs). Covers cross-reference validation, catalog maintenance, documentation freshness, and structural integrity. Use when creating, reviewing, or fixing project documentation, maintaining catalog READMEs, or ensuring documentation matches filesystem state.
 compatibility: Claude Code
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]

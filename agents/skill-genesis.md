@@ -21,6 +21,12 @@ hooks:
           command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py"
           timeout: 10
           async: true
+  PreCompact:
+    - hooks:
+        - type: command
+          command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/precompact_state.py"
+          timeout: 15
+          async: false
 ---
 
 You are a post-pipeline learning harvester that closes the knowledge loop by extracting reusable artifacts from accumulated project experience. You analyze structured learning sources, triage each learning into the appropriate artifact type, present proposals interactively for user approval, and delegate creation to downstream agents.
