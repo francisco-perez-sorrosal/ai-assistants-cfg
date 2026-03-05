@@ -40,7 +40,7 @@ Determine what you have to work with:
 1. **Check for RESEARCH_FINDINGS.md** — if it exists, read it thoroughly. This is your primary information source.
 2. **Check for existing SYSTEMS_PLAN.md** — you may be refining an existing architecture, not starting fresh.
 3. **Clarify the goal** — restate it in one sentence. If ambiguous, state your interpretation and ask for confirmation.
-4. **Define acceptance criteria** — concrete, testable conditions for "done."
+4. **Define acceptance criteria as behavioral specs** — concrete, testable conditions for "done" expressed as observable behaviors. These criteria drive test design downstream: the test-engineer will derive behavioral tests directly from them. Write each criterion as a verifiable behavior ("When X happens, the system does Y"), not an implementation detail ("Module Z is refactored").
 5. **Identify scope boundaries** — what is explicitly in scope and out of scope.
 
 If `RESEARCH_FINDINGS.md` does not exist and the task requires research, recommend invoking the researcher agent first. You can proceed with direct codebase analysis for tasks that don't need external research.

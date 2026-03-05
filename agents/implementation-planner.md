@@ -105,24 +105,42 @@ Before marking steps as parallel, verify **file disjointness**: no two steps in 
 
 Apply the step size heuristics from the software-planning skill. Quick test: if a step has multiple "and"s, involves more than 3-5 files, or requires multiple commits, break it down further.
 
-### Phase 4 — Testing Strategy
+### Phase 4 — Test-First Design (BDD/TDD)
 
-For each step, decide whether testing is needed:
+Design behavioral tests before implementation steps. The systems plan's acceptance criteria are the source of truth for what the system should do — tests encode those behaviors.
 
-**Include testing when:**
+**For each implementation step, decide whether it needs a paired test step:**
 
+**Create a paired test step when:**
+
+- The step implements behavioral acceptance criteria from `SYSTEMS_PLAN.md`
 - Complex algorithms or business logic
 - Critical user flows or integration points
 - Edge cases in important features
 - Fixing bugs (regression tests)
 - The architect flagged missing test coverage
-- When instructed or requested
 
-**Skip testing when:**
+**Skip the paired test step when:**
 
 - Obvious code with no logic (simple wiring, config)
 - Framework-provided functionality
 - Code that will be deleted soon
+
+**Paired step structure:**
+
+For each implementation step that needs testing, create two steps in the same parallel group:
+- **Step N** `[parallel-group: X]`: Implementation step (assignee: `implementer`, files: production code)
+- **Step N+1** `[parallel-group: X]`: Test step (assignee: `test-engineer`, files: test code)
+
+The test step's `Testing` field references the acceptance criteria it validates. The test-engineer designs tests from the behavioral spec, not from the production code — because the production code does not exist yet when both start concurrently.
+
+**Post-completion integration:**
+
+After both paired steps complete, add an integration checkpoint:
+- Run the full test suite (new + pre-existing tests)
+- If new tests fail against the new implementation, the implementer adjusts production code
+- If pre-existing tests broke, the implementer fixes them (boy scout rule)
+- Iterate until all tests pass
 
 ### Phase 5 — Phase Detection
 
@@ -151,11 +169,25 @@ Complete the planning documents:
 ```markdown
 ## Steps
 
-### Step 1: [One sentence description]
+### Step 1: [One sentence description] [parallel-group: A]
 
+**Assignee**: implementer
 **Implementation**: What code will we write?
-**Testing**: What needs testing? (if critical/complex)
+**Files**: [production files]
 **Done when**: How do we know it's complete?
+
+### Step 2: Design behavioral tests for [acceptance criteria] [parallel-group: A]
+
+**Assignee**: test-engineer
+**Testing**: Which acceptance criteria from SYSTEMS_PLAN.md does this validate?
+**Files**: [test files]
+**Done when**: Tests written, runnable (expected to fail until implementation lands)
+
+### Step 3: [Integration checkpoint after group A]
+
+**Assignee**: implementer
+**Implementation**: Run full test suite, fix failures (new tests + pre-existing broken tests)
+**Done when**: All tests pass
 
 ### Step N: [Phase: Refactoring] [One sentence description]
 
@@ -281,10 +313,17 @@ The verifier only operates after Phase 7 confirms plan adherence. Verifying an i
 
 ### With the Implementer
 
-- Provide each step with: one-sentence description, `Implementation` field, `Testing` field (if applicable), `Done when` field, `Files` field
+- Provide each step with: one-sentence description, `Implementation` field, `Done when` field, `Files` field
 - Expect back one of: `[COMPLETE]` (step done, WIP.md updated), `[BLOCKED]` (blocker described with evidence), `[CONFLICT]` (file outside declared set needed, parallel mode only)
 - **Sequential invocation**: invoke one implementer at a time, review result, advance WIP.md, invoke next
-- **Parallel invocation**: invoke 2-3 implementers concurrently on steps in the same parallel group, run coherence review after all report back, then advance to the next group
+- **Parallel invocation**: invoke implementer + test-engineer concurrently on paired steps in the same parallel group; after both complete, invoke the implementer for the integration checkpoint (run all tests, fix failures)
+
+### With the Test-Engineer
+
+- Provide each test step with: acceptance criteria references from `SYSTEMS_PLAN.md`, behavioral expectations, `Files` field (test files only)
+- Test-engineers design tests from the behavioral spec — they do not need to see production code first
+- Expect back one of: `[COMPLETE]` (tests written and runnable), `[BLOCKED]`, `[CONFLICT]`
+- Tests are expected to fail initially — they pass once the implementer's production code lands and the integration checkpoint runs
 
 ## Output
 
@@ -293,7 +332,7 @@ After completing the planning documents, return a concise summary:
 1. **Goal** — one sentence
 2. **Step count** — total steps, any refactoring phases noted
 3. **Step overview** — numbered list of step titles
-4. **Testing strategy** — which steps include tests and why
+4. **Testing strategy** — paired test steps, which acceptance criteria they validate, integration checkpoints
 5. **Supervision checkpoints** — milestones for execution review
 6. **Ready for review** — point the user to `IMPLEMENTATION_PLAN.md` for full details
 

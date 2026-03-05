@@ -119,19 +119,24 @@ Each step MUST:
 - Obvious when done
 - Single responsibility
 
-## Testing in Plan Steps
+## Testing in Plan Steps (BDD/TDD)
 
-**Pragmatic testing**: Include a **Testing** field in plan steps for critical paths, complex logic, and integrations. Skip it for trivial steps where testing adds no value.
+**Behavioral tests first.** Tests are designed from the acceptance criteria in the systems plan — they encode what the system should do, not how it does it. The test-engineer and implementer work concurrently on paired steps with disjoint file sets.
 
-**Include testing when:**
+**Paired step pattern:**
+1. **Test step** (test-engineer): design behavioral tests from acceptance criteria
+2. **Implementation step** (implementer): write production code
+3. **Integration checkpoint** (implementer): run full test suite, fix all failures including pre-existing broken tests (boy scout rule)
 
+**Create paired test steps when:**
+
+- The step implements behavioral acceptance criteria
 - Complex algorithms or business logic
 - Critical user flows or integration points
 - Edge cases in important features
 - Fixing bugs (regression tests)
-- When instructed or requested
 
-**Skip testing when:**
+**Skip paired test steps when:**
 
 - Obvious code with no logic (simple wiring, config)
 - Framework-provided functionality

@@ -25,7 +25,7 @@ Spawn agents without waiting for the user to ask:
 
 - Complex feature --> `researcher` then `systems-architect` (skip researcher if codebase context suffices)
 - Architecture approved --> `implementation-planner`; resuming work --> same agent to re-assess `WIP.md`
-- Plan ready --> `implementer`; dedicated testing steps --> `test-engineer`; implementation complete --> `verifier`
+- Plan ready --> `implementer` + `test-engineer` concurrently (paired steps on disjoint file sets); both complete --> run tests --> fix cycle if needed --> `verifier`
 - Context artifacts stale/conflicting or plan touches them --> `context-engineer` (parallel with `researcher`/`systems-architect`)
 - Ecosystem health or regression check --> `sentinel`; stale check: `.ai-state/SENTINEL_LOG.md` vs `git log -1 --format=%ci`
 - Documentation impact likely --> `doc-engineer` (in background): feature planned in area with existing docs, implementation or refactoring complete, files added/removed/renamed, new public API or interface
@@ -40,7 +40,9 @@ Spawn agents without waiting for the user to ask:
 Agents communicate through shared documents, not direct invocation.
 
 ```text
-promethean --> researcher --> systems-architect --> implementation-planner --> implementer / test-engineer --> verifier
+promethean --> researcher --> systems-architect --> implementation-planner --+--> implementer    --+--> verifier
+                                                                            |                     |
+                                                                            +--> test-engineer  --+
                                                                      context-engineer (any stage)
                                                                      doc-engineer (pipeline checkpoints)
                                                                      sentinel (independent audit)
@@ -49,6 +51,7 @@ promethean --> researcher --> systems-architect --> implementation-planner --> i
 **Pipeline rules:**
 
 - **Do not skip stages.** Research before architecture (unless codebase context suffices). Re-invoke upstream agents when downstream input is incomplete.
+- **BDD/TDD execution.** The planner produces paired implementation and test steps. Test-engineers design behavioral tests from the systems plan's acceptance criteria. Implementers and test-engineers execute concurrently on disjoint file sets. After both complete, tests are run against the implementation. Failing tests trigger a fix cycle: the implementer adjusts production code or the test-engineer adjusts test expectations until all tests pass — including pre-existing tests broken by the change (boy scout rule).
 - **Context-engineer** collaborates at any pipeline stage for context artifact work. Also operates independently for standalone audits.
 - **Sentinel** is independent. Reports (`SENTINEL_REPORT_*.md`) are public -- any agent or user can consume them. Promethean may read them for ideation (its choice, not a pipeline handoff).
 - Small-scope context work (single artifact) --> context-engineer directly; large-scope (3+) --> full pipeline.
@@ -63,8 +66,8 @@ promethean --> researcher --> systems-architect --> implementation-planner --> i
 | Architect | Designs structure, makes decisions | Plan steps |
 | Planner | Decomposes and supervises | Redesign |
 | Context Engineer | Manages information architecture, implements context artifacts | Implement features |
-| Implementer | Receives and implements steps | Plan, skip, reorder steps |
-| Test-Engineer | Designs, writes, and refactors test suites | Write production code, modify plans |
+| Implementer | Implements steps, makes tests pass, fixes broken pre-existing tests | Plan, skip, reorder steps |
+| Test-Engineer | Designs behavioral tests from acceptance criteria, writes test suites concurrently with implementer | Write production code, modify plans |
 | Verifier | Identifies issues, recommends actions | Fix issues |
 | Doc-engineer | Proactively maintains project documentation at pipeline checkpoints | Manage context artifacts |
 | Sentinel | Diagnoses and reports across ecosystem | Fix artifacts |
@@ -106,6 +109,7 @@ Launch independent agents concurrently whenever possible.
 | Separate codebase areas needing analysis | Two agents analyzing and modifying the same files |
 | Context audit alongside development planning | |
 | Doc-engineer alongside implementer or verifier | |
+| Implementer + test-engineer on paired steps (disjoint: production vs test files) | Implementer + test-engineer modifying the same files |
 | N same-type agents on disjoint work units (see Intra-Stage Parallelism) | Same-type agents whose file sets overlap |
 | Context-engineer alongside researcher or systems-architect | |
 
