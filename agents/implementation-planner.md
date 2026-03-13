@@ -134,6 +134,10 @@ For each implementation step that needs testing, create two steps in the same pa
 
 The test step's `Testing` field references the acceptance criteria it validates. The test-engineer designs tests from the behavioral spec, not from the production code — because the production code does not exist yet when both start concurrently.
 
+**Requirement traceability threading:**
+
+When `SYSTEMS_PLAN.md` contains a `## Behavioral Specification` section with REQ IDs, thread those IDs into paired test steps. Each test step's `Testing` field must reference the specific requirement IDs it validates (e.g., "Validates REQ-01, REQ-03"). This enables the verifier to produce a traceability matrix and the test-engineer to include IDs in test names.
+
 **Post-completion integration:**
 
 After both paired steps complete, add an integration checkpoint:
@@ -234,7 +238,7 @@ None
 
 Parallel Mode (when parallel groups exist): Use the WIP.md parallel format from the software-planning skill. Key fields: `Mode: parallel`, `Steps: [list]`, per-step `Assignee`, `Status`, and `Files`.
 
-**LEARNINGS.md** — initialize using the structure from the software-planning skill (sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical Debt). Every entry must be prefixed with the source agent in brackets (e.g., `**[implementation-planner]**`). Tag your own entries with `[implementation-planner]`.
+**LEARNINGS.md** — initialize using the structure from the software-planning skill (sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical Debt). Every entry must be prefixed with the source agent in brackets (e.g., `**[implementation-planner]**`). Tag your own entries with `[implementation-planner]`. For medium/large features, initialize the `Decisions Made` section with structured format guidance: `**[agent-name] [Decision title]**: [What]. **Why**: [rationale]. **Alternatives**: [rejected options].` This enables the verifier to check for substantive decision documentation and the persistent spec to archive decisions with full context.
 
 ### Phase 7 — Execution Supervision
 
@@ -274,10 +278,10 @@ After the plan is approved and implementation begins, the implementation planner
 
 When the plan contains parallel groups:
 
-1. **Prepare the batch** — write WIP.md in parallel mode with per-step assignees and file lists
+1. **Prepare the batch** — write WIP.md in parallel mode with per-step assignees and file lists. When spawning concurrent agents without worktree isolation, instruct each agent to write to fragment files (`WIP_<agent-type>.md`, `LEARNINGS_<agent-type>.md`, `PROGRESS_<agent-type>.md`) per the [agent-intermediate-documents](../rules/swe/agent-intermediate-documents.md) naming convention.
 2. **Track concurrently** — each implementer updates its own step's status independently
 3. **Coherence review** — after all implementers in a batch report back, re-read all files touched by the batch and verify integration correctness
-4. **Merge learnings** — consolidate step-specific LEARNINGS.md sections into the canonical topic-based structure
+4. **Reconcile documents** — after all agents in a batch report back, execute the semantic document reconciliation protocols from the software-planning skill's [agent-pipeline-details.md](../skills/software-planning/references/agent-pipeline-details.md): merge `WIP_<agent>.md` fragments into canonical `WIP.md` (preserving batch structure), merge `LEARNINGS_<agent>.md` into topic sections, merge `PROGRESS_<agent>.md` in timestamp order. Delete fragment files after successful merge.
 5. **Batch failure handling** — if one implementer reports `[BLOCKED]` or `[CONFLICT]`, let the others finish. Handle the failure during coherence review: retry, amend the plan, or escalate
 6. **Advance** — update WIP.md to the next batch or step
 
@@ -290,6 +294,14 @@ When all steps are marked on-track and `WIP.md` shows completion:
 3. The user decides whether to invoke the verifier -- this is not automatic
 
 The verifier only operates after Phase 7 confirms plan adherence. Verifying an implementation that deviated from the plan is not meaningful until deviations are resolved.
+
+**Spec archival (end-of-feature):**
+
+When the completed feature used a behavioral specification (medium/large task), archive the spec during the end-of-feature workflow:
+
+1. Create `.ai-state/specs/` directory if it does not exist
+2. Extract the `## Behavioral Specification` from `SYSTEMS_PLAN.md`, the traceability matrix from `VERIFICATION_REPORT.md`, and the `Decisions Made` entries from `LEARNINGS.md`
+3. Write `SPEC_<feature-name>_YYYY-MM-DD.md` to `.ai-state/specs/` using the persistent spec template from the `spec-driven-development` skill
 
 ## Collaboration Points
 

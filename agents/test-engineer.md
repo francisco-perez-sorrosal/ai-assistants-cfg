@@ -97,6 +97,7 @@ If `WIP.md` shows no current step or your step is already `[COMPLETE]`, stop and
 Before writing code, design the test strategy from the acceptance criteria:
 
 1. **Map acceptance criteria to tests** — each acceptance criterion from `SYSTEMS_PLAN.md` becomes one or more test cases. Name tests after the behavior they specify.
+   When the step's `Testing` field references requirement IDs (e.g., "Validates REQ-01, REQ-03"), include those IDs in test names and docstrings following the convention from the `spec-driven-development` skill: prefix test names with `req{NN}_` (e.g., `test_req01_session_expired_returns_401`). This enables the verifier to produce a traceability matrix linking each requirement to its test(s).
 2. **Define expected interfaces** — from the architecture in `SYSTEMS_PLAN.md`, determine what functions/classes/modules you will call and what they should return. This is the contract the implementer must satisfy.
 3. **Apply risk assessment** — which behaviors are critical? Which are low-risk?
 4. **Choose test granularity** — unit vs integration vs E2E for each behavior
@@ -166,10 +167,12 @@ You write ONLY to your own step's fields:
 - Another step's status or checkbox
 - The `Progress` checklist ordering
 
+**Parallel mode fragment files**: When running concurrently with another agent (parallel mode), write to `WIP_test-engineer.md` instead of `WIP.md`. Same fragment naming for `LEARNINGS_test-engineer.md` and `PROGRESS_test-engineer.md`. The supervising agent merges fragments after all concurrent agents complete.
+
 ### Phase 7 — Update LEARNINGS.md
 
 - **Sequential mode**: write to topic-based sections
-- **Parallel mode**: write to a step-specific section (`### Step N Learnings`)
+- **Parallel mode**: write to a step-specific section (`### Step N Learnings`). When running concurrently (parallel mode), write to `LEARNINGS_test-engineer.md` instead of `LEARNINGS.md`.
 
 **Attribution**: prefix every entry with `**[test-engineer]**`.
 

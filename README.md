@@ -112,6 +112,12 @@ Read the user preferences from https://raw.githubusercontent.com/francisco-perez
 
 This tells Claude to fetch and apply the adaptive precision mode instructions at the start of each conversation.
 
+## Spec-Driven Development
+
+For medium and large features, the pipeline activates spec-driven development -- behavioral specifications with requirement IDs threaded through architecture, planning, testing, and verification. Small tasks skip specs entirely; the pipeline scales proportionally.
+
+See [docs/spec-driven-development.md](docs/spec-driven-development.md) for the spec format, traceability flow, and comparison with spec-only tools.
+
 ## Skills
 
 Reusable knowledge modules loaded automatically based on context. See [`skills/README.md`](skills/README.md) for the full catalog.
@@ -121,7 +127,7 @@ Reusable knowledge modules loaded automatically based on context. See [`skills/R
 | AI Assistant Crafting | skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting |
 | Platform Knowledge | claude-ecosystem, agentic-sdks, communicating-agents |
 | Documentation | doc-management |
-| Software Development | python-development, python-prj-mgmt, refactoring, code-review, software-planning, cicd |
+| Software Development | python-development, python-prj-mgmt, refactoring, code-review, software-planning, spec-driven-development, cicd |
 | Project | memory, github-star |
 
 ## Commands

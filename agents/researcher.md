@@ -57,6 +57,7 @@ When the research involves existing code:
 4. **Existing tests** — check what test coverage exists
 5. **Patterns in use** — identify architectural patterns, frameworks, conventions
 6. **Technical debt** — note any structural issues that could affect the work
+7. **Archived specs** — check `.ai-state/specs/` for behavioral specifications relevant to the research area; these contain prior requirements, traceability, and architectural decisions
 
 Record findings as you go. Be specific: include file paths, line numbers, function names.
 

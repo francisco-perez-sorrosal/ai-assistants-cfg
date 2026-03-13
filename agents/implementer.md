@@ -90,6 +90,8 @@ You write ONLY to your own step's fields:
 - Your step's checkbox: `- [ ]` → `- [x]`
 - Your step's status: `[IN-PROGRESS]` → `[COMPLETE]` (or `[BLOCKED]`/`[CONFLICT]`)
 
+**Parallel mode fragment files**: When running concurrently with another agent (parallel mode), write to `WIP_implementer.md` instead of `WIP.md`. Same fragment naming for `LEARNINGS_implementer.md` and `PROGRESS_implementer.md`. The supervising agent merges fragments after all concurrent agents complete.
+
 **What you never modify:**
 
 - `Current Step` or `Current Batch` header
@@ -106,6 +108,10 @@ You write ONLY to your own step's fields:
 **Attribution**: prefix every entry with `**[implementer]**` so authorship is unambiguous. Example: `- **[implementer] Unexpected config path**: The settings file is loaded from...`
 
 Record anything that would help future steps: unexpected file structures, gotchas, patterns that worked, decisions made and why.
+
+For medium/large features (when `SYSTEMS_PLAN.md` contains a `## Behavioral Specification` section), record decisions using structured format in the `Decisions Made` section: `**[implementer] [Decision title]**: [What was decided]. **Why**: [rationale]. **Alternatives**: [what was considered and rejected].`
+
+When running concurrently (parallel mode), write to `LEARNINGS_implementer.md` instead of `LEARNINGS.md`.
 
 ## Collaboration Points
 

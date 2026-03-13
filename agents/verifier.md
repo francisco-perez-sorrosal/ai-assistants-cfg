@@ -67,6 +67,20 @@ For each acceptance criterion from `SYSTEMS_PLAN.md`:
 
 Skip this phase entirely in standalone mode.
 
+### Phase 3.5 -- Spec Conformance (pipeline mode, when behavioral specification exists)
+
+When `SYSTEMS_PLAN.md` contains a `## Behavioral Specification` section with REQ IDs:
+
+1. Build a traceability matrix: for each REQ-NN, find the corresponding test(s) by searching test files for `req{NN}_` in test names, and find the implementation location by tracing the behavior described in the requirement
+2. Classify each requirement: `PASS` (test exists and passes), `FAIL` (test fails or implementation missing), `UNTESTED` (no test found for this requirement)
+3. Add a `## Spec Conformance` section to `VERIFICATION_REPORT.md` with the traceability matrix:
+
+| Requirement | Test(s) | Implementation | Status |
+|-------------|---------|----------------|--------|
+| REQ-01 | test_req01_... | src/path:function() | PASS |
+
+Skip this phase when no Behavioral Specification section exists in `SYSTEMS_PLAN.md`.
+
 ### Phase 4 -- Convention Compliance
 
 Apply the `code-review` skill's review workflow:
@@ -116,7 +130,7 @@ Skip this phase entirely in standalone mode.
 2. Determine the overall verdict:
    - **PASS** -- all acceptance criteria met, no FAIL findings
    - **PASS WITH FINDINGS** -- all acceptance criteria met, only WARN findings
-   - **FAIL** -- any acceptance criterion not met, or FAIL findings in convention compliance
+   - **FAIL** -- any acceptance criterion not met, FAIL findings in convention compliance, or any requirement in the traceability matrix shows FAIL
 3. Write `VERIFICATION_REPORT.md` to `.ai-work/`
 4. Include the disclaimer: "Automated review complements but does not replace human judgment."
 5. Include the merge-to-LEARNINGS reminder: "Before deleting this report, merge recurring patterns and systemic quality issues into LEARNINGS.md. Tag merged entries with `**[verifier]**` for attribution."

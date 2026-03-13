@@ -2,10 +2,10 @@
 name: sentinel
 description: >
   Read-only ecosystem quality auditor that scans all context artifacts
-  (skills, agents, rules, commands, CLAUDE.md, plugin.json) across eight
-  dimensions. Seven dimensions evaluate individual artifacts: completeness,
+  (skills, agents, rules, commands, CLAUDE.md, plugin.json) across nine
+  dimensions. Eight dimensions evaluate individual artifacts: completeness,
   consistency, freshness, spec compliance, cross-reference integrity, token
-  efficiency, and pipeline discipline. The eighth — ecosystem coherence —
+  efficiency, pipeline discipline, and spec health. The ninth — ecosystem coherence —
   operates at two distinct levels: per-artifact coherence (how well each
   artifact aligns with its goals, spec, and related agents/skills) and
   system-level coherence (whether the ecosystem works as a connected whole:
@@ -145,6 +145,18 @@ Requires Task Chronograph data. Skip with a note when unavailable.
 | EC04 | L | Pipeline stages have complete handoff coverage | Every pipeline output doc has a producing and consuming agent; no dead ends |
 | EC05 | L | No structural gaps for stated purpose | Given CLAUDE.md description and Future Paths, are obvious artifact types missing? |
 
+### Spec Health (SH)
+
+Requires `.ai-state/specs/` directory with spec files. Skip with a note when no specs exist. Load detailed check definitions from `skills/spec-driven-development/references/sentinel-spec-checks.md` on demand.
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| SH01 | A | Persistent specs reference files that exist | All file paths in specs resolve |
+| SH02 | A | Persistent specs have traceability matrices | `## Traceability` section present and non-empty |
+| SH03 | L | Spec requirements still reflected in code | Key behavioral claims in spec match current implementation |
+| SH04 | L | Traceability matrix has no UNTESTED entries | All requirements have at least one test |
+| SH05 | L | Key Decisions section is substantive | Decisions include what, why, alternatives |
+
 ### Self-Verification (V)
 
 The sentinel includes itself in the audit.
@@ -190,6 +202,8 @@ Execute all auto type checks from the check catalog above:
 2. Record PASS/WARN/FAIL for each check with evidence (file paths, counts, grep output)
 3. Build the findings skeleton — a list of all failures and warnings with check IDs, locations, and evidence
 
+When `.ai-state/specs/` exists with spec files, include SH01-SH02 (auto) in this pass.
+
 This pass is deterministic and fast. Complete it fully before starting Pass 2.
 
 ### Phase 4 — Pass 2: LLM Judgment (4/7)
@@ -203,6 +217,8 @@ Execute llm type checks by reading artifact content in batches:
 **Batch 3 — Rules + Config**: Read all rule files, CLAUDE.md files, plugin.json, latest `IDEA_LEDGER_*.md`. Apply remaining llm checks: C08, N04-N06, S03, S07, X07, EC05 checks.
 
 **Batch 4 — Pipeline Discipline** (conditional): If Task Chronograph MCP tools are available (`get_pipeline_status`, `get_agent_events`), query for pipeline data and apply P01-P05 checks. If unavailable, skip with a note in the report.
+
+**Batch 5 — Spec Health** (conditional): If `.ai-state/specs/` exists with spec files, load `skills/spec-driven-development/references/sentinel-spec-checks.md`. Apply SH03-SH05 checks. If no specs exist, skip with a note in the report.
 
 For each batch, add findings to the running report. If context fills, write a partial report with `[PARTIAL]` header.
 

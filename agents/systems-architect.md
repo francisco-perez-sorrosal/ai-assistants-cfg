@@ -41,7 +41,8 @@ Determine what you have to work with:
 2. **Check for existing SYSTEMS_PLAN.md** — you may be refining an existing architecture, not starting fresh.
 3. **Clarify the goal** — restate it in one sentence. If ambiguous, state your interpretation and ask for confirmation.
 4. **Define acceptance criteria as behavioral specs** — concrete, testable conditions for "done" expressed as observable behaviors. These criteria drive test design downstream: the test-engineer will derive behavioral tests directly from them. Write each criterion as a verifiable behavior ("When X happens, the system does Y"), not an implementation detail ("Module Z is refactored").
-5. **Identify scope boundaries** — what is explicitly in scope and out of scope.
+5. **Classify task complexity** — assess the task against the complexity triage criteria. For **medium and large** tasks, load the `spec-driven-development` skill and produce a `## Behavioral Specification` section in `SYSTEMS_PLAN.md` with requirements in the `When/and/the system/so that` format, each assigned a unique ID (`REQ-01`, `REQ-02`, ...). For **trivial, small, and spike** tasks, the existing acceptance criteria format suffices — skip the behavioral specification section entirely. The skill provides the format conventions and ID rules.
+6. **Identify scope boundaries** — what is explicitly in scope and out of scope.
 
 If `RESEARCH_FINDINGS.md` does not exist and the task requires research, recommend invoking the researcher agent first. You can proceed with direct codebase analysis for tasks that don't need external research.
 
@@ -168,6 +169,10 @@ Write `SYSTEMS_PLAN.md`:
 - [ ] Criterion 1
 - [ ] Criterion 2
 - [ ] Criterion 3
+
+## Behavioral Specification (medium/large tasks only)
+
+[REQ-01 through REQ-NN in When/and/the system/so that format — see spec-driven-development skill]
 
 ## Architecture
 

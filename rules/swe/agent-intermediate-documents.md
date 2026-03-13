@@ -42,6 +42,8 @@ Not stored here:
     IDEA_LEDGER_*.md
     SENTINEL_REPORT_*.md
     SENTINEL_LOG.md
+    specs/
+      SPEC_<name>_YYYY-MM-DD.md
 ```
 
 - Committed to git — versioned, shareable, accumulates value over time
@@ -51,7 +53,9 @@ Not stored here:
 
 `SENTINEL_REPORT_*.md` — timestamped audit reports (`SENTINEL_REPORT_YYYY-MM-DD_HH-MM-SS.md`). `SENTINEL_LOG.md` — append-only run summary table (timestamp, report file, health grade, finding counts, coherence grade).
 
-Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log). Artifact inventory is not stored here — it is derivable from the filesystem.
+`SPEC_<name>_YYYY-MM-DD.md` — archived behavioral specifications with traceability matrices. Created by the implementation-planner at end-of-feature for medium/large tasks.
+
+Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log), implementation-planner (spec archival). Artifact inventory is not stored here — it is derivable from the filesystem.
 
 ### Document Lifecycle
 
@@ -59,9 +63,23 @@ Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log
 |------|----------|-----------|----------|
 | Ephemeral | `.ai-work/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `SYSTEMS_PLAN.md`, `SKILL_GENESIS_REPORT.md`, `VERIFICATION_REPORT.md`, `PROGRESS.md` | Single pipeline run — delete after downstream consumption (merge `VERIFICATION_REPORT.md` patterns into `LEARNINGS.md` first) |
 | Session-persistent | `.ai-work/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions — merge learnings into permanent locations at feature end |
-| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md` | Project lifetime — committed to git, timestamped per run |
+| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md`, `SPEC_*.md` | Project lifetime — committed to git, timestamped per run |
 
 ### Version Control and Cleanup
 
 - **Never commit `.ai-work/`** — add to `.gitignore`. **Always commit `.ai-state/`**.
 - Clean up with `rm -rf .ai-work/` after pipeline completion. Merge `LEARNINGS.md` into permanent locations first.
+
+### Parallel Execution
+
+When agents run concurrently within a pipeline (e.g., implementer + test-engineer on paired steps), each concurrent agent writes to a scoped fragment file instead of the canonical document:
+
+| Canonical | Fragment Pattern | Example |
+|-----------|-----------------|---------|
+| `WIP.md` | `WIP_<agent-type>.md` | `WIP_implementer.md`, `WIP_test-engineer.md` |
+| `LEARNINGS.md` | `LEARNINGS_<agent-type>.md` | `LEARNINGS_implementer.md` |
+| `PROGRESS.md` | `PROGRESS_<agent-type>.md` | `PROGRESS_implementer.md` |
+
+Agent types use the names from the [coordination protocol](swe-agent-coordination-protocol.md): `implementer`, `test-engineer`, `cicd-engineer`, etc. Single-writer documents (`SYSTEMS_PLAN.md`, `IMPLEMENTATION_PLAN.md`, etc.) are unaffected.
+
+The supervising agent (implementation-planner or main agent) merges fragment files into canonical documents after concurrent agents complete. See the software-planning skill's [agent-pipeline-details.md](../../skills/software-planning/references/agent-pipeline-details.md) for the full semantic reconciliation protocols.

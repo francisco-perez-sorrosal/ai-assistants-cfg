@@ -91,6 +91,17 @@ Some plan steps delegate to a **specialized skill** for their methodology. A pha
 
 **Contexts and phases compose**: A plan can use a language context (Python quality gates) *and* a phase (refactoring methodology) simultaneously. The context provides the quality checks; the phase provides the approach.
 
+## Spec-Driven Development Integration
+
+For medium and large features, the [spec-driven-development](../spec-driven-development/SKILL.md) skill provides behavioral specification format, requirement ID conventions, and traceability threading patterns. The two skills compose:
+
+- **Software-planning** provides the three-document model, step decomposition, and execution workflow
+- **Spec-driven-development** provides the behavioral specification format and requirement traceability
+- The implementation-planner loads both when working on medium/large features
+- Trivial and small tasks use software-planning alone — no spec overhead
+
+The SDD skill is a **phase delegation** peer, not a dependency: planning works without it, and SDD methodology can be loaded independently for reference.
+
 ## What Makes a "Known-Good Increment"
 
 Each step MUST:

@@ -105,3 +105,105 @@ When the Task Chronograph MCP server is registered, call `report_interaction(sou
 | Receiving agent result | `"{agent_type}"` | `"main_agent"` | `"result"` |
 | Making pipeline decision | `"main_agent"` | `"main_agent"` | `"decision"` |
 | Responding to user | `"main_agent"` | `"user"` | `"response"` |
+
+## Semantic Document Reconciliation
+
+When concurrent agents write to fragment files (`WIP_<agent>.md`, `LEARNINGS_<agent>.md`, `PROGRESS_<agent>.md`), the supervising agent (implementation-planner) merges fragments into canonical documents after all agents in a batch complete. Each document type has its own schema and merge semantics -- naive concatenation produces structurally invalid documents.
+
+### WIP.md Reconciliation
+
+**Schema:**
+
+```
+## Current Batch
+Mode: parallel
+Steps: N, M
+Status: in-progress
+
+### Step N -- [Description]
+- Assignee: [agent-type]
+- Status: [IN-PROGRESS|COMPLETE|BLOCKED|CONFLICT]
+- Files: [file list]
+
+## Progress
+- [x] Step 1: ...
+- [~] Step N: ... <- parallel batch
+- [ ] Step K: ...
+```
+
+**Fragment structure:** Each `WIP_<agent>.md` contains a single `### Step N` section with an updated `Status` field. No batch header, no progress checklist, no blockers section.
+
+**Merge procedure:**
+
+1. Read each `WIP_<agent>.md`. Extract the step number (from `### Step N`) and the new `Status` value.
+2. In canonical `WIP.md`, locate `### Step N` under `## Current Batch`. Update the `Status` field.
+3. In `## Progress`, update the step marker: `[~]` becomes `[x]` if `COMPLETE`, stays `[~]` if `IN-PROGRESS`, becomes `[!]` if `BLOCKED` or `CONFLICT`.
+4. If all batch steps show `COMPLETE`: set batch `Status: complete`, update `## Next Action`.
+5. If any step shows `BLOCKED`/`CONFLICT`: add the blocker to `## Blockers`.
+6. Delete fragment files after successful update.
+
+**Post-merge invariants:** Exactly one `### Step N` per step (no duplicates). Every step in `Steps:` has a section. Progress checklist has one entry per plan step. Statuses from closed set. Batch `Status` is `complete` iff all steps are `COMPLETE`.
+
+### LEARNINGS.md Reconciliation
+
+**Schema:** Five fixed topic sections (`## Gotchas`, `## Patterns That Worked`, `## Decisions Made`, `## Edge Cases`, `## Technical Debt`). Entries are bullet points with `**[agent-name]**` attribution.
+
+**Fragment structure:** Each `LEARNINGS_<agent>.md` contains only the topic sections the agent has entries for, with entries under `##` headings matching canonical section names.
+
+**Merge procedure:**
+
+1. Read each `LEARNINGS_<agent>.md`. For each `## [Topic]` section, extract bullet-point entries.
+2. In canonical `LEARNINGS.md`, locate the matching `## [Topic]` section. Append entries at the end.
+3. If a fragment contains an unrecognized `## [Topic]` header: create a `## Uncategorized` section and place entries there.
+4. Entry order within a section reflects merge order (no re-sorting -- entries are unordered within topics).
+5. Delete fragment files after successful merge.
+
+**Deduplication:** Do not deduplicate by content. Different agents may report similar learnings from different perspectives -- both are valuable. Flag suspicious near-duplicates for human review during end-of-feature learnings merge.
+
+**Post-merge invariants:** Every entry has `**[agent-name]**` attribution. Every entry under a topic section. No duplicate `## [Topic]` headers. File header present exactly once.
+
+### PROGRESS.md Reconciliation
+
+**Schema:** Timestamped log lines, one per entry:
+
+```
+[TIMESTAMP] [AGENT] Phase N/M: [phase-name] -- [summary] #label1 #key=value
+```
+
+Append-only. Entries in chronological order by timestamp.
+
+**Fragment structure:** Each `PROGRESS_<agent>.md` contains the agent's own entries in the same format, chronologically ordered within the fragment.
+
+**Merge procedure:**
+
+1. Read canonical `PROGRESS.md` and all `PROGRESS_<agent>.md` fragments.
+2. Collect all fragment entries into a single list.
+3. Sort by timestamp (ISO 8601 prefix enables lexicographic sorting).
+4. Append sorted entries to canonical `PROGRESS.md`. Do not re-sort existing canonical entries.
+5. Delete fragment files after successful append.
+
+**Validation:** No two entries with the same timestamp + agent + phase number (discard duplicates). Phase transitions per agent should be monotonically increasing -- non-monotonic transitions are warnings, not merge failures.
+
+**Post-merge invariants:** All entries in timestamp order. Every entry matches the format pattern. No exact-duplicate entries.
+
+### .ai-state/ Reconciliation for Worktree Merges
+
+When worktree branches are merged, `.ai-state/` documents are subject to git merge semantics. Most avoid conflicts by design (timestamped filenames), but two cases need attention:
+
+- **SENTINEL_LOG.md** — append-only table. If merge conflicts arise, resolve by keeping both entries in timestamp order. Git usually auto-merges concurrent appends.
+- **IDEA_LEDGER_\*.md** — each promethean run creates a timestamped file carrying forward previous entries. If two worktrees both run promethean, the later ledger may miss the earlier's new entries. Create a reconciled ledger with suffix `_reconciled` containing the union of both.
+- **specs/** — unique feature-name filenames. No reconciliation needed -- git merge handles distinct file additions natively.
+
+### Post-Worktree .ai-work/ State Reconciliation
+
+`.ai-work/` is gitignored, so git merge does not touch it. After merging a worktree branch, the main worktree's `.ai-work/` may contain stale state.
+
+**Reconciliation procedure:**
+
+1. Check if `.ai-work/WIP.md` exists in the main worktree.
+2. Compare the `## Progress` checklist against git log: check if commits for "completed" steps exist on the current branch.
+3. Update steps whose implementation is visible in git history but marked incomplete: set status to `[COMPLETE]`, marker to `[x]`.
+4. Incorporate `LEARNINGS.md` entries from the merged worktree using the topic-section merge protocol above.
+5. Same for `PROGRESS.md` fragments.
+
+This is a safety net -- normal reconciliation happens before worktree merge during the planner's batch supervision.
