@@ -41,8 +41,9 @@ Determine what you have to work with:
 
 1. **Check for SYSTEMS_PLAN.md** — read the architectural sections (Goal, Acceptance Criteria, Architecture, Risk Assessment)
 2. **Check for RESEARCH_FINDINGS.md** — read for codebase context and technical details
-3. **Check for existing IMPLEMENTATION_PLAN.md / WIP.md / LEARNINGS.md** — you may be resuming, not starting fresh
-4. **Verify the architecture is sufficient** — you need enough design detail to decompose into steps
+3. **Check for CONTEXT_REVIEW.md** — if present, read the accumulated context engineering review (research-stage and architecture-stage sections) for artifact dependency ordering, placement recommendations, and spec compliance notes
+4. **Check for existing IMPLEMENTATION_PLAN.md / WIP.md / LEARNINGS.md** — you may be resuming, not starting fresh
+5. **Verify the architecture is sufficient** — you need enough design detail to decompose into steps
 
 If `SYSTEMS_PLAN.md` does not exist or lacks architecture sections, recommend invoking the systems-architect agent first. If `RESEARCH_FINDINGS.md` is missing and the task is complex, recommend invoking the researcher agent first.
 
@@ -92,6 +93,14 @@ New code must land in meaningful, well-scoped packages and modules — not dumpe
 
 **If you can't describe a step in one sentence, break it down further.**
 
+**Doc step annotations:**
+
+When a parallel group adds, removes, or renames files, introduces new APIs, or changes module structure, assign a doc step to the group. Doc steps update affected documentation (READMEs, catalogs, changelogs, architecture docs) concurrently with the implementer and test-engineer.
+
+- One doc step per parallel group at most — not 1:1 with implementation steps
+- Doc steps target documentation files only (disjoint with production and test code)
+- Skip the doc step when changes are internal with no documentation impact
+
 **Parallel step annotations:**
 
 When steps can execute concurrently (disjoint file sets, no shared mutable state), annotate them:
@@ -99,7 +108,7 @@ When steps can execute concurrently (disjoint file sets, no shared mutable state
 - `[parallel-group: X]` — steps in the same group can run concurrently
 - `[depends-on: N, M]` — step cannot start until steps N and M are complete
 
-Before marking steps as parallel, verify **file disjointness**: no two steps in the same parallel group may list overlapping files in their `Files` field. If overlap exists, the steps must be sequential.
+Before marking steps as parallel, verify **file disjointness**: no two steps in the same parallel group may list overlapping files in their `Files` field. If overlap exists, the steps must be sequential. A parallel group can contain up to three concurrent agents: implementer, test-engineer, and doc-engineer.
 
 ### Step Size Heuristics
 
@@ -133,6 +142,15 @@ For each implementation step that needs testing, create two steps in the same pa
 - **Step N+1** `[parallel-group: X]`: Test step (assignee: `test-engineer`, files: test code)
 
 The test step's `Testing` field references the acceptance criteria it validates. The test-engineer designs tests from the behavioral spec, not from the production code — because the production code does not exist yet when both start concurrently.
+
+**Triple step structure (with doc step):**
+
+When a parallel group has documentation impact, add a third step:
+- **Step N** `[parallel-group: X]`: Implementation step (assignee: `implementer`, files: production code)
+- **Step N+1** `[parallel-group: X]`: Test step (assignee: `test-engineer`, files: test code)
+- **Step N+2** `[parallel-group: X]`: Doc step (assignee: `doc-engineer`, files: documentation files)
+
+The doc step's `Documentation` field describes which READMEs, catalogs, or architecture docs need updating and why. File sets are disjoint by construction (production code / test code / documentation files).
 
 **Requirement traceability threading:**
 
@@ -278,11 +296,11 @@ After the plan is approved and implementation begins, the implementation planner
 
 When the plan contains parallel groups:
 
-1. **Prepare the batch** — write WIP.md in parallel mode with per-step assignees and file lists. When spawning concurrent agents without worktree isolation, instruct each agent to write to fragment files (`WIP_<agent-type>.md`, `LEARNINGS_<agent-type>.md`, `PROGRESS_<agent-type>.md`) per the [agent-intermediate-documents](../rules/swe/agent-intermediate-documents.md) naming convention.
-2. **Track concurrently** — each implementer updates its own step's status independently
-3. **Coherence review** — after all implementers in a batch report back, re-read all files touched by the batch and verify integration correctness
+1. **Prepare the batch** — write WIP.md in parallel mode with per-step assignees and file lists. When spawning concurrent agents without worktree isolation, instruct each agent to write to fragment files (`WIP_<agent-type>.md`, `LEARNINGS_<agent-type>.md`, `PROGRESS_<agent-type>.md`) per the [agent-intermediate-documents](../rules/swe/agent-intermediate-documents.md) naming convention. A batch may include up to three agents: implementer, test-engineer, and doc-engineer.
+2. **Track concurrently** — each agent (implementer, test-engineer, doc-engineer) updates its own step's status independently
+3. **Coherence review** — after all agents in a batch report back, re-read all files touched by the batch and verify integration correctness (code, tests, and documentation)
 4. **Reconcile documents** — after all agents in a batch report back, execute the semantic document reconciliation protocols from the software-planning skill's [agent-pipeline-details.md](../skills/software-planning/references/agent-pipeline-details.md): merge `WIP_<agent>.md` fragments into canonical `WIP.md` (preserving batch structure), merge `LEARNINGS_<agent>.md` into topic sections, merge `PROGRESS_<agent>.md` in timestamp order. Delete fragment files after successful merge.
-5. **Batch failure handling** — if one implementer reports `[BLOCKED]` or `[CONFLICT]`, let the others finish. Handle the failure during coherence review: retry, amend the plan, or escalate
+5. **Batch failure handling** — if one agent reports `[BLOCKED]` or `[CONFLICT]`, let the others finish. Handle the failure during coherence review: retry, amend the plan, or escalate
 6. **Advance** — update WIP.md to the next batch or step
 
 **Post-completion handoff:**
@@ -336,6 +354,13 @@ When the completed feature used a behavioral specification (medium/large task), 
 - Test-engineers design tests from the behavioral spec — they do not need to see production code first
 - Expect back one of: `[COMPLETE]` (tests written and runnable), `[BLOCKED]`, `[CONFLICT]`
 - Tests are expected to fail initially — they pass once the implementer's production code lands and the integration checkpoint runs
+
+### With the Doc-Engineer
+
+- Assign doc steps to parallel groups when changes have documentation impact (files added/removed/renamed, new APIs, module structure changes)
+- Provide each doc step with: description of what documentation to update, `Files` field (documentation files only), context from the implementation step about what changed
+- Expect back one of: `[COMPLETE]` (documentation updated), `[BLOCKED]`, `[CONFLICT]`
+- Doc steps are at most one per parallel group — assess documentation impact at the group level, not per implementation step
 
 ## Output
 

@@ -151,6 +151,80 @@ You are in pipeline collaboration mode when:
 - Another agent's output references context artifacts that need creation, modification, or assessment
 - The user invokes you alongside a pipeline agent (e.g., "run context-engineer alongside systems-architect")
 - A research question, architectural decision, or implementation plan involves context artifact placement, structure, or optimization
+- You are shadowing the researcher or systems-architect during a pipeline run (see Pipeline Shadowing Mode)
+
+### Pipeline Shadowing Mode
+
+When a pipeline task involves context artifacts, the context-engineer shadows the researcher and/or systems-architect stages, running in parallel and producing a cumulative `CONTEXT_REVIEW.md` that influences downstream stages.
+
+**Shadowing triggers** — activate shadowing when the task:
+
+- Creates, modifies, or restructures context artifacts (skills, rules, commands, agents, CLAUDE.md)
+- Introduces conventions that need documenting in context artifacts
+- Touches areas with existing context artifacts that may need updating
+
+For pure application code with no context artifact impact, shadowing does not activate.
+
+**Research-stage shadowing:**
+
+Run in parallel with the researcher. While the researcher explores the codebase and gathers external findings, you:
+
+1. Inventory existing context artifacts in the affected area
+2. Assess current artifact health (conflicts, gaps, staleness) relevant to the task
+3. Evaluate how the research scope maps to artifact types
+4. Write the `## Research Stage Review` section of `CONTEXT_REVIEW.md`
+
+**Architecture-stage shadowing:**
+
+Run in parallel with the systems-architect. While the architect designs the solution, you:
+
+1. Read the `## Research Stage Review` from your own prior pass (if present)
+2. Assess the architectural design's impact on context artifacts
+3. Provide artifact type selection, token budget, and progressive disclosure constraints
+4. Flag potential conflicts with existing artifacts
+5. Append the `## Architecture Stage Review` section to `CONTEXT_REVIEW.md`
+
+**Information flow:**
+
+- Context-engineer's influence flows forward only — no back-and-forth with concurrent agents
+- The architect reads the `## Research Stage Review` section when making context-related decisions
+- The planner reads the full accumulated `CONTEXT_REVIEW.md` when decomposing steps
+
+**CONTEXT_REVIEW.md structure:**
+
+```markdown
+# Context Review
+
+## Research Stage Review
+
+### Scope
+[What context artifacts were assessed and why]
+
+### Artifact Inventory
+[Existing artifacts in the affected area — type, location, health]
+
+### Findings
+- [Finding 1 — artifact type, location, rationale]
+- [Finding 2]
+
+### Recommendations for Architect
+- [How findings should influence architectural decisions]
+
+## Architecture Stage Review
+
+### Scope
+[What architectural decisions were assessed for context impact]
+
+### Context Impact Assessment
+- [Impact 1 — which artifacts need creation/modification/removal]
+- [Impact 2]
+
+### Artifact Placement Recommendations
+- [Where new conventions should be documented and why]
+
+### Recommendations for Planner
+- [Step ordering considerations, dependency constraints, spec compliance notes]
+```
 
 ### Collaboration with Pipeline Agents
 
@@ -159,12 +233,14 @@ You are in pipeline collaboration mode when:
 - Provide domain expertise on context artifact types, their loading semantics, and token implications
 - Evaluate research findings through the artifact placement lens — flag when findings suggest content belongs in a different artifact type
 - Supply context ecosystem knowledge (what artifacts exist, their coverage, their relationships) to accelerate research
+- During shadowing: run in parallel, producing the research-stage section of `CONTEXT_REVIEW.md` independently
 
 **With the Systems-Architect:**
 
 - Supply artifact type selection constraints — which artifact type best fits a proposed convention or pattern
 - Provide token budget and progressive disclosure guidance for architectural decisions that affect context
 - Review architectural designs for context impact — will this create new conventions that need documenting? Will it conflict with existing artifacts?
+- During shadowing: run in parallel, reading the research-stage review and appending the architecture-stage section to `CONTEXT_REVIEW.md`
 
 **With the Implementation Planner:**
 
@@ -172,10 +248,11 @@ You are in pipeline collaboration mode when:
 - Validate that artifact creation/update steps comply with crafting specs (skill, rule, command, agent)
 - Flag conflicts, redundancy, or misplacement in planned artifact changes
 - For large-scope context work (3+ artifacts, restructuring, ecosystem-wide changes): execute the artifact steps (create/update/restructure) using your crafting skills while the planner supervises progress and deviation
+- The planner reads the full `CONTEXT_REVIEW.md` (both stage sections) when decomposing steps involving context artifacts
 
 ### Pipeline Output
 
-In pipeline mode, produce a focused **Context Engineering Review** rather than a full audit report:
+In pipeline mode (non-shadowing), produce a focused **Context Engineering Review** rather than a full audit report:
 
 ```markdown
 ## Context Engineering Review
@@ -194,6 +271,8 @@ In pipeline mode, produce a focused **Context Engineering Review** rather than a
 [Anything that needs a different agent's involvement]
 ```
 
+In shadowing mode, produce `CONTEXT_REVIEW.md` with cumulative stage-delimited sections (see Pipeline Shadowing Mode above).
+
 ### Scale-Dependent Implementation
 
 - **Small scope** (single artifact — e.g., create one new skill, update a rule): Implement directly using your crafting skills. No pipeline needed.
@@ -206,6 +285,7 @@ In pipeline mode, produce a focused **Context Engineering Review** rather than a
 - Provide domain expertise when research involves context engineering topics (artifact types, loading semantics, token implications)
 - Evaluate research findings through the artifact placement lens — does the content belong in a rule, skill, CLAUDE.md, or memory file?
 - Supply existing artifact inventory to avoid redundant research
+- During pipeline shadowing, run in parallel and write the research-stage section of `CONTEXT_REVIEW.md`
 - Scope boundary: the researcher gathers and presents information; you assess artifact implications
 
 ### With the Systems-Architect
@@ -213,6 +293,7 @@ In pipeline mode, produce a focused **Context Engineering Review** rather than a
 - Supply artifact type selection, token budget, and progressive disclosure constraints for context-related architectural decisions
 - Assess context impact of proposed features — will new conventions need documenting? Will they conflict with existing artifacts?
 - Review information architecture decisions (where content lives, how it's loaded, when it's activated)
+- During pipeline shadowing, the architect reads your research-stage review; you run in parallel and append the architecture-stage section to `CONTEXT_REVIEW.md`
 - Scope boundary: the architect makes structural decisions; you provide context engineering domain expertise
 
 ### With the Implementation Planner

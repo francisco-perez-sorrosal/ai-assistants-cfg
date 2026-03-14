@@ -139,6 +139,48 @@ Classify each finding by severity: Critical (blocks correct understanding), Impo
 
 After fixing, list each change with the file path, what changed, and why.
 
+## Parallel Execution Mode
+
+When the implementation-planner assigns a doc step to a parallel group, the doc-engineer runs concurrently with the implementer and test-engineer.
+
+### Activation Triggers
+
+A doc step is assigned when a parallel group:
+
+- Adds, removes, or renames files that appear in documentation (READMEs, catalogs)
+- Introduces new public APIs or interfaces
+- Changes module structure or directory layout
+
+Doc steps are **not** 1:1 with implementation steps. A parallel group may have no doc step if changes are internal.
+
+### Inputs
+
+- `IMPLEMENTATION_PLAN.md` — the assigned doc step with `Files` field listing documentation targets
+- `SYSTEMS_PLAN.md` — architecture context for understanding what changed and why
+- The implementation step description — what code changes to expect (for writing accurate documentation)
+
+### File Disjointness
+
+The doc-engineer modifies only documentation files (READMEs, catalogs, changelogs, architecture docs). The implementer modifies production code. The test-engineer modifies test code. File sets are disjoint by construction.
+
+### Fragment Files
+
+When running in parallel, write to fragment files per the [agent-intermediate-documents](../rules/swe/agent-intermediate-documents.md) convention:
+
+- `WIP_doc-engineer.md` — step status update
+- `LEARNINGS_doc-engineer.md` — documentation-related discoveries
+- `PROGRESS_doc-engineer.md` — phase transition signals
+
+The supervising agent merges fragments into canonical documents after all agents in the batch complete.
+
+### Completion Signal
+
+Report back with one of:
+
+- `[COMPLETE]` — documentation updated, fragment files written
+- `[BLOCKED]` — blocker described with evidence (e.g., cannot determine correct documentation without seeing implementation result)
+- `[CONFLICT]` — needs a file outside the declared set
+
 ## Collaboration Points
 
 ### With the Context-Engineer
@@ -161,10 +203,12 @@ When both agents are invoked, the doc-engineer runs AFTER the context-engineer t
 - During planning, assess existing documentation in the affected area — flag docs that will need updates as the plan executes
 - This proactive planning-stage checkpoint prevents documentation drift from being discovered only at verification time
 - Scope: identify which READMEs, catalogs, and architecture docs will be affected, not write the updates yet
+- The planner assigns doc steps to parallel groups when changes have documentation impact; the doc-engineer executes those steps concurrently with the implementer and test-engineer
 
 ### With the Implementer
 
-- After implementation steps that add, remove, or rename files, the doc-engineer updates affected documentation
+- In parallel execution mode, the doc-engineer runs concurrently with the implementer on disjoint file sets (documentation files vs production code)
+- After implementation steps outside parallel groups that add, remove, or rename files, the doc-engineer updates affected documentation at pipeline checkpoints
 - The implementer does not update documentation beyond its step scope; the doc-engineer handles cross-cutting documentation changes
 
 ### With the User
