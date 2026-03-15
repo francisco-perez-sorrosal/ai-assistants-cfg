@@ -18,10 +18,19 @@ Behavioral specifications bridge architecture and implementation by giving each 
 
 - [references/spec-format-guide.md](references/spec-format-guide.md) -- full spec format with examples, EARS/GWT comparison, traceability matrix template, persistent spec template, spec delta template, edge cases
 - [references/sentinel-spec-checks.md](references/sentinel-spec-checks.md) -- spec health check catalog for sentinel integration, pass conditions, integration guidance
+- [references/calibration-procedure.md](references/calibration-procedure.md) -- structured tier assessment procedure with signal catalog, scoring matrix, evidence template, and calibration log format
+
+## Process Calibration
+
+Before selecting a process tier, the main agent runs a structured calibration assessment at task intake. The procedure collects 6 objective signals (file count proxy, behavior count, architectural scope, prior spec existence, test coverage, request complexity), scores them against a weighted matrix, and produces a tier recommendation with per-signal evidence. The user can override at any time. Decisions are logged to `.ai-state/calibration_log.md` for trend analysis.
+
+**Calibration selects the tier; complexity triage refines spec depth within it.** These are two stages of the same decision — calibration determines how much pipeline machinery to deploy (Direct through Full), then triage determines how detailed the behavioral specification should be (trivial through large).
+
+--> See [references/calibration-procedure.md](references/calibration-procedure.md) for the full signal catalog, scoring matrix, evidence output template, and assessment examples.
 
 ## Complexity Triage
 
-Classify every task before deciding whether to produce a behavioral specification. This triage refines SDD depth within the Standard and Full tiers of the [process calibration](../../rules/swe/swe-agent-coordination-protocol.md#process-calibration) — it governs how much specification to produce, not whether to use agents or planning documents.
+Classify every task before deciding whether to produce a behavioral specification. Tier selection is determined by the [calibration procedure](references/calibration-procedure.md). This triage refines SDD depth within the Standard and Full tiers — it governs how much specification to produce, not whether to use agents or planning documents.
 
 | Tier | Signals | Spec Depth |
 |------|---------|------------|
@@ -187,4 +196,5 @@ For brownfield features — when `.ai-state/specs/` contains prior `SPEC_*.md` f
 | Traceability matrix | `VERIFICATION_REPORT.md` `## Spec Conformance` section |
 | Archived spec | `.ai-state/specs/SPEC_<name>_YYYY-MM-DD.md` |
 | Spec delta (brownfield) | `.ai-work/SPEC_DELTA.md` (ephemeral, produced by architect) |
+| Calibration log | `.ai-state/calibration_log.md` (persistent, append-only) |
 | Decision documentation | `LEARNINGS.md` `### Decisions Made` section |

@@ -44,6 +44,7 @@ Not stored here:
     IDEA_LEDGER_*.md
     SENTINEL_REPORT_*.md
     SENTINEL_LOG.md
+    calibration_log.md
     specs/
       SPEC_<name>_YYYY-MM-DD.md
 ```
@@ -57,7 +58,9 @@ Not stored here:
 
 `SPEC_<name>_YYYY-MM-DD.md` — archived behavioral specifications with traceability matrices. Created by the implementation-planner at end-of-feature for medium/large tasks.
 
-Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log), implementation-planner (spec archival). Artifact inventory is not stored here — it is derivable from the filesystem.
+`calibration_log.md` — append-only tier selection log (timestamp, task, signals, recommended tier, actual tier, source, retrospective). Used for calibration trend analysis by the sentinel.
+
+Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log), implementation-planner (spec archival), main agent (calibration log). Artifact inventory is not stored here — it is derivable from the filesystem.
 
 ### Document Lifecycle
 
@@ -65,7 +68,7 @@ Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log
 |------|----------|-----------|----------|
 | Ephemeral | `.ai-work/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `CONTEXT_REVIEW.md`, `SYSTEMS_PLAN.md`, `SPEC_DELTA.md`, `SKILL_GENESIS_REPORT.md`, `VERIFICATION_REPORT.md`, `PROGRESS.md` | Single pipeline run — delete after downstream consumption (merge `VERIFICATION_REPORT.md` patterns into `LEARNINGS.md` first) |
 | Session-persistent | `.ai-work/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions — merge learnings into permanent locations at feature end |
-| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md`, `SPEC_*.md` | Project lifetime — committed to git, timestamped per run |
+| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md`, `SPEC_*.md`, `calibration_log.md` | Project lifetime — committed to git, timestamped per run |
 
 ### Version Control and Cleanup
 

@@ -158,6 +158,15 @@ Requires `.ai-state/specs/` directory with spec files. Skip with a note when no 
 | SH05 | L | Key Decisions section is substantive | Decisions include what, why, alternatives |
 | SH06 | L | Spec delta claims match actual spec evolution | Added/modified/removed requirements in delta consistent with differences between prior and current archived specs |
 
+### Calibration Accuracy (CA)
+
+Requires `.ai-state/calibration_log.md`. Skip with a note when no calibration log exists or fewer than 5 entries.
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| CA01 | A | `calibration_log.md` exists with valid table format | File exists in `.ai-state/`, header row matches expected columns, 1+ data rows |
+| CA02 | L | Calibration accuracy analysis (5+ entries required) | Recommendation-vs-actual match rate >60%, no single override pattern >40% of entries |
+
 ### Self-Verification (V)
 
 The sentinel includes itself in the audit.
@@ -203,7 +212,7 @@ Execute all auto type checks from the check catalog above:
 2. Record PASS/WARN/FAIL for each check with evidence (file paths, counts, grep output)
 3. Build the findings skeleton — a list of all failures and warnings with check IDs, locations, and evidence
 
-When `.ai-state/specs/` exists with spec files, include SH01-SH02 (auto) in this pass.
+When `.ai-state/specs/` exists with spec files, include SH01-SH02 (auto) in this pass. When `.ai-state/calibration_log.md` exists, include CA01 (auto) in this pass.
 
 This pass is deterministic and fast. Complete it fully before starting Pass 2.
 

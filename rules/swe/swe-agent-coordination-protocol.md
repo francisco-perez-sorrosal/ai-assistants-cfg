@@ -19,6 +19,7 @@ Assess the task before starting work. Each tier prescribes what to do — higher
 - Bug fixes: Direct unless 4+ files or structural issue (escalate to Standard).
 - Refactoring: Standard with `[Phase: Refactoring]` delegation to the [refactoring skill](../../skills/refactoring/SKILL.md).
 - The SDD skill's [complexity triage](../../skills/spec-driven-development/SKILL.md#complexity-triage) refines specification depth within Standard and Full tiers.
+- For structured calibration with signal scoring, see the SDD skill's [calibration procedure](../../skills/spec-driven-development/references/calibration-procedure.md).
 
 ### Available Agents
 
