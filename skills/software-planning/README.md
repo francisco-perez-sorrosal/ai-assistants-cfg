@@ -18,10 +18,13 @@ Load explicitly with `software-planning` or reference the three-document model. 
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Core skill: three-document model, step sizing, testing guidance, commit discipline, workflow |
-| `README.md` | This file — overview and usage guide |
+| `SKILL.md` | Core skill: three-document model, step sizing, testing guidance, commit discipline, gotchas, workflow |
+| `references/document-templates.md` | IMPLEMENTATION_PLAN.md, WIP.md, LEARNINGS.md templates |
+| `references/decomposition-guide.md` | Feature breakdown, anti-patterns, step sizing heuristics |
+| `references/agent-pipeline-details.md` | Agent boundary discipline, parallel execution, interaction reporting |
 | `contexts/python.md` | Python-specific quality gates and step templates |
 | `phases/refactoring.md` | Refactoring phase methodology |
+| `README.md` | This file — overview and usage guide |
 
 ### Extension Directories
 

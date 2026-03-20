@@ -20,7 +20,9 @@ Trigger explicitly by mentioning "python skill" or referencing it by name.
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Core reference: project structure, type hints, code style, data modeling, testing, tool configs, development workflow |
+| `SKILL.md` | Core reference: project structure, type hints, code style, data modeling, testing, tool configs, gotchas |
+| `references/patterns-and-examples.md` | Dataclasses vs Pydantic, async patterns, structural pattern matching, error handling examples |
+| `references/testing-and-tooling.md` | Ruff/mypy/pyright configuration, pytest fixtures, parametrize patterns |
 | `README.md` | This file — overview and usage guide |
 
 ## Related Skills

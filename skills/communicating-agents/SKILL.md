@@ -6,7 +6,7 @@ description: Agent-to-agent communication protocols for multi-agent interoperabi
   Use when building multi-agent systems that communicate across frameworks or
   organizations, exposing agents via A2A endpoints, implementing agent discovery,
   or integrating A2A with AI frameworks (ADK, LangGraph, CrewAI, Pydantic AI).
-  Trigger terms: A2A, agent-to-agent, Agent Card, agent discovery, multi-agent
+  Trigger terms -- A2A, agent-to-agent, Agent Card, agent discovery, multi-agent
   communication, agent interoperability, cross-agent protocol.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 compatibility: Claude Code

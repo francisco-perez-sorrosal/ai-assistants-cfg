@@ -20,9 +20,10 @@ Load explicitly with `spec-driven-development` or reference behavioral specifica
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Core skill: complexity triage, spec format, REQ ID conventions, traceability threading, decision documentation, spec archival, spec delta format |
+| `SKILL.md` | Core skill: complexity triage, spec format, REQ ID conventions, traceability threading, decision documentation, gotchas, spec archival, spec delta format |
 | `README.md` | This file -- overview and usage guide |
 | `references/spec-format-guide.md` | Full spec format examples, EARS/GWT comparison, traceability matrix template, persistent spec template, spec delta template |
+| `references/calibration-procedure.md` | Structured tier assessment with signal scoring for complexity triage |
 | `references/sentinel-spec-checks.md` | Spec Health dimension checks for the sentinel agent |
 
 ## Quick Start
