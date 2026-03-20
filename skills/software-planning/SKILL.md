@@ -231,6 +231,8 @@ Sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical D
 
 --> See [references/document-templates.md](references/document-templates.md#learningsmd-structure) for the full template.
 
+When recording entries in `### Decisions Made`, agents also call `decision-tracker write` to create a machine-readable entry in `.ai-state/decisions.jsonl`. See the [decision-tracking rule](../../rules/swe/decision-tracking.md) for the CLI protocol and schema.
+
 ## Workflow
 
 ```text

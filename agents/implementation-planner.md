@@ -260,6 +260,17 @@ Parallel Mode (when parallel groups exist): Use the WIP.md parallel format from 
 
 **LEARNINGS.md** — initialize using the structure from the software-planning skill (sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical Debt). Every entry must be prefixed with the source agent in brackets (e.g., `**[implementation-planner]**`). Tag your own entries with `[implementation-planner]`. For medium/large features, initialize the `Decisions Made` section with structured format guidance: `**[agent-name] [Decision title]**: [What]. **Why**: [rationale]. **Alternatives**: [rejected options].` This enables the verifier to check for substantive decision documentation and the persistent spec to archive decisions with full context.
 
+**Decision write protocol:** When you document a decision in `LEARNINGS.md ### Decisions Made`, also record it to the decision audit log:
+
+```
+uv run --project ${CLAUDE_PLUGIN_ROOT}/decision-tracker python -m decision_tracker write \
+  --decision "<decision text>" --category "<type>" --agent-type "implementation-planner" \
+  [--rationale "<why>"] [--alternatives "<alt1>" "<alt2>"] \
+  [--affected-reqs "<REQ-01>"] [--affected-files "<path>"]
+```
+
+This ensures decisions have both human-readable (LEARNINGS.md) and machine-readable (`.ai-state/decisions.jsonl`) representations. See the [decision-tracking rule](../rules/swe/decision-tracking.md) for schema details.
+
 ### Phase 7 — Execution Supervision
 
 After the plan is approved and implementation begins, the implementation planner can be re-invoked to supervise execution.
@@ -322,6 +333,7 @@ When the completed feature used a behavioral specification (medium/large task), 
 1. Create `.ai-state/specs/` directory if it does not exist
 2. Extract the `## Behavioral Specification` from `SYSTEMS_PLAN.md`, the traceability matrix from `VERIFICATION_REPORT.md`, and the `Decisions Made` entries from `LEARNINGS.md`
 3. Write `SPEC_<feature-name>_YYYY-MM-DD.md` to `.ai-state/specs/` using the persistent spec template from the `spec-driven-development` skill
+4. Cross-reference `decisions.jsonl` entries covering the feature period against the archived spec's `## Key Decisions`. Note any decisions in the log that are missing from the spec, or vice versa.
 
 ## Collaboration Points
 

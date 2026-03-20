@@ -157,7 +157,11 @@ Review LEARNINGS.md and determine destination:
 | Technical debt | Issue tracker or CLAUDE.md | Track future improvements |
 | Domain knowledge | Project docs | Update relevant documentation |
 
-### 3. Delete Documents
+### 3. Verify Decision Log Consistency
+
+- Verify that `.ai-state/decisions.jsonl` entries covering the feature period are consistent with the decisions merged from `LEARNINGS.md`. Check for decisions in the log that were not merged (may indicate undocumented decisions caught by the hook), and decisions merged but missing from the log (may indicate the write protocol was not followed).
+
+### 4. Delete Documents
 
 After learnings are merged, delete all planning documents (see [agent intermediate documents](../../../rules/swe/agent-intermediate-documents.md) for cleanup instructions).
 

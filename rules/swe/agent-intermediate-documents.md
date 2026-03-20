@@ -45,6 +45,7 @@ Not stored here:
     SENTINEL_REPORT_*.md
     SENTINEL_LOG.md
     calibration_log.md
+    decisions.jsonl
     specs/
       SPEC_<name>_YYYY-MM-DD.md
 ```
@@ -60,7 +61,9 @@ Not stored here:
 
 `calibration_log.md` — append-only tier selection log (timestamp, task, signals, recommended tier, actual tier, source, retrospective). Used for calibration trend analysis by the sentinel.
 
-Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log), implementation-planner (spec archival), main agent (calibration log). Artifact inventory is not stored here — it is derivable from the filesystem.
+`decisions.jsonl` — append-only decision audit log tracking decisions made during AI-assisted development. Written by pipeline agents directly (primary path) and by the commit-time extraction hook (safety net). Each line is a self-contained JSON object following the schema defined in the [decision-tracking](decision-tracking.md) rule.
+
+Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log), implementation-planner (spec archival), main agent (calibration log), all pipeline agents (decisions.jsonl via CLI), commit-time hook (decisions.jsonl via extraction). Artifact inventory is not stored here — it is derivable from the filesystem.
 
 ### Document Lifecycle
 
@@ -68,7 +71,7 @@ Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log
 |------|----------|-----------|----------|
 | Ephemeral | `.ai-work/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `CONTEXT_REVIEW.md`, `SYSTEMS_PLAN.md`, `SPEC_DELTA.md`, `SKILL_GENESIS_REPORT.md`, `VERIFICATION_REPORT.md`, `PROGRESS.md` | Single pipeline run — delete after downstream consumption (merge `VERIFICATION_REPORT.md` patterns into `LEARNINGS.md` first) |
 | Session-persistent | `.ai-work/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions — merge learnings into permanent locations at feature end |
-| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md`, `SPEC_*.md`, `calibration_log.md` | Project lifetime — committed to git, timestamped per run |
+| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md`, `SPEC_*.md`, `calibration_log.md`, `decisions.jsonl` | Project lifetime — committed to git, timestamped per run |
 
 ### Version Control and Cleanup
 

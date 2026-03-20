@@ -131,6 +131,8 @@ This structure enables:
 
 Trivial and small tasks use freeform decision notes -- the structured format adds value only when decisions are complex enough to have alternatives worth recording.
 
+Decisions captured in this format are also recorded to `.ai-state/decisions.jsonl` via the `decision-tracker write` CLI. The human-readable format in LEARNINGS.md and the machine-readable format in `decisions.jsonl` coexist -- LEARNINGS.md is the authoring surface, `decisions.jsonl` is the persistent audit log. See the [decision-tracking rule](../../rules/swe/decision-tracking.md) for the JSONL schema.
+
 ## Spec Archival
 
 When a medium or large feature completes, the implementation-planner archives the spec during the end-of-feature workflow.

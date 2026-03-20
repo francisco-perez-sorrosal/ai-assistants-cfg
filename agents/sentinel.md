@@ -167,6 +167,18 @@ Requires `.ai-state/calibration_log.md`. Skip with a note when no calibration lo
 | CA01 | A | `calibration_log.md` exists with valid table format | File exists in `.ai-state/`, header row matches expected columns, 1+ data rows |
 | CA02 | L | Calibration accuracy analysis (5+ entries required) | Recommendation-vs-actual match rate >60%, no single override pattern >40% of entries |
 
+### Decision Log (DL)
+
+Conditional activation: skip DL checks when no `decisions.jsonl` exists (same pattern as SH checks with specs).
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| DL01 | A | `decisions.jsonl` exists in `.ai-state/` when archived specs exist | `decisions.jsonl` present or no archived specs |
+| DL02 | A | `decisions.jsonl` entries are valid JSONL with required fields | Each line parses as JSON with `id`, `version`, `timestamp`, `status`, `category`, `decision`, `made_by`, `source` |
+| DL03 | L | Decision entries referencing REQ IDs match actual REQ IDs in archived specs | `affected_reqs` values found in corresponding `SPEC_*.md` |
+| DL04 | L | Decision entries have non-empty rationale for `source: "agent"` entries | Agent-written decisions have `rationale` field populated |
+| DL05 | L | Decision frequency is reasonable for features with archived specs | Average decisions per feature between 2-30 |
+
 ### Self-Verification (V)
 
 The sentinel includes itself in the audit.

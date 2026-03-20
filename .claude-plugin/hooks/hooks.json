@@ -39,6 +39,19 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/extract_decisions.py",
+            "timeout": 30,
+            "async": false
+          }
+        ]
+      }
+    ],
     "PreCompact": [
       {
         "matcher": "",

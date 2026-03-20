@@ -124,6 +124,19 @@ Small decisions don't need this format. Reserve it for choices that affect:
 - Performance vs. maintainability trade-offs
 - Security model decisions
 
+**Persist to LEARNINGS.md:** After documenting trade-off decisions in `### Decisions` of `SYSTEMS_PLAN.md`, also record each significant trade-off in `LEARNINGS.md ### Decisions Made` using the structured format: `**[systems-architect] [Decision title]**: [What was decided]. **Why**: [rationale]. **Alternatives**: [what was considered and rejected].` This ensures architect decisions flow through the existing archival pipeline (spec archival extracts from LEARNINGS.md, not from SYSTEMS_PLAN.md) and are not lost when ephemeral documents are deleted.
+
+Also record each trade-off to the decision audit log via the CLI:
+
+```
+uv run --project ${CLAUDE_PLUGIN_ROOT}/decision-tracker python -m decision_tracker write \
+  --decision "<decision text>" --category "<type>" --agent-type "systems-architect" \
+  [--rationale "<why>"] [--alternatives "<alt1>" "<alt2>"] \
+  [--affected-reqs "<REQ-01>"] [--affected-files "<path>"]
+```
+
+This ensures decisions have both human-readable (LEARNINGS.md) and machine-readable (`.ai-state/decisions.jsonl`) representations. See the [decision-tracking rule](../rules/swe/decision-tracking.md) for schema details.
+
 ### Phase 5 — Risk Assessment
 
 Identify what could go wrong and how to mitigate it:
