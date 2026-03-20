@@ -9,6 +9,11 @@ compatibility: Claude Code
 
 Managing Python projects with modern package managers and dependency tools. **Default: pixi** unless uv is explicitly requested.
 
+**Satellite files** (loaded on-demand):
+
+- [references/pixi.md](references/pixi.md) -- pixi package manager: init, dependencies, tasks, environments, CI/CD
+- [references/uv.md](references/uv.md) -- uv package manager: init, dependencies, workspaces, publishing
+
 ## Quick Reference
 
 **Python Coding**: See the [Python Development](../python-development/SKILL.md) skill for type hints, testing patterns, code quality, and language best practices.
