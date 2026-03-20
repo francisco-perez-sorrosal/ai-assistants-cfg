@@ -5,9 +5,9 @@ description: Roadmap planning, feature prioritization, and backlog management fo
   ICE), dependency mapping between features, roadmap visualization formats (now-next-later,
   timeline, theme-based, outcome-based), and capacity-based planning. Integrates with
   promethean's IDEA_LEDGER output to produce prioritized backlogs that flow into
-  spec-driven-development. Use when prioritizing features, building a roadmap,
-  managing a backlog, sequencing work across releases, mapping feature dependencies,
-  or deciding what to build next.
+  spec-driven-development. Use when prioritizing features, building a product roadmap,
+  managing a backlog, sequencing work across releases, release planning, backlog
+  grooming, mapping feature dependencies, or deciding what to build next.
 compatibility: Claude Code
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
