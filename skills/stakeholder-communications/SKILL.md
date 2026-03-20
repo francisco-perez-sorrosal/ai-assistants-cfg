@@ -2,11 +2,11 @@
 name: stakeholder-communications
 description: Developer-oriented stakeholder communication patterns for software engineers.
   Covers technical status updates, RFC and design proposal authoring, release announcements,
-  breaking change notifications, migration guides, technical demo scripts, and approval
-  workflows. Use when writing status reports on technical work, authoring RFCs or design
-  docs, communicating releases or breaking changes to downstream consumers, preparing
-  sprint demo scripts, seeking architecture or security approval, or drafting technical
-  decision records.
+  release notes, breaking change notifications, change communication, migration guides,
+  technical demo scripts, and approval workflows. Use when writing status reports or
+  status updates on technical work, authoring RFCs or design docs, communicating releases
+  or breaking changes to downstream consumers, preparing sprint demo scripts, seeking
+  architecture or security approval, or drafting technical decision records.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 compatibility: Claude Code
 ---
