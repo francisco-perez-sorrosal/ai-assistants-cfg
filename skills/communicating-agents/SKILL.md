@@ -6,6 +6,8 @@ description: Agent-to-agent communication protocols for multi-agent interoperabi
   Use when building multi-agent systems that communicate across frameworks or
   organizations, exposing agents via A2A endpoints, implementing agent discovery,
   or integrating A2A with AI frameworks (ADK, LangGraph, CrewAI, Pydantic AI).
+  Trigger terms: A2A, agent-to-agent, Agent Card, agent discovery, multi-agent
+  communication, agent interoperability, cross-agent protocol.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 compatibility: Claude Code
 ---
@@ -20,6 +22,13 @@ Protocols for agent-to-agent communication -- enabling agents built with differe
 - [contexts/a2a-typescript.md](contexts/a2a-typescript.md) -- A2A TypeScript SDK implementation guide (`@a2a-js/sdk`)
 - [references/a2a-protocol.md](references/a2a-protocol.md) -- Full A2A protocol reference (spec, data model, operations, auth, lifecycle)
 - [references/a2a-framework-integrations.md](references/a2a-framework-integrations.md) -- Framework integration patterns (ADK, LangGraph, CrewAI, Pydantic AI, etc.)
+
+## Gotchas
+
+- **`InMemoryTaskStore` is dev-only.** Both Python and TypeScript SDKs default to `InMemoryTaskStore`. This loses all tasks on restart -- production requires a persistent backing store (PostgreSQL, MySQL, or SQLite). The minimal server examples in this skill use `InMemoryTaskStore` for brevity; always swap for production.
+- **Protocol is pre-1.0 -- expect breaking changes.** A2A is at v0.3. The spec, data model, and SDK APIs may change before 1.0. Pin SDK versions and monitor the [changelog](https://a2a-protocol.org/latest/specification/).
+- **Agent Card discovery beyond well-known URI is not standardized.** Only `/.well-known/agent-card.json` is specified. Curated registries, DNS-based discovery, and other mechanisms are proprietary or proposed -- do not depend on them for interop.
+- **Streaming requires SSE -- not WebSocket.** A2A streaming uses Server-Sent Events (SSE) over HTTP, not WebSocket. Client libraries that assume WebSocket will not work.
 
 ## Protocol Selection
 
@@ -184,3 +193,7 @@ For integration patterns and code examples, see [references/a2a-framework-integr
 - [JS/TS SDK](https://github.com/a2aproject/a2a-js)
 - [Sample Agents](https://github.com/a2aproject/a2a-samples)
 - [A2A Inspector](https://github.com/a2aproject/a2a-inspector)
+
+## Related Skills
+
+- **`agentic-sdks`** -- Building agents with OpenAI Agents SDK or Claude Agent SDK (agent loops, tools, multi-agent orchestration within a single framework). Complementary: build an agent with `agentic-sdks`, then expose it via A2A using this skill.
