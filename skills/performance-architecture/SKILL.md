@@ -1,11 +1,12 @@
 ---
 name: performance-architecture
 description: Performance architecture patterns and decisions for software systems. Covers
-  performance budgets, latency analysis, throughput optimization, caching strategies,
-  connection pooling, async and concurrent patterns, database query optimization, load
-  testing methodology, capacity planning, benchmarking, and scalability decisions. Use
-  when designing for performance, analyzing bottlenecks, choosing caching strategies,
-  planning capacity, optimizing latency or throughput, setting up load testing, or
+  performance budgets, latency analysis, throughput optimization, performance optimization,
+  caching strategies, connection pooling, async and concurrent patterns, database query
+  optimization, load testing methodology, capacity planning, benchmarking, bottleneck
+  analysis, scaling, and scalability decisions. Use when designing for performance,
+  analyzing bottlenecks, choosing caching strategies, planning capacity, optimizing
+  latency or throughput, setting up load testing, defining performance budgets, or
   reviewing systems for performance anti-patterns.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 compatibility: Claude Code
