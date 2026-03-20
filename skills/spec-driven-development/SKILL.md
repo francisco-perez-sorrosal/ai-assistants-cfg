@@ -101,6 +101,8 @@ The `and` clause is optional -- omit it when no precondition is needed. The `so 
 
 Status values: `PASS` (test exists and passes), `FAIL` (test fails or implementation missing), `UNTESTED` (no test found for this requirement).
 
+**Mid-flight coverage**: The `/sdd-coverage` command produces this table at any time during development — not just at verification. The test-engineer also includes a coverage check when reporting step completion. Use these to catch gaps early rather than discovering them at the verifier stage.
+
 ## Traceability Threading
 
 REQ IDs flow through the pipeline in five stages:

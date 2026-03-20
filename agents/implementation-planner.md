@@ -275,7 +275,7 @@ This ensures decisions have both human-readable (LEARNINGS.md) and machine-reada
 
 After the plan is approved and implementation begins, the implementation planner can be re-invoked to supervise execution.
 
-**Checkpoint reviews:** At defined milestones (after phases, after critical steps), compare codebase state against planned steps.
+**Checkpoint reviews:** At defined milestones (after phases, after critical steps), compare codebase state against planned steps. When a `## Behavioral Specification` exists, include a spec coverage check at checkpoints — scan test files for `req{NN}_` patterns against the REQ IDs to surface untested requirements early rather than at verification time.
 
 **Deviation detection:** For each planned step, assess:
 

@@ -191,8 +191,10 @@ This ensures decisions have both human-readable (LEARNINGS.md) and machine-reada
 
 ### Phase 8 — Report
 
+**Spec coverage check**: When a `## Behavioral Specification` section exists in `.ai-work/SYSTEMS_PLAN.md`, include a quick coverage table in your report. For each REQ-NN, grep test files for `req{NN}_` patterns and report which requirements now have tests and which still lack coverage. This gives the user immediate visibility into spec-to-test gaps without waiting for the verifier.
+
 Stop and report one of:
-- `[COMPLETE]` — step done, tests pass, WIP.md updated
+- `[COMPLETE]` — step done, tests pass, WIP.md updated, spec coverage table included (if applicable)
 - `[BLOCKED]` — blocker described with evidence (e.g., production code bug, missing dependency, untestable design)
 - `[CONFLICT]` — file outside declared set needed (parallel mode only)
 
