@@ -1,4 +1,4 @@
-# ai-assistants
+# Praxion
 
 The operational infrastructure for the development philosophy defined in `~/.claude/CLAUDE.md`. This repo provides the skills, agents, rules, commands, and MCP servers that make the philosophy actionable across projects.
 

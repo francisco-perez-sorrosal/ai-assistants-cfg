@@ -34,8 +34,8 @@ Environment:
   CCWT_DEV_DIR   Base directory for projects (default: $HOME/dev)
 
 Examples:
-  ccwt ai-assistants          # open all worktrees in $HOME/dev/ai-assistants
-  ccwt ai-assistants --list   # just list the worktrees
+  ccwt Praxion          # open all worktrees in $HOME/dev/Praxion
+  ccwt Praxion --list   # just list the worktrees
   ccwt /tmp/my-repo           # use absolute path
 EOF
     exit 0

@@ -1,6 +1,6 @@
 # github-star
 
-Prompts the user to star the ai-assistants-cfg GitHub repository. Triggered by the `/star-repo` command.
+Prompts the user to star the Praxion GitHub repository. Triggered by the `/star-repo` command.
 
 ## Files
 

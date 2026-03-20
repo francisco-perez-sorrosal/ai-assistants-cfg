@@ -1,9 +1,9 @@
 ---
-description: Onboard the current project to work with the ai-assistants plugin ecosystem
+description: Onboard the current project to work with the Praxion plugin ecosystem
 allowed-tools: [Bash(git:*), Bash(grep:*), Read, Write, Edit, Glob, Grep, AskUserQuestion]
 ---
 
-Onboard the current project directory to work cleanly with the ai-assistants plugin (i-am). Run checks and apply fixes for `.gitignore` hygiene, plugin installation, and project-level configuration.
+Onboard the current project directory to work cleanly with the Praxion plugin (i-am). Run checks and apply fixes for `.gitignore` hygiene, plugin installation, and project-level configuration.
 
 ## Pre-flight
 
@@ -30,7 +30,7 @@ If `.gitignore` does not exist, create it with the required entries. If it exist
 
 Check whether the i-am plugin is installed by looking for `i-am@bit-agora` in `~/.claude/plugins/installed_plugins.json`:
 
-- If the file does not exist or does not contain `i-am@bit-agora`, warn: "The i-am plugin is not installed. Run install.sh from the ai-assistants repo to install it."
+- If the file does not exist or does not contain `i-am@bit-agora`, warn: "The i-am plugin is not installed. Run install.sh from the Praxion repo to install it."
 - If installed, report the version and install path from the JSON entry
 
 ### 4. Project CLAUDE.md
@@ -56,5 +56,5 @@ After presenting the summary:
 2. Apply `.gitignore` fixes (if needed)
 3. Apply `.ai-state/` exclusion removal (if user approved)
 4. Create `CLAUDE.md` (if user approved)
-5. Stage and commit only the files this command changed, with message: `chore: Onboard project for ai-assistants plugin`
+5. Stage and commit only the files this command changed, with message: `chore: Onboard project for Praxion plugin`
 6. Print final summary of what was done

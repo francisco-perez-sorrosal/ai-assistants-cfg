@@ -1,4 +1,4 @@
-# ai-assistants
+# Praxion
 
 A toolkit that enhances AI coding assistants with reusable expertise, automated agents, slash commands, and coding conventions. Install once, and your AI assistant gains domain knowledge, a pipeline of specialized agents for complex features, and conventions that enforce quality automatically. Compatible with **Claude Code**, **Claude Desktop**, and **Cursor**.
 
@@ -25,8 +25,8 @@ For a full explanation of how these compose -- including the layered architectur
 ## Quick Start
 
 ```bash
-git clone https://github.com/francisco-perez-sorrosal/ai-assistants.git
-cd ai-assistants
+git clone https://github.com/francisco-perez-sorrosal/Praxion.git
+cd Praxion
 ./install.sh            # Claude Code (default)
 ./install.sh --check    # Verify installation
 ```
@@ -68,7 +68,7 @@ Slash commands invoked with `/<name>`. In Claude Code plugin mode, use `/i-am:<n
 | `/memory` | Manage persistent memory (user prefs, learnings, conventions) |
 | `/onboard-project` | Onboard the current project to work with the ecosystem |
 | `/sdd-coverage` | Report spec-to-test and spec-to-code coverage for REQ IDs |
-| `/star-repo` | Star the ai-assistants-cfg repo on GitHub |
+| `/star-repo` | Star the Praxion repo on GitHub |
 
 ### Agents
 
@@ -169,7 +169,7 @@ For **Claude Code vs Cursor** format differences (discovery paths, command expor
 On devices without filesystem access (e.g., Claude iOS app) or when using Claude Desktop without the CLI, paste the following into the **User Preferences** field in Claude's settings:
 
 ```text
-Read the user preferences from https://raw.githubusercontent.com/francisco-perez-sorrosal/ai-assistants-cfg/main/claude/config/userPreferences.txt and follow them before any other interaction
+Read the user preferences from https://raw.githubusercontent.com/francisco-perez-sorrosal/Praxion/main/claude/config/userPreferences.txt and follow them before any other interaction
 ```
 
 **Config directories** -- Installer resources live in tool-specific dirs:

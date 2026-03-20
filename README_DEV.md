@@ -1,6 +1,6 @@
 # Developer Guide
 
-Contributor and developer documentation for ai-assistants. For installation and usage, see [`README.md`](README.md).
+Contributor and developer documentation for Praxion. For installation and usage, see [`README.md`](README.md).
 
 ## Project Structure
 
@@ -218,7 +218,7 @@ For user-facing installation instructions, see [`README.md`](README.md#installat
 Load the plugin directly from the cloned repo for a single session. Changes to skills, commands, and agents are reflected immediately — no reinstall needed.
 
 ```bash
-claude --plugin-dir /path/to/ai-assistants
+claude --plugin-dir /path/to/Praxion
 ```
 
 Personal config and rules are **not** loaded. Use `./install.sh` if you also need those.

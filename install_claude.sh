@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ai-assistants — Claude Code / Claude Desktop installer
+# Praxion — Claude Code / Claude Desktop installer
 #
 # Installs personal config, rules, and the i-am plugin into Claude Code or
 # configures MCP servers for Claude Desktop. Invoked by install.sh for code|desktop.

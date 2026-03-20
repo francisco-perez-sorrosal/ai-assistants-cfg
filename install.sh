@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ai-assistants Installer — Entry point
+# Praxion Installer — Entry point
 #
 # Routes to install_claude.sh (Claude Code / Claude Desktop) or
 # install_cursor.sh (Cursor). See --help for usage.
@@ -27,7 +27,7 @@ header() { printf "\n${B}%s${R}\n" "$*"; }
 
 show_overview() {
     local mode=$1
-    printf "\n${B}ai-assistants Installer${R}\n"
+    printf "\n${B}Praxion Installer${R}\n"
     case "$mode" in
         code)
             cat <<EOF

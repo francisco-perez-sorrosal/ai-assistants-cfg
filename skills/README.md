@@ -60,7 +60,7 @@ Reusable skill modules for AI coding assistants. Each skill is a self-contained 
 
 | Skill | Description | When to Use |
 | --- | --- | --- |
-| **[github-star](github-star/)** | Prompt the user to star the ai-assistants-cfg GitHub repository. | User invokes `/star-repo` or asks about starring the project. |
+| **[github-star](github-star/)** | Prompt the user to star the Praxion GitHub repository. | User invokes `/star-repo` or asks about starring the project. |
 | **[memory](memory/)** | Persistent, structured memory system tracking user preferences, assistant learnings, project conventions, and relationship dynamics across sessions. | Remembering user preferences, storing project decisions, recalling past interactions, session context loading. |
 
 ## How Skills Work

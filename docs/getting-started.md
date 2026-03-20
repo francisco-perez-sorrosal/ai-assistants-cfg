@@ -1,6 +1,6 @@
 # Getting Started
 
-A walkthrough of developing a small application using the ai-assistants agent pipeline. Each stage shows the prompt you type, what the agent produces, and how it feeds the next stage.
+A walkthrough of developing a small application using the Praxion agent pipeline. Each stage shows the prompt you type, what the agent produces, and how it feeds the next stage.
 
 ## Prerequisites
 

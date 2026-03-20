@@ -1,12 +1,12 @@
 # Core Concepts
 
-The building blocks of the ai-assistants ecosystem and how they compose into a layered system for AI-assisted development.
+The building blocks of the Praxion ecosystem and how they compose into a layered system for AI-assisted development.
 
-## What is ai-assistants?
+## What is Praxion?
 
 A toolkit that enhances AI coding assistants (Claude Code, Claude Desktop, Cursor) with reusable expertise, automated agents, slash commands, and coding conventions. It provides a configuration layer that makes AI assistants more capable, consistent, and context-aware across projects.
 
-Without ai-assistants, an AI coding assistant starts each session from zero -- no knowledge of your coding conventions, no structured workflows, no ability to delegate complex tasks. With it, the assistant has domain expertise on demand, a pipeline of specialized agents for complex work, and conventions that enforce quality automatically.
+Without Praxion, an AI coding assistant starts each session from zero -- no knowledge of your coding conventions, no structured workflows, no ability to delegate complex tasks. With it, the assistant has domain expertise on demand, a pipeline of specialized agents for complex work, and conventions that enforce quality automatically.
 
 ## The Building Blocks
 

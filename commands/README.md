@@ -15,8 +15,8 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | `/manage-readme` | Create or refine README.md files |
 | `/memory` | Manage persistent memory (user prefs, assistant learnings, project conventions) |
 | `/merge-worktree` | Merge a worktree branch back into current branch |
-| `/onboard-project` | Onboard the current project for the ai-assistants plugin ecosystem |
-| `/star-repo` | Star the ai-assistants-cfg repo on GitHub |
+| `/onboard-project` | Onboard the current project for the Praxion plugin ecosystem |
+| `/star-repo` | Star the Praxion repo on GitHub |
 
 ## How Commands Work
 

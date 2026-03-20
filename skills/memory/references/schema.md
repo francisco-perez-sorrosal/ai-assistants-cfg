@@ -230,7 +230,7 @@ A complete v1.2 example showing entries across all categories:
     },
     "project": {
       "repo_name": {
-        "value": "ai-assistants -- configuration repository for AI coding assistants",
+        "value": "Praxion -- configuration repository for AI coding assistants",
         "created_at": "2026-02-09T14:00:00Z",
         "updated_at": "2026-02-09T14:00:00Z",
         "tags": ["identity"],

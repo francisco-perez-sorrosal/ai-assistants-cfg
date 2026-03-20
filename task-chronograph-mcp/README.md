@@ -26,7 +26,7 @@ Hooks forward `SubagentStart`, `SubagentStop`, and `PostToolUse` (Write) events 
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /path/to/ai-assistants/.claude-plugin/hooks/send_event.py",
+            "command": "python3 /path/to/Praxion/.claude-plugin/hooks/send_event.py",
             "timeout": 10,
             "async": true
           }
@@ -39,7 +39,7 @@ Hooks forward `SubagentStart`, `SubagentStop`, and `PostToolUse` (Write) events 
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /path/to/ai-assistants/.claude-plugin/hooks/send_event.py",
+            "command": "python3 /path/to/Praxion/.claude-plugin/hooks/send_event.py",
             "timeout": 10,
             "async": true
           }
@@ -52,7 +52,7 @@ Hooks forward `SubagentStart`, `SubagentStop`, and `PostToolUse` (Write) events 
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /path/to/ai-assistants/.claude-plugin/hooks/send_event.py",
+            "command": "python3 /path/to/Praxion/.claude-plugin/hooks/send_event.py",
             "timeout": 10,
             "async": true
           }
@@ -63,7 +63,7 @@ Hooks forward `SubagentStart`, `SubagentStop`, and `PostToolUse` (Write) events 
 }
 ```
 
-Replace `/path/to/ai-assistants` with the absolute path to the `ai-assistants` repo.
+Replace `/path/to/Praxion` with the absolute path to the `Praxion` repo.
 
 The hook script uses only Python stdlib and exits 0 unconditionally -- it never blocks agent execution, even when the server is down.
 
