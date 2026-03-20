@@ -1,6 +1,6 @@
 ---
 name: memory
-description: Persistent memory system for tracking user preferences, assistant learnings, project conventions, and relationship dynamics across sessions. Use when remembering user preferences, storing project decisions, recalling past interactions, managing assistant self-knowledge, or when starting a new session to load context about the user.
+description: Persistent memory system for tracking user preferences, assistant learnings, project conventions, and relationship dynamics across sessions. Use when remembering user preferences, storing project decisions, recalling past interactions, managing assistant self-knowledge, or when starting a new session to load context about the user. Provides persistent context and cross-session memory so knowledge survives between conversations.
 argument-hint: "session_start | remember | recall | search | forget | status | reflect | about_me | about_us | export_memories"
 compatibility: Claude Code
 ---
@@ -11,6 +11,13 @@ MCP-backed memory that persists across sessions. The `memory` MCP server handles
 
 **Satellite files** (loaded on-demand):
 - [references/schema.md](references/schema.md) -- full JSON schema, category definitions, field constraints, migration notes
+
+## Gotchas
+
+- **Never store secrets, API keys, or tokens in memory.** The memory store is a plain JSON file committed to `.ai-state/` -- anything written there is visible in version control.
+- **Memory categories are not tags -- each memory belongs to exactly one category.** Choosing the wrong category means the entry won't surface from category-scoped `recall` or `about_me`/`about_us` aggregations. Consult the Ontology table below before storing.
+- **`session_start` must be called at the beginning of every session.** Without it, memory context is empty and the assistant has no continuity from prior conversations. This is a silent failure -- nothing errors, you just lose all accumulated knowledge.
+- **Do not duplicate CLAUDE.md or rule content into memory.** If a convention is already in always-loaded context, storing it again wastes memory entries and creates drift risk when the source is updated but the memory copy is not.
 
 ## Ontology
 
