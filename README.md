@@ -1,8 +1,14 @@
 # Praxion
 
-My vision for turning AI assistance into a disciplined engineering system. There are many frameworks like this, but this is mine: a structured layer of reusable expertise, specialized agents, commands, rules, and memory that operationalizes spec-driven development and context engineering into reliable, context-aware results. It is my orchestration of established engineering conventions, workflows, and architectural thinking into the assistant's loop so it operates with continuity and stronger judgment. Compatible with **Claude Code**, **Claude Desktop**, and **Cursor** (primarily CC).
+**A structured layer of reusable expertise, specialized agents, commands, rules, and memory that operationalizes spec-driven development and context engineering into reliable, context-aware results**.
+
+This is my vision for turning AI assistance into a disciplined engineering system. There are many frameworks like this, but this is mine; It's my orchestration of established engineering conventions, workflows, and architectural thinking into the assistant's loop so it operates with continuity and stronger judgment.
+
+Every non-trivial feature starts from a behavioral spec with traceable requirements that thread through architecture, planning, implementation, and verification.
 
 The name comes from *praxis* (knowledge into action) combined with *axon* (signal transmission), representing the bridge between cognition and implementation.
+
+Compatible with **Claude Code** (mainly), **Claude Desktop**, and **Cursor**.
 
 ## What You Get
 
