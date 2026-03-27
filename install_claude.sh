@@ -301,23 +301,24 @@ PYEOF
 # =============================================================================
 
 prompt_hooks_install() {
-    local hook_script="${SCRIPT_DIR}/.claude-plugin/hooks/send_event.py"
-    if [ ! -f "$hook_script" ]; then
-        warn "Hook script not found: ${hook_script} — skipping hooks"
+    local hooks_dir="${SCRIPT_DIR}/.claude-plugin/hooks"
+    local send_event="${hooks_dir}/send_event.py"
+    if [ ! -f "$send_event" ]; then
+        warn "Hook script not found: ${send_event} — skipping hooks"
         return
     fi
 
-    header "Step 4 — Task Chronograph Hooks"
+    header "Step 4 — Hooks (Observability + Code Quality)"
     cat <<EOF
 
   ${B}[1] Install hooks (recommended)${R}
-      ${D}Enables agent lifecycle tracking via Task Chronograph MCP server.${R}
-      ${D}Hooks fire on SubagentStart, SubagentStop, and file edits (Write/Edit).${R}
+      ${D}Observability: agent lifecycle tracking via Task Chronograph.${R}
+      ${D}Code quality: auto-format Python on Write/Edit, lint gate on commit.${R}
       ${D}Modifies ~/.claude/settings.json.${R}
 
   ${B}[2] Skip hooks${R}
-      ${D}No pipeline observability. Agents still work, but lifecycle events${R}
-      ${D}won't be tracked. Install later by re-running: ./install.sh code${R}
+      ${D}No observability or automatic code quality enforcement.${R}
+      ${D}Install later by re-running: ./install.sh code${R}
 EOF
     ask 1 2
 
@@ -329,10 +330,10 @@ EOF
     local settings_file="${HOME}/.claude/settings.json"
     step "Installing hooks into settings.json..."
 
-    python3 - "$settings_file" "$hook_script" << 'PYEOF'
+    python3 - "$settings_file" "$hooks_dir" << 'PYEOF'
 import json, sys
 
-settings_path, hook_script = sys.argv[1], sys.argv[2]
+settings_path, hooks_dir = sys.argv[1], sys.argv[2]
 
 try:
     with open(settings_path) as f:
@@ -340,20 +341,37 @@ try:
 except FileNotFoundError:
     settings = {}
 
-hook_entry = lambda matcher="": {
-    "matcher": matcher,
-    "hooks": [{
-        "type": "command",
-        "command": f"python3 {hook_script}",
-        "timeout": 10,
-        "async": True,
-    }],
-}
+def hook(script, matcher="", timeout=10, is_async=True):
+    return {
+        "matcher": matcher,
+        "hooks": [{
+            "type": "command",
+            "command": f"python3 {hooks_dir}/{script}",
+            "timeout": timeout,
+            "async": is_async,
+        }],
+    }
 
 settings["hooks"] = {
-    "SubagentStart": [hook_entry()],
-    "SubagentStop": [hook_entry()],
-    "PostToolUse": [hook_entry("Write|Edit")],
+    # Observability (async, fire-and-forget)
+    "SubagentStart": [hook("send_event.py")],
+    "SubagentStop": [hook("send_event.py")],
+    "PostToolUse": [
+        hook("send_event.py", "Write|Edit"),
+        hook("format_python.py", "Write|Edit"),
+    ],
+    # Code quality gate (sync, blocks on violations)
+    "PreToolUse": [{
+        "matcher": "Bash",
+        "hooks": [
+            {
+                "type": "command",
+                "command": f"python3 {hooks_dir}/check_code_quality.py",
+                "timeout": 30,
+                "async": False,
+            },
+        ],
+    }],
 }
 
 with open(settings_path, "w") as f:
@@ -361,7 +379,9 @@ with open(settings_path, "w") as f:
     f.write("\n")
 PYEOF
 
-    info "Hooks installed (SubagentStart, SubagentStop, PostToolUse)"
+    info "Hooks installed:"
+    info "  Observability: SubagentStart, SubagentStop, PostToolUse (send_event)"
+    info "  Code quality:  PostToolUse (format_python), PreToolUse (check_code_quality)"
 }
 
 # =============================================================================
