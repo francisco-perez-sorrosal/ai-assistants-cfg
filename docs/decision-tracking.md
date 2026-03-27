@@ -26,28 +26,41 @@ Decision tracking addresses the first four directly and partially addresses the 
 
 Decisions reach `decisions.jsonl` via two complementary paths:
 
-```
-                    PRIMARY PATH                          SECONDARY PATH
-               (agent direct writes)                    (commit-time hook)
+```mermaid
+flowchart TD
+    subgraph Primary["PRIMARY PATH (agent direct writes)"]
+        direction TB
+        A1[Agent makes a decision]
+        A2["Writes to LEARNINGS.md<br/>(human-readable, working doc)"]
+        A3["Calls decision-tracker write CLI<br/>source: agent<br/>Full context: rationale,<br/>alternatives, affected_reqs"]
+        A1 --> A2
+        A1 --> A3
+    end
 
-Agent makes a decision                          PreToolUse fires on git commit
-  |                                                |
-  +-- Writes to LEARNINGS.md                       +-- Is this git commit? No -> exit 0
-  |   (human-readable, working doc)                |
-  |                                                +-- Read transcript + git diff --staged
-  +-- Calls decision-tracker write CLI             |
-  |   source: "agent"                              +-- Call Haiku (structured extraction)
-  |   Full context: rationale,                     |
-  |   alternatives, affected_reqs                  +-- Deduplicate against decisions.jsonl
-  |                                                |   (skip what agents already wrote)
-  v                                                |
-decisions.jsonl                                    +-- Branch on tier:
-  ^                                                |   +-- Direct/Lightweight/Spike: auto-log, exit 0
-  |                                                |   +-- Standard/Full: pending file, exit 2
-  +-- Hook appends only NOVEL decisions -----------+
-      source: "hook"                               Agent presents decisions for user review
-      Lower context (diff-derived)                         |
-                                                   User approves/rejects -> re-commits
+    subgraph Secondary["SECONDARY PATH (commit-time hook)"]
+        direction TB
+        B1["PreToolUse fires<br/>on git commit"]
+        B2{"Is this<br/>git commit?"}
+        B3[exit 0]
+        B4["Read transcript +<br/>git diff --staged"]
+        B5["Call Haiku<br/>(structured extraction)"]
+        B6["Deduplicate against<br/>decisions.jsonl"]
+        B7{"Branch on tier"}
+        B8["Auto-log, exit 0"]
+        B9["Pending file, exit 2"]
+        B10["Agent presents decisions<br/>for user review"]
+        B11["User approves/rejects<br/>→ re-commits"]
+        B1 --> B2
+        B2 -->|No| B3
+        B2 -->|Yes| B4
+        B4 --> B5 --> B6 --> B7
+        B7 -->|"Direct / Lightweight / Spike"| B8
+        B7 -->|"Standard / Full"| B9
+        B9 --> B10 --> B11
+    end
+
+    A3 --> DJ[("decisions.jsonl")]
+    B6 -->|"Hook appends only<br/>NOVEL decisions<br/>source: hook"| DJ
 ```
 
 **Primary path (agent direct writes)**: Agents call the `decision-tracker write` CLI whenever they document a decision in `LEARNINGS.md`. This produces the highest-quality entries -- the agent has full context (rationale, alternatives, affected requirements) at the moment of decision.

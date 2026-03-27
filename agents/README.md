@@ -10,39 +10,31 @@ Custom agents for specialized workflows — autonomous subprocesses that handle 
 
 Twelve agents that collaborate on software development tasks, each with a dedicated responsibility. They communicate through shared documents and can be invoked independently or in sequence. The context-engineer shadows the researcher and systems-architect stages when work involves context artifacts, producing a cumulative `CONTEXT_REVIEW.md` that flows forward to downstream stages. The doc-engineer runs in parallel with the implementer and test-engineer when the planner assigns documentation steps, and continues to operate at pipeline checkpoints. The sentinel operates independently as an on-demand ecosystem auditor whose reports any agent can consume. The implementer executes plan steps with skill-augmented coding. The verifier sits downstream as an optional quality gate. The skill-genesis agent harvests patterns from implementation learnings and proposes new artifacts (memory entries, rules, skills, agent definitions) for persistent curation.
 
-```
- promethean ──► IDEA_PROPOSAL.md + IDEA_LEDGER_*.md
-     │
-     ▼
- researcher ──────────────► RESEARCH_FINDINGS.md
- + context-engineer ──────► CONTEXT_REVIEW.md (research stage section)
-   (shadow, when context     │
-    artifacts involved)      │
-     │                       │
-     ▼                       ▼
- systems-architect ────────► SYSTEMS_PLAN.md
- + context-engineer ──────► CONTEXT_REVIEW.md (architecture stage section appended)
-   (shadow, when context
-    artifacts involved)
-     │
-     ▼
- implementation-planner ──► IMPLEMENTATION_PLAN.md (Steps), WIP.md, LEARNINGS.md
-     │
-     ▼
- implementer ──────────► code
- test-engineer ────────► tests        (parallel, disjoint file sets)
- doc-engineer ─────────► documentation (when planner assigns doc step)
-     │
-     ▼
- verifier ─────────────► VERIFICATION_REPORT.md (optional — when quality review needed)
-     │
-     ▼ (optional)
- skill-genesis ────────► SKILL_GENESIS_REPORT.md (harvest learnings → artifact proposals)
+```mermaid
+flowchart TD
+    P["<b>promethean</b>"] -->|"IDEA_PROPOSAL.md +<br/>IDEA_LEDGER_*.md"| R
 
- ┌──────────────────────────────────────────────────────────────────┐
- │ sentinel ──► SENTINEL_REPORT_*.md + SENTINEL_LOG.md (.ai-state/)│
- │ (independent audit — any agent or user can consume reports)      │
- └──────────────────────────────────────────────────────────────────┘
+    R["<b>researcher</b>"] -->|"RESEARCH_FINDINGS.md"| SA
+    CE1["context-engineer<br/>(shadow)"] -.->|"CONTEXT_REVIEW.md<br/>(research stage)"| SA
+
+    SA["<b>systems-architect</b>"] -->|"SYSTEMS_PLAN.md"| IP
+    CE2["context-engineer<br/>(shadow)"] -.->|"CONTEXT_REVIEW.md<br/>(architecture stage)"| IP
+
+    IP["<b>implementation-planner</b>"] -->|"IMPLEMENTATION_PLAN.md<br/>WIP.md, LEARNINGS.md"| EX
+
+    subgraph EX["Parallel Execution (disjoint file sets)"]
+        I["<b>implementer</b> → code"]
+        TE["<b>test-engineer</b> → tests"]
+        DE["<b>doc-engineer</b> → docs<br/>(when planner assigns)"]
+    end
+
+    EX -->|"VERIFICATION_REPORT.md"| V["<b>verifier</b><br/>(optional)"]
+    V -.->|"SKILL_GENESIS_REPORT.md"| SG["<b>skill-genesis</b><br/>(optional)"]
+
+    SE["<b>sentinel</b><br/>(independent audit)"]
+    SE -.->|"SENTINEL_REPORT_*.md +<br/>SENTINEL_LOG.md<br/>(.ai-state/)"| ANY["Any agent or user<br/>can consume reports"]
+
+    style SE fill:#f0f0f0,stroke:#999,stroke-dasharray: 5 5
 ```
 
 | Agent | Description | Skills Used |

@@ -71,30 +71,15 @@ For detailed rationale and edge case handling, see [`references/spec-format-guid
 
 REQ IDs flow through the pipeline in five stages, each consuming the output of the previous one.
 
-```
-  Stage 1                Stage 2                 Stage 3
-  Architect creates      Planner threads         Test-engineer names
-  REQ-01..REQ-NN in      "Validates REQ-01,      test_req01_... in
-  SYSTEMS_PLAN.md        REQ-03" in test         test code
-       |                 step Testing fields          |
-       |                      |                       |
-       v                      v                       v
-  +-----------+       +-----------------+      +-------------+
-  | Behavioral|  -->  | IMPLEMENTATION  |  --> | Test files   |
-  | Spec      |       | _PLAN.md steps  |      |              |
-  +-----------+       +-----------------+      +-------------+
-                                                      |
-                      Stage 5                  Stage 4 |
-                      Planner archives         Verifier produces
-                      spec + matrix +          traceability matrix
-                      decisions to             in VERIFICATION_
-                      .ai-state/specs/         REPORT.md
-                           ^                         |
-                           |                         v
-                    +-------------+         +-----------------+
-                    | Persistent  |  <--    | Traceability     |
-                    | spec file   |         | matrix           |
-                    +-------------+         +-----------------+
+```mermaid
+flowchart LR
+    S1["<b>Stage 1</b><br/>Behavioral Spec<br/><i>Architect creates<br/>REQ-01..REQ-NN in<br/>SYSTEMS_PLAN.md</i>"]
+    S2["<b>Stage 2</b><br/>Implementation Plan<br/><i>Planner threads<br/>Validates REQ-01, REQ-03<br/>in test step fields</i>"]
+    S3["<b>Stage 3</b><br/>Test Files<br/><i>Test-engineer names<br/>test_req01_... in<br/>test code</i>"]
+    S4["<b>Stage 4</b><br/>Traceability Matrix<br/><i>Verifier produces<br/>matrix in<br/>VERIFICATION_REPORT.md</i>"]
+    S5["<b>Stage 5</b><br/>Persistent Spec<br/><i>Planner archives<br/>spec + matrix + decisions<br/>to .ai-state/specs/</i>"]
+
+    S1 --> S2 --> S3 --> S4 --> S5
 ```
 
 The verifier's traceability matrix is the conformance checkpoint -- it shows whether every requirement has tests and implementation. The archived spec preserves the full chain for cross-session reference.

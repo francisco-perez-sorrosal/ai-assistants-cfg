@@ -89,19 +89,20 @@ If the HTTP server fails to start (e.g., port conflict), MCP tools still work vi
 
 A single process runs two transports in parallel:
 
-```
-plugin.json (mcpServers)
-        │
-        ▼
-  __main__.py
-   ├── daemon thread: uvicorn → Starlette app
-   │     ├── /           dashboard (Jinja2 + htmx + SSE)
-   │     ├── /api/*      event ingestion + state API
-   │     └── /mcp        MCP streamable HTTP (bonus)
-   │
-   └── main thread: mcp.run() → stdio MCP transport
-        │
-        └── shared EventStore (thread-safe, threading.Lock)
+```mermaid
+flowchart TD
+    PJ["plugin.json<br/>(mcpServers)"] --> MM["__main__.py"]
+
+    MM --> DT["daemon thread:<br/>uvicorn → Starlette"]
+    MM --> MT["main thread:<br/>mcp.run() → stdio"]
+
+    DT --> D["/ dashboard<br/>(Jinja2 + htmx + SSE)"]
+    DT --> API["/api/* event ingestion<br/>+ state API"]
+    DT --> MH["/mcp streamable HTTP<br/>(bonus)"]
+
+    ES[("shared EventStore<br/>(thread-safe,<br/>threading.Lock)")]
+    DT <--> ES
+    MT <--> ES
 ```
 
 The `EventStore` uses `threading.Lock` for data protection and `call_soon_threadsafe` for cross-thread SSE broadcasting. MCP tool calls from either transport read/write the same store.

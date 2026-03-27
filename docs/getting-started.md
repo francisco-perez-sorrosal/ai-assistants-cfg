@@ -12,10 +12,19 @@ A walkthrough of developing a small application using the Praxion agent pipeline
 
 Agents communicate through documents in `.ai-work/`, not through direct invocation. Each agent reads upstream documents and writes its own, forming a chain:
 
-```
-promethean ──► researcher ────────► systems-architect ──► implementation-planner ──► implementer    ──► verifier
-               + context-engineer   + context-engineer                               test-engineer
-                 (shadow)             (shadow)                                       doc-engineer (when assigned)
+```mermaid
+graph LR
+    P[promethean] --> R[researcher]
+    R --> SA[systems-architect]
+    SA --> IP[implementation-planner]
+    IP --> I[implementer]
+    IP --> TE[test-engineer]
+    IP -.-> DE["doc-engineer<br/>(when assigned)"]
+    I --> V[verifier]
+    TE --> V
+    DE -.-> V
+    R -. shadow .-> CE1[context-engineer]
+    SA -. shadow .-> CE2[context-engineer]
 ```
 
 You drive the pipeline by telling Claude what you need. It delegates to the right agent based on context. You can also name agents explicitly.
