@@ -1,22 +1,19 @@
-"""Starlette application with MCP server, HTTP API, and dashboard routes."""
+"""Starlette application with MCP server, HTTP API, and OTel relay."""
 
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
-from sse_starlette.sse import EventSourceResponse
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 from starlette.routing import Mount, Route
 
-from task_chronograph_mcp.dashboard.routes import dashboard_handler
 from task_chronograph_mcp.events import (
     AgentStatus,
     Event,
@@ -203,30 +200,10 @@ async def pipeline_state(request: Request) -> JSONResponse:
     return JSONResponse(store.get_pipeline_summary())
 
 
-async def sse_stream(request: Request) -> EventSourceResponse:
-    """GET /api/events/stream -- SSE endpoint for real-time event delivery."""
-    store: EventStore = request.app.state.store
-    queue = store.subscribe()
-
-    async def event_generator():
-        try:
-            while True:
-                if await request.is_disconnected():
-                    break
-                event = await queue.get()
-                event_type_value = (
-                    event.event_type.value
-                    if isinstance(event.event_type, EventType)
-                    else str(event.event_type)
-                )
-                yield {
-                    "event": event_type_value,
-                    "data": json.dumps(event.to_dict()),
-                }
-        finally:
-            store.unsubscribe(queue)
-
-    return EventSourceResponse(event_generator())
+async def phoenix_redirect(request: Request) -> RedirectResponse:
+    """GET / -- redirect to Phoenix UI."""
+    phoenix_port = os.environ.get("PHOENIX_PORT", "6006")
+    return RedirectResponse(url=f"http://localhost:{phoenix_port}", status_code=302)
 
 
 # ---------------------------------------------------------------------------
@@ -301,11 +278,10 @@ def report_interaction(
 
 app = Starlette(
     routes=[
-        Route("/", dashboard_handler, methods=["GET"]),
+        Route("/", phoenix_redirect, methods=["GET"]),
         Route("/api/events", receive_event, methods=["POST"]),
         Route("/api/interactions", receive_interaction, methods=["POST"]),
         Route("/api/state", pipeline_state, methods=["GET"]),
-        Route("/api/events/stream", sse_stream, methods=["GET"]),
         Mount("", _build_mcp_app()),
     ],
     lifespan=app_lifespan,

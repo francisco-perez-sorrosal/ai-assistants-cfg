@@ -5,15 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "task-chronograph-mcp"
 version = "0.1.0"
-description = "Real-time agent pipeline observability via MCP server and web dashboard"
+description = "Agent pipeline observability via MCP server with OTel export to Phoenix"
 requires-python = ">=3.13"
 dependencies = [
     "mcp[cli]>=1.25,<2",
     "starlette",
-    "sse-starlette",
     "uvicorn",
     "watchfiles",
-    "jinja2",
     # OTel instrumentation for Phoenix relay
     "opentelemetry-api>=1.20",
     "opentelemetry-sdk>=1.20",

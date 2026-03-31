@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import MagicMock
 
 import httpx
@@ -144,98 +143,22 @@ class TestPipelineState:
 # ---------------------------------------------------------------------------
 
 
-class TestSSEStream:
-    async def test_sse_subscribe_and_broadcast_integration(self, client: httpx.AsyncClient):
-        """Verify that the EventStore used by the server supports SSE pub/sub.
-
-        Full SSE HTTP streaming cannot be tested with httpx ASGITransport because
-        the EventSourceResponse keeps the connection open indefinitely, blocking
-        the single-threaded ASGI transport. Instead, we test the pub/sub mechanism
-        that backs the SSE endpoint directly via the server's store.
-        The subscribe/unsubscribe unit tests are in test_events.py; this test
-        verifies the server's store instance is wired correctly.
-        """
-        import task_chronograph_mcp.server as server_module
-        from task_chronograph_mcp.events import Event, EventType
-
-        store: EventStore = server_module._store  # type: ignore[assignment]
-
-        queue = store.subscribe()
-        event = Event(event_type=EventType.AGENT_START, agent_type="researcher")
-        store.add(event)
-
-        received = await asyncio.wait_for(queue.get(), timeout=1.0)
-        assert received.agent_type == "researcher"
-        assert received.event_type == EventType.AGENT_START
-
-        store.unsubscribe(queue)
-
-
 # ---------------------------------------------------------------------------
-# GET / (Dashboard)
+# GET / (Phoenix redirect)
 # ---------------------------------------------------------------------------
 
 
-class TestDashboard:
-    async def test_dashboard_returns_html(self, client: httpx.AsyncClient):
-        resp = await client.get("/")
-        assert resp.status_code == 200
-        assert "text/html" in resp.headers["content-type"]
+class TestPhoenixRedirect:
+    async def test_root_redirects_to_phoenix(self, client: httpx.AsyncClient):
+        resp = await client.get("/", follow_redirects=False)
+        assert resp.status_code == 302
+        assert "localhost:6006" in resp.headers["location"]
 
-    async def test_dashboard_contains_title(self, client: httpx.AsyncClient):
-        resp = await client.get("/")
-        assert "Task Chronograph" in resp.text
-
-    async def test_dashboard_hydrated_with_agent_data(
-        self, client: httpx.AsyncClient, sample_event_payload: dict
-    ):
-        """Post events, then GET / and verify the agent appears in the HTML."""
-        await client.post("/api/events", json=sample_event_payload)
-        resp = await client.get("/")
-        assert "researcher" in resp.text
-
-    async def test_dashboard_shows_task_summary(
-        self, client: httpx.AsyncClient, sample_event_payload: dict
-    ):
-        """Agent card shows task_summary from delegation interaction."""
-        import task_chronograph_mcp.server as server_module
-
-        store: EventStore = server_module._store  # type: ignore[assignment]
-        delegation = Interaction(
-            source="main_agent",
-            target="agent-001",
-            summary="Research auth patterns",
-            interaction_type="delegation",
-        )
-        store.add_interaction(delegation)
-        await client.post("/api/events", json=sample_event_payload)
-
-        resp = await client.get("/")
-        assert "Research auth patterns" in resp.text
-
-    async def test_dashboard_shows_elapsed_time(
-        self, client: httpx.AsyncClient, sample_event_payload: dict
-    ):
-        """Agent card shows elapsed duration for running agents."""
-        await client.post("/api/events", json=sample_event_payload)
-        resp = await client.get("/")
-        assert "Started" in resp.text
-
-    async def test_dashboard_shows_interaction_timeline(self, client: httpx.AsyncClient):
-        """Add an interaction via the store, verify it appears in dashboard."""
-        import task_chronograph_mcp.server as server_module
-
-        store: EventStore = server_module._store  # type: ignore[assignment]
-        interaction = Interaction(
-            source="main_agent",
-            target="researcher",
-            summary="Delegate auth research",
-            interaction_type="delegation",
-        )
-        store.add_interaction(interaction)
-
-        resp = await client.get("/")
-        assert "Delegate auth research" in resp.text
+    async def test_redirect_contains_phoenix_in_body(self, client: httpx.AsyncClient):
+        resp = await client.get("/", follow_redirects=False)
+        # Some redirect responses include a body for clients that don't follow redirects
+        # The location header is the authoritative target
+        assert resp.headers["location"].startswith("http://localhost:")
 
 
 # ---------------------------------------------------------------------------

@@ -1,1 +1,1 @@
-"""Task Chronograph: real-time agent pipeline observability via MCP server and web dashboard."""
+"""Task Chronograph: agent pipeline observability via MCP server with OTel export to Phoenix."""

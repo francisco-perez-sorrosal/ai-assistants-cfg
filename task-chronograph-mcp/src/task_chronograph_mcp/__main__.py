@@ -1,8 +1,8 @@
-"""Hybrid stdio+HTTP entry point: MCP tools over stdio, dashboard over HTTP.
+"""Hybrid stdio+HTTP entry point: MCP tools over stdio, HTTP API in daemon thread.
 
 The plugin system auto-registers this as a stdio MCP server. On startup, the
-HTTP server (dashboard + REST API + SSE) launches in a daemon thread so the
-dashboard is available at http://127.0.0.1:<port> without manual setup.
+HTTP server (REST API for hook event ingestion + OTel relay) launches in a
+daemon thread. The root route redirects to Phoenix UI at localhost:6006.
 """
 
 from __future__ import annotations
@@ -18,9 +18,13 @@ from task_chronograph_mcp.server import DEFAULT_PORT, _http_ready, app, mcp
 
 
 def _run_http_server(port: int) -> None:
-    """Run the Starlette app (dashboard + API) in its own event loop."""
+    """Run the Starlette app (API + OTel relay) in its own event loop."""
     config = uvicorn.Config(
-        app, host="127.0.0.1", port=port, log_level="warning", access_log=False,
+        app,
+        host="127.0.0.1",
+        port=port,
+        log_level="warning",
+        access_log=False,
     )
     server = uvicorn.Server(config)
     asyncio.run(server.serve())
@@ -29,13 +33,16 @@ def _run_http_server(port: int) -> None:
 port = int(os.environ.get("CHRONOGRAPH_PORT", str(DEFAULT_PORT)))
 
 http_thread = threading.Thread(
-    target=_run_http_server, args=(port,), daemon=True, name="chronograph-http",
+    target=_run_http_server,
+    args=(port,),
+    daemon=True,
+    name="chronograph-http",
 )
 http_thread.start()
 
 if _http_ready.wait(timeout=5):
-    sys.stderr.write(f"Task Chronograph dashboard: http://127.0.0.1:{port}\n")
+    sys.stderr.write(f"Task Chronograph: http://127.0.0.1:{port} (Phoenix UI at localhost:6006)\n")
 else:
-    sys.stderr.write("Task Chronograph: HTTP server failed to start — dashboard unavailable\n")
+    sys.stderr.write("Task Chronograph: HTTP server failed to start\n")
 
 mcp.run()
