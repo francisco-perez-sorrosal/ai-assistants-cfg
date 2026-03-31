@@ -17,6 +17,8 @@ class EventType(StrEnum):
     PHASE_TRANSITION = "phase_transition"
     TOOL_USE = "tool_use"
     ERROR = "error"
+    SESSION_START = "session_start"
+    SESSION_STOP = "session_stop"
 
 
 class AgentStatus(StrEnum):
@@ -51,6 +53,8 @@ class Event:
     message: str = ""
     labels: dict[str, str] = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
+    tool_name: str = ""
+    project_dir: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -68,6 +72,8 @@ class Event:
             "message": self.message,
             "labels": dict(self.labels),
             "metadata": dict(self.metadata),
+            "tool_name": self.tool_name,
+            "project_dir": self.project_dir,
         }
 
 

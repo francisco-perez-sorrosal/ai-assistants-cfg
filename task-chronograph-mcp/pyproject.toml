@@ -14,6 +14,11 @@ dependencies = [
     "uvicorn",
     "watchfiles",
     "jinja2",
+    # OTel instrumentation for Phoenix relay
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp-proto-http>=1.20",
+    "openinference-semantic-conventions>=0.1.5",
 ]
 
 [dependency-groups]
