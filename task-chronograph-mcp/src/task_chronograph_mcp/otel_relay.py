@@ -14,13 +14,10 @@ from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter
+from opentelemetry.sdk.trace.id_generator import IdGenerator, RandomIdGenerator
 from opentelemetry.trace import (
-    NonRecordingSpan,
-    SpanContext,
     SpanKind,
     StatusCode,
-    TraceFlags,
-    set_span_in_context,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,6 +36,30 @@ TRACER_NAME = "praxion.chronograph"
 
 # Agent origin detection prefix
 _PRAXION_AGENT_PREFIX = "i-am:"
+
+
+class _SeededIdGenerator(IdGenerator):
+    """ID generator that returns a predetermined trace_id for the first trace.
+
+    After the first ``generate_trace_id()`` call, falls back to random IDs.
+    This lets the session root span carry a deterministic trace_id (derived
+    from the session_id) while all subsequent spans get random IDs.
+    """
+
+    def __init__(self, seed_trace_id: int) -> None:
+        self._seed_trace_id: int | None = seed_trace_id
+        self._fallback = RandomIdGenerator()
+
+    def generate_span_id(self) -> int:
+        return self._fallback.generate_span_id()
+
+    def generate_trace_id(self) -> int:
+        if self._seed_trace_id is not None:
+            tid = self._seed_trace_id
+            self._seed_trace_id = None
+            return tid
+        return self._fallback.generate_trace_id()
+
 
 # Trace type values
 TRACE_TYPE_PIPELINE = "pipeline"
@@ -111,7 +132,8 @@ class OTelRelay:
         if not _is_otel_enabled():
             return
         try:
-            self._init_provider(project_dir)
+            trace_id = _generate_trace_id(session_id)
+            self._init_provider(project_dir, trace_id=trace_id)
             self._open_session_span(session_id, project_dir)
         except Exception:
             logger.warning("Failed to start OTel session", exc_info=True)
@@ -278,7 +300,7 @@ class OTelRelay:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _init_provider(self, project_dir: str) -> None:
+    def _init_provider(self, project_dir: str, trace_id: int | None = None) -> None:
         """Create the TracerProvider with the appropriate exporter and resource."""
         from openinference.semconv.resource import ResourceAttributes
 
@@ -289,7 +311,8 @@ class OTelRelay:
             }
         )
 
-        self._provider = TracerProvider(resource=resource)
+        id_generator = _SeededIdGenerator(trace_id) if trace_id else RandomIdGenerator()
+        self._provider = TracerProvider(resource=resource, id_generator=id_generator)
 
         if self._custom_exporter is not None:
             exporter = self._custom_exporter
@@ -302,28 +325,21 @@ class OTelRelay:
         self._tracer = self._provider.get_tracer(TRACER_NAME)
 
     def _open_session_span(self, session_id: str, project_dir: str) -> None:
-        """Start the root SESSION span with a deterministic trace ID."""
+        """Start the root SESSION span with a deterministic trace ID.
+
+        The TracerProvider's _SeededIdGenerator ensures the first trace_id
+        matches our session hash. The span is created with no parent context,
+        making it a true root visible in Phoenix's Traces view.
+        """
         if self._tracer is None:
             return
 
-        trace_id = _generate_trace_id(session_id)
-        span_id_seed = _generate_span_id_seed(session_id)
-
-        # Build a synthetic parent context carrying our deterministic trace_id
-        parent_ctx = SpanContext(
-            trace_id=trace_id,
-            span_id=span_id_seed,
-            is_remote=False,
-            trace_flags=TraceFlags(TraceFlags.SAMPLED),
-        )
-        parent_span = NonRecordingSpan(parent_ctx)
-        ctx = set_span_in_context(parent_span)
-
         project_name = os.path.basename(project_dir) if project_dir else self._default_project_name
 
+        # No parent context → true root span. The SeededIdGenerator provides
+        # our deterministic trace_id on the first generate_trace_id() call.
         self._session_span = self._tracer.start_span(
             name="session",
-            context=ctx,
             kind=SpanKind.INTERNAL,
             attributes={
                 SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.CHAIN.value,
