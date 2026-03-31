@@ -164,7 +164,7 @@ sys.exit(0 if sys.argv[2] in servers else 1)
                 fi
             done < "$expected_servers"
             if [ -z "$missing" ]; then
-                info "mcp.json present (task-chronograph, memory, sub-agents)"
+                info "mcp.json present (task-chronograph, memory, sub-agents, chub)"
             else
                 warn "mcp.json missing expected server(s):$missing"
                 healthy=false
@@ -251,8 +251,9 @@ sed -e "s|{{MCP_ROOT}}|$MCP_ROOT|g" \
     "$template" > "$CURSOR_DIR/mcp.json"
 info "MCP config written to $CURSOR_DIR/mcp.json (servers use repo: $MCP_ROOT)"
 info "sub-agents points at $AGENTS_DIR_ABS (requires Node/npx)"
+info "chub (context-hub) configured for external API docs (requires Node/npx)"
 
 printf "\n"
 info "Cursor install complete."
 step "Target: $CURSOR_DIR"
-step "MCP: task-chronograph and memory require \`uv\`; sub-agents require Node/npx."
+step "MCP: task-chronograph and memory require \`uv\`; sub-agents and chub require Node/npx."

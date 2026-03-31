@@ -385,6 +385,72 @@ PYEOF
 }
 
 # =============================================================================
+# External API Docs (context-hub MCP)
+# =============================================================================
+
+prompt_chub_install() {
+    header "Step 6 — External API Docs (context-hub)"
+
+    # Check for Node.js
+    if ! command -v npx &>/dev/null; then
+        step "Node.js not found — skipping context-hub setup"
+        step "Install Node.js 18+ and re-run to enable external API docs"
+        return
+    fi
+
+    cat <<EOF
+
+  ${B}[1] Configure context-hub MCP (recommended)${R}
+      ${D}Agents get curated, current API docs for 600+ libraries (Stripe,${R}
+      ${D}OpenAI, AWS, etc.) via MCP tools. Uses npx (auto-downloads).${R}
+      ${D}Telemetry disabled by default. Modifies ~/.claude/settings.json.${R}
+
+  ${B}[2] Skip${R}
+      ${D}The external-api-docs skill still works via CLI (chub commands).${R}
+      ${D}MCP gives agents native tool discovery without CLI teaching.${R}
+      ${D}Install later by re-running: ./install.sh code${R}
+EOF
+    ask 1 2
+
+    if [ "$REPLY" -eq 2 ]; then
+        step "context-hub MCP skipped"
+        return
+    fi
+
+    local settings_file="${HOME}/.claude/settings.json"
+    step "Adding context-hub MCP to settings.json..."
+
+    python3 - "$settings_file" << 'PYEOF'
+import json, sys
+
+settings_path = sys.argv[1]
+
+try:
+    with open(settings_path) as f:
+        settings = json.load(f)
+except FileNotFoundError:
+    settings = {}
+
+servers = settings.setdefault("mcpServers", {})
+servers["chub"] = {
+    "command": "npx",
+    "args": ["-y", "@aisuite/chub", "mcp"],
+    "env": {
+        "CHUB_TELEMETRY": "0",
+        "CHUB_FEEDBACK": "0"
+    }
+}
+
+with open(settings_path, "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+PYEOF
+
+    info "context-hub MCP configured (telemetry disabled)"
+    step "Agents can now search/fetch curated API docs via chub_search, chub_get"
+}
+
+# =============================================================================
 # Claude Desktop config link
 # =============================================================================
 
@@ -397,7 +463,7 @@ get_claude_desktop_config_dir() {
 }
 
 prompt_claude_desktop_link() {
-    header "Step 6 — Claude Desktop"
+    header "Step 7 — Claude Desktop"
     cat <<EOF
 
   ${B}[1] Skip${R}
@@ -528,6 +594,19 @@ sys.exit(0 if 'SubagentStart' in hooks and 'SubagentStop' in hooks else 1)
         healthy=false
     fi
 
+    printf "\n  ${B}External API Docs:${R}\n"
+    if [ -f "$settings_file" ] && python3 -c "
+import json, sys
+with open(sys.argv[1]) as f:
+    s = json.load(f)
+servers = s.get('mcpServers', {})
+sys.exit(0 if 'chub' in servers else 1)
+" "$settings_file" 2>/dev/null; then
+        info "context-hub MCP configured"
+    else
+        warn "context-hub MCP not configured (optional)"
+    fi
+
     printf "\n"
     if $healthy; then
         info "All checks passed"
@@ -615,19 +694,26 @@ uninstall_claude_code() {
         fi
     done
 
-    # Remove hooks
+    # Remove hooks and chub MCP
     local settings_file="${HOME}/.claude/settings.json"
     if [ -f "$settings_file" ]; then
         python3 -c "
 import json, sys
 with open(sys.argv[1]) as f:
     s = json.load(f)
+changed = False
 if 'hooks' in s:
     del s['hooks']
+    changed = True
+servers = s.get('mcpServers', {})
+if 'chub' in servers:
+    del servers['chub']
+    changed = True
+if changed:
     with open(sys.argv[1], 'w') as f:
         json.dump(s, f, indent=2)
         f.write('\n')
-" "$settings_file" 2>/dev/null && info "Hooks removed" || true
+" "$settings_file" 2>/dev/null && info "Hooks and MCP servers removed" || true
     fi
 
     printf "\n"
@@ -668,6 +754,7 @@ install_claude_code() {
     fi
 
     install_scripts
+    prompt_chub_install
     prompt_claude_desktop_link
 
     printf "\n"

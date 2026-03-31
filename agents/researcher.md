@@ -53,11 +53,12 @@ When the research involves existing code:
 
 1. **Project structure** — read configuration files, understand module layout
 2. **Relevant modules** — identify files and functions in the area of interest
-3. **Dependencies** — trace the dependency graph around the relevant area
+3. **Dependencies** — trace the dependency graph around the relevant area. Note pinned versions of external libraries.
 4. **Existing tests** — check what test coverage exists
 5. **Patterns in use** — identify architectural patterns, frameworks, conventions
 6. **Technical debt** — note any structural issues that could affect the work
 7. **Archived specs** — check `.ai-state/specs/` for behavioral specifications relevant to the research area; these contain prior requirements, traceability, and architectural decisions
+8. **API version drift** — when research involves external APIs, use the `external-api-docs` skill to check context-hub for current documentation. Compare the documented version against the project's pinned version. Note any drift in the Dependencies section of `RESEARCH_FINDINGS.md` using the `[API VERSION DRIFT]` format. This gives the systems-architect version awareness for design decisions.
 
 Record findings as you go. Be specific: include file paths, line numbers, function names.
 

@@ -62,11 +62,44 @@ Evaluate the codebase for structural readiness to receive the proposed changes:
 - Code duplication that the feature would worsen
 - Absent or inadequate test coverage for critical paths being modified
 
+**API version drift check:**
+
+When the architecture involves external APIs, use the `external-api-docs` skill to check context-hub for current documentation. Compare the documented API version against the project's dependency version (`pyproject.toml`, `package.json`, etc.). If the project uses an older version than what the curated docs cover, flag the drift in the Risk Assessment (Phase 5) using the `[API VERSION DRIFT]` format defined in the skill.
+
+Before acting on drift, **assess the dependency's criticality** to decide how much attention it deserves:
+
+| Priority | Criteria | Example | Action |
+|----------|----------|---------|--------|
+| **Critical** | Core domain dependency — the project's primary value flows through it, deep integration across many modules | ORM, web framework, core SDK the product is built on | Actively evaluate upgrade; flag in Risk Assessment |
+| **High** | Significant integration — used in multiple modules, touches data flow or auth | Payment SDK, auth library, main API client | Flag drift; recommend upgrade if breaking changes affect the feature |
+| **Medium** | Moderate use — used in a few modules, replaceable with effort | Logging, HTTP client, serialization library | Note drift; upgrade only if the current task touches this code |
+| **Low** | Peripheral — used in one place, utilities, dev tooling | Markdown parser, date formatting, test helper | Ignore drift unless it causes a concrete problem |
+
+Not all drift is equal. A core framework two major versions behind is a risk; a formatting utility one patch behind is noise. Prioritize based on how deeply the dependency is woven into the codebase and how much the project's correctness depends on it. When multiple dependencies show drift, focus attention on Critical and High; Low-priority drift is not worth the user's time.
+
+When drift is detected in a **Critical or High** dependency and the upgrade would require significant changes (breaking API changes, multiple call sites, schema migrations), **stop and ask the user** before incorporating the upgrade into the current work. Present the decision clearly:
+
+```
+[API VERSION DRIFT] <library> (priority: <critical|high>): project uses v<old>, docs cover v<new>.
+Upgrade impact: <brief assessment — e.g., "3 breaking changes affecting 12 call sites">.
+
+Options:
+1. Upgrade as part of this work — adds scope but addresses drift now
+2. Upgrade first in a separate task — clean baseline before the feature/refactoring
+3. Upgrade later as a dedicated task — proceed with current version now, track drift
+4. Skip upgrade — current version meets requirements, drift is acceptable
+```
+
+The user decides. Do not bundle a high-impact upgrade into a refactoring or feature by default — the inherent complexity of the task at hand may already be significant, and mixing structural changes with dependency upgrades creates compounded risk. When in doubt, recommend option 2 or 3.
+
+For **Medium** dependencies, flag drift in the Risk Assessment without stopping — the user sees it but is not blocked. For **Low** dependencies, do not flag at all unless the drift causes a concrete issue in the current task.
+
 **Determine preparatory work:**
 
 - If structural issues exist in the affected area, note them as prerequisites for the implementation planner
 - If tests are missing for the area being changed, flag characterization tests as needed
 - If the feature requires new infrastructure (database, API, config), note setup requirements
+- If API version drift was detected and the user chose option 1 or 2, include the upgrade as a prerequisite step for the implementation planner
 
 ### Phase 3 — Architecture Design
 

@@ -13,6 +13,13 @@ Reusable skill modules for AI coding assistants. Each skill is a self-contained 
 | **[command-crafting](command-crafting/)** | Creating slash commands with proper syntax, arguments, frontmatter, and best practices.                                                                    | Creating custom slash commands, debugging command behavior, converting prompts to reusable commands.                     |
 | **[mcp-crafting](mcp-crafting/)**         | Building MCP servers in Python with FastMCP. Covers tools, resources, prompts, transports, testing, and deployment.                                        | Creating MCP servers, defining tools/resources, configuring transports, testing, integrating with Claude.                |
 | **[rule-crafting](rule-crafting/)**       | Creating and managing rules — domain knowledge files eagerly loaded within scope (personal = all projects, project = that project).                        | Creating new rules, updating existing rules, debugging rule loading, organizing rule files, layer placement decisions.   |
+| **[hook-crafting](hook-crafting/)**       | Creating, testing, and registering Claude Code hooks for automated code quality, observability, security gates, and workflow enforcement.                   | Creating new hooks, debugging hook execution, fixing hook registration, choosing between hook types, installer integration. |
+
+### External Knowledge
+
+| Skill | Description | When to Use |
+| --- | --- | --- |
+| **[external-api-docs](external-api-docs/)** | Retrieving current, curated API documentation for external libraries and SDKs. Covers search strategies, token-aware fetching, annotation persistence, and provider fallback hierarchy. Default provider: context-hub. | Writing code against an external API, debugging integration issues, evaluating SDK capabilities, looking up current endpoint signatures. |
 
 ### Platform Knowledge
 

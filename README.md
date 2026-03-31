@@ -12,7 +12,7 @@ Compatible with **Claude Code** (mainly), **Claude Desktop**, and **Cursor**.
 
 ## What You Get
 
-- **24 skills** covering Python, API design, CI/CD, refactoring, spec-driven development, and more -- loaded automatically when the task matches
+- **26 skills** covering Python, API design, CI/CD, refactoring, spec-driven development, external API docs, and more -- loaded automatically when the task matches
 - **12 specialized agents** that collaborate on complex features (research, architecture, planning, implementation, testing, verification)
 - **12 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding
 - **Coding rules** auto-loaded by context -- coding style, git conventions, documentation standards, agent coordination
@@ -51,7 +51,8 @@ Reusable knowledge modules loaded automatically based on context. See [`skills/R
 
 | Category | Skills |
 |----------|--------|
-| AI Assistant Crafting | skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting |
+| AI Assistant Crafting | skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting, hook-crafting |
+| External Knowledge | external-api-docs |
 | Platform Knowledge | claude-ecosystem, agentic-sdks, communicating-agents |
 | Planning & Communication | roadmap-planning, stakeholder-communications |
 | Design & Architecture | api-design, data-modeling, performance-architecture |
@@ -123,7 +124,9 @@ The main entry point is `install.sh`, which routes to `install_claude.sh` (Claud
 | 2 | Rules to `~/.claude/rules/` (auto-loaded by Claude when relevant) | No -- always installed |
 | 3 | i-am plugin via [`bit-agora`](https://github.com/francisco-perez-sorrosal/bit-agora) marketplace (scope: user or project) | Yes -- recommended |
 | 4 | Task Chronograph hooks (agent lifecycle observability) | Yes -- recommended |
-| 5 | Claude Desktop config link to official Desktop location | Yes -- skip by default |
+| 5 | CLI scripts (ccwt — multi-worktree Claude sessions) to `~/.local/bin/` | No -- always installed |
+| 6 | External API docs ([context-hub](https://github.com/andrewyng/context-hub) MCP — curated API docs for 600+ libraries) | Yes -- recommended |
+| 7 | Claude Desktop config link to official Desktop location | Yes -- skip by default |
 
 When installed as a plugin, commands are namespaced: `/co` becomes `/i-am:co`. Plugin permissions for skill reference files are auto-configured at Step 3. See [`README_DEV.md`](README_DEV.md#progressive-disclosure-and-satellite-files) for how progressive disclosure works with plugin-installed skills.
 
@@ -187,6 +190,7 @@ Read the user preferences from https://raw.githubusercontent.com/francisco-perez
 
 ## Advanced Topics
 
+- **[External API Docs](docs/external-api-docs.md)** -- Retrieve current, curated API documentation for external libraries (Stripe, OpenAI, AWS, etc.) during development. Setup guide, workflow examples, and the annotation learning loop.
 - **[Spec-Driven Development](docs/spec-driven-development.md)** -- Behavioral specifications with requirement IDs for medium/large features. The pipeline scales proportionally: small tasks skip specs; substantive features get full traceability.
 - **[Decision Tracking](docs/decision-tracking.md)** -- Machine-readable audit log of decisions from AI-assisted sessions. Dual-path capture (agents write directly + commit-time hook safety net) with tier-aware gating.
 - **[Claude Code vs Cursor](docs/cursor-compat.md)** -- Format differences, discovery paths, and adaptation details for each tool.

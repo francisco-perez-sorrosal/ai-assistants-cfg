@@ -39,7 +39,8 @@ show_overview() {
     • Rules            (auto-loaded by Claude)
     • i-am plugin      (skills, commands, agents)
     • Chronograph hooks (agent lifecycle observability)
-    • CLI scripts        (ccwt — multi-worktree Claude sessions)
+    • CLI scripts       (ccwt — multi-worktree Claude sessions)
+    • External API docs (context-hub MCP — curated API docs)
 EOF
             ;;
         desktop)
