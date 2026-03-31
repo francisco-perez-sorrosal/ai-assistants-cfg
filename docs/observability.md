@@ -108,9 +108,13 @@ chronograph-ctl logs     # Tail the log file
 
 | Port | Service |
 |------|---------|
-| 6006 | Phoenix UI + OTLP HTTP receiver |
+| 6006 | Phoenix UI + OTLP HTTP receiver (single instance, all projects) |
 | 4317 | Phoenix OTLP gRPC receiver |
-| 8765 | Chronograph HTTP API (hook target) |
+| 8765-9764 | Chronograph HTTP API (one per project, derived from project path) |
+
+Each project's chronograph binds to a deterministic port derived from the project directory path (SHA-256 hash mod 1000 + 8765). This allows multiple projects to run simultaneously without port collisions. Both the hook script and the chronograph server use the same derivation, so they always agree.
+
+Override with `CHRONOGRAPH_PORT` env var if needed.
 
 ## Troubleshooting
 

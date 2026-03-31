@@ -3,10 +3,25 @@
 Exits 0 unconditionally -- must never block agent execution.
 """
 
-import json, os, re, sys, urllib.request  # noqa: E401
+import hashlib, json, os, re, sys, urllib.request  # noqa: E401
 
 PROGRESS_MARKER = "PROGRESS.md"
 DEFAULT_PORT = 8765
+PORT_RANGE_SIZE = 1000
+
+
+def _derive_port(project_dir):
+    """Derive a deterministic port from the project directory.
+
+    Must match the logic in server.py:derive_port() so hooks POST to the
+    correct chronograph instance when multiple projects run simultaneously.
+    """
+    if not project_dir:
+        return DEFAULT_PORT
+    digest = hashlib.sha256(os.path.abspath(project_dir).encode()).digest()
+    offset = int.from_bytes(digest[:2], "big") % PORT_RANGE_SIZE
+    return DEFAULT_PORT + offset
+
 
 PROGRESS_LINE_RE = re.compile(
     r"\[([^\]]+)\]\s+\[([^\]]+)\]\s+(?:Phase\s+(\d+)/(\d+):\s+(\S+)\s+--\s+)?(.+)"
@@ -228,7 +243,11 @@ def main():
     try:
         data = json.loads(sys.stdin.read())
         events, interactions = _build_events(data)
-        port = int(os.environ.get("CHRONOGRAPH_PORT", str(DEFAULT_PORT)))
+        # Explicit env var overrides, otherwise derive from project dir
+        if os.environ.get("CHRONOGRAPH_PORT"):
+            port = int(os.environ["CHRONOGRAPH_PORT"])
+        else:
+            port = _derive_port(data.get("cwd", ""))
         for event in events:
             _post(port, "/api/events", event)
         for interaction in interactions:

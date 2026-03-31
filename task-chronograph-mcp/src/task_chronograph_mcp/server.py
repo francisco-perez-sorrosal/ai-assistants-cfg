@@ -25,7 +25,25 @@ from task_chronograph_mcp.file_watcher import watch_progress_file
 from task_chronograph_mcp.otel_relay import OTelRelay
 
 DEFAULT_PORT = 8765
+PORT_RANGE_SIZE = 1000  # ports 8765-9764
 WATCH_DIR_ENV = "CHRONOGRAPH_WATCH_DIR"
+
+
+def derive_port(project_dir: str) -> int:
+    """Derive a deterministic port from the project directory path.
+
+    Each project gets a stable port in the range 8765-9764 so multiple
+    projects can run chronograph instances simultaneously without collision.
+    Falls back to DEFAULT_PORT when no project directory is available.
+    """
+    if not project_dir:
+        return DEFAULT_PORT
+    import hashlib
+
+    digest = hashlib.sha256(os.path.abspath(project_dir).encode()).digest()
+    offset = int.from_bytes(digest[:2], "big") % PORT_RANGE_SIZE
+    return DEFAULT_PORT + offset
+
 
 mcp = FastMCP("Task Chronograph")
 _store = EventStore()

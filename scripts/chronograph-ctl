@@ -12,9 +12,27 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CHRONO_DIR="${SCRIPT_DIR}/task-chronograph-mcp"
-CHRONO_PORT="${CHRONOGRAPH_PORT:-8765}"
-PIDFILE="/tmp/chronograph-ctl.pid"
-LOGFILE="/tmp/chronograph-ctl.log"
+
+# Port derivation: explicit env > derive from project dir > default
+# Must match the logic in server.py:derive_port() and send_event.py:_derive_port()
+_derive_port() {
+    local dir="${1:-$(pwd)}"
+    python3 -c "
+import hashlib, os
+d = hashlib.sha256(os.path.abspath('${dir}').encode()).digest()
+print(8765 + int.from_bytes(d[:2], 'big') % 1000)
+"
+}
+
+if [ -n "${CHRONOGRAPH_PORT:-}" ]; then
+    CHRONO_PORT="$CHRONOGRAPH_PORT"
+else
+    CHRONO_PORT="$(_derive_port "${PROJECT_DIR:-$(pwd)}")"
+fi
+
+# Per-project PID and log files (keyed by port to avoid collisions)
+PIDFILE="/tmp/chronograph-ctl-${CHRONO_PORT}.pid"
+LOGFILE="/tmp/chronograph-ctl-${CHRONO_PORT}.log"
 
 B='\033[1m'
 R='\033[0m'

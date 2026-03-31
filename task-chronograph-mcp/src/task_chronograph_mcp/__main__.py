@@ -14,7 +14,7 @@ import threading
 
 import uvicorn
 
-from task_chronograph_mcp.server import DEFAULT_PORT, _http_ready, app, mcp
+from task_chronograph_mcp.server import _http_ready, app, derive_port, mcp
 
 
 def _run_http_server(port: int) -> None:
@@ -30,7 +30,11 @@ def _run_http_server(port: int) -> None:
     asyncio.run(server.serve())
 
 
-port = int(os.environ.get("CHRONOGRAPH_PORT", str(DEFAULT_PORT)))
+# Derive port: explicit env var > project-based derivation > default
+if os.environ.get("CHRONOGRAPH_PORT"):
+    port = int(os.environ["CHRONOGRAPH_PORT"])
+else:
+    port = derive_port(os.getcwd())
 
 http_thread = threading.Thread(
     target=_run_http_server,
