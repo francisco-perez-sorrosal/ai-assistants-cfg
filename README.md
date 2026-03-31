@@ -102,6 +102,17 @@ Twelve autonomous agents for complex, multi-step tasks. See [`agents/README.md`]
 
 Domain knowledge files loaded by the assistant within scope (personal = all projects, project = that project). See [`rules/README.md`](rules/README.md) for the full catalog and the rules-vs-skills decision model.
 
+### Observability
+
+Agent pipeline tracing via OpenTelemetry and [Arize Phoenix](https://github.com/Arize-ai/phoenix). Every session -- pipeline runs, native Claude Code agents, tool calls -- is traced and persisted. One Phoenix instance serves all projects on the machine with per-project isolation.
+
+```bash
+phoenix-ctl install    # Install daemon (~300MB, starts on login)
+open http://localhost:6006  # Trace UI
+```
+
+See [Observability](docs/observability.md) for the full guide: architecture, multi-project workflow, configuration, and troubleshooting.
+
 ## Installation
 
 The main entry point is `install.sh`, which routes to `install_claude.sh` (Claude Code/Desktop) or `install_cursor.sh` (Cursor). The interactive installer walks through each choice, defaulting to the recommended option at each step.
@@ -126,6 +137,7 @@ The main entry point is `install.sh`, which routes to `install_claude.sh` (Claud
 | 4 | Task Chronograph hooks (agent lifecycle observability) | Yes -- recommended |
 | 5 | CLI scripts (ccwt — multi-worktree Claude sessions) to `~/.local/bin/` | No -- always installed |
 | 6 | External API docs ([context-hub](https://github.com/andrewyng/context-hub) MCP — curated API docs for 600+ libraries) | Yes -- recommended |
+| 7 | Phoenix observability daemon (persistent trace backend at `http://localhost:6006`) | Yes -- recommended |
 | 7 | Claude Desktop config link to official Desktop location | Yes -- skip by default |
 
 When installed as a plugin, commands are namespaced: `/co` becomes `/i-am:co`. Plugin permissions for skill reference files are auto-configured at Step 3. See [`README_DEV.md`](README_DEV.md#progressive-disclosure-and-satellite-files) for how progressive disclosure works with plugin-installed skills.
