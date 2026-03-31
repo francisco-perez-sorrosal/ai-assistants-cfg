@@ -353,13 +353,18 @@ def hook(script, matcher="", timeout=10, is_async=True):
     }
 
 settings["hooks"] = {
-    # Observability (async, fire-and-forget)
+    # Session lifecycle (async, fire-and-forget)
+    "SessionStart": [hook("send_event.py")],
+    "Stop": [hook("send_event.py")],
+    # Agent lifecycle (async, fire-and-forget)
     "SubagentStart": [hook("send_event.py")],
     "SubagentStop": [hook("send_event.py")],
+    # Tool tracing: all tools for observability + Python formatting
     "PostToolUse": [
-        hook("send_event.py", "Write|Edit"),
+        hook("send_event.py"),  # all tools (empty matcher = match all)
         hook("format_python.py", "Write|Edit", is_async=False),
     ],
+    "PostToolUseFailure": [hook("send_event.py")],
     # Code quality gate (sync, blocks on violations)
     "PreToolUse": [{
         "matcher": "Bash",
@@ -372,6 +377,8 @@ settings["hooks"] = {
             },
         ],
     }],
+    # Pipeline state snapshot before context compaction
+    "PreCompact": [hook("precompact_state.py", is_async=False, timeout=15)],
 }
 
 with open(settings_path, "w") as f:
@@ -380,8 +387,10 @@ with open(settings_path, "w") as f:
 PYEOF
 
     info "Hooks installed:"
-    info "  Observability: SubagentStart, SubagentStop, PostToolUse (send_event)"
+    info "  Observability: SessionStart, Stop, SubagentStart, SubagentStop,"
+    info "                 PostToolUse (all tools), PostToolUseFailure"
     info "  Code quality:  PostToolUse (format_python), PreToolUse (check_code_quality)"
+    info "  Pipeline:      PreCompact (precompact_state)"
 }
 
 # =============================================================================
@@ -641,7 +650,8 @@ import json, sys
 with open(sys.argv[1]) as f:
     s = json.load(f)
 hooks = s.get('hooks', {})
-sys.exit(0 if 'SubagentStart' in hooks and 'SubagentStop' in hooks else 1)
+required = {'SessionStart', 'Stop', 'SubagentStart', 'SubagentStop', 'PostToolUse', 'PostToolUseFailure'}
+sys.exit(0 if required.issubset(hooks.keys()) else 1)
 " "$settings_file" 2>/dev/null; then
         info "Task Chronograph hooks configured"
     else

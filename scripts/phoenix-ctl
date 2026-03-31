@@ -25,7 +25,7 @@ _check_port() {
 }
 
 _pid() {
-    launchctl list "$PLIST_LABEL" 2>/dev/null | awk '/PID/{print $NF}' | grep -v '^-$' || true
+    launchctl list "$PLIST_LABEL" 2>/dev/null | sed -n 's/.*"PID" = \([0-9]*\).*/\1/p' || true
 }
 
 cmd_install() {
