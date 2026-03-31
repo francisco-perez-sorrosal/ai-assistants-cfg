@@ -25,6 +25,7 @@ from task_chronograph_mcp.events import (
     Interaction,
 )
 from task_chronograph_mcp.file_watcher import watch_progress_file
+from task_chronograph_mcp.otel_relay import OTelRelay
 
 DEFAULT_PORT = 8765
 WATCH_DIR_ENV = "CHRONOGRAPH_WATCH_DIR"
@@ -46,11 +47,12 @@ def _build_mcp_app() -> Starlette:
 
 @asynccontextmanager
 async def _core_lifespan(app: Starlette):
-    """Reset store, start file watcher, and expose store to Starlette routes."""
+    """Reset store, start file watcher, init OTel relay, and expose to routes."""
     global _store  # noqa: PLW0603
     _store = EventStore()
     _store.set_loop(asyncio.get_running_loop())
     app.state.store = _store
+    app.state.relay = OTelRelay()
 
     watch_dir = os.environ.get(WATCH_DIR_ENV, "")
     watcher_task: asyncio.Task | None = None
@@ -69,6 +71,8 @@ async def _core_lifespan(app: Starlette):
         except asyncio.CancelledError:
             pass
 
+    app.state.relay.shutdown()
+
 
 @asynccontextmanager
 async def app_lifespan(app: Starlette):
@@ -82,6 +86,46 @@ async def app_lifespan(app: Starlette):
             yield
 
 
+def _relay_event(relay: OTelRelay, event: Event) -> None:
+    """Route an event to the OTel relay. Fail-open: never raises."""
+    try:
+        match event.event_type:
+            case EventType.SESSION_START:
+                relay.start_session(event.session_id, event.project_dir)
+            case EventType.SESSION_STOP:
+                relay.end_session(event.session_id)
+            case EventType.AGENT_START:
+                relay.start_agent(
+                    event.agent_id, event.agent_type, event.session_id, event.parent_session_id
+                )
+            case EventType.AGENT_STOP:
+                relay.end_agent(event.agent_id, event.message)
+            case EventType.TOOL_USE:
+                relay.record_tool(
+                    event.agent_id,
+                    event.tool_name,
+                    str(event.metadata.get("input_summary", "")),
+                    str(event.metadata.get("output_summary", "")),
+                    is_error=False,
+                    error_msg="",
+                )
+            case EventType.ERROR:
+                relay.record_tool(
+                    event.agent_id,
+                    event.tool_name,
+                    str(event.metadata.get("input_summary", "")),
+                    "",
+                    is_error=True,
+                    error_msg=event.message,
+                )
+            case EventType.PHASE_TRANSITION:
+                relay.add_phase_event(
+                    event.agent_id, event.phase, event.total_phases, event.phase_name, event.message
+                )
+    except Exception:  # noqa: BLE001
+        pass  # fail-open — OTel issues must never disrupt EventStore path
+
+
 async def receive_event(request: Request) -> JSONResponse:
     """POST /api/events -- ingest a pipeline event."""
     try:
@@ -89,12 +133,8 @@ async def receive_event(request: Request) -> JSONResponse:
     except Exception:
         return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
 
-    missing = [f for f in ("event_type", "agent_type") if f not in body]
-    if missing:
-        return JSONResponse(
-            {"error": f"Missing required fields: {', '.join(missing)}"},
-            status_code=400,
-        )
+    if "event_type" not in body:
+        return JSONResponse({"error": "Missing required field: event_type"}, status_code=400)
 
     try:
         event_type = EventType(body["event_type"])
@@ -107,7 +147,7 @@ async def receive_event(request: Request) -> JSONResponse:
 
     event = Event(
         event_type=event_type,
-        agent_type=body["agent_type"],
+        agent_type=body.get("agent_type", ""),
         session_id=body.get("session_id", ""),
         agent_id=body.get("agent_id", ""),
         parent_session_id=body.get("parent_session_id", ""),
@@ -118,10 +158,14 @@ async def receive_event(request: Request) -> JSONResponse:
         message=body.get("message", ""),
         labels=body.get("labels", {}),
         metadata=body.get("metadata", {}),
+        tool_name=body.get("tool_name", ""),
+        project_dir=body.get("project_dir", ""),
     )
 
     store: EventStore = request.app.state.store
     store.add(event)
+
+    _relay_event(request.app.state.relay, event)
 
     return JSONResponse({"event_id": event.event_id}, status_code=201)
 
