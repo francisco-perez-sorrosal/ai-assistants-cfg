@@ -477,6 +477,35 @@ if 'chub' in servers:
 }
 
 # =============================================================================
+# Phoenix Observability Daemon
+# =============================================================================
+
+prompt_phoenix_install() {
+    header "Step 7 — Phoenix Observability Daemon"
+
+    cat <<EOF
+
+  ${B}[1] Install Phoenix daemon (recommended)${R}
+      ${D}Persistent trace backend for agent pipeline observability.${R}
+      ${D}Creates a background daemon, UI at http://localhost:6006.${R}
+      ${D}Installs in ~/.phoenix/ (~300MB). 90-day trace retention.${R}
+
+  ${B}[2] Skip${R}
+      ${D}Hooks still fire and chronograph still works for real-time${R}
+      ${D}MCP queries. Traces are not persisted. Install later with:${R}
+      ${D}phoenix-ctl install${R}
+EOF
+    ask 1 2
+
+    if [ "$REPLY" -eq 2 ]; then
+        step "Phoenix daemon skipped"
+        return
+    fi
+
+    "${SCRIPT_DIR}/scripts/phoenix-ctl" install
+}
+
+# =============================================================================
 # Claude Desktop config link
 # =============================================================================
 
@@ -618,6 +647,18 @@ sys.exit(0 if 'SubagentStart' in hooks and 'SubagentStop' in hooks else 1)
     else
         warn "Task Chronograph hooks not configured"
         healthy=false
+    fi
+
+    printf "\n  ${B}Phoenix Observability:${R}\n"
+    if [ -f "${HOME}/Library/LaunchAgents/com.praxion.phoenix.plist" ]; then
+        info "Phoenix plist installed"
+        if curl -sf "http://localhost:${PHOENIX_PORT:-6006}" >/dev/null 2>&1; then
+            info "Phoenix UI reachable at http://localhost:${PHOENIX_PORT:-6006}"
+        else
+            warn "Phoenix UI not reachable (daemon may not be running)"
+        fi
+    else
+        warn "Phoenix not installed (optional — run: phoenix-ctl install)"
     fi
 
     printf "\n  ${B}context-hub MCP:${R}\n"
@@ -763,6 +804,11 @@ if 'chub' in servers:
 " "$claude_json" 2>/dev/null && info "context-hub MCP removed from ~/.claude.json" || true
     fi
 
+    # Uninstall Phoenix daemon
+    if [ -f "${HOME}/Library/LaunchAgents/com.praxion.phoenix.plist" ]; then
+        "${SCRIPT_DIR}/scripts/phoenix-ctl" uninstall 2>/dev/null || true
+    fi
+
     printf "\n"
     info "Uninstall complete"
 }
@@ -802,6 +848,7 @@ install_claude_code() {
 
     install_scripts
     prompt_chub_mcp
+    prompt_phoenix_install
     prompt_claude_desktop_link
 
     printf "\n"

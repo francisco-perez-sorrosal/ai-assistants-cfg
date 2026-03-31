@@ -1,5 +1,31 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py",
+            "timeout": 10,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py",
+            "timeout": 10,
+            "async": true
+          }
+        ]
+      }
+    ],
     "SubagentStart": [
       {
         "matcher": "",
@@ -28,7 +54,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Write",
+        "matcher": "",
         "hooks": [
           {
             "type": "command",
@@ -46,6 +72,19 @@
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/format_python.py",
             "timeout": 10,
             "async": false
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py",
+            "timeout": 10,
+            "async": true
           }
         ]
       }

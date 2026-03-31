@@ -1,0 +1,212 @@
+#!/usr/bin/env bash
+# phoenix-ctl — Manage the Phoenix observability daemon for Praxion.
+# Usage: phoenix-ctl {install|start|stop|restart|status|uninstall}
+set -euo pipefail
+
+PHOENIX_DIR="${HOME}/.phoenix"
+PHOENIX_VENV="${PHOENIX_DIR}/venv"
+PLIST_LABEL="com.praxion.phoenix"
+PLIST_PATH="${HOME}/Library/LaunchAgents/${PLIST_LABEL}.plist"
+PHOENIX_PORT="${PHOENIX_PORT:-6006}"
+PHOENIX_GRPC_PORT="${PHOENIX_GRPC_PORT:-4317}"
+RETENTION_DAYS="${PHOENIX_DEFAULT_RETENTION_POLICY_DAYS:-90}"
+
+B='\033[1m'
+R='\033[0m'
+info()  { printf "  ✓ %s\n" "$*"; }
+warn()  { printf "  ⚠ %s\n" "$*"; }
+fail()  { printf "  ✗ %s\n" "$*" >&2; exit 1; }
+
+_check_port() {
+    if lsof -iTCP:"$1" -sTCP:LISTEN -P -n >/dev/null 2>&1; then
+        return 0  # port in use
+    fi
+    return 1
+}
+
+_pid() {
+    launchctl list "$PLIST_LABEL" 2>/dev/null | awk '/PID/{print $NF}' | grep -v '^-$' || true
+}
+
+cmd_install() {
+    printf "\n${B}Installing Phoenix daemon${R}\n"
+
+    # Create directory
+    mkdir -p "$PHOENIX_DIR"
+    info "Created ${PHOENIX_DIR}"
+
+    # Check port
+    if _check_port "$PHOENIX_PORT"; then
+        warn "Port ${PHOENIX_PORT} already in use — check for existing Phoenix or conflicts"
+    fi
+
+    # Create venv and install Phoenix
+    if [ ! -d "$PHOENIX_VENV" ]; then
+        printf "  Creating venv at %s...\n" "$PHOENIX_VENV"
+        python3 -m venv "$PHOENIX_VENV"
+        info "Venv created"
+    fi
+
+    printf "  Installing arize-phoenix (this may take a minute)...\n"
+    "${PHOENIX_VENV}/bin/pip" install -q arize-phoenix 2>&1 | tail -1
+    info "arize-phoenix installed"
+
+    # Verify phoenix binary
+    if ! "${PHOENIX_VENV}/bin/phoenix" --help >/dev/null 2>&1; then
+        # Try python -m phoenix instead
+        if ! "${PHOENIX_VENV}/bin/python" -m phoenix.server.main --help >/dev/null 2>&1; then
+            warn "Phoenix binary not found — will try 'python -m phoenix.server.main' in plist"
+        fi
+    fi
+
+    # Generate launchd plist
+    local phoenix_bin="${PHOENIX_VENV}/bin/phoenix"
+    if [ ! -f "$phoenix_bin" ]; then
+        phoenix_bin="${PHOENIX_VENV}/bin/python"
+    fi
+
+    cat > "$PLIST_PATH" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>${PLIST_LABEL}</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${phoenix_bin}</string>
+        <string>serve</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PHOENIX_WORKING_DIR</key>
+        <string>${PHOENIX_DIR}</string>
+        <key>PHOENIX_SQL_DATABASE_URL</key>
+        <string>sqlite:///${PHOENIX_DIR}/phoenix.db</string>
+        <key>PHOENIX_PORT</key>
+        <string>${PHOENIX_PORT}</string>
+        <key>PHOENIX_GRPC_PORT</key>
+        <string>${PHOENIX_GRPC_PORT}</string>
+        <key>PHOENIX_HOST</key>
+        <string>127.0.0.1</string>
+        <key>PHOENIX_DEFAULT_RETENTION_POLICY_DAYS</key>
+        <string>${RETENTION_DAYS}</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>${PHOENIX_DIR}/phoenix.log</string>
+    <key>StandardErrorPath</key>
+    <string>${PHOENIX_DIR}/phoenix.err</string>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+</dict>
+</plist>
+PLIST
+    info "Launchd plist written to ${PLIST_PATH}"
+
+    # Load plist
+    launchctl load "$PLIST_PATH" 2>/dev/null || true
+    info "Phoenix daemon loaded"
+
+    # Wait briefly for startup
+    sleep 2
+    cmd_status
+}
+
+cmd_start() {
+    if [ ! -f "$PLIST_PATH" ]; then
+        fail "Phoenix not installed. Run: phoenix-ctl install"
+    fi
+    launchctl start "$PLIST_LABEL" 2>/dev/null || true
+    sleep 1
+    cmd_status
+}
+
+cmd_stop() {
+    launchctl stop "$PLIST_LABEL" 2>/dev/null || true
+    info "Phoenix daemon stopped"
+}
+
+cmd_restart() {
+    cmd_stop
+    sleep 1
+    cmd_start
+}
+
+cmd_status() {
+    printf "\n${B}Phoenix Daemon Status${R}\n"
+
+    if [ ! -f "$PLIST_PATH" ]; then
+        warn "Not installed (no plist at ${PLIST_PATH})"
+        return 1
+    fi
+    info "Installed (plist: ${PLIST_PATH})"
+
+    local pid
+    pid=$(_pid)
+    if [ -n "$pid" ] && [ "$pid" != "0" ]; then
+        info "Running (PID: ${pid})"
+        # Memory usage
+        local mem
+        mem=$(ps -o rss= -p "$pid" 2>/dev/null | awk '{printf "%.0f", $1/1024}')
+        if [ -n "$mem" ]; then
+            info "Memory: ${mem} MB"
+        fi
+    else
+        warn "Not running"
+    fi
+
+    printf "  Data dir:  %s\n" "$PHOENIX_DIR"
+    printf "  UI:        http://localhost:%s\n" "$PHOENIX_PORT"
+    printf "  OTLP HTTP: http://localhost:%s/v1/traces\n" "$PHOENIX_PORT"
+    printf "  OTLP gRPC: localhost:%s\n" "$PHOENIX_GRPC_PORT"
+    printf "  Logs:      %s/phoenix.{log,err}\n" "$PHOENIX_DIR"
+    printf "  Retention: %s days\n" "$RETENTION_DAYS"
+
+    # Check if UI is reachable
+    if curl -sf "http://localhost:${PHOENIX_PORT}" >/dev/null 2>&1; then
+        info "UI reachable at http://localhost:${PHOENIX_PORT}"
+    else
+        warn "UI not reachable at http://localhost:${PHOENIX_PORT}"
+    fi
+    printf "\n"
+}
+
+cmd_uninstall() {
+    printf "\n${B}Uninstalling Phoenix daemon${R}\n"
+
+    # Stop and unload
+    launchctl stop "$PLIST_LABEL" 2>/dev/null || true
+    launchctl unload "$PLIST_PATH" 2>/dev/null || true
+    rm -f "$PLIST_PATH"
+    info "Launchd plist removed"
+
+    printf "\n  Data directory at %s was NOT removed.\n" "$PHOENIX_DIR"
+    printf "  To remove all data: rm -rf %s\n\n" "$PHOENIX_DIR"
+}
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+case "${1:-}" in
+    install)    cmd_install ;;
+    start)      cmd_start ;;
+    stop)       cmd_stop ;;
+    restart)    cmd_restart ;;
+    status)     cmd_status ;;
+    uninstall)  cmd_uninstall ;;
+    --help|-h)
+        printf "Usage: phoenix-ctl {install|start|stop|restart|status|uninstall}\n"
+        printf "\nManage the Phoenix observability daemon for Praxion.\n"
+        printf "Phoenix provides trace visualization at http://localhost:%s\n" "$PHOENIX_PORT"
+        ;;
+    *)
+        printf "Usage: phoenix-ctl {install|start|stop|restart|status|uninstall}\n" >&2
+        exit 1
+        ;;
+esac
