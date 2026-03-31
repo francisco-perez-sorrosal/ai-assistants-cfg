@@ -1,157 +1,111 @@
 # Task Chronograph
 
-Real-time observability for agent pipelines. Used by **Claude Code** (plugin) and **Cursor** (via `./install.sh cursor`). The web dashboard shows an **interaction timeline** -- the full story of what happens between a user query and the final response, with all delegations, results, and decisions visible -- alongside **agent status cards** tracking each agent's phase progress and health.
+Agent pipeline observability for Praxion. Traces every session -- pipeline runs, native Claude Code agents, tool calls, decisions, and phase transitions -- via OpenTelemetry, with persistent storage in [Arize Phoenix](https://github.com/Arize-ai/phoenix).
+
+Used by **Claude Code** (plugin) and **Cursor** (via `./install.sh cursor`).
+
+## Architecture
+
+A single MCP server process runs two transports in parallel:
+
+```
+Claude Code Hooks (stdlib, <100ms)
+  SessionStart, SubagentStart, SubagentStop,
+  PostToolUse, PostToolUseFailure, Stop
+      │
+      │  HTTP POST to localhost:8765/api/events
+      ▼
+┌─────────────────────────────┐        ┌─────────────────────┐
+│ Chronograph MCP Server      │        │ Phoenix Daemon      │
+│ (daemon thread: uvicorn)    │        │ (persistent, launchd)│
+│                             │        │                     │
+│ HTTP API: /api/events       │─OTLP──>│ localhost:6006      │
+│ EventStore (in-memory)      │        │ ~/.phoenix/phoenix.db│
+│ OTel Relay (otel_relay.py)  │        │ 90-day retention    │
+│                             │        └─────────────────────┘
+│ (main thread: mcp stdio)   │
+│ MCP Tools:                  │
+│   get_pipeline_status       │
+│   get_agent_events          │
+│   report_interaction        │
+└─────────────────────────────┘
+```
+
+**Dual storage**: EventStore (in-memory) serves real-time MCP queries. Phoenix (SQLite) persists traces for historical analysis and visualization. Either can fail independently.
 
 ## Quick Start
 
-The `i-am` plugin auto-registers the MCP server on install. The dashboard starts automatically at `http://localhost:8765` — no manual setup required.
+The `i-am` plugin auto-registers the MCP server. Phoenix is installed separately:
 
-To run the server standalone (without the plugin):
+```bash
+phoenix-ctl install          # Install Phoenix daemon (~300MB)
+open http://localhost:6006   # Trace UI
+```
+
+To run the chronograph standalone (without the plugin):
 
 ```bash
 cd task-chronograph-mcp
 uv run python -m task_chronograph_mcp
 ```
 
-## Hook Setup
+## Hook Events
 
-Hooks forward `SubagentStart`, `SubagentStop`, and `PostToolUse` (Write) events to the chronograph server. Add the following to `.claude/settings.local.json` in your project:
+8 hook events are registered, forwarding to `send_event.py`:
 
-```json
-{
-  "hooks": {
-    "SubagentStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /path/to/Praxion/.claude-plugin/hooks/send_event.py",
-            "timeout": 10,
-            "async": true
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /path/to/Praxion/.claude-plugin/hooks/send_event.py",
-            "timeout": 10,
-            "async": true
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /path/to/Praxion/.claude-plugin/hooks/send_event.py",
-            "timeout": 10,
-            "async": true
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+| Hook Event | Event Type | OTel Span |
+|---|---|---|
+| `SessionStart` | session_start | Root SESSION span (CHAIN) |
+| `Stop` | session_stop | End SESSION span |
+| `SubagentStart` | agent_start | AGENT child span |
+| `SubagentStop` | agent_stop | End AGENT span |
+| `PostToolUse` | tool_use | TOOL child span (all tools) |
+| `PostToolUseFailure` | error | TOOL span with ERROR status |
+| `PreToolUse` (Bash) | -- | Code quality gate (sync) |
+| `PreCompact` | -- | Pipeline state snapshot (sync) |
 
-Replace `/path/to/Praxion` with the absolute path to the `Praxion` repo.
+PostToolUse additionally detects PROGRESS.md writes and emits phase_transition events.
 
-The hook script uses only Python stdlib and exits 0 unconditionally -- it never blocks agent execution, even when the server is down.
+The hook script uses only Python stdlib and exits 0 unconditionally -- it never blocks agent execution.
 
-## MCP Server Registration
-
-The `i-am` plugin declares `mcpServers` in its manifest. Installing the plugin auto-registers everything — MCP tools via stdio **and** the web dashboard via a background HTTP server. No manual `claude mcp add` needed.
-
-On startup, the entry point (`python -m task_chronograph_mcp`):
-
-1. Launches the HTTP server (dashboard + REST API + SSE) in a daemon thread
-2. Runs the MCP stdio transport in the main thread
-3. Both share a single thread-safe `EventStore`
-
-If the HTTP server fails to start (e.g., port conflict), MCP tools still work via stdio — the dashboard is unavailable but a warning is logged to stderr.
-
-### MCP Tools
+## MCP Tools
 
 - **`get_pipeline_status`** -- current state of all agents, interaction timeline, and delegation hierarchy
 - **`get_agent_events`** -- filtered event history for a specific agent (with optional label filter)
-- **`report_interaction`** -- record an interaction between pipeline participants (query, delegation, result, decision, response)
+- **`report_interaction`** -- record an interaction between pipeline participants
 
-## Architecture
+## OTel Span Model
 
-A single process runs two transports in parallel:
+Traces use [OpenInference](https://github.com/Arize-ai/openinference) semantic conventions:
 
-```mermaid
-flowchart TD
-    PJ["plugin.json<br/>(mcpServers)"] --> MM["__main__.py"]
-
-    MM --> DT["daemon thread:<br/>uvicorn → Starlette"]
-    MM --> MT["main thread:<br/>mcp.run() → stdio"]
-
-    DT --> D["/ dashboard<br/>(Jinja2 + htmx + SSE)"]
-    DT --> API["/api/* event ingestion<br/>+ state API"]
-    DT --> MH["/mcp streamable HTTP<br/>(bonus)"]
-
-    ES[("shared EventStore<br/>(thread-safe,<br/>threading.Lock)")]
-    DT <--> ES
-    MT <--> ES
+```
+SESSION (CHAIN) ← root, trace_id from session_id hash
+├── researcher (AGENT, origin: praxion)
+│   ├── Read (TOOL)
+│   ├── Bash (TOOL)
+│   └── [event: phase_transition] Phase 2/5
+├── general-purpose (AGENT, origin: claude-code)
+│   └── Edit (TOOL)
+└── verifier (AGENT, origin: praxion)
 ```
 
-The `EventStore` uses `threading.Lock` for data protection and `call_soon_threadsafe` for cross-thread SSE broadcasting. MCP tool calls from either transport read/write the same store.
-
-### Event Sources
-
-1. **Hooks** (primary) -- zero-token-cost event forwarding from `SubagentStart`, `SubagentStop`, and `PostToolUse` hooks configured in project settings. Events POST to the HTTP API.
-2. **MCP tools** -- agents call `report_interaction` via stdio to record pipeline interactions
-3. **PROGRESS.md file watcher** (fallback) -- watches `.ai-work/PROGRESS.md` for phase-transition lines appended by agents, covering subagent contexts where hooks may not fire
-
-## Hook Payload Reference
-
-Claude Code hook payloads differ from what some documentation suggests. Actual field names (verified in v2.1.37):
-
-| Hook Event | Key Fields |
-| ---------- | ---------- |
-| `SubagentStart` | `session_id` (parent session), `agent_id` (subagent), `agent_type` (e.g., `"general-purpose"`, `"i-am:researcher"`) |
-| `SubagentStop` | Same as start, plus `agent_transcript_path` |
-| `PostToolUse` | `session_id`, `tool_input` (contains `file_path` for Write tool) |
-
-Notably: `session_id` is the **parent** session that spawned the subagent (there is no separate `parent_session_id` field), and the agent type field is `agent_type` (not `subagent_type`).
-
-## Interaction Types
-
-The interaction timeline uses `report_interaction` entries to reconstruct the pipeline story. Each interaction has a type that determines its dashboard badge color:
-
-| Type | Color | Meaning |
-| ---- | ----- | ------- |
-| `query` | Purple | User asks the main agent something |
-| `delegation` | Blue | Main agent delegates to a subagent |
-| `result` | Green | Agent returns findings |
-| `decision` | Yellow | Main agent makes a routing decision |
-| `response` | Teal | Main agent responds to the user |
-| *(unknown)* | Gray | Any other type (extensible) |
-
-Only `delegation` interactions contribute to the agent hierarchy. Unknown types are accepted and rendered with a generic badge.
+Key attributes: `praxion.agent_origin` (praxion vs claude-code), `praxion.trace_type` (pipeline vs native), `praxion.project_name` (multi-project isolation).
 
 ## Configuration
 
 | Variable | Default | Description |
-| -------- | ------- | ----------- |
-| `CHRONOGRAPH_PORT` | `8765` | Server port (used by both the server and the hook script) |
-| `CHRONOGRAPH_WATCH_DIR` | *(unset)* | Directory containing `.ai-work/PROGRESS.md` to watch (e.g., the project root). File watching is disabled when unset. |
+|---|---|---|
+| `CHRONOGRAPH_PORT` | `8765` | Chronograph HTTP API port |
+| `CHRONOGRAPH_WATCH_DIR` | *(unset)* | Directory for PROGRESS.md file watching |
+| `PHOENIX_ENDPOINT` | `http://localhost:6006/v1/traces` | OTLP export target |
+| `PHOENIX_PROJECT_NAME` | `praxion-default` | Fallback project name |
+| `OTEL_ENABLED` | `true` | Set to `false` to disable OTel export |
 
 ## Development
 
-Run tests:
-
 ```bash
 cd task-chronograph-mcp
-uv run pytest -v
+uv run python -m pytest -q    # 150 tests
+uv run ruff check              # Lint
+uv run ruff format             # Format
 ```

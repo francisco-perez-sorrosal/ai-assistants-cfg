@@ -47,7 +47,7 @@ The `mcpServers` key in `plugin.json` registers MCP servers automatically when t
 
 Reference: [claude-mermaid](https://github.com/veelenga/claude-mermaid/tree/main/.claude-plugin) uses this for npm-based MCP servers. For Python projects, `uv run --project` handles dependency installation on first launch.
 
-**Hybrid stdio+HTTP pattern:** Since only stdio is supported, a server that also needs HTTP (e.g., for a web dashboard) can start an HTTP server in a daemon thread before entering the stdio transport. The `task-chronograph` server uses this approach — its `__main__.py` launches uvicorn in a background thread, then calls `mcp.run()` on stdio. The plugin registers the stdio transport; the HTTP dashboard comes as a side effect. See `task-chronograph-mcp/README.md` for details.
+**Hybrid stdio+HTTP pattern:** Since only stdio is supported, a server that also needs HTTP (e.g., for hook event ingestion) can start an HTTP server in a daemon thread before entering the stdio transport. The `task-chronograph` server uses this approach — its `__main__.py` launches uvicorn in a background thread, then calls `mcp.run()` on stdio. The plugin registers the stdio transport; the HTTP API (for receiving hook events and relaying OTel spans to Phoenix) comes as a side effect. The root route redirects to Phoenix UI at `localhost:6006`. See `task-chronograph-mcp/README.md` for details.
 
 **Note:** `${CLAUDE_PLUGIN_ROOT}` resolution in `mcpServers` args is assumed based on its behavior in hook commands — verify after plugin reinstall.
 
