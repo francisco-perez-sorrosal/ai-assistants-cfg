@@ -521,7 +521,21 @@ class TestBuildEventsProjectDir:
         )
         assert events[0]["project_dir"] == "/test/project"
 
-    def test_missing_env_var_defaults_to_empty(self, build_events):
+    def test_cwd_from_payload_takes_priority_over_env(self, build_events):
+        events, _ = build_events(
+            {
+                "hook_event_name": "SessionStart",
+                "session_id": "s",
+                "cwd": "/from/payload",
+            }
+        )
+        assert events[0]["project_dir"] == "/from/payload"
+
+    def test_env_var_used_when_no_cwd_in_payload(self, build_events):
+        events, _ = build_events({"hook_event_name": "SessionStart", "session_id": "s"})
+        assert events[0]["project_dir"] == "/test/project"  # from mocked env
+
+    def test_missing_both_cwd_and_env_defaults_to_empty(self, build_events):
         with patch.dict("os.environ", {}, clear=True):
             events, _ = build_events({"hook_event_name": "SessionStart", "session_id": "s"})
             assert events[0]["project_dir"] == ""

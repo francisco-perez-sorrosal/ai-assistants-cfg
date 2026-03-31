@@ -77,9 +77,9 @@ def _summarize_tool_output(data):
     return _truncate(str(output) if output else "")
 
 
-def _project_dir():
-    """Get project directory from environment."""
-    return os.environ.get("CLAUDE_PROJECT_DIR", "")
+def _project_dir(data):
+    """Get project directory from hook payload (cwd) or environment fallback."""
+    return data.get("cwd", "") or os.environ.get("CLAUDE_PROJECT_DIR", "")
 
 
 def _build_events(data):
@@ -87,7 +87,7 @@ def _build_events(data):
     hook = data.get("hook_event_name", "")
     sid = data.get("session_id", "")
     aid = data.get("agent_id", "")
-    proj = _project_dir()
+    proj = _project_dir(data)
     events = []
     interactions = []
 
