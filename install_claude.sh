@@ -388,25 +388,31 @@ PYEOF
 # External API Docs (context-hub MCP)
 # =============================================================================
 
-prompt_chub_install() {
-    header "Step 6 — External API Docs (context-hub)"
+prompt_chub_mcp() {
+    header "Step 6 — context-hub MCP Server"
 
-    # Check for Node.js
-    if ! command -v npx &>/dev/null; then
-        step "Node.js not found — skipping context-hub setup"
-        step "Install Node.js 18+ and re-run to enable external API docs"
+    # Prefer globally installed chub-mcp, fall back to npx
+    local chub_mcp_cmd chub_mcp_args
+    if command -v chub-mcp &>/dev/null; then
+        chub_mcp_cmd="chub-mcp"
+        chub_mcp_args="[]"
+    elif command -v npx &>/dev/null; then
+        chub_mcp_cmd="npx"
+        chub_mcp_args='["-p", "@aisuite/chub", "chub-mcp"]'
+    else
+        step "Neither chub-mcp nor npx found — skipping MCP server setup"
+        step "Install chub globally (npm install -g @aisuite/chub) and re-run"
         return
     fi
 
     cat <<EOF
 
   ${B}[1] Configure context-hub MCP (recommended)${R}
-      ${D}Agents get curated, current API docs for 600+ libraries (Stripe,${R}
-      ${D}OpenAI, AWS, etc.) via MCP tools. Uses npx (auto-downloads).${R}
-      ${D}Telemetry disabled by default. Modifies ~/.claude/settings.json.${R}
+      ${D}Agents get native tool access to curated API docs (chub_search,${R}
+      ${D}chub_get). Modifies ~/.claude/settings.json.${R}
 
   ${B}[2] Skip${R}
-      ${D}The external-api-docs skill still works via CLI (chub commands).${R}
+      ${D}Agents can still use chub CLI as fallback (if installed globally).${R}
       ${D}MCP gives agents native tool discovery without CLI teaching.${R}
       ${D}Install later by re-running: ./install.sh code${R}
 EOF
@@ -417,37 +423,57 @@ EOF
         return
     fi
 
-    local settings_file="${HOME}/.claude/settings.json"
-    step "Adding context-hub MCP to settings.json..."
+    local claude_json="${HOME}/.claude.json"
+    step "Adding context-hub MCP to ~/.claude.json (command: ${chub_mcp_cmd})..."
 
-    python3 - "$settings_file" << 'PYEOF'
+    python3 - "$claude_json" "$chub_mcp_cmd" "$chub_mcp_args" << 'PYEOF'
 import json, sys
 
-settings_path = sys.argv[1]
+claude_json_path = sys.argv[1]
+cmd = sys.argv[2]
+args = json.loads(sys.argv[3])
 
 try:
-    with open(settings_path) as f:
-        settings = json.load(f)
+    with open(claude_json_path) as f:
+        config = json.load(f)
 except FileNotFoundError:
-    settings = {}
+    config = {}
 
-servers = settings.setdefault("mcpServers", {})
+servers = config.setdefault("mcpServers", {})
 servers["chub"] = {
-    "command": "npx",
-    "args": ["-y", "@aisuite/chub", "mcp"],
+    "type": "stdio",
+    "command": cmd,
+    "args": args,
     "env": {
         "CHUB_TELEMETRY": "0",
         "CHUB_FEEDBACK": "0"
     }
 }
 
-with open(settings_path, "w") as f:
-    json.dump(settings, f, indent=2)
+with open(claude_json_path, "w") as f:
+    json.dump(config, f, indent=2)
     f.write("\n")
 PYEOF
 
     info "context-hub MCP configured (telemetry disabled)"
-    step "Agents can now search/fetch curated API docs via chub_search, chub_get"
+
+    # Migrate: remove stale chub entry from settings.json if present
+    local settings_file="${HOME}/.claude/settings.json"
+    if [ -f "$settings_file" ]; then
+        python3 -c "
+import json, sys
+with open(sys.argv[1]) as f:
+    s = json.load(f)
+servers = s.get('mcpServers', {})
+if 'chub' in servers:
+    del servers['chub']
+    if not servers:
+        del s['mcpServers']
+    with open(sys.argv[1], 'w') as f:
+        json.dump(s, f, indent=2)
+        f.write('\n')
+" "$settings_file" 2>/dev/null && step "Cleaned stale chub entry from settings.json" || true
+    fi
 }
 
 # =============================================================================
@@ -594,17 +620,18 @@ sys.exit(0 if 'SubagentStart' in hooks and 'SubagentStop' in hooks else 1)
         healthy=false
     fi
 
-    printf "\n  ${B}External API Docs:${R}\n"
-    if [ -f "$settings_file" ] && python3 -c "
+    printf "\n  ${B}context-hub MCP:${R}\n"
+    local claude_json="${HOME}/.claude.json"
+    if [ -f "$claude_json" ] && python3 -c "
 import json, sys
 with open(sys.argv[1]) as f:
     s = json.load(f)
 servers = s.get('mcpServers', {})
 sys.exit(0 if 'chub' in servers else 1)
-" "$settings_file" 2>/dev/null; then
+" "$claude_json" 2>/dev/null; then
         info "context-hub MCP configured"
     else
-        warn "context-hub MCP not configured (optional)"
+        warn "context-hub MCP not configured"
     fi
 
     printf "\n"
@@ -694,7 +721,7 @@ uninstall_claude_code() {
         fi
     done
 
-    # Remove hooks and chub MCP
+    # Remove hooks from settings.json
     local settings_file="${HOME}/.claude/settings.json"
     if [ -f "$settings_file" ]; then
         python3 -c "
@@ -705,15 +732,35 @@ changed = False
 if 'hooks' in s:
     del s['hooks']
     changed = True
+# Clean up stale mcpServers from settings.json (moved to ~/.claude.json)
 servers = s.get('mcpServers', {})
 if 'chub' in servers:
     del servers['chub']
+    changed = True
+if not servers and 'mcpServers' in s:
+    del s['mcpServers']
     changed = True
 if changed:
     with open(sys.argv[1], 'w') as f:
         json.dump(s, f, indent=2)
         f.write('\n')
-" "$settings_file" 2>/dev/null && info "Hooks and MCP servers removed" || true
+" "$settings_file" 2>/dev/null && info "Hooks removed from settings.json" || true
+    fi
+
+    # Remove chub MCP from ~/.claude.json
+    local claude_json="${HOME}/.claude.json"
+    if [ -f "$claude_json" ]; then
+        python3 -c "
+import json, sys
+with open(sys.argv[1]) as f:
+    s = json.load(f)
+servers = s.get('mcpServers', {})
+if 'chub' in servers:
+    del servers['chub']
+    with open(sys.argv[1], 'w') as f:
+        json.dump(s, f, indent=2)
+        f.write('\n')
+" "$claude_json" 2>/dev/null && info "context-hub MCP removed from ~/.claude.json" || true
     fi
 
     printf "\n"
@@ -754,7 +801,7 @@ install_claude_code() {
     fi
 
     install_scripts
-    prompt_chub_install
+    prompt_chub_mcp
     prompt_claude_desktop_link
 
     printf "\n"

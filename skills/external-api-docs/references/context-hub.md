@@ -149,4 +149,4 @@ Filter with `--source official,maintainer` to exclude community-contributed entr
 - **Pre-1.0** -- v0.1.3; API and content format may change
 - **Single annotation per entry** -- overwrites, no history
 - **No streaming** -- full content fetched at once
-- **No programmatic API** -- CLI and MCP server only; cannot `import` as a library
+- **No programmatic API** -- CLI (`chub`) and MCP server (`chub-mcp`) only; cannot `import` as a library

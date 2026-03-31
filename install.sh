@@ -20,6 +20,87 @@ info()  { printf "  ✓ %s\n" "$*"; }
 warn()  { printf "  ⚠ %s\n" "$*"; }
 fail()  { printf "  ✗ %s\n" "$*" >&2; exit 1; }
 header() { printf "\n${B}%s${R}\n" "$*"; }
+step()  { printf "    %s\n" "$*"; }
+
+# Prompt for a numbered choice. Sets REPLY to the chosen number.
+ask() {
+    local default=$1 max=$2
+    printf "\n"
+    read -rp "  Choice [$default]: " choice
+    choice="${choice:-$default}"
+    if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "$max" ]; then
+        fail "Invalid choice: $choice"
+    fi
+    REPLY="$choice"
+}
+
+# =============================================================================
+# Shared — External API Docs (context-hub CLI + telemetry config)
+# =============================================================================
+
+install_chub_cli() {
+    header "Shared — External API Docs (context-hub)"
+
+    if ! command -v npm &>/dev/null; then
+        step "Node.js not found — skipping context-hub setup"
+        step "Install Node.js 18+ and re-run to enable external API docs"
+        return
+    fi
+
+    cat <<EOF
+
+  ${B}[1] Install context-hub CLI (recommended)${R}
+      ${D}Installs chub globally (npm install -g). Curated API docs for${R}
+      ${D}600+ libraries (Stripe, OpenAI, AWS, etc.). Used by skills as${R}
+      ${D}a fallback and available to all users on this machine.${R}
+      ${D}Telemetry disabled by default.${R}
+
+  ${B}[2] Skip${R}
+      ${D}No chub CLI. Install later by re-running: ./install.sh${R}
+EOF
+    ask 1 2
+
+    if [ "$REPLY" -eq 2 ]; then
+        step "context-hub CLI skipped"
+        return
+    fi
+
+    step "Installing chub CLI globally..."
+    if npm install -g @aisuite/chub 2>&1 | tail -1; then
+        info "chub CLI installed ($(chub --cli-version 2>/dev/null || echo '?'))"
+    else
+        warn "Global install failed — re-run or install manually: npm install -g @aisuite/chub"
+    fi
+
+    # Disable telemetry persistently
+    local chub_config_dir="${HOME}/.chub"
+    if [ ! -f "${chub_config_dir}/config.yaml" ]; then
+        mkdir -p "$chub_config_dir"
+        cat > "${chub_config_dir}/config.yaml" << 'YAML'
+telemetry: false
+feedback: false
+YAML
+        info "Telemetry disabled in ~/.chub/config.yaml"
+    fi
+}
+
+check_chub_cli() {
+    printf "\n  ${B}External API Docs (shared):${R}\n"
+    if command -v chub &>/dev/null; then
+        info "chub CLI installed ($(chub --cli-version 2>/dev/null || echo '?'))"
+    else
+        warn "chub CLI not installed globally"
+    fi
+}
+
+uninstall_chub_cli() {
+    if command -v chub &>/dev/null; then
+        step "Removing chub CLI..."
+        npm uninstall -g @aisuite/chub 2>/dev/null \
+            && info "chub CLI removed" \
+            || warn "chub CLI removal failed"
+    fi
+}
 
 # =============================================================================
 # Overview banner
@@ -28,6 +109,13 @@ header() { printf "\n${B}%s${R}\n" "$*"; }
 show_overview() {
     local mode=$1
     printf "\n${B}Praxion Installer${R}\n"
+
+    cat <<EOF
+
+  Shared:
+    • External API docs (chub CLI — curated docs for 600+ libraries)
+EOF
+
     case "$mode" in
         code)
             cat <<EOF
@@ -40,7 +128,7 @@ show_overview() {
     • i-am plugin      (skills, commands, agents)
     • Chronograph hooks (agent lifecycle observability)
     • CLI scripts       (ccwt — multi-worktree Claude sessions)
-    • External API docs (context-hub MCP — curated API docs)
+    • context-hub MCP   (chub-mcp — native agent tool access)
 EOF
             ;;
         desktop)
@@ -135,13 +223,38 @@ case "$MODE" in
         $CHECK     && delegate_args+=(--check)
         $DRY_RUN   && delegate_args+=(--dry-run)
         $UNINSTALL && delegate_args+=(--uninstall)
-        exec "$SCRIPT_DIR/install_claude.sh" "${delegate_args[@]}"
         ;;
     cursor)
         [ -n "$CURSOR_TARGET" ] && delegate_args+=("$CURSOR_TARGET")
         $CHECK     && delegate_args+=(--check)
         $DRY_RUN   && delegate_args+=(--dry-run)
         $UNINSTALL && delegate_args+=(--uninstall)
-        exec "$SCRIPT_DIR/install_cursor.sh" "${delegate_args[@]}"
         ;;
 esac
+
+# Dispatch to tool-specific script (capture exit code — don't let set -e kill shared steps)
+delegate() {
+    local rc=0
+    case "$MODE" in
+        code|desktop) "$SCRIPT_DIR/install_claude.sh" "${delegate_args[@]}" || rc=$? ;;
+        cursor)       "$SCRIPT_DIR/install_cursor.sh" "${delegate_args[@]}" || rc=$? ;;
+    esac
+    return $rc
+}
+
+if $CHECK; then
+    delegate_rc=0
+    delegate || delegate_rc=$?
+    check_chub_cli
+    exit $delegate_rc
+elif $UNINSTALL; then
+    delegate
+    uninstall_chub_cli
+elif $DRY_RUN; then
+    check_chub_cli
+    delegate
+else
+    # Install: shared CLI first, then tool-specific
+    install_chub_cli
+    delegate
+fi
