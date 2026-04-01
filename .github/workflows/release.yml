@@ -1,0 +1,62 @@
+# Release workflow -- bumps version, updates changelog, tags, and creates a GitHub Release.
+#
+# Idempotency: This workflow triggers on push to main. When it bumps and pushes,
+# it re-triggers itself. The second run finds no bumpable commits (the bump commit
+# itself is not a conventional commit type that warrants a version increment), so
+# `cz bump` exits non-zero. The `continue-on-error: true` on the bump step lets
+# the workflow exit gracefully instead of failing. Downstream steps are conditional
+# on bump success, so no duplicate tags or releases are created.
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "CHANGELOG.md"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Commitizen
+        run: pip install commitizen
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        id: cz
+        continue-on-error: true
+        run: |
+          cz bump --changelog --yes 2>&1 | tee bump_output.txt
+          echo "version=$(cz version --project)" >> $GITHUB_OUTPUT
+
+      - name: Push with tags
+        if: steps.cz.outcome == 'success'
+        run: git push --follow-tags
+
+      - name: Create GitHub Release
+        if: steps.cz.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="v${{ steps.cz.outputs.version }}"
+          gh release create "$VERSION" --generate-notes --title "$VERSION"
