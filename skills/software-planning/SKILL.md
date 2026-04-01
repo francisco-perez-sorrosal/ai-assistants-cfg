@@ -15,6 +15,7 @@ Create and maintain planning documents (IMPLEMENTATION_PLAN.md, WIP.md, LEARNING
 - [references/document-templates.md](references/document-templates.md) -- WIP.md and LEARNINGS.md templates, parallel mode, end-of-feature workflow
 - [references/decomposition-guide.md](references/decomposition-guide.md) -- feature breakdown examples, spike steps, anti-patterns, Claude Code agent usage
 - [references/agent-pipeline-details.md](references/agent-pipeline-details.md) -- boundary discipline, parallel execution, intra-stage parallelism, pipeline engagement tables
+- [references/decision-tracking-protocols.md](references/decision-tracking-protocols.md) -- agent write CLI, commit-time review, spec auto-update protocols
 - [phases/refactoring.md](phases/refactoring.md) -- refactoring phase integration
 - [contexts/python.md](contexts/python.md) -- Python-specific quality gates and step templates
 
@@ -231,7 +232,7 @@ Sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical D
 
 --> See [references/document-templates.md](references/document-templates.md#learningsmd-structure) for the full template.
 
-When recording entries in `### Decisions Made`, agents also call `decision-tracker write` to create a machine-readable entry in `.ai-state/decisions.jsonl`. See the [decision-tracking rule](../../rules/swe/decision-tracking.md) for the CLI protocol and schema.
+When recording entries in `### Decisions Made`, agents also call `decision-tracker write` to create a machine-readable entry in `.ai-state/decisions.jsonl`. See the [decision-tracking rule](../../rules/swe/decision-tracking.md) for the schema and the [decision-tracking protocols reference](references/decision-tracking-protocols.md) for the CLI and review protocols.
 
 ## Workflow
 
