@@ -77,7 +77,8 @@ rules/                               # Rules (installed to ~/.claude/rules/ or .
     ├── precompact_state.py
     ├── format_python.py
     ├── extract_decisions.py
-    └── check_code_quality.py
+    ├── check_code_quality.py
+    └── commit_gate.sh
 claude/config/                       # Claude personal config (symlinked to ~/.claude/)
 ├── README.md
 ├── CLAUDE.md
@@ -93,7 +94,9 @@ cursor/config/                       # Cursor installer config
 ├── export-cursor-rules.py
 └── README.md
 scripts/                             # Utility scripts
-└── ccwt                             # Multi-worktree Claude session launcher
+├── ccwt                             # Multi-worktree Claude session launcher
+├── chronograph-ctl                  # Task Chronograph server control
+└── phoenix-ctl                      # Phoenix observability server control
 docs/                                # Cross-cutting documentation
 ├── concepts.md
 ├── cursor-compat.md
