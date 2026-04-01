@@ -634,34 +634,27 @@ class TestOTelDisabled:
 
 
 class TestTraceTypeDetection:
-    """Verify trace_type attribute based on first agent origin (lazy-set once)."""
+    """Verify trace_type attribute on agent spans based on their origin."""
 
-    def test_only_praxion_agents_gives_pipeline_trace_type(self, harness: OTelRelayTestHarness):
+    def test_praxion_agent_has_pipeline_trace_type(self, harness: OTelRelayTestHarness):
         harness.relay.start_session(SESSION_ID, harness.project_dir)
         harness.relay.start_agent("agent-r1", "i-am:researcher", SESSION_ID)
-        harness.relay.start_agent("agent-i1", "i-am:implementer", SESSION_ID)
         harness.relay.end_agent("agent-r1", "Done")
-        harness.relay.end_agent("agent-i1", "Done")
         harness.relay.end_session(SESSION_ID)
 
-        root = harness.session_span()
-        assert root.attributes.get("praxion.trace_type") == "pipeline"
+        agent = harness.spans_named("researcher")[0]
+        assert agent.attributes.get("praxion.trace_type") == "pipeline"
 
-    def test_only_native_agents_gives_native_trace_type(self, harness: OTelRelayTestHarness):
+    def test_native_agent_has_native_trace_type(self, harness: OTelRelayTestHarness):
         harness.relay.start_session(SESSION_ID, harness.project_dir)
         harness.relay.start_agent("agent-gp1", "general-purpose", SESSION_ID)
         harness.relay.end_agent("agent-gp1", "Done")
         harness.relay.end_session(SESSION_ID)
 
-        root = harness.session_span()
-        assert root.attributes.get("praxion.trace_type") == "native"
+        agent = harness.spans_named("general-purpose")[0]
+        assert agent.attributes.get("praxion.trace_type") == "native"
 
-    def test_trace_type_set_by_first_agent_origin(self, harness: OTelRelayTestHarness):
-        """The trace_type is lazily set on the first start_agent call only.
-
-        When the first agent is a Praxion agent, the trace_type is 'pipeline'
-        even if a native agent is added later.
-        """
+    def test_mixed_agents_each_carry_their_own_trace_type(self, harness: OTelRelayTestHarness):
         harness.relay.start_session(SESSION_ID, harness.project_dir)
         harness.relay.start_agent("agent-r1", "i-am:researcher", SESSION_ID)
         harness.relay.start_agent("agent-gp1", "general-purpose", SESSION_ID)
@@ -669,7 +662,7 @@ class TestTraceTypeDetection:
         harness.relay.end_agent("agent-gp1", "Done")
         harness.relay.end_session(SESSION_ID)
 
-        root = harness.session_span()
-        # First agent was praxion, so trace_type is pipeline (set once, never updated)
-        trace_type = root.attributes.get("praxion.trace_type")
-        assert trace_type == "pipeline"
+        researcher = harness.spans_named("researcher")[0]
+        gp = harness.spans_named("general-purpose")[0]
+        assert researcher.attributes.get("praxion.trace_type") == "pipeline"
+        assert gp.attributes.get("praxion.trace_type") == "native"

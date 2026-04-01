@@ -139,14 +139,16 @@ class OTelRelay:
             logger.warning("Failed to start OTel session", exc_info=True)
 
     def end_session(self, session_id: str) -> None:
-        """End the root SESSION span and flush the exporter."""
+        """Flush remaining spans on session end.
+
+        The root span was already ended in ``_open_session_span``, so this
+        just flushes any in-flight child spans and clears state.
+        """
         if not _is_otel_enabled():
             return
         try:
-            if self._session_span is not None:
-                self._session_span.end()
-                self._session_span = None
-                self._session_context = None
+            self._session_span = None
+            self._session_context = None
             if self._provider is not None:
                 self._provider.force_flush()
         except Exception:
@@ -325,11 +327,16 @@ class OTelRelay:
         self._tracer = self._provider.get_tracer(TRACER_NAME)
 
     def _open_session_span(self, session_id: str, project_dir: str) -> None:
-        """Start the root SESSION span with a deterministic trace ID.
+        """Create the root SESSION span and end it immediately.
 
-        The TracerProvider's _SeededIdGenerator ensures the first trace_id
-        matches our session hash. The span is created with no parent context,
-        making it a true root visible in Phoenix's Traces view.
+        The span is ended right away so Phoenix receives it and shows the
+        trace in the Traces view. Child spans (agents, tools) reference
+        the root's SpanContext for parent-child linkage — this works even
+        after the root span is closed because OTel links by IDs, not by
+        live Span objects.
+
+        The ``_session_context`` is preserved so child spans can be
+        parented under this root throughout the session.
         """
         if self._tracer is None:
             return
@@ -349,7 +356,11 @@ class OTelRelay:
                 "praxion.session_start": datetime.now(UTC).isoformat(),
             },
         )
+        # Capture context BEFORE ending — child spans parent under this.
         self._session_context = trace.set_span_in_context(self._session_span)
+        # End immediately so Phoenix receives the root span right away.
+        # Child spans still link to it via the saved _session_context.
+        self._session_span.end()
         self._trace_type_set = False
 
     def _start_agent_span(
@@ -366,11 +377,8 @@ class OTelRelay:
         origin = _detect_agent_origin(agent_type)
         clean_type = _clean_agent_type(agent_type)
 
-        # Lazily set trace_type on the session span
-        if not self._trace_type_set and self._session_span is not None:
-            trace_type = TRACE_TYPE_PIPELINE if origin == "praxion" else TRACE_TYPE_NATIVE
-            self._session_span.set_attribute("praxion.trace_type", trace_type)
-            self._trace_type_set = True
+        # Set trace_type on each agent span (session span is already ended)
+        trace_type = TRACE_TYPE_PIPELINE if origin == "praxion" else TRACE_TYPE_NATIVE
 
         span = self._tracer.start_span(
             name=clean_type,
@@ -380,6 +388,7 @@ class OTelRelay:
                 SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.AGENT.value,
                 "praxion.agent_type": clean_type,
                 "praxion.agent_origin": origin,
+                "praxion.trace_type": trace_type,
                 "praxion.agent_id": agent_id,
                 "praxion.session_id": session_id,
                 "praxion.parent_session_id": parent_session_id,
