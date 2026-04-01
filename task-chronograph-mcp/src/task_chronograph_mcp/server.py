@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import threading
 from contextlib import asynccontextmanager
@@ -23,6 +24,8 @@ from task_chronograph_mcp.events import (
 )
 from task_chronograph_mcp.file_watcher import watch_progress_file
 from task_chronograph_mcp.otel_relay import OTelRelay
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_PORT = 8765
 PORT_RANGE_SIZE = 1000  # ports 8765-9764
@@ -138,7 +141,7 @@ def _relay_event(relay: OTelRelay, event: Event) -> None:
                     event.agent_id, event.phase, event.total_phases, event.phase_name, event.message
                 )
     except Exception:  # noqa: BLE001
-        pass  # fail-open — OTel issues must never disrupt EventStore path
+        logger.warning("OTel relay failed for %s", event.event_type, exc_info=True)
 
 
 async def receive_event(request: Request) -> JSONResponse:
