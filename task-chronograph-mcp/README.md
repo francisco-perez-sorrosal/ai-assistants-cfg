@@ -99,7 +99,7 @@ Key attributes: `praxion.agent_origin` (praxion vs claude-code), `praxion.trace_
 | `CHRONOGRAPH_WATCH_DIR` | *(unset)* | Directory for PROGRESS.md file watching |
 | `PHOENIX_ENDPOINT` | `http://localhost:6006/v1/traces` | OTLP export target |
 | `PHOENIX_PROJECT_NAME` | `praxion-default` | Fallback project name |
-| `OTEL_ENABLED` | `true` | Set to `false` to disable OTel export |
+| `OTEL_ENABLED` | `false` | Set to `true` to enable OTel export |
 
 ## Development
 

@@ -6,24 +6,32 @@ Contributor and developer documentation for Praxion. For installation and usage,
 
 ```
 skills/                              # Shared skill modules (assistant-agnostic)
-├── skill-crafting/
 ├── agent-crafting/
-├── command-crafting/
-├── mcp-crafting/
-├── rule-crafting/
-├── claude-ecosystem/
+├── agent-evals/
 ├── agentic-sdks/
+├── api-design/
+├── cicd/
+├── claude-ecosystem/
+├── code-review/
+├── command-crafting/
 ├── communicating-agents/
+├── data-modeling/
+├── doc-management/
+├── external-api-docs/
+├── github-star/
+├── hook-crafting/
+├── mcp-crafting/
+├── memory/
+├── performance-architecture/
 ├── python-development/
 ├── python-prj-mgmt/
 ├── refactoring/
-├── code-review/
+├── roadmap-planning/
+├── rule-crafting/
+├── skill-crafting/
 ├── software-planning/
 ├── spec-driven-development/
-├── doc-management/
-├── cicd/
-├── memory/
-└── github-star/
+└── stakeholder-communications/
 commands/                            # Shared slash commands
 ├── add-rules.md
 ├── clean-work.md
@@ -35,6 +43,7 @@ commands/                            # Shared slash commands
 ├── memory.md
 ├── merge-worktree.md
 ├── onboard-project.md
+├── sdd-coverage.md
 └── star-repo.md
 agents/                              # Shared agent definitions
 ├── promethean.md
@@ -53,6 +62,7 @@ rules/                               # Rules (installed to ~/.claude/rules/ or .
 ├── swe/
 │   ├── agent-intermediate-documents.md
 │   ├── coding-style.md
+│   ├── decision-tracking.md
 │   ├── swe-agent-coordination-protocol.md
 │   └── vcs/
 │       └── git-conventions.md
@@ -64,7 +74,10 @@ rules/                               # Rules (installed to ~/.claude/rules/ or .
 └── hooks/                           # Plugin hook scripts
     ├── hooks.json
     ├── send_event.py
-    └── precompact_state.py
+    ├── precompact_state.py
+    ├── format_python.py
+    ├── extract_decisions.py
+    └── check_code_quality.py
 claude/config/                       # Claude personal config (symlinked to ~/.claude/)
 ├── README.md
 ├── CLAUDE.md
@@ -83,9 +96,11 @@ scripts/                             # Utility scripts
 └── ccwt                             # Multi-worktree Claude session launcher
 docs/                                # Cross-cutting documentation
 ├── concepts.md
-├── getting-started.md
 ├── cursor-compat.md
 ├── decision-tracking.md
+├── external-api-docs.md
+├── getting-started.md
+├── observability.md
 └── spec-driven-development.md
 task-chronograph-mcp/                # Pipeline observability MCP server
 memory-mcp/                          # Persistent memory MCP server

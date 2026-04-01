@@ -102,7 +102,7 @@ chronograph-ctl logs     # Tail the log file
 | `PHOENIX_GRPC_PORT` | `4317` | OTLP gRPC port |
 | `PHOENIX_DEFAULT_RETENTION_POLICY_DAYS` | `90` | Auto-prune traces older than this |
 | `PHOENIX_ENDPOINT` | `http://localhost:6006/v1/traces` | Chronograph's OTLP export target |
-| `OTEL_ENABLED` | `true` | Set to `false` to disable trace export |
+| `OTEL_ENABLED` | `false` | Set to `true` to enable trace export |
 
 ## Ports
 
@@ -144,7 +144,7 @@ tail -f ~/.phoenix/phoenix.err   # stderr
 
 1. Verify Phoenix is running: `phoenix-ctl status`
 2. Verify chronograph is running: check MCP server in Claude Code
-3. Check `OTEL_ENABLED` is not set to `false`
+3. Check `OTEL_ENABLED` is set to `true`
 4. Verify hooks are registered: `./install.sh code --check`
 
 ## Backend Portability
