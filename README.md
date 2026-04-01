@@ -1,5 +1,10 @@
 # Praxion
 
+[![Version](https://img.shields.io/github/v/release/francisco-perez-sorrosal/Praxion?style=flat-square&label=version)](https://github.com/francisco-perez-sorrosal/Praxion/releases/latest)
+[![Release Date](https://img.shields.io/github/release-date/francisco-perez-sorrosal/Praxion?style=flat-square)](https://github.com/francisco-perez-sorrosal/Praxion/releases/latest)
+[![License](https://img.shields.io/github/license/francisco-perez-sorrosal/Praxion?style=flat-square)](LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/francisco-perez-sorrosal/Praxion?style=flat-square)](https://github.com/francisco-perez-sorrosal/Praxion/commits/main)
+
 **A structured layer of reusable expertise, specialized agents, commands, rules, and memory that operationalizes spec-driven development and context engineering into reliable, context-aware results**.
 
 This is my vision for turning AI assistance into a disciplined engineering system. There are many frameworks like this, but this is mine; It's my orchestration of established engineering conventions, workflows, and architectural thinking into the assistant's loop so it operates with continuity and stronger judgment.
