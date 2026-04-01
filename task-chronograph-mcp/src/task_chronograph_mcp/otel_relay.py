@@ -101,32 +101,42 @@ class OTelRelay:
     def start_session(self, session_id: str, project_dir: str) -> None:
         """Initialise the TracerProvider and open the root SESSION span.
 
-        If a provider already exists (e.g., from a previous session_start
-        or from _ensure_initialized), this is a no-op. The chronograph-ctl
-        instance persists across Claude Code session restarts, so duplicate
-        session_start events must not create duplicate root spans.
+        The chronograph-ctl instance persists across Claude Code session
+        restarts. The TracerProvider is reused, but each new session gets
+        its own root span. Duplicate session_start events within the same
+        session are deduplicated via ``_session_context``.
         """
         if not _is_otel_enabled():
             return
-        if self._provider is not None:
-            return  # already initialized — skip duplicate session_start
+        if self._session_context is not None:
+            return  # already have an active session — skip duplicate
         try:
-            self._init_provider(project_dir)
+            if self._provider is None:
+                self._init_provider(project_dir)
             self._open_session_span(session_id, project_dir)
         except Exception:
             logger.warning("Failed to start OTel session", exc_info=True)
 
     def end_session(self, session_id: str) -> None:
-        """Flush remaining spans on session end.
+        """End all open agent spans, flush, and clear session state.
 
-        The root span was already ended in ``_open_session_span``, so this
-        just flushes any in-flight child spans and clears state.
+        The root span was already ended in ``_open_session_span``. This
+        ends any orphaned agent spans, flushes, and resets so the next
+        ``start_session`` can create a fresh root span.
         """
         if not _is_otel_enabled():
             return
         try:
+            # End any orphaned agent spans
+            for _agent_id, span in list(self._span_map.items()):
+                try:
+                    span.end()
+                except Exception:
+                    pass
+            self._span_map.clear()
             self._session_span = None
             self._session_context = None
+            self._trace_type_set = False
             if self._provider is not None:
                 self._provider.force_flush()
         except Exception:
@@ -149,15 +159,14 @@ class OTelRelay:
         env, or cwd (which Claude Code sets to the project directory for hooks).
         Returns True if the relay is ready to create spans.
         """
-        if self._provider is not None:
-            return True
         if not _is_otel_enabled():
             return False
         effective_dir = project_dir or os.environ.get("CLAUDE_PROJECT_DIR", "")
         if not effective_dir or effective_dir == "/":
             effective_dir = ""  # let it fall back to default_project_name
-        self._init_provider(effective_dir)
-        if session_id and self._session_span is None:
+        if self._provider is None:
+            self._init_provider(effective_dir)
+        if session_id and self._session_context is None:
             self._open_session_span(session_id, effective_dir)
         return self._provider is not None
 
