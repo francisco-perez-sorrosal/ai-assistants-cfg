@@ -9,7 +9,6 @@ Uses InMemorySpanExporter to verify span creation without requiring a live Phoen
 
 from __future__ import annotations
 
-import hashlib
 import os
 from typing import Any
 from unittest.mock import patch
@@ -81,11 +80,6 @@ def disabled_harness():
     h.teardown()
 
 
-def _expected_trace_id_from_session(session_id: str) -> int:
-    """Compute the expected trace_id the same way OTelRelay does."""
-    return int.from_bytes(hashlib.sha256(session_id.encode()).digest()[:16], "big")
-
-
 # ---------------------------------------------------------------------------
 # 1. Session start creates a root CHAIN span
 # ---------------------------------------------------------------------------
@@ -106,16 +100,12 @@ class TestSessionStartCreatesRootSpan:
         root = harness.session_span()
         assert root.attributes["session.id"] == "sess-abc-123"
 
-    def test_session_start_trace_id_derived_from_session_id_hash(
-        self, harness: OTelRelayTestHarness
-    ):
-        session_id = "sess-deterministic-id"
-        harness.relay.start_session(session_id, harness.project_dir)
-        harness.relay.end_session(session_id)
+    def test_session_start_produces_valid_trace_id(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session("sess-abc", harness.project_dir)
+        harness.relay.end_session("sess-abc")
 
         root = harness.session_span()
-        expected = _expected_trace_id_from_session(session_id)
-        assert root.context.trace_id == expected
+        assert root.context.trace_id != 0
 
     def test_session_start_sets_project_name_as_basename(self, harness: OTelRelayTestHarness):
         harness.relay.start_session(SESSION_ID, harness.project_dir)

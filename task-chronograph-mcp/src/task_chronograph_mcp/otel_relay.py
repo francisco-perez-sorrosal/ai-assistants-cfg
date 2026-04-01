@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import os
 from datetime import UTC, datetime
@@ -14,7 +13,6 @@ from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter
-from opentelemetry.sdk.trace.id_generator import IdGenerator, RandomIdGenerator
 from opentelemetry.trace import (
     SpanKind,
     StatusCode,
@@ -36,29 +34,6 @@ TRACER_NAME = "praxion.chronograph"
 
 # Agent origin detection prefix
 _PRAXION_AGENT_PREFIX = "i-am:"
-
-
-class _SeededIdGenerator(IdGenerator):
-    """ID generator that returns a predetermined trace_id for the first trace.
-
-    After the first ``generate_trace_id()`` call, falls back to random IDs.
-    This lets the session root span carry a deterministic trace_id (derived
-    from the session_id) while all subsequent spans get random IDs.
-    """
-
-    def __init__(self, seed_trace_id: int) -> None:
-        self._seed_trace_id: int | None = seed_trace_id
-        self._fallback = RandomIdGenerator()
-
-    def generate_span_id(self) -> int:
-        return self._fallback.generate_span_id()
-
-    def generate_trace_id(self) -> int:
-        if self._seed_trace_id is not None:
-            tid = self._seed_trace_id
-            self._seed_trace_id = None
-            return tid
-        return self._fallback.generate_trace_id()
 
 
 # Trace type values
@@ -88,16 +63,6 @@ def _clean_agent_type(agent_type: str) -> str:
     if agent_type.startswith(_PRAXION_AGENT_PREFIX):
         return agent_type[len(_PRAXION_AGENT_PREFIX) :]
     return agent_type
-
-
-def _generate_trace_id(session_id: str) -> int:
-    """Deterministic 128-bit trace ID derived from the session ID."""
-    return int.from_bytes(hashlib.sha256(session_id.encode()).digest()[:16], "big")
-
-
-def _generate_span_id_seed(session_id: str) -> int:
-    """Generate a 64-bit span ID seed from the session ID (bytes 16-24 of the hash)."""
-    return int.from_bytes(hashlib.sha256(session_id.encode()).digest()[16:24], "big")
 
 
 class OTelRelay:
@@ -134,12 +99,19 @@ class OTelRelay:
     # ------------------------------------------------------------------
 
     def start_session(self, session_id: str, project_dir: str) -> None:
-        """Initialise the TracerProvider and open the root SESSION span."""
+        """Initialise the TracerProvider and open the root SESSION span.
+
+        If a provider already exists (e.g., from a previous session_start
+        or from _ensure_initialized), this is a no-op. The chronograph-ctl
+        instance persists across Claude Code session restarts, so duplicate
+        session_start events must not create duplicate root spans.
+        """
         if not _is_otel_enabled():
             return
+        if self._provider is not None:
+            return  # already initialized — skip duplicate session_start
         try:
-            trace_id = _generate_trace_id(session_id)
-            self._init_provider(project_dir, trace_id=trace_id)
+            self._init_provider(project_dir)
             self._open_session_span(session_id, project_dir)
         except Exception:
             logger.warning("Failed to start OTel session", exc_info=True)
@@ -184,8 +156,7 @@ class OTelRelay:
         effective_dir = project_dir or os.environ.get("CLAUDE_PROJECT_DIR", "")
         if not effective_dir or effective_dir == "/":
             effective_dir = ""  # let it fall back to default_project_name
-        trace_id = _generate_trace_id(session_id) if session_id else None
-        self._init_provider(effective_dir, trace_id=trace_id)
+        self._init_provider(effective_dir)
         if session_id and self._session_span is None:
             self._open_session_span(session_id, effective_dir)
         return self._provider is not None
@@ -316,7 +287,7 @@ class OTelRelay:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _init_provider(self, project_dir: str, trace_id: int | None = None) -> None:
+    def _init_provider(self, project_dir: str) -> None:
         """Create the TracerProvider with the appropriate exporter and resource."""
         from openinference.semconv.resource import ResourceAttributes
 
@@ -327,8 +298,7 @@ class OTelRelay:
             }
         )
 
-        id_generator = _SeededIdGenerator(trace_id) if trace_id else RandomIdGenerator()
-        self._provider = TracerProvider(resource=resource, id_generator=id_generator)
+        self._provider = TracerProvider(resource=resource)
 
         if self._custom_exporter is not None:
             exporter = self._custom_exporter
