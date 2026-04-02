@@ -58,7 +58,8 @@ When the research involves existing code:
 5. **Patterns in use** — identify architectural patterns, frameworks, conventions
 6. **Technical debt** — note any structural issues that could affect the work
 7. **Archived specs** — check `.ai-state/specs/` for behavioral specifications relevant to the research area; these contain prior requirements, traceability, and architectural decisions
-8. **API version drift** — when research involves external APIs, use the `external-api-docs` skill to check context-hub for current documentation. Compare the documented version against the project's pinned version. Note any drift in the Dependencies section of `RESEARCH_FINDINGS.md` using the `[API VERSION DRIFT]` format. This gives the systems-architect version awareness for design decisions.
+8. **Past decisions** — read `.ai-state/decisions/DECISIONS_INDEX.md` for a scannable overview of Architecture Decision Records. When the research area overlaps with past decisions (matching tags, affected files, or category), read the relevant ADR files for context on why prior choices were made
+9. **API version drift** — when research involves external APIs, use the `external-api-docs` skill to check context-hub for current documentation. Compare the documented version against the project's pinned version. Note any drift in the Dependencies section of `RESEARCH_FINDINGS.md` using the `[API VERSION DRIFT]` format. This gives the systems-architect version awareness for design decisions.
 
 Record findings as you go. Be specific: include file paths, line numbers, function names.
 
