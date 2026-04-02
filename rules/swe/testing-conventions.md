@@ -37,7 +37,7 @@ Each test runs independently. No shared mutable state between tests. No ordering
 
 Tests produce the same result on every run, regardless of time, timezone, or environment.
 
-- No `sleep()`, `time.time()`, or wall-clock dependencies -- use time freezing (`freezegun`, `timemachine`) or injected clocks
+- No `sleep()`, `time.time()`, or wall-clock dependencies -- use time-freezing libraries (e.g., `freezegun` in Python, `jest.useFakeTimers()` in JS) or injected clocks
 - No random values without fixed seeds -- use explicit seeds or deterministic generators
 - No reliance on dictionary ordering, filesystem sort order, or other platform-variant behavior
 - No tests that pass "most of the time" -- flaky tests are broken tests
@@ -46,8 +46,8 @@ Tests produce the same result on every run, regardless of time, timezone, or env
 
 Never hardcode absolute paths or assume a specific working directory.
 
-- Use `tmp_path` (pytest), `tempfile` fixtures, or equivalent temporary directory mechanisms
-- Use `pathlib.Path` relative to a known root, not string concatenation with `/`
+- Use the framework's temporary directory mechanism (e.g., `tmp_path` in pytest, `os.tmpdir()` in Node, `t.TempDir()` in Go)
+- Use path abstractions relative to a known root, not string concatenation with separators
 - Test data files live in a dedicated directory (`tests/fixtures/`, `tests/data/`) referenced via relative paths
 
 ### Arrange-Act-Assert
@@ -64,7 +64,7 @@ Use factories, builders, or fixture functions for complex test objects.
 
 - Only include fields relevant to the behavior under test -- minimal data, not exhaustive
 - Avoid inline dictionaries or constructors with many positional arguments
-- Shared test data lives in conftest files or dedicated factory modules, not copy-pasted across tests
+- Shared test data lives in shared fixture files (e.g., `conftest.py` in pytest, setup modules in Jest) or dedicated factory modules, not copy-pasted across tests
 
 ### Mocking Boundaries
 
@@ -73,14 +73,14 @@ Mock at system boundaries: external APIs, databases, file systems, network calls
 - Never mock the unit under test
 - Never mock internal implementation details (private methods, internal data structures)
 - Prefer fakes (in-memory implementations) over mocks when the boundary has complex behavior
-- Integration tests that hit real external systems must be explicitly marked (e.g., `@pytest.mark.integration`)
+- Integration tests that hit real external systems must be explicitly marked (e.g., `@pytest.mark.integration` in pytest, test file naming convention in other frameworks)
 
 ### No Logic in Tests
 
 Tests are straightforward sequences -- no conditionals, loops, or branching logic in test bodies.
 
 - No `if`/`else` in test functions -- each branch should be a separate test
-- No `for` loops asserting over collections -- use parametrize or dedicated assertions
+- No `for` loops asserting over collections -- use the framework's parametrize/data-driven mechanism or dedicated assertions
 - Complex setup logic belongs in fixtures or helper functions, not in the test body
 
 ### Error Path Testing
@@ -96,7 +96,7 @@ Test error cases explicitly, not just the happy path.
 Tests leave no trace -- no temporary files, database records, environment variable changes, or monkey-patches persist after the test completes.
 
 - Use context managers (`with`) or teardown fixtures for resource cleanup
-- Prefer `tmp_path` and scoped fixtures over manual file creation and deletion
+- Prefer framework-provided temporary directory mechanisms over manual file creation and deletion
 - Global state modifications (environment variables, module-level caches) must be reverted in teardown, not left for other tests to inherit
 
 ### No Commented-Out Tests
@@ -104,7 +104,7 @@ Tests leave no trace -- no temporary files, database records, environment variab
 Never commit commented-out or skipped-without-reason tests. A disabled test is invisible debt.
 
 - Commented-out test code must be deleted, not preserved
-- `@pytest.mark.skip` and `@xfail` require a reason string explaining when the skip can be removed
+- Skip/xfail markers (e.g., `@pytest.mark.skip`, `@xfail`, `it.skip()`) require a reason string explaining when the skip can be removed
 - If a test is no longer relevant, delete it — version control is the history
 
 ### Assertion Messages
@@ -119,5 +119,5 @@ Include assertion messages when the failure output alone would be ambiguous.
 Test files mirror the source structure they test.
 
 - `src/module/handler.py` → `tests/module/test_handler.py`
-- Shared fixtures live in `conftest.py` at the appropriate scope level (directory-level for shared, root-level for global)
-- Test utilities and custom assertions live in `tests/helpers/` or `tests/utils/`, never in production code
+- Shared fixtures live in the framework's fixture sharing mechanism (e.g., `conftest.py` in pytest, setup files in Jest) at the appropriate scope level
+- Test utilities and custom assertions live in `tests/helpers/` or `tests/support/`, never in production code
