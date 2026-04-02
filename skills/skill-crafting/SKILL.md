@@ -157,6 +157,21 @@ bigquery-skill/
     ├── finance.md, sales.md, product.md, marketing.md
 ```
 
+#### Pattern 2b: Language/context-specific references
+
+When a skill provides cross-cutting knowledge (e.g., testing strategy, API design), keep the SKILL.md body language-agnostic and place language-specific or context-specific content in separate reference files. The agent loads only the reference relevant to the active project:
+
+```text
+testing-strategy/
+├── SKILL.md (language-agnostic strategy)
+└── references/
+    ├── python-testing.md     # pytest, hypothesis, coverage
+    ├── typescript-testing.md  # vitest, jest, type-safe mocks (future)
+    └── rust-testing.md        # cargo test, proptest (future)
+```
+
+The SKILL.md lists all available references as satellite files. New language support is added by creating a reference file — no changes to the core SKILL.md. Use illustrative examples from specific languages (e.g., `tmp_path` in pytest) but frame them as instances of a general principle, not as the only valid approach.
+
 #### Pattern 3: Conditional details
 
 Show basic content, link to advanced:
