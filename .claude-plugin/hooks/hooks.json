@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py 2>/dev/null",
             "timeout": 10,
             "async": true
           }
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py 2>/dev/null",
             "timeout": 10,
             "async": true
           }
@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py 2>/dev/null",
             "timeout": 10,
             "async": true
           }
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py 2>/dev/null",
             "timeout": 10,
             "async": true
           }
@@ -58,7 +58,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py 2>/dev/null",
             "timeout": 10,
             "async": true
           }
@@ -72,19 +72,6 @@
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/format_python.py",
             "timeout": 10,
             "async": false
-          }
-        ]
-      }
-    ],
-    "PostToolUseFailure": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py",
-            "timeout": 10,
-            "async": true
           }
         ]
       }
