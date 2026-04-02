@@ -27,6 +27,26 @@ PROGRESS_LINE_RE = re.compile(
     r"\[([^\]]+)\]\s+\[([^\]]+)\]\s+(?:Phase\s+(\d+)/(\d+):\s+(\S+)\s+--\s+)?(.+)"
 )
 
+SECRET_PATTERNS = [
+    re.compile(r"(?i)(api[_-]?key|apikey)\s*[:=]\s*\S+"),
+    re.compile(r"(?i)(secret|token|password|passwd|pwd)\s*[:=]\s*\S+"),
+    re.compile(r"(?i)bearer\s+\S+"),
+    re.compile(r"sk-[a-zA-Z0-9]{20,}"),  # OpenAI-style
+    re.compile(r"sk-ant-[a-zA-Z0-9]{20,}"),  # Anthropic-style
+    re.compile(r"ghp_[a-zA-Z0-9]{36}"),  # GitHub PAT
+    re.compile(r"gho_[a-zA-Z0-9]{36}"),  # GitHub OAuth
+    re.compile(r"github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}"),  # Fine-grained PAT
+    re.compile(r"xox[bpoas]-[a-zA-Z0-9\-]+"),  # Slack tokens
+    re.compile(r"AKIA[0-9A-Z]{16}"),  # AWS access key
+]
+
+
+def _redact_secrets(text: str) -> str:
+    """Replace common secret patterns with [REDACTED]."""
+    for pattern in SECRET_PATTERNS:
+        text = pattern.sub("[REDACTED]", text)
+    return text
+
 
 def _post(port, path, payload):
     """POST JSON to the Chronograph server. Log failures to stderr."""
@@ -82,13 +102,15 @@ def _summarize_tool_input(data):
     """Build a short summary of tool input from the hook payload."""
     tool_input = data.get("tool_input", {})
     if isinstance(tool_input, str):
-        return _truncate(tool_input)
+        return _redact_secrets(_truncate(tool_input))
     # Common patterns: file_path, command, pattern, content
     parts = []
     for key in ("file_path", "command", "pattern", "query", "prompt", "url"):
         if key in tool_input:
             parts.append(f"{key}={tool_input[key]}")
-    return _truncate(", ".join(parts)) if parts else _truncate(json.dumps(tool_input))
+    return _redact_secrets(
+        _truncate(", ".join(parts)) if parts else _truncate(json.dumps(tool_input))
+    )
 
 
 def _summarize_tool_output(data):
@@ -96,7 +118,7 @@ def _summarize_tool_output(data):
     output = data.get("tool_response", data.get("tool_output", ""))
     if isinstance(output, dict):
         output = json.dumps(output)
-    return _truncate(str(output) if output else "")
+    return _redact_secrets(_truncate(str(output) if output else ""))
 
 
 def _project_dir(data):
