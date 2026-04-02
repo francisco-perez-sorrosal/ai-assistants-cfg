@@ -151,6 +151,13 @@ class TestReq31PatternCoverage:
         assert pat not in result
         assert "[REDACTED]" in result
 
+    def test_req31_github_fine_grained_pat_fully_replaced(self, redact_secrets):
+        """A GitHub fine-grained PAT (github_pat_ prefix) is fully replaced."""
+        pat = "github_pat_11ABCDEFGH0123456789_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY"
+        result = redact_secrets(f"token: {pat}")
+        assert pat not in result
+        assert "[REDACTED]" in result
+
     def test_req31_aws_key_fully_replaced(self, redact_secrets):
         """An AWS access key ID is fully replaced."""
         result = redact_secrets("AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE")
