@@ -20,6 +20,7 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | `/release` | Bump version, update changelog, and create a release tag |
 | `/sdd-coverage` | Report spec-to-test and spec-to-code coverage for REQ IDs |
 | `/star-repo` | Star the Praxion repo on GitHub |
+| `/test` | Auto-detect test framework and run tests |
 
 ## How Commands Work
 
