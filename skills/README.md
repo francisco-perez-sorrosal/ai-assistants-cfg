@@ -62,6 +62,7 @@ Reusable skill modules for AI coding assistants. Each skill is a self-contained 
 | **[spec-driven-development](spec-driven-development/)** | Behavioral specification format, complexity triage, requirement ID conventions, and traceability threading for medium/large features. Composes with software-planning. | Working on medium/large features that need behavioral specifications, requirement traceability, spec archival, or spec health monitoring. |
 | **[agent-evals](agent-evals/)**             | Agent evaluation (evals) -- eval types, framework selection (Inspect AI, DeepEval, Promptfoo), golden datasets, LLM-as-judge, grader design, scoring, non-determinism, CI/CD integration. Python-focused. | Evaluating agent behavior, choosing eval frameworks, designing eval suites, building golden datasets, trajectory evaluation, eval-driven development. |
 | **[cicd](cicd/)**                           | CI/CD pipeline design, GitHub Actions workflows, deployment strategies, caching, secrets management, and security hardening. | Creating CI/CD pipelines, writing GitHub Actions workflows, debugging workflow failures, optimizing pipeline performance. |
+| **[context-security-review](context-security-review/)** | Security review methodology for Claude Code plugin ecosystems covering context artifact injection, hook compromise, dependency supply chain, secrets exposure, and GitHub Actions security. | Reviewing PRs for security issues, conducting security audits, verifying agent permissions, reviewing hook scripts, checking for secrets. |
 
 ### Project
 

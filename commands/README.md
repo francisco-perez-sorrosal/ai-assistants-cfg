@@ -12,6 +12,7 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | `/cop` | Create a commit and push to remote |
 | `/create-simple-python-prj` | Create a basic Python project with pixi or uv |
 | `/create-worktree` | Create a new git worktree in `.trees/` |
+| `/full-security-scan` | Run a full-project security audit against all security-critical paths |
 | `/manage-readme` | Create or refine README.md files |
 | `/memory` | Manage persistent memory (user prefs, assistant learnings, project conventions) |
 | `/merge-worktree` | Merge a worktree branch back into current branch |
