@@ -8,15 +8,30 @@ Detect the project's test framework automatically and run tests. Load the [testi
 
 ## Process
 
-1. **Detect test framework** from project config files, checking in priority order:
+1. **Detect test framework and project runner** from project config files. Always run tests through the project's package/environment manager — never invoke test frameworks directly.
 
-   | Config Signal | Framework | Run Command |
+   **Runner detection** (check in order, use first match):
+
+   | Signal | Runner | Example |
    |---|---|---|
-   | `pyproject.toml` with `[tool.pytest.ini_options]` or `pytest` in dependencies | pytest | `<runner> pytest` where `<runner>` is `uv run`, `pixi run`, or `python -m` depending on lockfile present |
-   | `package.json` with `jest` in devDependencies | Jest | `npx jest` |
-   | `package.json` with `vitest` in devDependencies | Vitest | `npx vitest run` |
-   | `Cargo.toml` exists | cargo test | `cargo test` |
-   | `go.mod` exists | go test | `go test ./...` |
+   | `pixi.toml` or `[tool.pixi]` in `pyproject.toml` | `pixi run` | `pixi run pytest` |
+   | `uv.lock` or `[tool.uv]` in `pyproject.toml` | `uv run` | `uv run pytest` |
+   | `pyproject.toml` exists (no pixi/uv) | `python -m` | `python -m pytest` |
+   | `pnpm-lock.yaml` | `pnpm exec` | `pnpm exec jest` |
+   | `yarn.lock` | `yarn` | `yarn jest` |
+   | `package-lock.json` or `package.json` | `npx` | `npx jest` |
+   | `Cargo.toml` | `cargo` | `cargo test` |
+   | `go.mod` | `go` | `go test ./...` |
+
+   **Framework detection** (after runner is determined):
+
+   | Config Signal | Framework |
+   |---|---|
+   | `pyproject.toml` with `[tool.pytest.ini_options]` or `pytest` in dependencies | pytest |
+   | `package.json` with `vitest` in devDependencies | Vitest |
+   | `package.json` with `jest` in devDependencies | Jest |
+   | `Cargo.toml` | cargo test (built-in) |
+   | `go.mod` | go test (built-in) |
 
    If no framework is detected, report what was checked and ask the user which framework to use.
 
