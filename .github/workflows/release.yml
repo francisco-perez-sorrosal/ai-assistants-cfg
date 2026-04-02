@@ -46,7 +46,7 @@ jobs:
         id: cz
         continue-on-error: true
         run: |
-          cz bump --changelog --yes 2>&1 | tee bump_output.txt
+          cz bump --prerelease dev --changelog --yes 2>&1 | tee bump_output.txt
           echo "version=$(cz version --project)" >> $GITHUB_OUTPUT
 
       - name: Push with tags
@@ -59,4 +59,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="v${{ steps.cz.outputs.version }}"
-          gh release create "$VERSION" --generate-notes --title "$VERSION"
+          gh release create "$VERSION" --generate-notes --title "$VERSION" --prerelease
