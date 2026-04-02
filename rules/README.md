@@ -9,7 +9,7 @@ rules/
 ├── swe/
 │   ├── agent-intermediate-documents.md
 │   ├── coding-style.md
-│   ├── decision-tracking.md
+│   ├── adr-conventions.md
 │   ├── swe-agent-coordination-protocol.md
 │   └── vcs/
 │       └── git-conventions.md
@@ -22,7 +22,7 @@ rules/
 | ---- | ------- |
 | `swe/agent-intermediate-documents.md` | Agent document locations (`.ai-work/` ephemeral, `.ai-state/` persistent), lifecycle tiers, cleanup |
 | `swe/coding-style.md` | Immutability, function/file size, nesting, error handling, naming, validation |
-| `swe/decision-tracking.md` | Append-only decision audit log (`decisions.jsonl`), dual-path model, commit-time review, spec auto-update |
+| `swe/adr-conventions.md` | ADR file format (YAML frontmatter + MADR body), naming convention, supersession protocol, agent authoring guidance |
 | `swe/swe-agent-coordination-protocol.md` | Agent selection, coordination pipeline, parallel execution — detailed tables in `software-planning` skill reference |
 | `swe/vcs/git-conventions.md` | Commit scope, staging discipline, secrets, exclusions, message format |
 | `writing/readme-style.md` | Precision-first technical writing and structural integrity conventions for README.md files. Path-scoped: loads only when accessing `**/README.md` or `**/README_DEV.md` |
@@ -205,7 +205,7 @@ Two mechanisms, each serving a different purpose:
 ```
 rules/swe/agent-intermediate-documents.md      →  ~/.claude/rules/swe/agent-intermediate-documents.md
 rules/swe/coding-style.md                     →  ~/.claude/rules/swe/coding-style.md
-rules/swe/decision-tracking.md                →  ~/.claude/rules/swe/decision-tracking.md
+rules/swe/adr-conventions.md                  →  ~/.claude/rules/swe/adr-conventions.md
 rules/swe/swe-agent-coordination-protocol.md  →  ~/.claude/rules/swe/swe-agent-coordination-protocol.md
 rules/swe/vcs/git-conventions.md              →  ~/.claude/rules/swe/vcs/git-conventions.md
 rules/writing/readme-style.md                 →  ~/.claude/rules/writing/readme-style.md
