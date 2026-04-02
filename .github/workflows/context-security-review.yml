@@ -1,0 +1,124 @@
+# Security review workflow -- runs Claude Code on every PR to review diff for
+# security issues in context artifacts (CLAUDE.md, agents, skills, rules,
+# commands, hooks, plugin.json, workflows, install scripts).
+#
+# Operates in diff mode: reviews ONLY files changed in the PR.
+# Uses the context-security-review skill loaded via --plugin-dir.
+
+name: Security Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read  # needed for artifact URL access
+
+jobs:
+  context-security-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        with:
+          fetch-depth: 2
+
+      - name: Security Review
+        id: review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Load the i-am:context-security-review skill in DIFF MODE. Review ONLY
+            the files modified in this PR -- do not scan the entire project.
+
+            Steps:
+            1. Run `git diff --name-only HEAD~1` to get the list of
+               changed files
+            2. Filter to files matching security-critical paths from
+               the skill
+            3. For each matching file, assess the risk using the
+               vulnerability categories
+            4. Check for permission escalation in agent or command changes
+            5. Check for secret patterns in added/modified lines
+            6. Check for dependency changes that widen version ranges or
+               add new dependencies
+
+            SCOPE: Only the PR diff. Do not review unchanged files.
+            CONFIDENCE: HIGH findings only. Do not report stylistic issues.
+
+            Return structured JSON with your findings.
+          claude_args: |
+            --plugin-dir .
+            --model sonnet
+            --max-turns 10
+            --allowedTools "Read,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
+            --json-schema '{"type":"object","required":["findings","summary","risk_level","pass"],"properties":{"findings":{"type":"array","items":{"type":"object","required":["severity","category","description"],"properties":{"severity":{"type":"string","enum":["critical","high","medium","low","info"]},"category":{"type":"string"},"file":{"type":"string"},"line":{"type":"integer"},"description":{"type":"string"},"recommendation":{"type":"string"}}}},"summary":{"type":"string"},"risk_level":{"type":"string","enum":["critical","high","medium","low","none"]},"pass":{"type":"boolean"}}}'
+
+      # Render Markdown report visible on workflow run page
+      - name: Generate report summary
+        if: always()
+        run: |
+          OUTPUT='${{ steps.review.outputs.structured_output }}'
+          echo "$OUTPUT" > security-report.json
+          echo "$OUTPUT" | jq -r '
+            "# Security Review Report\n\n",
+            "**Risk Level:** \(.risk_level) | **Pass:** \(.pass)\n\n",
+            "## Summary\n\n\(.summary)\n\n",
+            "## Findings\n\n",
+            if (.findings | length) == 0 then "No security issues found.\n"
+            else (.findings[] |
+              "### [\(.severity | ascii_upcase)] \(.category)\n",
+              if .file then "**File:** `\(.file)`" + (if .line then ":\(.line)" else "" end) + "\n" else "" end,
+              "\(.description)\n",
+              if .recommendation then "**Recommendation:** \(.recommendation)\n" else "" end,
+              "\n")
+            end
+          ' >> "$GITHUB_STEP_SUMMARY"
+
+      # Upload structured JSON for agent consumption
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: security-report
+          path: security-report.json
+          retention-days: 30
+
+      # Upload full execution log for debugging
+      - name: Upload execution log
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: context-security-review-execution
+          path: ${{ steps.review.outputs.execution_file }}
+          retention-days: 14
+
+      # Post concise PR comment with link to full report
+      - name: Comment on PR
+        if: always()
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7.1.0
+        with:
+          script: |
+            const output = JSON.parse('${{ steps.review.outputs.structured_output }}');
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const emoji = output.pass ? ':white_check_mark:' : ':x:';
+            const count = output.findings.length;
+            const body = [
+              `## ${emoji} Security Review`,
+              '',
+              `**Risk Level:** ${output.risk_level} | **Findings:** ${count}`,
+              '',
+              output.summary,
+              '',
+              `[View full report](${runUrl}) | [Download JSON artifact](${runUrl}#artifacts)`,
+            ].join('\n');
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body,
+            });
