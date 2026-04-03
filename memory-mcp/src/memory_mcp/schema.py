@@ -1,4 +1,4 @@
-"""Schema dataclasses for memory-mcp v1.3."""
+"""Schema dataclasses for memory-mcp v2.0."""
 
 from __future__ import annotations
 
@@ -6,9 +6,19 @@ from dataclasses import dataclass, field
 
 # -- Constants ----------------------------------------------------------------
 
-SCHEMA_VERSION = "1.3"
+SCHEMA_VERSION = "2.0"
 
 VALID_CATEGORIES = ("user", "assistant", "project", "relationships", "tools", "learnings")
+
+VALID_TYPES = (
+    "decision",
+    "gotcha",
+    "pattern",
+    "convention",
+    "preference",
+    "correction",
+    "insight",
+)
 
 VALID_STATUSES = ("active", "archived", "superseded")
 
@@ -52,13 +62,28 @@ class Source:
 
     type: str = "session"
     detail: str | None = None
+    agent_type: str | None = None
+    agent_id: str | None = None
+    session_id: str | None = None
 
     def to_dict(self) -> dict:
-        return {"type": self.type, "detail": self.detail}
+        return {
+            "type": self.type,
+            "detail": self.detail,
+            "agent_type": self.agent_type,
+            "agent_id": self.agent_id,
+            "session_id": self.session_id,
+        }
 
     @classmethod
     def from_dict(cls, data: dict) -> Source:
-        return cls(type=data.get("type", "session"), detail=data.get("detail"))
+        return cls(
+            type=data.get("type", "session"),
+            detail=data.get("detail"),
+            agent_type=data.get("agent_type"),
+            agent_id=data.get("agent_id"),
+            session_id=data.get("session_id"),
+        )
 
 
 @dataclass(frozen=True)
@@ -78,7 +103,7 @@ class Link:
 
 @dataclass
 class MemoryEntry:
-    """A single memory entry with v1.3 schema fields."""
+    """A single memory entry with v2.0 schema fields."""
 
     value: str
     created_at: str
@@ -94,6 +119,8 @@ class MemoryEntry:
     summary: str = ""
     valid_at: str | None = None
     invalid_at: str | None = None
+    type: str | None = None
+    created_by: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -111,6 +138,8 @@ class MemoryEntry:
             "summary": self.summary,
             "valid_at": self.valid_at,
             "invalid_at": self.invalid_at,
+            "type": self.type,
+            "created_by": self.created_by,
         }
 
     @classmethod
@@ -132,4 +161,65 @@ class MemoryEntry:
             summary=data.get("summary", ""),
             valid_at=data.get("valid_at"),
             invalid_at=data.get("invalid_at"),
+            type=data.get("type"),
+            created_by=data.get("created_by"),
+        )
+
+
+# -- Observation (JSONL layer) ------------------------------------------------
+
+VALID_EVENT_TYPES = (
+    "tool_use",
+    "session_start",
+    "session_stop",
+    "agent_start",
+    "agent_stop",
+)
+
+
+@dataclass
+class Observation:
+    """A single observation event for the JSONL observation layer."""
+
+    timestamp: str
+    session_id: str
+    agent_type: str
+    agent_id: str
+    project: str
+    event_type: str  # one of VALID_EVENT_TYPES
+    tool_name: str | None = None
+    file_paths: list[str] = field(default_factory=list)
+    outcome: str | None = None  # success, failure
+    classification: str | None = None  # decision, test, commit, implementation, etc.
+    metadata: dict = field(default_factory=dict)
+
+    def to_dict(self) -> dict:
+        return {
+            "timestamp": self.timestamp,
+            "session_id": self.session_id,
+            "agent_type": self.agent_type,
+            "agent_id": self.agent_id,
+            "project": self.project,
+            "event_type": self.event_type,
+            "tool_name": self.tool_name,
+            "file_paths": list(self.file_paths),
+            "outcome": self.outcome,
+            "classification": self.classification,
+            "metadata": dict(self.metadata),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Observation:
+        return cls(
+            timestamp=data["timestamp"],
+            session_id=data["session_id"],
+            agent_type=data["agent_type"],
+            agent_id=data["agent_id"],
+            project=data["project"],
+            event_type=data["event_type"],
+            tool_name=data.get("tool_name"),
+            file_paths=list(data.get("file_paths", [])),
+            outcome=data.get("outcome"),
+            classification=data.get("classification"),
+            metadata=dict(data.get("metadata", {})),
         )

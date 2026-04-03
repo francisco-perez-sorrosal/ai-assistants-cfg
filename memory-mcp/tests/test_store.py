@@ -46,9 +46,9 @@ class TestStoreInit:
         assert data["session_count"] == 0
         assert set(data["memories"].keys()) == set(VALID_CATEGORIES)
 
-    def test_loads_existing_v1_3_file(self, memory_file: Path):
+    def test_loads_existing_v2_0_file(self, memory_file: Path):
         existing = {
-            "schema_version": "1.3",
+            "schema_version": "2.0",
             "session_count": 5,
             "memories": {
                 "user": {
@@ -67,6 +67,8 @@ class TestStoreInit:
                         "summary": "Test",
                         "valid_at": "2026-01-01T00:00:00Z",
                         "invalid_at": None,
+                        "type": None,
+                        "created_by": None,
                     }
                 }
             },
@@ -83,6 +85,16 @@ class TestStoreInit:
             "memories": {"user": {}},
         }
         memory_file.write_text(json.dumps(old, indent=2) + "\n")
+        with pytest.raises(ValueError, match="Unsupported schema version"):
+            MemoryStore(memory_file)
+
+    def test_rejects_v1_3_schema_version(self, memory_file: Path):
+        v1_3 = {
+            "schema_version": "1.3",
+            "session_count": 3,
+            "memories": {"user": {}},
+        }
+        memory_file.write_text(json.dumps(v1_3, indent=2) + "\n")
         with pytest.raises(ValueError, match="Unsupported schema version"):
             MemoryStore(memory_file)
 
@@ -420,3 +432,206 @@ class TestAboutUs:
     def test_empty_profile(self, store: MemoryStore):
         result = store.about_us()
         assert result["profile"] == "No relationship data found."
+
+
+# -- v2.0: remember with type and created_by ----------------------------------
+
+
+class TestRememberV2:
+    def test_remember_with_type(self, store: MemoryStore):
+        result = store.remember("learnings", "tip", "Use fixtures", entry_type="pattern")
+        assert result["action"] == "ADD"
+        assert result["entry"]["type"] == "pattern"
+
+    def test_remember_with_created_by(self, store: MemoryStore):
+        result = store.remember("learnings", "tip", "Use fixtures", created_by="implementer")
+        assert result["action"] == "ADD"
+        assert result["entry"]["created_by"] == "implementer"
+
+    def test_remember_with_type_and_created_by(self, store: MemoryStore):
+        result = store.remember(
+            "learnings",
+            "decision-log",
+            "Chose JSONL for observations",
+            entry_type="decision",
+            created_by="systems-architect",
+        )
+        assert result["entry"]["type"] == "decision"
+        assert result["entry"]["created_by"] == "systems-architect"
+
+    def test_remember_type_defaults_to_none(self, store: MemoryStore):
+        result = store.remember("user", "name", "Alice")
+        assert result["entry"]["type"] is None
+        assert result["entry"]["created_by"] is None
+
+    def test_remember_update_preserves_type_when_not_provided(self, store: MemoryStore):
+        store.remember("learnings", "tip", "Use fixtures", entry_type="pattern")
+        result = store.remember("learnings", "tip", "Use fixtures v2")
+        assert result["action"] == "UPDATE"
+        assert result["entry"]["type"] == "pattern"
+
+    def test_remember_update_overwrites_type_when_provided(self, store: MemoryStore):
+        store.remember("learnings", "tip", "Use fixtures", entry_type="pattern")
+        result = store.remember("learnings", "tip", "Use fixtures v2", entry_type="convention")
+        assert result["action"] == "UPDATE"
+        assert result["entry"]["type"] == "convention"
+
+    def test_remember_update_preserves_created_by_when_not_provided(self, store: MemoryStore):
+        store.remember("learnings", "tip", "Use fixtures", created_by="implementer")
+        result = store.remember("learnings", "tip", "Use fixtures v2")
+        assert result["action"] == "UPDATE"
+        assert result["entry"]["created_by"] == "implementer"
+
+    def test_remember_invalid_type_stored_as_is(self, store: MemoryStore):
+        """type is not validated -- just a string field."""
+        result = store.remember("user", "name", "Alice", entry_type="nonstandard")
+        assert result["entry"]["type"] == "nonstandard"
+
+
+# -- v2.0: search with since and type filters ---------------------------------
+
+
+class TestSearchV2:
+    def test_search_with_since_filter(self, store: MemoryStore, memory_file: Path):
+        # Create entries with specific timestamps via direct file manipulation
+        data = json.loads(memory_file.read_text())
+        memories = data["memories"]
+        memories["learnings"]["old-tip"] = {
+            "value": "python old tip",
+            "created_at": "2026-01-01T00:00:00Z",
+            "updated_at": "2026-01-01T00:00:00Z",
+            "tags": ["python"],
+            "confidence": None,
+            "importance": 5,
+            "source": {"type": "session", "detail": None},
+            "access_count": 0,
+            "last_accessed": None,
+            "status": "active",
+            "links": [],
+            "summary": "python old tip",
+            "valid_at": "2026-01-01T00:00:00Z",
+            "invalid_at": None,
+            "type": None,
+            "created_by": None,
+        }
+        memories["learnings"]["new-tip"] = {
+            "value": "python new tip",
+            "created_at": "2026-04-01T00:00:00Z",
+            "updated_at": "2026-04-01T00:00:00Z",
+            "tags": ["python"],
+            "confidence": None,
+            "importance": 5,
+            "source": {"type": "session", "detail": None},
+            "access_count": 0,
+            "last_accessed": None,
+            "status": "active",
+            "links": [],
+            "summary": "python new tip",
+            "valid_at": "2026-04-01T00:00:00Z",
+            "invalid_at": None,
+            "type": None,
+            "created_by": None,
+        }
+        memory_file.write_text(json.dumps(data, indent=2) + "\n")
+
+        store2 = MemoryStore(memory_file)
+        result = store2.search("python", since="2026-03-01T00:00:00Z")
+        keys = {r["key"] for r in result["results"]}
+        assert "new-tip" in keys
+        assert "old-tip" not in keys
+
+    def test_search_with_type_filter(self, store: MemoryStore):
+        store.remember("learnings", "tip-a", "Use fixtures", entry_type="pattern")
+        store.remember("learnings", "tip-b", "Use parametrize", entry_type="gotcha", force=True)
+        result = store.search("use", entry_type="pattern")
+        keys = {r["key"] for r in result["results"]}
+        assert "tip-a" in keys
+        assert "tip-b" not in keys
+
+    def test_search_with_since_and_type(self, store: MemoryStore, memory_file: Path):
+        data = json.loads(memory_file.read_text())
+        memories = data["memories"]
+        memories["learnings"]["old-pattern"] = {
+            "value": "python old pattern",
+            "created_at": "2026-01-01T00:00:00Z",
+            "updated_at": "2026-01-01T00:00:00Z",
+            "tags": ["python"],
+            "confidence": None,
+            "importance": 5,
+            "source": {"type": "session", "detail": None},
+            "access_count": 0,
+            "last_accessed": None,
+            "status": "active",
+            "links": [],
+            "summary": "python old pattern",
+            "valid_at": "2026-01-01T00:00:00Z",
+            "invalid_at": None,
+            "type": "pattern",
+            "created_by": None,
+        }
+        memories["learnings"]["new-pattern"] = {
+            "value": "python new pattern",
+            "created_at": "2026-04-01T00:00:00Z",
+            "updated_at": "2026-04-01T00:00:00Z",
+            "tags": ["python"],
+            "confidence": None,
+            "importance": 5,
+            "source": {"type": "session", "detail": None},
+            "access_count": 0,
+            "last_accessed": None,
+            "status": "active",
+            "links": [],
+            "summary": "python new pattern",
+            "valid_at": "2026-04-01T00:00:00Z",
+            "invalid_at": None,
+            "type": "pattern",
+            "created_by": None,
+        }
+        memories["learnings"]["new-gotcha"] = {
+            "value": "python new gotcha",
+            "created_at": "2026-04-01T00:00:00Z",
+            "updated_at": "2026-04-01T00:00:00Z",
+            "tags": ["python"],
+            "confidence": None,
+            "importance": 5,
+            "source": {"type": "session", "detail": None},
+            "access_count": 0,
+            "last_accessed": None,
+            "status": "active",
+            "links": [],
+            "summary": "python new gotcha",
+            "valid_at": "2026-04-01T00:00:00Z",
+            "invalid_at": None,
+            "type": "gotcha",
+            "created_by": None,
+        }
+        memory_file.write_text(json.dumps(data, indent=2) + "\n")
+
+        store2 = MemoryStore(memory_file)
+        result = store2.search("python", since="2026-03-01T00:00:00Z", entry_type="pattern")
+        keys = {r["key"] for r in result["results"]}
+        assert "new-pattern" in keys
+        assert "old-pattern" not in keys
+        assert "new-gotcha" not in keys
+
+    def test_search_no_type_filter_matches_all(self, store: MemoryStore):
+        store.remember("learnings", "tip-a", "Use fixtures", entry_type="pattern")
+        store.remember("learnings", "tip-b", "Use parametrize", entry_type=None, force=True)
+        result = store.search("use")
+        keys = {r["key"] for r in result["results"]}
+        assert "tip-a" in keys
+        assert "tip-b" in keys
+
+    def test_search_with_provenance_source_fields(self, store: MemoryStore):
+        """Entries created with type and created_by are retrievable."""
+        store.remember(
+            "learnings",
+            "decision-1",
+            "Chose JSONL format",
+            entry_type="decision",
+            created_by="architect",
+        )
+        result = store.recall("learnings", "decision-1")
+        entry = result["entries"]["decision-1"]
+        assert entry["type"] == "decision"
+        assert entry["created_by"] == "architect"

@@ -485,10 +485,10 @@ class TestHardDeleteLinkCleanup:
 
 
 class TestSchemaVersionValidation:
-    def test_v1_3_file_loads_cleanly(self, memory_file: Path):
-        """A v1.3 file should load without issues."""
-        v1_3 = {
-            "schema_version": "1.3",
+    def test_v2_0_file_loads_cleanly(self, memory_file: Path):
+        """A v2.0 file should load without issues."""
+        v2_0 = {
+            "schema_version": "2.0",
             "session_count": 10,
             "memories": {
                 "user": {
@@ -507,16 +507,18 @@ class TestSchemaVersionValidation:
                         "summary": "User name is Alice",
                         "valid_at": "2026-02-10T06:35:00Z",
                         "invalid_at": None,
+                        "type": "preference",
+                        "created_by": "user",
                     },
                 },
             },
         }
-        memory_file.write_text(json.dumps(v1_3, indent=2) + "\n")
+        memory_file.write_text(json.dumps(v2_0, indent=2) + "\n")
 
         MemoryStore(memory_file)
 
         data = json.loads(memory_file.read_text())
-        assert data["schema_version"] == "1.3"
+        assert data["schema_version"] == "2.0"
         assert len(data["memories"]["user"]["name"]["links"]) == 1
 
     def test_old_schema_version_raises(self, memory_file: Path):
@@ -526,6 +528,17 @@ class TestSchemaVersionValidation:
             "memories": {"user": {}},
         }
         memory_file.write_text(json.dumps(v1_0, indent=2) + "\n")
+
+        with pytest.raises(ValueError, match="Unsupported schema version"):
+            MemoryStore(memory_file)
+
+    def test_v1_3_schema_version_raises(self, memory_file: Path):
+        """v1.3 is now an old version that should raise ValueError."""
+        v1_3 = {
+            "schema_version": "1.3",
+            "memories": {"user": {}},
+        }
+        memory_file.write_text(json.dumps(v1_3, indent=2) + "\n")
 
         with pytest.raises(ValueError, match="Unsupported schema version"):
             MemoryStore(memory_file)

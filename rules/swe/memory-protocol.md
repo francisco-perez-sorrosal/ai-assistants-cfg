@@ -1,6 +1,8 @@
 ## Memory Protocol
 
-Memory context is injected automatically at agent start via hook. You do NOT need to call `session_start()` or `recall()` — the data is already visible in your context as "Memory Context (auto-injected)".
+This protocol applies only when the memory MCP server is available. If memory tools are not present in your context, skip all memory operations.
+
+Memory context is injected automatically at agent start via hook. You do NOT need to call `session_start()` or `recall()` -- the data is already visible in your context as "Memory Context (auto-injected)". Injected context replaces `browse_index` for most use cases -- use `browse_index` only when you need the full index or `include_historical`.
 
 ### When to Remember
 
@@ -24,13 +26,27 @@ Do NOT call `remember()` for:
 ### How to Remember
 
 ```
-remember(category, key, value, tags, importance, summary)
+remember(category, key, value, tags, importance, summary, type)
 ```
 
 - **category**: `learnings` for gotchas/patterns, `project` for conventions/decisions
-- **summary**: One-line description (~100 chars) — this is what agents see in the index
+- **summary**: One-line description (~100 chars) -- this is what agents see in the index
 - **importance**: Gotchas and conventions: 7-8. Patterns: 5-6. Preferences: 3-4
 - **tags**: 2-4 lowercase tags for discoverability
+- **type**: When the knowledge kind is clear, set `type` to one of: `decision`, `gotcha`, `pattern`, `convention`, `preference`, `correction`, `insight`
+
+### Tag Vocabulary
+
+Use these standard tags for consistent discoverability:
+
+- `decision` -- architectural or implementation decision
+- `gotcha` -- non-obvious failure point
+- `pattern` -- reusable approach
+- `convention` -- project standard
+- `api-drift` -- external API version change
+- `bugfix` -- bug diagnosis and solution
+- `preference` -- user preference
+- `correction` -- user-corrected behavior
 
 ### After Completing Your Task
 

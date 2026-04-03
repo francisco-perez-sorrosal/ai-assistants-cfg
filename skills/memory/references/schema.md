@@ -8,6 +8,7 @@ Full schema reference for `.ai-state/memory.json`. Loaded on-demand from the mem
 - [Memory Entry Schema](#memory-entry-schema)
 - [Category Definitions](#category-definitions)
 - [Field Constraints](#field-constraints)
+- [Observation Schema](#observation-schema)
 - [Markdown-KV Format](#markdown-kv-format)
 - [Consolidation Actions](#consolidation-actions)
 - [Example Document](#example-document)
@@ -16,7 +17,7 @@ Full schema reference for `.ai-state/memory.json`. Loaded on-demand from the mem
 
 ```json
 {
-  "schema_version": "1.3",
+  "schema_version": "2.0",
   "session_count": 0,
   "memories": {
     "user": {},
@@ -31,7 +32,7 @@ Full schema reference for `.ai-state/memory.json`. Loaded on-demand from the mem
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `schema_version` | string | `"1.3"`. No migration from earlier versions -- fresh start only |
+| `schema_version` | string | `"2.0"`. No migration from earlier versions -- fresh start only |
 | `session_count` | integer | Number of sessions started via `session_start`. Default `0` |
 | `memories` | object | Container with one key per category |
 
@@ -75,12 +76,17 @@ Full schema reference for `.ai-state/memory.json`. Loaded on-demand from the mem
 | `tags` | string[] | No | `[]` | Classification labels for filtering and search |
 | `confidence` | number \| null | No | `null` | Certainty level 0.0-1.0 for assistant self-knowledge |
 | `importance` | integer | No | `5` | Priority from 1 (low) to 10 (critical) |
-| `source` | object | No | `{"type": "session", "detail": null}` | Origin metadata |
-| `source.type` | string | Yes | `"session"` | One of: `"session"`, `"user-stated"`, `"inferred"`, `"codebase"` |
+| `source` | object | No | see below | Origin metadata with provenance |
+| `source.type` | string | Yes | `"session"` | `"session"`, `"user-stated"`, `"inferred"`, `"codebase"` |
 | `source.detail` | string \| null | No | `null` | Additional source context |
+| `source.agent_type` | string \| null | No | `null` | Agent type that created the entry (e.g., `"implementer"`) |
+| `source.agent_id` | string \| null | No | `null` | Specific agent instance identifier |
+| `source.session_id` | string \| null | No | `null` | Session that created the entry |
 | `access_count` | integer | No | `0` | Times recalled or found via search |
 | `last_accessed` | string \| null | No | `null` | ISO 8601 UTC timestamp of last access |
 | `status` | string | No | `"active"` | `"active"`, `"archived"`, or `"superseded"` |
+| `type` | string \| null | No | `null` | `"decision"`, `"gotcha"`, `"pattern"`, `"convention"`, `"preference"`, `"correction"`, `"insight"` |
+| `created_by` | string \| null | No | `null` | Agent type or `"user"` that created this entry |
 | `links` | object[] | No | `[]` | Unidirectional links to other entries |
 | `links[].target` | string | Yes | -- | `"category.key"` format |
 | `links[].relation` | string | Yes | -- | One of: `"supersedes"`, `"elaborates"`, `"contradicts"`, `"related-to"`, `"depends-on"` |
@@ -209,11 +215,11 @@ Replace an entry's summary field.
 
 ## Example Document
 
-A complete v1.3 document:
+A complete v2.0 document:
 
 ```json
 {
-  "schema_version": "1.3",
+  "schema_version": "2.0",
   "session_count": 12,
   "memories": {
     "user": {

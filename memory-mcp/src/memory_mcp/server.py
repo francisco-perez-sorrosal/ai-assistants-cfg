@@ -8,7 +8,15 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-from memory_mcp.schema import SCHEMA_VERSION, VALID_CATEGORIES, VALID_RELATIONS, VALID_STATUSES
+from memory_mcp.narrative import build_session_narrative, build_timeline
+from memory_mcp.observations import ObservationStore
+from memory_mcp.schema import (
+    SCHEMA_VERSION,
+    VALID_CATEGORIES,
+    VALID_RELATIONS,
+    VALID_STATUSES,
+    VALID_TYPES,
+)
 from memory_mcp.store import MemoryStore
 
 # -- Server instance ----------------------------------------------------------
@@ -29,6 +37,22 @@ def _get_store() -> MemoryStore:
         memory_file = os.environ.get("MEMORY_FILE", DEFAULT_MEMORY_FILE)
         _store = MemoryStore(Path(memory_file))
     return _store
+
+
+# -- Lazy observation store initialization ------------------------------------
+
+DEFAULT_OBSERVATIONS_FILE = ".ai-state/observations.jsonl"
+
+_obs_store: ObservationStore | None = None
+
+
+def _get_observation_store() -> ObservationStore:
+    """Return the singleton ObservationStore, creating it on first call."""
+    global _obs_store  # noqa: PLW0603
+    if _obs_store is None:
+        obs_file = os.environ.get("OBSERVATIONS_FILE", DEFAULT_OBSERVATIONS_FILE)
+        _obs_store = ObservationStore(Path(obs_file))
+    return _obs_store
 
 
 # -- MCP Tools ----------------------------------------------------------------
@@ -60,6 +84,8 @@ def remember(
     force: bool = False,
     broad: bool = False,
     summary: str | None = None,
+    type: str | None = None,  # noqa: A002
+    created_by: str | None = None,
 ) -> dict:
     """Store a new memory or update an existing one.
 
@@ -82,6 +108,9 @@ def remember(
         force: If True, skip deduplication check and write immediately.
         broad: If True, check for duplicates across all categories (not just target).
         summary: Optional one-line summary (~100 chars). Auto-generated from value if omitted.
+        type: Optional knowledge type (decision, gotcha, pattern, convention,
+            preference, correction, insight).
+        created_by: Optional identifier for the agent or user that created this entry.
     """
     try:
         return _get_store().remember(
@@ -95,6 +124,8 @@ def remember(
             force=force,
             broad=broad,
             summary=summary,
+            entry_type=type,
+            created_by=created_by,
         )
     except (ValueError, KeyError) as exc:
         return {"error": str(exc)}
@@ -148,6 +179,8 @@ def search(
     category: str | None = None,
     detail: str = "index",
     include_historical: bool = False,
+    since: str | None = None,
+    type: str | None = None,  # noqa: A002
 ) -> dict:
     """Search memories by text across keys, values, tags, and summaries.
 
@@ -160,10 +193,19 @@ def search(
         category: Optional category filter. If omitted, searches all categories.
         detail: Response format -- "index" (Markdown summaries) or "full" (complete entries).
         include_historical: If True, include soft-deleted entries in results.
+        since: Optional ISO 8601 timestamp. Only entries created at or after
+            this time are included.
+        type: Optional type filter (decision, gotcha, pattern, convention,
+            preference, correction, insight).
     """
     try:
         return _get_store().search(
-            query, category, detail=detail, include_historical=include_historical
+            query,
+            category,
+            detail=detail,
+            include_historical=include_historical,
+            since=since,
+            entry_type=type,
         )
     except ValueError as exc:
         return {"error": str(exc)}
@@ -385,6 +427,74 @@ def consolidate(actions: str, dry_run: bool = False) -> dict:
         return {"error": f"Unexpected error: {exc}"}
 
 
+@mcp.tool()
+def timeline(
+    since: str | None = None,
+    until: str | None = None,
+    session_id: str | None = None,
+    tool_filter: str | None = None,
+    classification: str | None = None,
+    limit: int = 100,
+) -> dict:
+    """View chronological observation history as a compact Markdown timeline.
+
+    Returns tool events and lifecycle events grouped by date. Each line:
+    ``HH:MM [agent_type] tool_name -> outcome (files)``
+
+    Filter by date range, session, tool name, or classification.
+
+    Args:
+        since: Optional ISO 8601 start timestamp (inclusive).
+        until: Optional ISO 8601 end timestamp (inclusive).
+        session_id: Optional session ID to filter by.
+        tool_filter: Optional tool name to filter by.
+        classification: Optional classification to filter by
+            (e.g., "decision", "implementation", "test").
+        limit: Maximum number of observations to return (default 100).
+    """
+    try:
+        obs_store = _get_observation_store()
+        observations = obs_store.query(
+            since=since,
+            until=until,
+            session_id=session_id,
+            tool_filter=tool_filter,
+            classification=classification,
+            limit=limit,
+        )
+        md = build_timeline(observations)
+        return {"timeline": md, "count": len(observations)}
+    except Exception as exc:
+        return {"error": f"Unexpected error: {exc}"}
+
+
+@mcp.tool()
+def session_narrative(session_id: str | None = None) -> dict:
+    """Get a structured narrative summary of a session.
+
+    Summarizes what was done, files touched, decisions made, and outcome.
+    Uses the most recent session if session_id is not specified.
+
+    Args:
+        session_id: Optional session ID. If omitted, uses the most recent session.
+    """
+    try:
+        obs_store = _get_observation_store()
+        if session_id is None:
+            recent = obs_store.query(event_type="session_start", limit=1)
+            if recent:
+                session_id = recent[0].get("session_id", "")
+        observations = obs_store.session_observations(session_id or "")
+        md = build_session_narrative(observations)
+        return {
+            "narrative": md,
+            "observation_count": len(observations),
+            "session_id": session_id or "",
+        }
+    except Exception as exc:
+        return {"error": f"Unexpected error: {exc}"}
+
+
 # -- MCP Resources ------------------------------------------------------------
 
 
@@ -399,6 +509,7 @@ def schema_resource() -> str:
         "schema_version": SCHEMA_VERSION,
         "categories": list(VALID_CATEGORIES),
         "statuses": list(VALID_STATUSES),
+        "types": list(VALID_TYPES),
         "entry_fields": {
             "value": "The memory content (string, required)",
             "summary": "One-line description (~100 chars) for index browsing",
@@ -409,11 +520,16 @@ def schema_resource() -> str:
             "tags": "List of string tags for categorization and search",
             "confidence": "Confidence score from 0.0 to 1.0 (null if unset)",
             "importance": "Priority from 1 (low) to 10 (critical), default 5",
-            "source": "Origin metadata: {type, detail}",
+            "source": ("Origin metadata: {type, detail, agent_type, agent_id, session_id}"),
             "access_count": "Number of times this entry has been recalled/searched",
             "last_accessed": "ISO 8601 UTC timestamp of last access (null if never)",
             "status": "Entry lifecycle: active, archived, or superseded",
             "links": "Array of {target, relation} linking to other entries",
+            "type": (
+                "Knowledge type: decision, gotcha, pattern, convention, "
+                "preference, correction, insight (null if unset)"
+            ),
+            "created_by": "Identifier for the agent or user that created this entry (null if unset)",
         },
         "valid_relations": list(VALID_RELATIONS),
     }

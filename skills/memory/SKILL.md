@@ -15,13 +15,15 @@ MCP-backed memory that persists across sessions. The `memory` MCP server handles
 
 Memory context is delivered to agents through three complementary mechanisms:
 
-1. **Hook injection (Layer 1)**: The `inject_memory.py` SubagentStart hook reads `.ai-state/memory.json` and injects a Markdown-KV summary into every agent's context. Agents see memory data automatically without calling any tool.
+1. **Hook injection (Layer 1)**: The `inject_memory.py` SubagentStart hook reads `.ai-state/memory.json` (with LOCK_SH for concurrent safety) and injects a Markdown-KV summary into every agent's context. Uses importance tiers, agent-type-aware category routing, and a MAX_INJECT_CHARS budget.
 
-2. **Always-loaded rule (Layer 2)**: The `memory-protocol.md` rule provides clear criteria for when to call `remember()` vs. when to skip. Loaded for every agent session.
+2. **Always-loaded rule (Layer 2)**: The `memory-protocol.md` rule provides clear criteria for when to call `remember()` vs. when to skip, including type guidance. Loaded for every agent session.
 
 3. **Validation hook (Layer 3)**: The `validate_memory.py` SubagentStop hook checks whether agents that wrote to LEARNINGS.md also called `remember()`. Warns the parent agent on omission.
 
-**Implication**: You do NOT need to call `session_start()` or `recall()` to see memory data. It is already in your context. Focus on `remember()` for writing discoveries.
+4. **Capture hooks**: `capture_memory.py` (PostToolUse) and `capture_session.py` (lifecycle events) write automatic JSONL observations to `.ai-state/observations.jsonl`. `promote_learnings.py` (PreToolUse) warns before LEARNINGS.md cleanup when unpromoted entries exist.
+
+**Implication**: You do NOT need to call `session_start()` or `recall()` to see memory data. It is already in your context. Focus on `remember()` for writing discoveries. Tool and lifecycle events are captured automatically to the observation layer.
 
 ## Gotchas
 
@@ -47,10 +49,10 @@ Six memory categories, each targeting a distinct knowledge domain:
 
 | Tool | Description |
 |------|-------------|
-| `remember` | Store or update. Checks for duplicates first. Use `force=True` to bypass. Optional `summary` param for one-line description. |
+| `remember` | Store or update. Checks for duplicates first. Use `force=True` to bypass. Optional `summary`, `type` (knowledge classification), and `created_by` (provenance) params. |
 | `forget` | **Soft-delete**: sets `invalid_at` and status to `superseded`. Entry remains in historical queries. |
 | `hard_delete` | Permanent removal with link cleanup and backup. |
-| `search` | Multi-term ranked search. `detail="index"` (Markdown summaries, default) or `detail="full"` (complete entries). `include_historical=True` to include soft-deleted. |
+| `search` | Multi-term ranked search. `detail="index"` (Markdown summaries, default) or `detail="full"` (complete entries). `include_historical=True` to include soft-deleted. `since` filters by creation time. `type` filters by knowledge type. |
 | `browse_index` | Full Markdown-KV summary of all entries grouped by category. Most token-efficient overview. |
 | `consolidate` | Execute structured actions (merge, archive, adjust_confidence, update_summary) atomically with backup. JSON actions param. |
 | `recall` | Retrieve entries from a category with access tracking. |
@@ -59,6 +61,8 @@ Six memory categories, each targeting a distinct knowledge domain:
 | `about_me` / `about_us` | Aggregated user or relationship profiles. |
 | `connections` | Show outgoing and incoming links for an entry. |
 | `add_link` / `remove_link` | Manage unidirectional links between entries. |
+| `timeline` | Chronological observation history as compact Markdown. Filter by `since`, `until`, `session_id`, `tool_filter`, `classification`, `limit`. |
+| `session_narrative` | Structured session summary: what was done, files touched, decisions made, outcome. Uses most recent session if `session_id` omitted. |
 
 ### Key Parameters on `remember`
 
@@ -67,8 +71,24 @@ Six memory categories, each targeting a distinct knowledge domain:
 - **`source_type`** (str, default "session"): `"session"`, `"user-stated"`, `"inferred"`, or `"codebase"`.
 - **`confidence`** (float, 0.0-1.0, optional): For assistant self-knowledge; null for factual entries.
 - **`tags`**: 2-4 lowercase tags for discoverability.
+- **`type`** (str, optional): Knowledge classification -- `"decision"`, `"gotcha"`, `"pattern"`, `"convention"`, `"preference"`, `"correction"`, or `"insight"`.
+- **`created_by`** (str, optional): Identifier for the agent or user that created the entry.
 
 See [references/schema.md](references/schema.md) for full field definitions and constraints.
+
+## Observation Layer
+
+The observation layer captures tool and lifecycle events automatically in `.ai-state/observations.jsonl` (JSONL, one event per line). No LLM calls are involved in capture.
+
+- **`capture_memory.py`** (PostToolUse): records tool events with file paths, outcome, and classification. Noisy tools (Read, Glob, Grep, etc.) are blocklisted.
+- **`capture_session.py`** (SessionStart, Stop, SubagentStart, SubagentStop): records lifecycle events with session and agent IDs.
+
+Query the observation layer via two MCP tools:
+
+- **`timeline()`**: chronological event history grouped by date, filterable by date range, session, tool, or classification
+- **`session_narrative()`**: structured summary of a session -- what was done, files touched, decisions made, outcome
+
+Observations are separate from curated memories. They accumulate without deduplication. The `ObservationStore` handles rotation when the file exceeds 10 MiB.
 
 ## Integration with Agent Pipeline
 

@@ -1,8 +1,8 @@
 # Memory Skill
 
-Persistent, structured memory system that tracks user preferences, assistant learnings, project conventions, and relationship dynamics across sessions. Stores data in `.ai-state/memory.json` as a categorized, queryable JSON document with progressive disclosure via Markdown-KV format.
+Persistent, structured memory system that tracks user preferences, assistant learnings, project conventions, and relationship dynamics across sessions. Dual-layer architecture: curated memories in `.ai-state/memory.json` (JSON) and automatic observations in `.ai-state/observations.jsonl` (JSONL). Progressive disclosure via Markdown-KV format.
 
-Complements built-in memory (e.g. Claude Code's `MEMORY.md`) with explicit categories, tags, confidence levels, temporal supersession, and structured consolidation. Used via memory MCP in both Claude Code and Cursor.
+Complements built-in memory (e.g. Claude Code's `MEMORY.md`) with explicit categories, knowledge types, tags, confidence levels, temporal supersession, structured consolidation, chronological timelines, and session narratives. Used via memory MCP in both Claude Code and Cursor.
 
 ## When to Use
 
@@ -13,25 +13,27 @@ Complements built-in memory (e.g. Claude Code's `MEMORY.md`) with explicit categ
 - Consolidating overlapping entries via `consolidate()`
 - Reviewing memory health via `reflect()`
 
-## Three-Layer Enforcement
+## Enforcement and Capture
 
 Memory is automatically integrated into agent workflows:
 
-1. **Hook injection**: `inject_memory.py` injects Markdown-KV summary into every agent's context at spawn
-2. **Always-loaded rule**: `memory-protocol.md` guides when to call `remember()`
+1. **Hook injection**: `inject_memory.py` injects Markdown-KV summary into every agent's context at spawn (LOCK_SH reads, importance tiers, agent-type-aware routing)
+2. **Always-loaded rule**: `memory-protocol.md` guides when to call `remember()` with type guidance
 3. **Validation hook**: `validate_memory.py` warns when agents write LEARNINGS.md without calling `remember()`
+4. **Capture hooks**: `capture_memory.py` (PostToolUse) and `capture_session.py` (lifecycle events) write automatic JSONL observations
+5. **Promotion hook**: `promote_learnings.py` warns before LEARNINGS.md cleanup when unpromoted entries exist
 
 ## Skill Contents
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Core reference: ontology, tool table, enforcement, integration, proactive guidelines |
-| `references/schema.md` | Full JSON schema v1.3, field constraints, Markdown-KV format, consolidation actions |
+| `SKILL.md` | Core reference: ontology, tool table, enforcement, observation layer, integration, proactive guidelines |
+| `references/schema.md` | Full JSON schema v2.0, field constraints, Observation schema, Markdown-KV format, consolidation actions |
 | `README.md` | This file -- overview and usage guide |
 
 ## Data Model
 
-Schema v1.3 with six categories. Key new fields: `summary` (one-line description), `valid_at`/`invalid_at` (temporal supersession).
+Schema v2.0 with six categories. Key fields: `summary` (one-line description), `valid_at`/`invalid_at` (temporal supersession), `type` (knowledge classification), `created_by` (provenance), enriched `source` with `agent_type`, `agent_id`, and `session_id`.
 
 | Category | Tracks |
 |----------|--------|
@@ -47,11 +49,13 @@ Schema v1.3 with six categories. Key new fields: `summary` (one-line description
 | Tool | Description |
 |------|-------------|
 | `browse_index` | Full Markdown-KV summary of all entries. Most token-efficient view. |
-| `remember` | Store entry with optional `summary` param. Auto-generates summary if omitted. |
-| `search` | Multi-term ranked search. `detail="index"` (Markdown) or `detail="full"` (JSON). |
+| `remember` | Store entry with `summary`, `type`, and `created_by` params. Auto-generates summary if omitted. |
+| `search` | Multi-term ranked search. `detail="index"` (Markdown) or `detail="full"` (JSON). Filter by `since` and `type`. |
 | `forget` | Soft-delete (sets `invalid_at`). Use `hard_delete` for permanent removal. |
 | `consolidate` | Execute structured actions (merge, archive, adjust, update) with backup. |
 | `reflect` | Lifecycle analysis: stale entries, archival candidates. Read-only. |
+| `timeline` | Chronological observation history. Filter by date range, session, tool, classification. |
+| `session_narrative` | Structured session summary: what was done, files touched, decisions, outcome. |
 
 ## Related Artifacts
 

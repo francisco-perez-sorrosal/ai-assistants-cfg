@@ -85,7 +85,7 @@ class MemoryStore:
     """Persistent memory store backed by a single JSON file.
 
     Provides CRUD operations, access tracking, atomic writes, and link management.
-    Requires schema v1.3 -- no migration from older versions.
+    Requires schema v2.0 -- no migration from older versions.
     """
 
     def __init__(self, file_path: Path) -> None:
@@ -149,7 +149,7 @@ class MemoryStore:
             lock_fd.close()
 
     def _auto_migrate_if_needed(self) -> None:
-        """Validate schema version is 1.3. Raises ValueError on mismatch."""
+        """Validate schema version is 2.0. Raises ValueError on mismatch."""
         data = self._load()
         version = data.get("schema_version")
 
@@ -214,6 +214,8 @@ class MemoryStore:
         force: bool = False,
         broad: bool = False,
         summary: str | None = None,
+        entry_type: str | None = None,
+        created_by: str | None = None,
     ) -> dict:
         """Create or update a memory entry.
 
@@ -246,6 +248,8 @@ class MemoryStore:
             source_type=source_type,
             confidence=confidence,
             summary=summary,
+            entry_type=entry_type,
+            created_by=created_by,
         )
 
     def _find_candidates(
@@ -287,6 +291,8 @@ class MemoryStore:
         source_type: str,
         confidence: float | None,
         summary: str | None = None,
+        entry_type: str | None = None,
+        created_by: str | None = None,
     ) -> dict:
         """Unconditionally create or update a memory entry (no dedup check).
 
@@ -311,6 +317,10 @@ class MemoryStore:
                 existing["importance"] = importance
                 if confidence is not None:
                     existing["confidence"] = confidence
+                if entry_type is not None:
+                    existing["type"] = entry_type
+                if created_by is not None:
+                    existing["created_by"] = created_by
                 return {"action": "UPDATE", "entry": dict(existing)}
 
             entry = MemoryEntry(
@@ -327,6 +337,8 @@ class MemoryStore:
                 summary=resolved_summary,
                 valid_at=now,
                 invalid_at=None,
+                type=entry_type,
+                created_by=created_by,
             )
             entry_dict = entry.to_dict()
             cat_entries[key] = entry_dict
@@ -435,6 +447,8 @@ class MemoryStore:
         *,
         detail: str = "full",
         include_historical: bool = False,
+        since: str | None = None,
+        entry_type: str | None = None,
     ) -> dict:
         """Multi-signal ranked search across keys, values, tags, and summaries.
 
@@ -449,6 +463,10 @@ class MemoryStore:
             detail: ``"index"`` returns Markdown-formatted summaries;
                 ``"full"`` returns complete entry dicts (default).
             include_historical: When True, include soft-deleted entries.
+            since: Optional ISO 8601 timestamp. Only entries with
+                ``created_at >= since`` are included.
+            entry_type: Optional type filter. Only entries whose ``type`` field
+                matches are included.
         """
         if category is not None:
             self._validate_category(category)
@@ -466,6 +484,14 @@ class MemoryStore:
                 for entry_key, entry in entries.items():
                     # Filter inactive entries unless include_historical
                     if not _is_active(entry) and not include_historical:
+                        continue
+
+                    # Filter by created_at >= since
+                    if since is not None and entry.get("created_at", "") < since:
+                        continue
+
+                    # Filter by type
+                    if entry_type is not None and entry.get("type") != entry_type:
                         continue
 
                     match_reasons = _find_match_reasons_multi(

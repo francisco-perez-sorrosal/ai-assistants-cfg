@@ -9,6 +9,12 @@
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py 2>/dev/null",
             "timeout": 10,
             "async": true
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/capture_session.py 2>/dev/null",
+            "timeout": 5,
+            "async": true
           }
         ]
       }
@@ -21,6 +27,12 @@
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py 2>/dev/null",
             "timeout": 10,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/capture_session.py 2>/dev/null",
+            "timeout": 5,
             "async": true
           }
         ]
@@ -41,6 +53,12 @@
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/inject_memory.py",
             "timeout": 5,
             "async": false
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/capture_session.py 2>/dev/null",
+            "timeout": 5,
+            "async": true
           }
         ]
       }
@@ -60,6 +78,12 @@
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/validate_memory.py 2>/dev/null",
             "timeout": 10,
             "async": true
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/capture_session.py 2>/dev/null",
+            "timeout": 5,
+            "async": true
           }
         ]
       }
@@ -72,6 +96,12 @@
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py 2>/dev/null",
             "timeout": 10,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/capture_memory.py 2>/dev/null",
+            "timeout": 5,
             "async": true
           }
         ]
@@ -102,6 +132,12 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/commit_gate.sh ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/remind_adr.py",
             "timeout": 30,
+            "async": false
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/promote_learnings.py",
+            "timeout": 5,
             "async": false
           }
         ]
