@@ -64,7 +64,9 @@ jobs:
             echo "Release $VERSION already exists, skipping"
             exit 0
           fi
-          gh release create "$VERSION" --generate-notes --title "$VERSION"
+          # Extract this version's section from CHANGELOG.md for the release body
+          BODY=$(sed -n "/^## $VERSION/,/^## v/{/^## v[^$]/!p;}" CHANGELOG.md | sed '1d')
+          gh release create "$VERSION" --title "$VERSION" --notes "$BODY"
 
       - name: Bump to next dev version
         run: |
