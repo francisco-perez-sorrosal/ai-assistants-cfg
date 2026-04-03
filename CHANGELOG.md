@@ -1,11 +1,4 @@
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## v0.0.1.dev1 (2026-04-03)
+## v0.1.0 (2026-04-03)
 
 ### Feat
 
@@ -113,6 +106,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fix
 
+- Simplify release to manual-only stable releases
+- No-tag dev bumps, changelog on stable only
+- Drop changelog generation from release workflow
+- Use annotated tags for version releases
 - Set initial dev version and fix release workflow
 - Reduce terminal noise from hooks and VS Code markdownlint
 - Ensure all agents discover ADRs through index, then read full files
