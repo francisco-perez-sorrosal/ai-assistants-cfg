@@ -307,26 +307,27 @@ Versioning is managed by [Commitizen](https://commitizen-tools.github.io/commiti
 
 ### Day-to-day development
 
-Push to `main` with conventional commit messages (`feat:`, `fix:`, etc.). No CI runs on push — the version in `main` stays at the last stable release. Conventional commits accumulate and determine the bump level at release time.
+Push to `main` with conventional commit messages (`feat:`, `fix:`, etc.). No CI runs on push — the version in `main` shows a `.dev0` suffix (e.g., `0.2.1.dev0`) indicating unreleased development. Conventional commits accumulate and determine the bump level at release time.
 
 ### Creating a release (manual, from GitHub UI)
 
 1. Go to **Actions → Release → Run workflow**
 2. Click **Run workflow**
 
-Commitizen computes the proper semver bump from all conventional commits since the last tag, generates `CHANGELOG.md`, creates a git tag, and publishes a GitHub release. The bump level depends on commit types: `fix:` → patch, `feat:` → minor, breaking change → major.
+Commitizen computes the proper semver bump from all conventional commits since the last tag, generates `CHANGELOG.md`, creates a git tag, and publishes a GitHub release. The bump level depends on commit types: `fix:` → patch, `feat:` → minor, breaking change → major. After the release, the workflow automatically bumps version files to the next patch dev version (e.g., `0.2.0` → `0.2.1.dev0`).
 
 ### Version lifecycle example
 
 ```text
-push fix: ...     →  (main stays at 0.0.1)
-push feat: ...    →  (main stays at 0.0.1)
-push fix: ...     →  (main stays at 0.0.1)
+push fix: ...     →  (main at 0.0.1.dev0)
+push feat: ...    →  (main at 0.0.1.dev0)
   ↓ Run workflow
 0.1.0                (stable — had feat: commits, changelog generated)
-push fix: ...     →  (main stays at 0.1.0)
+  → 0.1.1.dev0      (automatic post-release dev bump)
+push fix: ...     →  (main at 0.1.1.dev0)
   ↓ Run workflow
 0.1.1                (patch — only fix: commits since 0.1.0)
+  → 0.1.2.dev0      (automatic post-release dev bump)
 ```
 
 ### Manual version operations

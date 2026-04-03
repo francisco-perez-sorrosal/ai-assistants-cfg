@@ -4,8 +4,9 @@
 # the last stable tag, generates CHANGELOG.md, creates a git tag, and publishes
 # a GitHub release.
 #
-# No CI runs on push to main. Between releases, the version in main reflects
-# the last stable release.
+# No CI runs on push to main. After a release, the workflow bumps version files
+# to the next patch dev version (e.g., 0.2.0 → 0.2.1.dev0) so main always
+# signals "unreleased development."
 
 name: Release
 
@@ -64,3 +65,13 @@ jobs:
             exit 0
           fi
           gh release create "$VERSION" --generate-notes --title "$VERSION"
+
+      - name: Bump to next dev version
+        run: |
+          STABLE=$(cz version --project)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$STABLE"
+          NEXT_DEV="${MAJOR}.${MINOR}.$((PATCH + 1)).dev0"
+          cz bump "$NEXT_DEV" --files-only --yes
+          git add -A
+          git commit -m "bump: Open $NEXT_DEV development cycle"
+          git push
