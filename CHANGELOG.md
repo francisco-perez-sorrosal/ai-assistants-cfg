@@ -106,6 +106,8 @@
 
 ### Fix
 
+- Reset version to 0.0.1.dev0 for clean first release
+- Use commitizen changelog as GitHub release body
 - Reset version to 0.0.1.dev0 for first release
 - Add post-release dev bump to release workflow
 - Separate changelog commit to preserve version tag
