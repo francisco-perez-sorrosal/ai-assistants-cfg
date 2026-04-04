@@ -196,7 +196,7 @@ When both agents are invoked, the doc-engineer runs AFTER the context-engineer t
 
 ### With the Sentinel
 
-- The sentinel detects ecosystem-wide documentation drift across its eight audit dimensions
+- The sentinel detects ecosystem-wide documentation drift across its ten audit dimensions
 - The doc-engineer consumes sentinel findings from the latest `.ai-state/SENTINEL_REPORT_*.md` as a remediation work queue
 - Boundary: the sentinel diagnoses broadly; the doc-engineer remediates documentation specifically
 

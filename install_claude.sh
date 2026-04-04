@@ -407,6 +407,7 @@ settings["hooks"] = {
         hook("send_event.py"),
         hook("capture_memory.py", timeout=5),
         hook("format_python.py", "Write|Edit", is_async=False),
+        hook("detect_duplication.py", "Write|Edit", is_async=False),
     ],
     "PostToolUseFailure": [hook("send_event.py")],
     # Code quality gate + LEARNINGS.md promotion warning (sync, blocks on violations)
@@ -441,7 +442,8 @@ PYEOF
     info "  Memory:        inject_memory (SubagentStart), validate_memory (SubagentStop),"
     info "                 capture_memory (PostToolUse), capture_session (lifecycle),"
     info "                 promote_learnings (PreToolUse cleanup warning)"
-    info "  Code quality:  format_python (PostToolUse), check_code_quality (PreToolUse)"
+    info "  Code quality:  format_python (PostToolUse), detect_duplication (PostToolUse),"
+    info "                 check_code_quality (PreToolUse)"
     info "  Pipeline:      precompact_state (PreCompact)"
 }
 

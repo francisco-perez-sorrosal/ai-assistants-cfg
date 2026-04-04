@@ -80,6 +80,7 @@ Before reporting completion, check your changes against coding-style conventions
 - [ ] No magic values (named constants)
 - [ ] Descriptive naming
 - [ ] Immutable patterns where applicable
+- [ ] No code duplication (check for repeated logic in this file and grep sibling modules for similar patterns)
 
 Fix any violations before reporting. Do not produce a formal report — just fix the code.
 

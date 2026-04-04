@@ -108,6 +108,7 @@ Convention checks (derived from `coding-style` rule):
 - Immutability (prefer immutable patterns)
 - Naming (descriptive, intention-revealing)
 - Code organization (modular, no catch-all utils)
+- Code duplication (no repeated logic within files; for changed files, read sibling files in the same module — capped at 5 — and use LLM judgment to assess cross-module semantic similarity; report duplicated patterns with file paths and line ranges)
 
 ### Phase 4.5 -- Security Review (when context-security-review skill is loaded)
 
@@ -161,11 +162,23 @@ Skip this phase entirely in standalone mode.
 
 ## Collaboration Points
 
-### With the Implementation Planner
+### With the Implementation Planner (Self-Healing Loop)
+
+The verifier anchors a self-healing loop for code quality — including duplication:
+
+```
+edit → PostToolUse hook (advisory) → implementer may self-correct
+  → if not caught: verifier Phase 4 detects (LLM-judged cross-module)
+  → FAIL/WARN in VERIFICATION_REPORT.md
+  → user routes to implementation-planner
+  → planner creates corrective steps → implementer fixes
+  → verifier re-runs → clean
+```
 
 - The verifier runs AFTER Phase 7 confirms plan adherence
-- If findings require corrective action, the user may re-invoke the implementation-planner with `VERIFICATION_REPORT.md` as input
+- If findings require corrective action, the user re-invokes the implementation-planner with `VERIFICATION_REPORT.md` as input
 - The implementation-planner creates corrective steps; the verifier does not
+- This cycle repeats until the verifier produces a clean report — each iteration narrows the gap between current state and desired quality
 
 ### With the Systems Architect
 

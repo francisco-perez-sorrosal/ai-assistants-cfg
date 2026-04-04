@@ -2,10 +2,11 @@
 name: sentinel
 description: >
   Read-only ecosystem quality auditor that scans all context artifacts
-  (skills, agents, rules, commands, CLAUDE.md, plugin.json) across nine
+  (skills, agents, rules, commands, CLAUDE.md, plugin.json) across ten
   dimensions. Eight dimensions evaluate individual artifacts: completeness,
   consistency, freshness, spec compliance, cross-reference integrity, token
-  efficiency, pipeline discipline, and spec health. The ninth — ecosystem coherence —
+  efficiency, pipeline discipline, and spec health. A code health dimension
+  samples implementation files for systemic duplication. The tenth — ecosystem coherence —
   operates at two distinct levels: per-artifact coherence (how well each
   artifact aligns with its goals, spec, and related agents/skills) and
   system-level coherence (whether the ecosystem works as a connected whole:
@@ -134,6 +135,14 @@ Requires Task Chronograph data. Skip with a note when unavailable.
 | P03 | A | Agent events have start/stop pairs | Every `agent_start` has a corresponding `agent_stop` |
 | P04 | L | Agents operate within declared scope | Outputs don't include actions outside boundary (e.g., implementer making design decisions) |
 | P05 | L | Handoff docs have required sections | Pipeline docs contain their expected sections |
+
+### Code Health (CH)
+
+Samples implementation files for systemic quality patterns. The sentinel's only implementation-code dimension — per-change quality is the verifier's domain.
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| CH01 | L | No significant code duplication across implementation files | Sample 3-5 implementation files from recent changes; check for structural similarity in functions and repeated logic blocks across modules |
 
 ### Ecosystem Coherence (EC)
 
@@ -334,7 +343,7 @@ Report schema:
 | Artifact | Type | Complete (C) | Consistent (N) | Fresh (F) | Spec (S) | Cross-Ref (X) | Tokens (T) | Coherence (EC) | Overall |
 |----------|------|--------------|-----------------|-----------|----------|----------------|------------|----------------|---------|
 
-Check codes reference dimensions above; Pipeline Discipline (P) and Self-Verification (V) appear in findings only.
+Check codes reference dimensions above; Pipeline Discipline (P), Code Health (CH), and Self-Verification (V) appear in findings only.
 
 ### Findings
 

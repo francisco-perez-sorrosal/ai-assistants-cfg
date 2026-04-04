@@ -39,6 +39,14 @@ Exceptions: performance-critical inner loops where allocation cost is measured a
 - When a module grows large, extract its helpers into `<module_name>_utils`, not a shared `utils`
 - Break code into multiple files before splitting across directories
 
+### Code Reuse and DRY
+
+- Before writing new logic, check if equivalent functionality exists in the current file, module, or sibling modules
+- Extract shared logic into a single source of truth — never copy-paste with minor variations
+- When the same pattern appears three times, refactor immediately into a shared abstraction
+- When modifying a file, scan related files in the same directory for similar functions or patterns
+- Prefer extending an existing function with a parameter over duplicating it with small differences
+
 ### File Size
 
 - Target: 200–400 lines
