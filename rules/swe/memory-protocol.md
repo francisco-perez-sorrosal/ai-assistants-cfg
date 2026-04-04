@@ -48,6 +48,14 @@ Use these standard tags for consistent discoverability:
 - `preference` -- user preference
 - `correction` -- user-corrected behavior
 
+### Conflict Resolution
+
+Two memory systems coexist: Claude Code's auto-memory (`~/.claude/.../memory/`) and Praxion's memory-mcp (`.ai-state/memory.json`). When they conflict:
+
+- **Praxion memory wins** -- it has timestamps (`created_at`, `updated_at`) and is the actively curated project store. Claude Code's auto-memory has no per-entry timestamps.
+- **More recent wins** -- check `updated_at` on the Praxion entry. The most recently updated fact is the current truth.
+- **If still ambiguous** -- verify against the code or git history. Memory is a hint, not truth.
+
 ### After Completing Your Task
 
 Before reporting completion, ask yourself: "Did I discover anything that future agents should know?" If yes, call `remember()`. If no, proceed.
