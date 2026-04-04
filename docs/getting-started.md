@@ -188,7 +188,7 @@ These agents operate alongside the main pipeline:
 | `/create-worktree [branch]` | Work on a feature in an isolated worktree |
 | `/merge-worktree [branch]` | Merge the worktree back |
 | `/clean-work` | Remove `.ai-work/<task-slug>/` after pipeline completion |
-| `/memory` | Manage persistent memory across sessions |
+| `/cajalogic` | Manage persistent memory across sessions |
 | `/onboard-project` | Set up a new project for the ecosystem |
 
 ## Further Reading

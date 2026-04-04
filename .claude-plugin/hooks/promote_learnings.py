@@ -76,7 +76,7 @@ def main() -> None:
             "additionalContext": (
                 f"LEARNINGS.md files found with unpromoted content:\n"
                 f"{files_list}\n\n"
-                f"Consider running `/memory dream` or calling `remember()` "
+                f"Consider running `/cajalogic dream` or calling `remember()` "
                 f"for cross-session insights before cleanup."
             )
         }

@@ -14,7 +14,7 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | `/create-worktree` | Create a new git worktree in `.trees/` |
 | `/full-security-scan` | Run a full-project security audit against all security-critical paths |
 | `/manage-readme` | Create or refine README.md files |
-| `/memory` | Manage persistent memory (user prefs, assistant learnings, project conventions) |
+| `/cajalogic` | Manage persistent memory (user prefs, assistant learnings, project conventions, observations) |
 | `/merge-worktree` | Merge a worktree branch back into current branch |
 | `/onboard-project` | Onboard the current project for the Praxion plugin ecosystem |
 | `/release` | Bump version, update changelog, and create a release tag |

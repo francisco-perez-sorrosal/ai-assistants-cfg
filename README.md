@@ -29,7 +29,7 @@ The ecosystem has five building blocks that layer from always-on background know
 
 - **Rules** -- Domain knowledge loaded automatically by relevance. Declarative constraints (coding style, git conventions) the assistant applies without explicit invocation.
 - **Skills** -- Reusable knowledge modules loaded on demand. Deeper than rules: workflows, procedures, and reference material for specific domains (Python development, refactoring, CI/CD).
-- **Commands** -- Slash commands for frequent workflows. User-invoked quick actions (`/co` for commits, `/create-worktree` for git worktrees, `/memory` for cross-session persistence).
+- **Commands** -- Slash commands for frequent workflows. User-invoked quick actions (`/co` for commits, `/create-worktree` for git worktrees, `/cajalogic` for cross-session memory).
 - **Agents** -- Autonomous subprocesses for complex multi-step tasks. Each runs in its own context with a specialty (research, architecture, implementation, testing, verification). They communicate through shared documents, forming a pipeline.
 - **MCP Servers** -- External tool servers for capabilities like persistent memory and task observability.
 
@@ -79,7 +79,7 @@ Slash commands invoked with `/<name>`. In Claude Code plugin mode, use `/i-am:<n
 | `/add-rules` | Copy rules into the current project for customization |
 | `/manage-readme` | Create or refine README.md files |
 | `/clean-work` | Clean the `.ai-work/` directory after pipeline completion |
-| `/memory` | Manage persistent memory (user prefs, learnings, conventions) |
+| `/cajalogic` | Manage persistent memory (user prefs, learnings, conventions, observations) |
 | `/onboard-project` | Onboard the current project to work with the ecosystem |
 | `/sdd-coverage` | Report spec-to-test and spec-to-code coverage for REQ IDs |
 | `/star-repo` | Star the Praxion repo on GitHub |

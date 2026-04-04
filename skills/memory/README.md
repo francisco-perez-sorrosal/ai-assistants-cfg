@@ -59,7 +59,7 @@ Schema v2.0 with six categories. Key fields: `summary` (one-line description), `
 
 ## Related Artifacts
 
-- [`/memory` command](../../commands/memory.md) -- slash command that delegates to this skill
+- [`/cajalogic` command](../../commands/cajalogic.md) -- slash command that delegates to this skill
 - [`memory-protocol.md`](../../rules/swe/memory-protocol.md) -- always-loaded rule for remember guidance
 - [`inject_memory.py`](../../.claude-plugin/hooks/inject_memory.py) -- SubagentStart hook for context injection
 - [`.ai-state/memory.json`](../../.ai-state/memory.json) -- the persistent data store
