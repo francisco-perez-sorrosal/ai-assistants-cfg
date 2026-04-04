@@ -118,6 +118,40 @@ open http://localhost:6006  # Trace UI
 
 See [Observability](docs/observability.md) for the full guide: architecture, multi-project workflow, configuration, and troubleshooting.
 
+### Memory
+
+Dual-layer persistent memory that gives every agent cross-session knowledge about the project. Curated memories (facts, decisions, gotchas) live in `memory.json`; automatic observations (tool events, session lifecycle) accumulate in `observations.jsonl`. Both live in each project's `.ai-state/` directory and are committed to git.
+
+**Setup**: Memory activates automatically per project. The first `remember()` call or tool event creates `.ai-state/memory.json` and `.ai-state/observations.jsonl`. No manual initialization required.
+
+**How agents use it**:
+
+1. At agent spawn, the `inject_memory.py` hook injects a Markdown summary of all curated entries into the agent's context -- no tool call needed
+2. During work, agents call `remember()` when they discover something that applies beyond the current task (guided by the always-loaded `memory-protocol.md` rule)
+3. Tool events are captured automatically to the observation log by the `capture_memory.py` hook
+4. At agent completion, `validate_memory.py` warns if LEARNINGS.md was written without `remember()`
+
+**Key tools**:
+
+| Tool | Purpose |
+|------|---------|
+| `remember` | Store a curated memory with type, importance, summary |
+| `search` | Multi-term ranked search with Markdown summaries |
+| `browse_index` | Full memory index as compact Markdown-KV |
+| `timeline` | Chronological view of observations |
+| `session_narrative` | Structured summary of a session |
+| `consolidate` | Merge, archive, or update entries atomically |
+
+**Configuration** (per project, in `.ai-state/`):
+
+| File | Purpose | Git |
+|------|---------|-----|
+| `memory.json` | Curated memories (schema v2.0) | Committed |
+| `observations.jsonl` | Observation log (append-only) | Committed |
+| `*.lock` | File locks for concurrency | Gitignored |
+
+See [Memory Architecture](docs/memory-architecture.md) for the full guide: dual-layer design, data model, enforcement hooks, concurrency model, and scaling strategy.
+
 ## Installation
 
 The main entry point is `install.sh`, which routes to `install_claude.sh` (Claude Code/Desktop) or `install_cursor.sh` (Cursor). The interactive installer walks through each choice, defaulting to the recommended option at each step.
@@ -207,6 +241,7 @@ Read the user preferences from https://raw.githubusercontent.com/francisco-perez
 
 ## Advanced Topics
 
+- **[Memory Architecture](docs/memory-architecture.md)** -- Dual-layer memory system: curated JSON + observation JSONL, enforcement hooks, concurrency model, temporal consistency, scaling strategy, and agent integration.
 - **[External API Docs](docs/external-api-docs.md)** -- Retrieve current, curated API documentation for external libraries (Stripe, OpenAI, AWS, etc.) during development. Setup guide, workflow examples, and the annotation learning loop.
 - **[Spec-Driven Development](docs/spec-driven-development.md)** -- Behavioral specifications with requirement IDs for medium/large features. The pipeline scales proportionally: small tasks skip specs; substantive features get full traceability.
 - **[Decision Tracking](docs/decision-tracking.md)** -- Architecture Decision Records (ADRs) in `.ai-state/decisions/` capture decisions from AI-assisted sessions. Agents write structured Markdown files with YAML frontmatter, with a lightweight reminder hook for architectural commits.
