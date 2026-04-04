@@ -102,23 +102,28 @@ def _format_timeline_line(obs: dict) -> str:
     outcome = obs.get("outcome", "")
     file_paths = obs.get("file_paths", [])
 
+    summary = obs.get("summary", "")
+
     # Build the action portion
-    if tool:
+    if summary:
+        action = summary
+    elif tool:
         action = tool
     elif event_type:
         action = event_type
     else:
         action = "unknown"
 
-    # Build the suffix
+    # Build the suffix (only when no summary — summary already contains the details)
     parts: list[str] = []
-    if outcome:
-        parts.append(f"-> {outcome}")
-    if file_paths:
-        files_str = ", ".join(file_paths[:3])
-        if len(file_paths) > 3:
-            files_str += f" +{len(file_paths) - 3} more"
-        parts.append(f"({files_str})")
+    if not summary:
+        if outcome:
+            parts.append(f"-> {outcome}")
+        if file_paths:
+            files_str = ", ".join(file_paths[:3])
+            if len(file_paths) > 3:
+                files_str += f" +{len(file_paths) - 3} more"
+            parts.append(f"({files_str})")
 
     suffix = " ".join(parts)
     line = f"{time_part} [{agent}] {action}"
@@ -132,14 +137,22 @@ def _append_what_was_done(lines: list[str], observations: list[dict]) -> None:
     lines.append("## What Was Done")
     lines.append("")
 
-    by_classification: dict[str, int] = defaultdict(int)
+    by_classification: dict[str, list[str]] = defaultdict(list)
     for obs in observations:
         classification = obs.get("classification") or obs.get("event_type") or "other"
-        by_classification[classification] += 1
+        summary = obs.get("summary", "")
+        by_classification[classification].append(summary)
 
     for classification in sorted(by_classification.keys()):
-        count = by_classification[classification]
-        lines.append(f"- **{classification}**: {count} event{'s' if count != 1 else ''}")
+        summaries = by_classification[classification]
+        count = len(summaries)
+        lines.append(f"- **{classification}** ({count}):")
+        # Show up to 5 summaries per classification
+        for s in summaries[:5]:
+            if s:
+                lines.append(f"  - {s}")
+        if count > 5:
+            lines.append(f"  - ... and {count - 5} more")
 
     lines.append("")
 
@@ -176,11 +189,11 @@ def _append_decisions_made(lines: list[str], observations: list[dict]) -> None:
         lines.append("No decisions recorded.")
     else:
         for obs in decisions:
-            tool = obs.get("tool_name", "unknown")
+            summary = obs.get("summary", "")
             file_paths = obs.get("file_paths", [])
             ts = obs.get("timestamp", "")
             time_part = ts[11:16] if len(ts) >= 16 else ""
-            desc = ", ".join(file_paths) if file_paths else tool
+            desc = summary or ", ".join(file_paths) or obs.get("tool_name", "unknown")
             prefix = f"{time_part} " if time_part else ""
             lines.append(f"- {prefix}{desc}")
 

@@ -156,8 +156,8 @@ class TestBuildSessionNarrative:
         obs2 = _make_obs(classification="implementation")
         obs3 = _make_obs(classification="test")
         result = build_session_narrative([obs1, obs2, obs3])
-        assert "**implementation**: 2 events" in result
-        assert "**test**: 1 event" in result
+        assert "**implementation** (2):" in result
+        assert "**test** (1):" in result
 
     def test_files_touched_deduplicated(self) -> None:
         obs1 = _make_obs(file_paths=["src/foo.py", "src/bar.py"])

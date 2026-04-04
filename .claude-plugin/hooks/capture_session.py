@@ -21,6 +21,24 @@ EVENT_MAP = {
 }
 
 
+def _build_summary(event_type: str, payload: dict) -> str:
+    """Build a human-readable summary for lifecycle events."""
+    agent_type = payload.get("agent_type", "")
+    description = payload.get("description", "")
+
+    if event_type == "session_start":
+        return "Session started"
+    if event_type == "session_stop":
+        return "Session ended"
+    if event_type == "agent_start":
+        label = description or agent_type or "unknown"
+        return f"Agent started: {label[:150]}"
+    if event_type == "agent_stop":
+        label = description or agent_type or "unknown"
+        return f"Agent completed: {label[:150]}"
+    return event_type
+
+
 def _append_observation(obs_path: Path, observation: dict) -> None:
     """Append a single observation to the JSONL file with exclusive locking."""
     obs_path.parent.mkdir(parents=True, exist_ok=True)
@@ -54,6 +72,7 @@ def main() -> None:
         return  # graceful degradation
 
     obs_path = ai_state_dir / "observations.jsonl"
+    summary = _build_summary(event_type, payload)
 
     observation = {
         "timestamp": datetime.now(UTC).isoformat(),
@@ -63,10 +82,10 @@ def main() -> None:
         "project": Path(cwd).name,
         "event_type": event_type,
         "tool_name": None,
+        "summary": summary,
         "file_paths": [],
         "outcome": None,
         "classification": None,
-        "metadata": {},
     }
 
     _append_observation(obs_path, observation)
