@@ -33,7 +33,7 @@ Persistent memory management via MCP (Model Context Protocol) server with dual-l
 Registered in `.claude-plugin/plugin.json` under `mcpServers.memory`. Runs via `uv run --project` with `MEMORY_FILE` pointing to `.ai-state/memory.json`.
 
 Six hooks integrate with Claude Code's event system:
-- `inject_memory.py` (SubagentStart) — injects Markdown-KV summary with LOCK_SH reads, importance tiers, agent-type-aware routing, and MAX_INJECT_CHARS budget
+- `inject_memory.py` (SubagentStart) — injects memory context (Markdown-KV with importance tiers, agent-type routing) and ADR decision context (from `DECISIONS_INDEX.md`, filtered to accepted/proposed, with soft cap budget). Memory-first budget allocation within MAX_INJECT_CHARS
 - `validate_memory.py` (SubagentStop) — warns parent when agents write LEARNINGS.md without calling remember()
 - `capture_memory.py` (PostToolUse) — captures tool events as JSONL observations
 - `capture_session.py` (SessionStart, Stop, SubagentStart, SubagentStop) — captures lifecycle events as JSONL observations

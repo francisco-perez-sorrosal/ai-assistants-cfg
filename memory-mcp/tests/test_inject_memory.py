@@ -470,3 +470,593 @@ class TestAgentTypeResolution:
         """Empty payload returns _default."""
         result = inject_memory._resolve_agent_type({})
         assert result == "_default"
+
+
+# -- ADR test helpers ---------------------------------------------------------
+
+_SAMPLE_ADR_ROWS = [
+    {
+        "id": "dec-001",
+        "title": "Use skill wrapper for context-hub",
+        "status": "accepted",
+        "category": "architectural",
+        "date": "2026-03-31",
+        "tags": "context-hub, skills",
+        "summary": "Skill wrapper instead of MCP server",
+    },
+    {
+        "id": "dec-002",
+        "title": "OTel relay for telemetry",
+        "status": "accepted",
+        "category": "architectural",
+        "date": "2026-03-31",
+        "tags": "observability, otel",
+        "summary": "Hooks POST events to chronograph",
+    },
+    {
+        "id": "dec-003",
+        "title": "Dual-layer memory architecture",
+        "status": "proposed",
+        "category": "architectural",
+        "date": "2026-04-03",
+        "tags": "memory, architecture",
+        "summary": "Curated JSON plus append-only JSONL",
+    },
+]
+
+
+def _make_decisions_index(rows: list[dict], *, path: Path) -> None:
+    """Write a DECISIONS_INDEX.md file from a list of ADR row dicts."""
+    decisions_dir = path / ".ai-state" / "decisions"
+    decisions_dir.mkdir(parents=True, exist_ok=True)
+    lines = [
+        "# Decisions Index\n",
+        "Auto-generated from ADR frontmatter. Do not edit manually.",
+        "Regenerate: `python scripts/regenerate_adr_index.py`\n",
+        "| ID | Title | Status | Category | Date | Tags | Summary |",
+        "|----|-------|--------|----------|------|------|---------|",
+    ]
+    for r in rows:
+        lines.append(
+            f"| {r['id']} | {r['title']} | {r['status']} | "
+            f"{r['category']} | {r['date']} | {r['tags']} | {r['summary']} |"
+        )
+    (decisions_dir / "DECISIONS_INDEX.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+# -- ADR index parsing tests --------------------------------------------------
+
+
+class TestADRIndexParsing:
+    def test_parses_valid_index_rows(self, project_dir: Path):
+        """Standard rows produce parsed dicts with correct fields."""
+        _make_decisions_index(_SAMPLE_ADR_ROWS, path=project_dir)
+        content = (project_dir / ".ai-state" / "decisions" / "DECISIONS_INDEX.md").read_text()
+        rows = inject_memory._parse_index_rows(content)
+        assert len(rows) == 3
+        assert rows[0]["id"] == "dec-001"
+        assert rows[0]["title"] == "Use skill wrapper for context-hub"
+        assert rows[0]["status"] == "accepted"
+        assert rows[2]["status"] == "proposed"
+
+    def test_filters_superseded_and_rejected(self):
+        """Rows with superseded or rejected status are excluded."""
+        content = (
+            "| ID | Title | Status | Category | Date | Tags | Summary |\n"
+            "|----|-------|--------|----------|------|------|---------|  \n"
+            "| dec-001 | A | superseded | arch | 2026-01-01 | t1 | S1 |\n"
+            "| dec-002 | B | rejected | arch | 2026-01-01 | t2 | S2 |\n"
+            "| dec-003 | C | accepted | arch | 2026-01-01 | t3 | S3 |\n"
+        )
+        rows = inject_memory._parse_index_rows(content)
+        assert len(rows) == 1
+        assert rows[0]["id"] == "dec-003"
+
+    def test_keeps_accepted_and_proposed(self):
+        """Both accepted and proposed rows pass the filter."""
+        content = (
+            "| ID | Title | Status | Category | Date | Tags | Summary |\n"
+            "|----|-------|--------|----------|------|------|---------|  \n"
+            "| dec-001 | A | accepted | arch | 2026-01-01 | t1 | S1 |\n"
+            "| dec-002 | B | proposed | arch | 2026-01-01 | t2 | S2 |\n"
+        )
+        rows = inject_memory._parse_index_rows(content)
+        assert len(rows) == 2
+        statuses = {r["status"] for r in rows}
+        assert statuses == {"accepted", "proposed"}
+
+    def test_skips_malformed_rows(self):
+        """Rows with wrong column count are silently skipped."""
+        content = (
+            "| ID | Title | Status | Category | Date | Tags | Summary |\n"
+            "|----|-------|--------|----------|------|------|---------|  \n"
+            "| dec-001 | A | accepted | arch | 2026-01-01 | t1 | S1 |\n"
+            "| dec-002 | only-two-cols |\n"
+            "| dec-003 | C | accepted | arch | 2026-01-01 | t3 | S3 |\n"
+        )
+        rows = inject_memory._parse_index_rows(content)
+        assert len(rows) == 2
+
+    def test_skips_header_and_separator_lines(self):
+        """Header, separator, blank, and metadata lines are not parsed as data."""
+        content = (
+            "# Decisions Index\n"
+            "\n"
+            "Auto-generated from ADR frontmatter.\n"
+            "Regenerate: `python scripts/regenerate_adr_index.py`\n"
+            "\n"
+            "| ID | Title | Status | Category | Date | Tags | Summary |\n"
+            "|----|-------|--------|----------|------|------|---------|  \n"
+            "| dec-001 | A | accepted | arch | 2026-01-01 | t1 | S1 |\n"
+        )
+        rows = inject_memory._parse_index_rows(content)
+        assert len(rows) == 1
+
+    def test_empty_index_returns_empty_list(self):
+        """Index with only headers produces empty list."""
+        content = (
+            "| ID | Title | Status | Category | Date | Tags | Summary |\n"
+            "|----|-------|--------|----------|------|------|---------|  \n"
+        )
+        rows = inject_memory._parse_index_rows(content)
+        assert rows == []
+
+    def test_status_filtering_is_case_insensitive(self):
+        """Status comparison is case-insensitive."""
+        content = (
+            "| ID | Title | Status | Category | Date | Tags | Summary |\n"
+            "|----|-------|--------|----------|------|------|---------|  \n"
+            "| dec-001 | A | Accepted | arch | 2026-01-01 | t1 | S1 |\n"
+            "| dec-002 | B | PROPOSED | arch | 2026-01-01 | t2 | S2 |\n"
+        )
+        rows = inject_memory._parse_index_rows(content)
+        assert len(rows) == 2
+
+
+# -- ADR output formatting tests ----------------------------------------------
+
+
+class TestADROutput:
+    def test_formats_entries_in_rich_semantic_format(self):
+        """Output matches the rich semantic format with all fields."""
+        rows = [_SAMPLE_ADR_ROWS[0]]
+        parsed = [
+            {
+                "id": r["id"],
+                "title": r["title"],
+                "status": r["status"],
+                "category": r["category"],
+                "date": r["date"],
+                "tags": r["tags"],
+                "summary": r["summary"],
+            }
+            for r in rows
+        ]
+        result = inject_memory._build_adr_output(parsed, budget=2000)
+        assert "**dec-001**" in result
+        assert "Use skill wrapper for context-hub" in result
+        assert "(accepted)" in result
+        assert "Skill wrapper instead of MCP server" in result
+        assert "[context-hub, skills]" in result
+
+    def test_respects_budget(self):
+        """Output does not exceed the given budget."""
+        parsed = [
+            {
+                "id": r["id"],
+                "title": r["title"],
+                "status": r["status"],
+                "category": r["category"],
+                "date": r["date"],
+                "tags": r["tags"],
+                "summary": r["summary"],
+            }
+            for r in _SAMPLE_ADR_ROWS
+        ]
+        result = inject_memory._build_adr_output(parsed, budget=200)
+        # Should fit at most 1 entry in 200 chars
+        assert len(result) <= 200 + 100  # +100 for truncation footer
+
+    def test_entries_trimmed_when_budget_tight(self):
+        """With small budget, only as many entries as fit are included."""
+        parsed = [
+            {
+                "id": f"dec-{i:03d}",
+                "title": f"Decision {i}",
+                "status": "accepted",
+                "category": "architectural",
+                "date": "2026-01-01",
+                "tags": "tag1, tag2",
+                "summary": f"Summary for decision {i} with some detail",
+            }
+            for i in range(20)
+        ]
+        result = inject_memory._build_adr_output(parsed, budget=500)
+        line_count = len([line for line in result.split("\n") if line.startswith("- **")])
+        assert line_count < 20
+
+    def test_empty_rows_returns_empty_string(self):
+        """Empty input produces empty string."""
+        result = inject_memory._build_adr_output([], budget=2000)
+        assert result == ""
+
+    def test_truncation_footer_when_entries_dropped(self):
+        """Footer indicates omitted count when entries are dropped."""
+        parsed = [
+            {
+                "id": f"dec-{i:03d}",
+                "title": f"Decision {i}",
+                "status": "accepted",
+                "category": "architectural",
+                "date": "2026-01-01",
+                "tags": "tag1",
+                "summary": f"Summary {i}",
+            }
+            for i in range(30)
+        ]
+        result = inject_memory._build_adr_output(parsed, budget=500)
+        assert "more decisions" in result
+
+
+# -- ADR graceful degradation tests -------------------------------------------
+
+
+class TestADRGracefulDegradation:
+    def test_missing_decisions_dir_no_adr_section(self, project_dir: Path):
+        """No .ai-state/decisions/ directory -> no ADR section, memory works."""
+        _make_memory_json(
+            [
+                {
+                    "category": "learnings",
+                    "key": "a",
+                    "value": "V",
+                    "importance": 7,
+                    "tags": [],
+                }
+            ],
+            path=project_dir,
+        )
+        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        import io
+        from io import StringIO
+
+        with (
+            patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload))),
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            inject_memory.main()
+        output_str = mock_stdout.getvalue()
+        if output_str.strip():
+            result = json.loads(output_str)
+            ctx = result["hookSpecificOutput"]["additionalContext"]
+            assert "Memory Context" in ctx
+            assert "Decision Context" not in ctx
+
+    def test_missing_index_file_no_adr_section(self, project_dir: Path):
+        """Directory exists but no DECISIONS_INDEX.md -> no ADR section."""
+        decisions_dir = project_dir / ".ai-state" / "decisions"
+        decisions_dir.mkdir(parents=True, exist_ok=True)
+        index_path = decisions_dir / "DECISIONS_INDEX.md"
+        result = inject_memory._read_decisions_index(index_path)
+        assert result is None
+
+    def test_empty_index_file_no_adr_section(self, project_dir: Path):
+        """Empty file -> returns None."""
+        decisions_dir = project_dir / ".ai-state" / "decisions"
+        decisions_dir.mkdir(parents=True, exist_ok=True)
+        (decisions_dir / "DECISIONS_INDEX.md").write_text("", encoding="utf-8")
+        result = inject_memory._read_decisions_index(decisions_dir / "DECISIONS_INDEX.md")
+        assert result is None
+
+    def test_memory_works_without_adrs(self, project_dir: Path):
+        """Full memory output when no ADRs exist (backward compat)."""
+        _make_memory_json(
+            [
+                {
+                    "category": "learnings",
+                    "key": "critical",
+                    "value": "Critical info",
+                    "importance": 9,
+                    "tags": ["test"],
+                }
+            ],
+            path=project_dir,
+        )
+        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        import io
+        from io import StringIO
+
+        with (
+            patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload))),
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            inject_memory.main()
+        result = json.loads(mock_stdout.getvalue())
+        ctx = result["hookSpecificOutput"]["additionalContext"]
+        assert "Memory Context" in ctx
+        assert "critical" in ctx
+        assert "Decision Context" not in ctx
+
+    def test_adrs_work_without_memory(self, project_dir: Path):
+        """ADR section present when memory.json is missing."""
+        _make_decisions_index(_SAMPLE_ADR_ROWS, path=project_dir)
+        # No memory.json created
+        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        import io
+        from io import StringIO
+
+        with (
+            patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload))),
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            inject_memory.main()
+        output_str = mock_stdout.getvalue()
+        if output_str.strip():
+            result = json.loads(output_str)
+            ctx = result["hookSpecificOutput"]["additionalContext"]
+            assert "Decision Context" in ctx
+            assert "Memory Context" not in ctx
+
+
+# -- ADR budget integration tests ---------------------------------------------
+
+
+class TestADRBudgetIntegration:
+    def test_both_sections_within_budget(self, project_dir: Path):
+        """Combined memory + ADR output under MAX_INJECT_CHARS."""
+        _make_memory_json(
+            [
+                {
+                    "category": "learnings",
+                    "key": "a",
+                    "value": "V",
+                    "importance": 7,
+                    "tags": [],
+                }
+            ],
+            path=project_dir,
+        )
+        _make_decisions_index(_SAMPLE_ADR_ROWS, path=project_dir)
+        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        import io
+        from io import StringIO
+
+        with (
+            patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload))),
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            inject_memory.main()
+        result = json.loads(mock_stdout.getvalue())
+        ctx = result["hookSpecificOutput"]["additionalContext"]
+        assert len(ctx) <= inject_memory.MAX_INJECT_CHARS + 200
+        assert "Memory Context" in ctx
+        assert "Decision Context" in ctx
+
+    def test_adrs_trimmed_by_soft_cap(self):
+        """When budget is ample but ADRs exceed soft cap, ADRs are trimmed."""
+        parsed = [
+            {
+                "id": f"dec-{i:03d}",
+                "title": f"Decision number {i} with a longer title",
+                "status": "accepted",
+                "category": "architectural",
+                "date": "2026-01-01",
+                "tags": "tag1, tag2, tag3",
+                "summary": f"A detailed summary for decision {i} explaining the rationale",
+            }
+            for i in range(30)
+        ]
+        result = inject_memory._build_adr_output(parsed, budget=6000)
+        # Soft cap is 2000, so should be trimmed despite 6000 budget
+        assert len(result) <= inject_memory.ADR_SOFT_CAP + 100  # +100 for footer
+
+    def test_adrs_trimmed_below_soft_cap_when_memory_large(self, project_dir: Path):
+        """Large memory output pushes ADRs below soft cap."""
+        # Create many high-importance memory entries to consume budget
+        entries = [
+            {
+                "category": "learnings",
+                "key": f"entry_{i:03d}",
+                "value": f"Important learning about topic {i} in the project",
+                "summary": f"Topic {i} learning summary",
+                "importance": 8,
+                "tags": ["t1", "t2"],
+            }
+            for i in range(200)
+        ]
+        _make_memory_json(entries, path=project_dir)
+        _make_decisions_index(_SAMPLE_ADR_ROWS, path=project_dir)
+        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        import io
+        from io import StringIO
+
+        with (
+            patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload))),
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            inject_memory.main()
+        result = json.loads(mock_stdout.getvalue())
+        ctx = result["hookSpecificOutput"]["additionalContext"]
+        assert len(ctx) <= inject_memory.MAX_INJECT_CHARS + 200
+
+    def test_no_adr_section_when_zero_remaining_budget(self):
+        """When budget is zero, no ADR output is produced."""
+        parsed = [_SAMPLE_ADR_ROWS[0]]
+        result = inject_memory._build_adr_output(parsed, budget=0)
+        assert result == ""
+
+    def test_adr_output_with_ample_budget_includes_all(self):
+        """When budget is ample and few ADRs, all are included."""
+        parsed = [
+            {
+                "id": r["id"],
+                "title": r["title"],
+                "status": r["status"],
+                "category": r["category"],
+                "date": r["date"],
+                "tags": r["tags"],
+                "summary": r["summary"],
+            }
+            for r in _SAMPLE_ADR_ROWS
+        ]
+        result = inject_memory._build_adr_output(parsed, budget=6000)
+        line_count = len([line for line in result.split("\n") if line.startswith("- **")])
+        assert line_count == 3
+
+
+# -- ADR end-to-end tests -----------------------------------------------------
+
+
+class TestADREndToEnd:
+    def test_both_memory_and_adrs_in_output(self, project_dir: Path):
+        """Both sections present in final JSON output."""
+        _make_memory_json(
+            [
+                {
+                    "category": "learnings",
+                    "key": "learn1",
+                    "value": "A learning",
+                    "importance": 7,
+                    "tags": ["test"],
+                }
+            ],
+            path=project_dir,
+        )
+        _make_decisions_index(_SAMPLE_ADR_ROWS, path=project_dir)
+        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        import io
+        from io import StringIO
+
+        with (
+            patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload))),
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            inject_memory.main()
+        result = json.loads(mock_stdout.getvalue())
+        ctx = result["hookSpecificOutput"]["additionalContext"]
+        assert "## Memory Context (auto-injected)" in ctx
+        assert "## Decision Context (auto-injected)" in ctx
+        assert "dec-001" in ctx
+
+    def test_adr_section_header_format(self, project_dir: Path):
+        """Output contains the correct Decision Context header."""
+        _make_decisions_index(_SAMPLE_ADR_ROWS[:1], path=project_dir)
+        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        import io
+        from io import StringIO
+
+        with (
+            patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload))),
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            inject_memory.main()
+        result = json.loads(mock_stdout.getvalue())
+        ctx = result["hookSpecificOutput"]["additionalContext"]
+        assert "## Decision Context (auto-injected)" in ctx
+
+    def test_hook_event_name_present(self, project_dir: Path):
+        """Output JSON includes hookEventName: SubagentStart."""
+        _make_decisions_index(_SAMPLE_ADR_ROWS[:1], path=project_dir)
+        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        import io
+        from io import StringIO
+
+        with (
+            patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload))),
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            inject_memory.main()
+        result = json.loads(mock_stdout.getvalue())
+        assert result["hookSpecificOutput"]["hookEventName"] == "SubagentStart"
+
+    def test_decisions_appear_before_memory_in_output(self, project_dir: Path):
+        """ADR section appears before memory section in the injected context."""
+        _make_memory_json(
+            [
+                {
+                    "category": "learnings",
+                    "key": "a",
+                    "value": "V",
+                    "importance": 7,
+                    "tags": [],
+                }
+            ],
+            path=project_dir,
+        )
+        _make_decisions_index(_SAMPLE_ADR_ROWS[:1], path=project_dir)
+        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        import io
+        from io import StringIO
+
+        with (
+            patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload))),
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            inject_memory.main()
+        result = json.loads(mock_stdout.getvalue())
+        ctx = result["hookSpecificOutput"]["additionalContext"]
+        dec_pos = ctx.find("## Decision Context")
+        mem_pos = ctx.find("## Memory Context")
+        assert dec_pos < mem_pos, "Decisions must appear before memory"
+
+    def test_total_output_within_budget_with_both_sources(self, project_dir: Path):
+        """Combined output including headers stays within MAX_INJECT_CHARS."""
+        # Many memory entries to pressure the budget
+        entries = [
+            {
+                "category": "learnings",
+                "key": f"entry_{i:03d}",
+                "value": f"Important learning about topic {i} in the project",
+                "summary": f"Topic {i} learning summary",
+                "importance": 8,
+                "tags": ["t1", "t2"],
+            }
+            for i in range(200)
+        ]
+        _make_memory_json(entries, path=project_dir)
+        _make_decisions_index(_SAMPLE_ADR_ROWS, path=project_dir)
+        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        import io
+        from io import StringIO
+
+        with (
+            patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload))),
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            inject_memory.main()
+        result = json.loads(mock_stdout.getvalue())
+        ctx = result["hookSpecificOutput"]["additionalContext"]
+        assert len(ctx) <= inject_memory.MAX_INJECT_CHARS, (
+            f"Total output {len(ctx)} exceeds budget {inject_memory.MAX_INJECT_CHARS}"
+        )
+
+    def test_adrs_get_priority_over_memory(self, project_dir: Path):
+        """When budget is tight, ADRs are preserved and memory is trimmed."""
+        # Fill memory with many high-importance entries
+        entries = [
+            {
+                "category": "learnings",
+                "key": f"entry_{i:03d}",
+                "value": f"Important learning about topic {i} in the project",
+                "summary": f"Topic {i} learning summary text here",
+                "importance": 9,
+                "tags": ["t1", "t2"],
+            }
+            for i in range(500)
+        ]
+        _make_memory_json(entries, path=project_dir)
+        _make_decisions_index(_SAMPLE_ADR_ROWS, path=project_dir)
+        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        import io
+        from io import StringIO
+
+        with (
+            patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload))),
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            inject_memory.main()
+        result = json.loads(mock_stdout.getvalue())
+        ctx = result["hookSpecificOutput"]["additionalContext"]
+        # ADRs must be present even when memory is huge
+        assert "Decision Context" in ctx
+        assert "dec-001" in ctx
