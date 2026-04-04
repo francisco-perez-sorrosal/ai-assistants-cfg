@@ -18,10 +18,9 @@ __pycache__/
 # Agent intermediate documents
 .ai-work/
 
-# Runtime state files (locks, backups, append-only logs)
+# Runtime ephemeral files (concurrency locks, transient backups)
 .ai-state/*.lock
 .ai-state/*.backup.json
-.ai-state/observations.jsonl
 
 # User-specific local settings
 **/.claude/settings.local.json
