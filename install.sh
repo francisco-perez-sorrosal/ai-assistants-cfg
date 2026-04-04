@@ -173,6 +173,7 @@ Usage: $(basename "$0") [code|desktop|cursor [path]] [--check] [--dry-run] [--un
   --check      Verify installation health
   --dry-run    Show what would be installed (no writes)
   --uninstall  Remove installation
+  --relink     Re-symlink config, rules, and scripts (no prompts)
   --help       Show this help
 EOF
     exit 0
@@ -186,6 +187,7 @@ MODE="code"
 CHECK=false
 DRY_RUN=false
 UNINSTALL=false
+RELINK=false
 CURSOR_TARGET=""
 
 while [ $# -gt 0 ]; do
@@ -196,14 +198,20 @@ while [ $# -gt 0 ]; do
         --check)      CHECK=true ;;
         --dry-run)    DRY_RUN=true ;;
         --uninstall)  UNINSTALL=true ;;
+        --relink)     RELINK=true ;;
         -h|--help)    show_usage ;;
         *)            fail "Unknown argument: $1. Use --help for usage." ;;
     esac
     shift
 done
 
-# At most one of --check, --dry-run, --uninstall (first wins)
-if $CHECK && ( $DRY_RUN || $UNINSTALL ); then
+# At most one of --check, --dry-run, --uninstall, --relink (first wins)
+if $RELINK && ( $CHECK || $DRY_RUN || $UNINSTALL ); then
+    warn "Multiple actions requested; using --relink only."
+    CHECK=false
+    DRY_RUN=false
+    UNINSTALL=false
+elif $CHECK && ( $DRY_RUN || $UNINSTALL ); then
     warn "Multiple actions requested; using --check only."
     DRY_RUN=false
     UNINSTALL=false
@@ -223,12 +231,14 @@ case "$MODE" in
         $CHECK     && delegate_args+=(--check)
         $DRY_RUN   && delegate_args+=(--dry-run)
         $UNINSTALL && delegate_args+=(--uninstall)
+        $RELINK    && delegate_args+=(--relink)
         ;;
     cursor)
         [ -n "$CURSOR_TARGET" ] && delegate_args+=("$CURSOR_TARGET")
         $CHECK     && delegate_args+=(--check)
         $DRY_RUN   && delegate_args+=(--dry-run)
         $UNINSTALL && delegate_args+=(--uninstall)
+        $RELINK    && delegate_args+=(--relink)
         ;;
 esac
 
@@ -242,7 +252,9 @@ delegate() {
     return $rc
 }
 
-if $CHECK; then
+if $RELINK; then
+    delegate
+elif $CHECK; then
     delegate_rc=0
     delegate || delegate_rc=$?
     check_chub_cli

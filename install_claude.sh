@@ -5,7 +5,7 @@
 # configures MCP servers for Claude Desktop. Invoked by install.sh for code|desktop.
 #
 # Usage:
-#   ./install_claude.sh code|desktop [--check] [--dry-run] [--uninstall] [--help]
+#   ./install_claude.sh code|desktop [--check] [--dry-run] [--uninstall] [--relink] [--help]
 
 set -eo pipefail
 
@@ -15,6 +15,10 @@ set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_CONFIG_DIR="${SCRIPT_DIR}/claude/config"
+
+# Shared linking helpers (rules linking used by both Claude and Cursor installers)
+# shellcheck source=lib/install_shared.sh
+source "${SCRIPT_DIR}/lib/install_shared.sh"
 PLUGIN_NAME="i-am"
 MARKETPLACE_NAME="bit-agora"
 MARKETPLACE_SOURCE="francisco-perez-sorrosal/bit-agora"
@@ -78,7 +82,7 @@ link_item() {
 }
 
 # =============================================================================
-# Personal config + rules
+# Symlink management — single source of truth for all symlink-based artifacts
 # =============================================================================
 
 clean_stale_symlinks() {
@@ -108,43 +112,52 @@ clean_stale_symlinks() {
     done
 }
 
-install_personal_config() {
+relink_all() {
+    # 1. Personal config
     local src_dir="$CLAUDE_CONFIG_DIR"
     local dest_dir="${HOME}/.claude"
+    local list_file="${CLAUDE_CONFIG_DIR}/config_items.txt"
     mkdir -p "${dest_dir}"
 
-    header "Step 1 — Personal config"
-
-    clean_stale_symlinks
-
-    local list_file="${CLAUDE_CONFIG_DIR}/config_items.txt"
     if [ ! -f "$list_file" ]; then
         fail "Claude config list not found: $list_file"
     fi
+    local config_count=0
     while IFS= read -r item || [ -n "$item" ]; do
         [ -z "$item" ] && continue
         if [ -e "$src_dir/$item" ]; then
-            link_item "$src_dir/$item" "$dest_dir/$item" "$item → ~/.claude/"
+            ln -sf "$src_dir/$item" "$dest_dir/$item"
+            config_count=$((config_count + 1))
         fi
     done < "$list_file"
-}
+    info "Config: ${config_count} items linked"
 
-install_rules() {
-    local rules_src="${SCRIPT_DIR}/rules"
-    local rules_dir="${HOME}/.claude/rules"
-    mkdir -p "${rules_dir}"
+    # 2. Rules (shared logic — see lib/install_shared.sh)
+    link_rules "${SCRIPT_DIR}/rules" "${HOME}/.claude/rules"
+    info "Rules: ${LINK_RULES_COUNT} files linked"
 
-    header "Step 2 — Rules"
+    # 3. CLI scripts
+    local scripts_src="${SCRIPT_DIR}/scripts"
+    local bin_dir="${HOME}/.local/bin"
 
-    while IFS= read -r rule; do
-        local rel_path="${rule#"$rules_src"/}"
-        local rel_dir
-        rel_dir="$(dirname "$rel_path")"
-        [[ "$(basename "$rule")" == "README.md" ]] && continue
-        [[ "$rel_path" == */references/* ]] && continue
-        [ "$rel_dir" != "." ] && mkdir -p "${rules_dir}/${rel_dir}"
-        link_item "$rule" "${rules_dir}/${rel_path}" "${rel_path}"
-    done < <(find "$rules_src" -name '*.md' -type f | sort)
+    if [ -d "$scripts_src" ] && [ -n "$(ls -A "$scripts_src" 2>/dev/null)" ]; then
+        mkdir -p "$bin_dir"
+        local scripts_count=0
+        for script in "$scripts_src"/*; do
+            [ -f "$script" ] || continue
+            local name
+            name="$(basename "$script")"
+            ln -sf "$script" "${bin_dir}/${name}"
+            scripts_count=$((scripts_count + 1))
+        done
+        info "Scripts: ${scripts_count} files linked"
+    fi
+
+    # PATH check for scripts
+    if [[ ":$PATH:" != *":${HOME}/.local/bin:"* ]]; then
+        warn "~/.local/bin is not in PATH"
+        step "Add to ~/.zshrc:  export PATH=\"\$HOME/.local/bin:\$PATH\""
+    fi
 }
 
 # =============================================================================
@@ -169,7 +182,7 @@ marketplace_is_registered() {
 
 # Returns 0 if plugin was installed, 1 if skipped.
 prompt_plugin_install() {
-    header "Step 3 — i-am Plugin"
+    header "Step 2 — i-am Plugin"
     cat <<EOF
 
   ${B}[1] Install plugin (recommended)${R}
@@ -234,37 +247,6 @@ EOF
     return 0
 }
 
-# =============================================================================
-# CLI scripts (~/.local/bin/)
-# =============================================================================
-
-install_scripts() {
-    local scripts_src="${SCRIPT_DIR}/scripts"
-    local bin_dir="${HOME}/.local/bin"
-
-    header "Step 5 — CLI Scripts"
-
-    if [ ! -d "$scripts_src" ] || [ -z "$(ls -A "$scripts_src" 2>/dev/null)" ]; then
-        step "No scripts to install"
-        return
-    fi
-
-    mkdir -p "$bin_dir"
-
-    for script in "$scripts_src"/*; do
-        [ -f "$script" ] || continue
-        local name
-        name="$(basename "$script")"
-        link_item "$script" "${bin_dir}/${name}" "${name} → ~/.local/bin/"
-    done
-
-    # Check PATH
-    if [[ ":$PATH:" != *":${bin_dir}:"* ]]; then
-        warn "~/.local/bin is not in PATH"
-        step "Add to ~/.zshrc:  export PATH=\"\$HOME/.local/bin:\$PATH\""
-    fi
-}
-
 install_plugin_permissions() {
     local settings_file="${HOME}/.claude/settings.json"
 
@@ -308,7 +290,7 @@ prompt_hooks_install() {
         return
     fi
 
-    header "Step 4 — Hooks (Observability + Code Quality)"
+    header "Step 3 — Hooks (Observability + Code Quality)"
     cat <<EOF
 
   ${B}[1] Install hooks (recommended)${R}
@@ -421,7 +403,7 @@ PYEOF
 # =============================================================================
 
 prompt_chub_mcp() {
-    header "Step 6 — context-hub MCP Server"
+    header "Step 4 — context-hub MCP Server"
 
     # Prefer globally installed chub-mcp, fall back to npx
     local chub_mcp_cmd chub_mcp_args
@@ -513,7 +495,7 @@ if 'chub' in servers:
 # =============================================================================
 
 prompt_phoenix_install() {
-    header "Step 7 — Phoenix Observability Daemon"
+    header "Step 5 — Phoenix Observability Daemon"
 
     cat <<EOF
 
@@ -550,7 +532,7 @@ get_claude_desktop_config_dir() {
 }
 
 prompt_claude_desktop_link() {
-    header "Step 7 — Claude Desktop"
+    header "Step 6 — Claude Desktop"
     cat <<EOF
 
   ${B}[1] Skip${R}
@@ -872,14 +854,14 @@ uninstall_claude_desktop() {
 # =============================================================================
 
 install_claude_code() {
-    install_personal_config
-    install_rules
+    header "Step 1 — Symlinks (config, rules, scripts)"
+    clean_stale_symlinks
+    relink_all
 
     if prompt_plugin_install; then
         prompt_hooks_install
     fi
 
-    install_scripts
     prompt_chub_mcp
     prompt_phoenix_install
     prompt_claude_desktop_link
@@ -944,6 +926,7 @@ Usage: $(basename "$0") code|desktop [--check] [--dry-run] [--uninstall] [--help
   --check      Verify installation health
   --dry-run    Show what would be installed (no writes)
   --uninstall  Remove installation
+  --relink     Re-symlink config, rules, and scripts (no prompts)
   --help       Show this help
 EOF
     exit 0
@@ -957,6 +940,7 @@ MODE=""
 CHECK=false
 DRY_RUN=false
 UNINSTALL=false
+RELINK=false
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -964,6 +948,7 @@ while [ $# -gt 0 ]; do
         --check)      CHECK=true ;;
         --dry-run)    DRY_RUN=true ;;
         --uninstall)  UNINSTALL=true ;;
+        --relink)     RELINK=true ;;
         -h|--help)    show_usage ;;
         *)            fail "Unknown argument: $1. Use --help for usage." ;;
     esac
@@ -972,6 +957,19 @@ done
 
 if [ -z "$MODE" ]; then
     fail "Missing mode. Use code or desktop. See --help."
+fi
+
+if $RELINK; then
+    case "$MODE" in
+        code)
+            header "Relinking symlink-based artifacts"
+            relink_all
+            printf "\n"
+            info "Relink complete"
+            ;;
+        desktop) fail "--relink is only supported for code mode" ;;
+    esac
+    exit $?
 fi
 
 if $CHECK; then

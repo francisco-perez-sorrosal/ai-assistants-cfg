@@ -17,6 +17,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$SCRIPT_DIR"
 CURSOR_CONFIG_DIR="$REPO_ROOT/cursor/config"
 
+# Shared linking helpers (rules linking used by both Claude and Cursor installers)
+# shellcheck source=lib/install_shared.sh
+source "${SCRIPT_DIR}/lib/install_shared.sh"
+
 # Terminal formatting
 if [ -t 1 ]; then
     B=$'\033[1m' D=$'\033[2m' R=$'\033[0m'
@@ -208,26 +212,10 @@ for d in skills/*/; do
 done
 info "Skills linked ($(ls -1 "$CURSOR_DIR/skills" 2>/dev/null | wc -l | tr -d ' ') skills)"
 
-# 2. Rules: symlink each rule file (preserving directory structure)
+# 2. Rules (shared logic — see lib/install_shared.sh)
 step "Linking rules..."
-mkdir -p "$CURSOR_DIR/rules"
-rules_count=0
-while IFS= read -r rule; do
-    rel_path="${rule#"$REPO_ROOT/rules"/}"
-    rel_dir="$(dirname "$rel_path")"
-    [[ "$(basename "$rule")" == "README.md" ]] && continue
-    [[ "$rel_path" == */references/* ]] && continue
-    [ "$rel_dir" != "." ] && mkdir -p "$CURSOR_DIR/rules/$rel_dir"
-    src="$REPO_ROOT/rules/$rel_path"
-    target="$CURSOR_DIR/rules/$rel_path"
-    if [ -L "$target" ] && [ "$(readlink "$target")" = "$src" ]; then
-        :
-    else
-        ln -sf "$src" "$target"
-    fi
-    rules_count=$((rules_count + 1))
-done < <(find "$REPO_ROOT/rules" -name '*.md' -type f | sort)
-info "Rules linked ($rules_count rules)"
+link_rules "$REPO_ROOT/rules" "$CURSOR_DIR/rules"
+info "Rules linked ($LINK_RULES_COUNT rules)"
 
 # 3. Commands: export plain .md into TARGET/commands/
 step "Exporting commands..."
