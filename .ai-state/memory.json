@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "session_count": 3,
+  "session_count": 4,
   "memories": {
     "user": {},
     "assistant": {},
@@ -294,6 +294,65 @@
         "invalid_at": null,
         "type": "gotcha",
         "created_by": "main"
+      },
+      "hook-duplication-scan-transcript": {
+        "value": "The _scan_transcript() function is duplicated across memory_gate.py and validate_memory.py hooks in .claude-plugin/hooks/. Both implement identical logic to scan Claude Code transcripts and classify tool events. This should be refactored into a shared utility module (already partially done with _hook_utils.py) to reduce maintenance burden and prevent divergence.",
+        "created_at": "2026-04-05T01:33:31.818069Z",
+        "updated_at": "2026-04-05T01:33:31.818069Z",
+        "tags": [
+          "architecture",
+          "code-quality",
+          "hooks",
+          "refactoring"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "_scan_transcript() duplicated in memory_gate.py and validate_memory.py — refactoring candidate for DRY",
+        "valid_at": "2026-04-05T01:33:31.818069Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "praxion-ecosystem-inventory-2026-04-04": {
+        "value": "Comprehensive ecosystem inventory completed for Praxion plugin. All component categories verified:\n\nSKILLS: 29 directories with SKILL.md, all with proper frontmatter (name, description). Catalog in skills/README.md matches filesystem exactly.\n\nCOMMANDS: 15 files with frontmatter (description, argument-hint, allowed-tools). Catalog in commands/README.md matches filesystem exactly. Note: renamed from 'memory.md' to 'cajalogic.md' (update README_DEV.md).\n\nAGENTS: 12 files with proper frontmatter (name, description, tools, skills). All 12 registered in plugin.json agents array. Filesystem matches plugin.json exactly.\n\nRULES: 8 rule files in swe/ and writing/ subdirectories. Two path-scoped (testing-conventions.md for tests/**, readme-style.md for **/README.md). Catalog in rules/README.md matches filesystem.\n\nHOOKS: 13 hook scripts + 1 utility module (_hook_utils.py) in .claude-plugin/hooks/. All registered in hooks.json. Types: Python (11), Shell (1), Tests (1), Utils (1).\n\nMCP SERVERS: 2 servers registered in plugin.json and present as directories:\n- task-chronograph-mcp (Python, uv-based)\n- memory-mcp (Python, uv-based)\n\nREFERENCE FILES: All skills have optional references/ subdirectories for progressive disclosure.\n\nISSUE IDENTIFIED: README_DEV.md lists 'commands/memory.md' but actual file is 'commands/cajalogic.md'. Needs update.",
+        "created_at": "2026-04-05T01:34:25.891042Z",
+        "updated_at": "2026-04-05T01:34:25.891042Z",
+        "tags": [
+          "audit",
+          "documentation",
+          "ecosystem",
+          "inventory",
+          "structure"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Comprehensive ecosystem inventory completed for Praxion plugin. All component categories...",
+        "valid_at": "2026-04-05T01:34:25.891042Z",
+        "invalid_at": null,
+        "type": "decision",
+        "created_by": null
       }
     }
   }
