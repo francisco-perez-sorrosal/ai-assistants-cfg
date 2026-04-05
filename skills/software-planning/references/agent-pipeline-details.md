@@ -55,14 +55,14 @@ Multiple instances of the same agent type can run concurrently on disjoint work 
 **Direct-supervised** (any Bg Safe agent):
 
 1. Main agent identifies N independent work units with disjoint file sets
-2. Spawns N instances with `isolation: "worktree"` when agents modify files, each scoped to its target via the task prompt
+2. Spawns N instances in the pipeline worktree (no `isolation: "worktree"` — all agents share the same worktree), each scoped to its target via the task prompt. Parallel document safety is handled by fragment files
 3. Each instance reports independently
 4. Main agent reviews all outputs for coherence
 
 **Planner-supervised** (implementer/test-engineer under implementation-planner):
 
 1. Planner prepares `WIP.md` in parallel mode with per-step assignees and file lists
-2. Main agent spawns N implementer or test-engineer agents with `isolation: "worktree"`, each assigned one step
+2. Main agent spawns N implementer or test-engineer agents in the pipeline worktree, each assigned one step. Each writes to fragment files (`WIP_<agent-type>.md`, etc.) to avoid document collisions
 3. Each agent updates only its own step status in `WIP.md`
 4. After all report back, planner runs coherence review (re-reads modified files, verifies integration, merges learnings)
 
@@ -70,10 +70,10 @@ Multiple instances of the same agent type can run concurrently on disjoint work 
 
 ## Pipeline Worktree Lifecycle
 
-Standard and Full tier pipelines operate inside a dedicated worktree created by the main agent at pipeline start. This provides two levels of isolation:
+Standard and Full tier pipelines operate inside a dedicated worktree created by the main agent at pipeline start. This provides **single-level isolation**:
 
 1. **Pipeline-level** — `EnterWorktree` switches the main agent's session into a worktree, isolating the entire pipeline (`.ai-work/`, `.ai-state/`, code) from other concurrent Claude Code sessions on the same repo
-2. **Agent-level** — parallel file-modifying agents (implementer + test-engineer + doc-engineer) use `isolation: "worktree"` on the Agent tool to avoid colliding with each other within the pipeline
+2. All subagents work directly in this pipeline worktree — **no additional `isolation: "worktree"` on the Agent tool**. Parallel document safety is handled by fragment files (`WIP_<agent-type>.md`, etc.) and file disjointness enforcement by the planner
 
 ### Entry
 
@@ -84,12 +84,12 @@ Immediately after tier selection and task slug generation:
 3. A new branch is created from HEAD automatically
 4. All subsequent agent spawns, file reads/writes, and `.ai-work/<task-slug>/` operations happen inside this worktree
 
-Research-only agents (researcher, systems-architect, implementation-planner) read the codebase but produce only `.ai-work/` documents — they run inside the pipeline worktree naturally (no additional `isolation: "worktree"` needed).
+All agents — research-only, sequential, and parallel — run inside the pipeline worktree. No agent uses `isolation: "worktree"` on the Agent tool.
 
 ### During Execution
 
-- **Sequential agents** (single implementer, single test-engineer): run directly in the pipeline worktree — no agent-level isolation needed since there's no concurrency
-- **Parallel agents** (implementer + test-engineer + doc-engineer in a batch): spawn with `isolation: "worktree"` on the Agent tool to prevent intra-pipeline file collisions. After each batch completes, merge returned branches into the pipeline worktree branch
+- **Sequential agents** (single implementer, single test-engineer, researcher, architect, planner): run directly in the pipeline worktree
+- **Parallel agents** (implementer + test-engineer + doc-engineer in a batch): run in the same pipeline worktree. Document safety is handled by fragment files (`WIP_<agent-type>.md`, `LEARNINGS_<agent-type>.md`). File collision safety is handled by the planner's file disjointness checks
 - **`.ai-state/` writes** (ADRs, calibration log, spec archival): happen in the pipeline worktree, committed there. Git merge handles them when the pipeline branch is merged back
 
 ### Exit
@@ -126,6 +126,12 @@ When running multiple Claude Code sessions concurrently on the same repository:
 - **Direct and Lightweight tiers**: low collision risk, few files, short duration — work directly in the current checkout
 - **Spike tier**: read-only exploration, no file modifications — no isolation needed
 - **Sentinel runs**: read-only audits — run from any checkout without isolation
+
+### Do NOT Use `isolation: "worktree"` on the Agent Tool
+
+Never pass `isolation: "worktree"` when spawning subagents. It creates additional git worktrees with opaque names (`agent-<hex-id>`) that nest inside the pipeline worktree, confusing the user and fragmenting work across multiple directories. Known Claude Code issues: nested worktree creation ([#27881](https://github.com/anthropics/claude-code/issues/27881)), silent ignore for team agents ([#33045](https://github.com/anthropics/claude-code/issues/33045)).
+
+Instead, all agents share the pipeline worktree created by `EnterWorktree`. Parallel document safety uses fragment files. Parallel file safety uses planner-enforced disjointness.
 
 ## Multi-Perspective Analysis
 

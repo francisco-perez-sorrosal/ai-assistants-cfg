@@ -24,3 +24,9 @@ If `memories.assistant.name` is missing, pick a random name and store it immedia
 - **Assistant-agnostic shared assets**: `skills/`, `commands/`, `agents/` at the repo root, reusable across tools
 - **Assistant-specific config in subdirectories**: `claude/config/` for Claude, `cursor/config/` for Cursor
 - **Progressive disclosure**: Skills load metadata at startup, full content on activation, reference files on demand — keeping token cost minimal
+
+## Known Claude Code Limitations
+
+Tracked here so they can be revisited when Claude Code releases fixes:
+
+- **`isolation: "worktree"` on Agent tool creates nested worktrees** — when the session is already in a worktree (via `EnterWorktree`), agent worktrees nest inside it with opaque `agent-<hex>` names, fragmenting work. Workaround: never use `isolation: "worktree"`, rely on `EnterWorktree` + fragment files. Claude Code issues: [#27881](https://github.com/anthropics/claude-code/issues/27881) (nested creation), [#33045](https://github.com/anthropics/claude-code/issues/33045) (silent ignore for team agents). If these are fixed and worktree naming becomes controllable, reconsider the single-worktree policy in `swe-agent-coordination-protocol.md`

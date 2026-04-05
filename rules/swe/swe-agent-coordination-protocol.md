@@ -36,7 +36,7 @@ Standard and Full tier pipelines **must** operate in a dedicated worktree to pre
 
 1. Call `EnterWorktree` with `name: "<task-slug>"` — creates a worktree and switches the session into it
 2. All subsequent work (`.ai-work/`, `.ai-state/`, code changes) happens inside the worktree
-3. Parallel file-modifying agents (implementer + test-engineer + doc-engineer) additionally use `isolation: "worktree"` on the Agent tool for intra-pipeline isolation
+3. All subagents (researcher, architect, planner, implementer, test-engineer, doc-engineer) work directly in this worktree — do **NOT** use `isolation: "worktree"` on the Agent tool. Parallel document safety is handled by fragment files (see [agent-intermediate-documents](agent-intermediate-documents.md#parallel-execution))
 
 **At pipeline end:**
 
