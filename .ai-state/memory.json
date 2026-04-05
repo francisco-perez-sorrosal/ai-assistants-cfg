@@ -32,6 +32,39 @@
         "invalid_at": null,
         "type": "decision",
         "created_by": "main"
+      },
+      "memory-enforcement-architecture": {
+        "value": "Memory creation is enforced by three layers: (1) memory_gate.py Stop hook blocks main agent if >3 edits and 0 remember() calls, (2) validate_memory.py SubagentStop hook blocks subagents if >5 edits and 0 remember() calls (exempt: Explore, sentinel, doc-engineer, Plan), (3) inject_memory.py appends a memory obligation footer to every subagent's context. The memory-protocol rule uses mandatory language. This replaced the original design where remember() calls were purely voluntary — which resulted in 0 organic memories across 300+ observations.",
+        "created_at": "2026-04-05T00:32:39.022026Z",
+        "updated_at": "2026-04-05T00:32:39.022026Z",
+        "tags": [
+          "architecture",
+          "enforcement",
+          "memory"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "project.memory-system-v2-architecture",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Three-layer memory enforcement: Stop gate, SubagentStop gate, inject obligation footer",
+        "valid_at": "2026-04-05T00:32:39.022026Z",
+        "invalid_at": null,
+        "type": "decision",
+        "created_by": "main"
       }
     },
     "relationships": {},
@@ -61,6 +94,104 @@
         "links": [],
         "summary": "Hook additionalContext requires hookEventName field or injection is silently ignored",
         "valid_at": "2026-04-04T18:24:54.862577Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": "main"
+      },
+      "stop-hook-gate-pattern": {
+        "value": "The Stop hook gate pattern enforces pre-completion checklists: a sync Stop hook scans the transcript, exits 2 with {\"decision\": \"block\", \"reason\": \"...\"} on stderr when criteria aren't met, and checks stop_hook_active to prevent infinite loops (exit 0 on second invocation). This pattern is reusable for any \"before you stop\" enforcement — test runs, commit checks, memory persistence. The key design: first invocation blocks with actionable feedback, second invocation always passes.",
+        "created_at": "2026-04-05T00:32:14.428100Z",
+        "updated_at": "2026-04-05T00:32:14.428100Z",
+        "tags": [
+          "enforcement",
+          "hooks",
+          "pattern"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Stop hook gate pattern: sync hook + exit 2 + stop_hook_active check for pre-completion enforcement",
+        "valid_at": "2026-04-05T00:32:14.428100Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": "main"
+      },
+      "hook-additionalContext-supported-events": {
+        "value": "additionalContext in hook output is only supported for specific events: PostToolUse, PostToolUseFailure, SessionStart, UserPromptSubmit, SubagentStart, Notification, PreToolUse (exit 0 only). Stop and SubagentStop do NOT support additionalContext — output is silently ignored. For those events, use decision: \"block\" + exit 2 + stderr JSON instead. This caused validate_memory.py to be dead code for months — it generated warnings that nobody ever saw.",
+        "created_at": "2026-04-05T00:32:26.230942Z",
+        "updated_at": "2026-04-05T00:32:26.230942Z",
+        "tags": [
+          "claude-code",
+          "gotcha",
+          "hooks"
+        ],
+        "confidence": null,
+        "importance": 9,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.hook-output-requires-hookEventName",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "additionalContext only works on 7 specific hook events; Stop/SubagentStop must use exit 2 + stderr",
+        "valid_at": "2026-04-05T00:32:26.230942Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": "main"
+      },
+      "async-hooks-cannot-deliver-feedback": {
+        "value": "Async hooks (async: true) cannot reliably deliver additionalContext to Claude — the agent may move on before the hook output arrives. Any hook that needs Claude to see and act on its output MUST be sync (async: false). This was the root cause of validate_memory.py being dead code: it was registered as async at SubagentStop, so its warnings were generated but never reached the parent agent. Always verify async vs sync when a hook's purpose is to influence agent behavior.",
+        "created_at": "2026-04-05T00:32:28.438442Z",
+        "updated_at": "2026-04-05T00:32:28.438442Z",
+        "tags": [
+          "claude-code",
+          "gotcha",
+          "hooks"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.hook-output-requires-hookEventName",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.hook-additionalContext-supported-events",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Async hooks silently drop feedback — any hook influencing agent behavior must be sync",
+        "valid_at": "2026-04-05T00:32:28.438442Z",
         "invalid_at": null,
         "type": "gotcha",
         "created_by": "main"
