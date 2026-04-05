@@ -316,11 +316,11 @@
         },
         "access_count": 0,
         "last_accessed": null,
-        "status": "superseded",
+        "status": "active",
         "links": [],
         "summary": "_scan_transcript() duplicated in memory_gate.py and validate_memory.py — refactoring candidate for DRY",
         "valid_at": "2026-04-05T01:33:31.818069Z",
-        "invalid_at": "2026-04-05T02:07:26.827694Z",
+        "invalid_at": null,
         "type": "gotcha",
         "created_by": null
       },
