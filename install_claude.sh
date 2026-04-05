@@ -330,7 +330,7 @@ PYEOF
 # =============================================================================
 # Hooks were previously installed into ~/.claude/settings.json by this script.
 # Since Claude Code auto-loads hooks from installed plugins, the plugin's
-# hooks.json (.claude-plugin/hooks/hooks.json) is now the single authority.
+# hooks.json (hooks/hooks.json) is now the single authority.
 # The installer only cleans up stale hooks from settings.json if present.
 
 # =============================================================================
@@ -584,7 +584,7 @@ check_claude_code() {
     done
 
     printf "\n  ${B}Hooks:${R}\n"
-    local hooks_json="${SCRIPT_DIR}/.claude-plugin/hooks/hooks.json"
+    local hooks_json="${SCRIPT_DIR}/hooks/hooks.json"
     if [ -f "$hooks_json" ]; then
         info "Hooks provided by plugin hooks.json"
         # Warn if stale hooks remain in settings.json

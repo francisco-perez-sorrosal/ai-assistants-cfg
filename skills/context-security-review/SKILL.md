@@ -40,9 +40,9 @@ Files matching these patterns control AI behavior, execute code in the plugin co
 | `skills/*/SKILL.md` | High | Context Artifact Injection |
 | `rules/**/*.md` | High | Context Artifact Injection |
 | `commands/*.md` | High | Context Artifact Injection |
-| `.claude-plugin/hooks/**` | Critical | Hook Compromise |
+| `hooks/**` | Critical | Hook Compromise |
 | `.claude-plugin/plugin.json` | High | Script/Config Injection |
-| `.claude-plugin/hooks/hooks.json` | Critical | Hook Compromise |
+| `hooks/hooks.json` | Critical | Hook Compromise |
 | `**/pyproject.toml` | Medium | Dependency Supply Chain |
 | `.github/workflows/**` | Medium | GitHub Actions Security |
 | `install*.sh`, `scripts/*` | Medium | Script/Config Injection |
@@ -263,9 +263,9 @@ Enumerate all files matching the security-critical paths table. Use `Glob` to fi
 - `skills/*/SKILL.md`
 - `rules/**/*.md`
 - `commands/*.md`
-- `.claude-plugin/hooks/**`
+- `hooks/**`
 - `.claude-plugin/plugin.json`
-- `.claude-plugin/hooks/hooks.json`
+- `hooks/hooks.json`
 - `**/pyproject.toml`
 - `.github/workflows/**`
 - `install*.sh`, `scripts/*`

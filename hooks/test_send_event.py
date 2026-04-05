@@ -1,4 +1,4 @@
-"""Tests for secret redaction in .claude-plugin/hooks/send_event.py.
+"""Tests for secret redaction in hooks/send_event.py.
 
 Validates REQ-SW-031: When the send_event.py hook processes tool input/output
 for logging, common secret patterns are redacted before transmission.

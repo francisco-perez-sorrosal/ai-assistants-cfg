@@ -17,13 +17,13 @@ hooks:
   Stop:
     - hooks:
         - type: command
-          command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py"
+          command: "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/send_event.py"
           timeout: 10
           async: true
   PreCompact:
     - hooks:
         - type: command
-          command: "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/precompact_state.py"
+          command: "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/precompact_state.py"
           timeout: 15
           async: false
 ---

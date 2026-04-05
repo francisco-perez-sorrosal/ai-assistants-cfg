@@ -1,13 +1,12 @@
 # Plugin Configuration
 
-Plugin infrastructure for the `i-am` Claude Code plugin. Contains the manifest, hooks, and schema documentation.
+Plugin infrastructure for the `i-am` Claude Code plugin. Contains the manifest and schema documentation.
 
 ## Key Files
 
 - `plugin.json` — Plugin manifest defining MCP servers, skills, commands, and agents
-- `hooks/hooks.json` — Hook registration (event → script mappings)
-- `hooks/*.py` — Hook implementation scripts (Python)
 - `PLUGIN_SCHEMA_NOTES.md` — Schema documentation for plugin.json
+- Hooks live at `<repo-root>/hooks/` (not here) — see `hooks/hooks.json`
 
 ## Registration Patterns
 
@@ -22,7 +21,7 @@ Plugin infrastructure for the `i-am` Claude Code plugin. Contains the manifest, 
 
 Hooks are Python scripts triggered by Claude Code events (SessionStart, Stop, PreToolUse, PostToolUse, PreCompact). They use `${CLAUDE_PLUGIN_ROOT}` for portable paths. Hooks are deterministic enforcement — unlike CLAUDE.md which is advisory guidance.
 
-**Single authority**: All hooks are registered in `hooks/hooks.json` and auto-loaded by Claude Code via the plugin system. Do NOT register hooks in `~/.claude/settings.json` — that causes double-firing and path portability issues. The installer (`install_claude.sh`) no longer writes hooks to settings.json.
+**Single authority**: All hooks are registered in `<repo-root>/hooks/hooks.json` and auto-loaded by Claude Code via the plugin system. Hooks must be at the plugin root level (not inside `.claude-plugin/`) for auto-discovery. Do NOT register hooks in `~/.claude/settings.json` — that causes double-firing and path portability issues.
 
 Load the `hook-crafting` skill before creating or modifying hooks.
 

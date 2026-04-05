@@ -45,7 +45,7 @@ Wrapped in a `hooks` object, uses `${CLAUDE_PLUGIN_ROOT}`:
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/hook.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/hook.py",
             "timeout": 10,
             "async": true
           }
@@ -56,7 +56,7 @@ Wrapped in a `hooks` object, uses `${CLAUDE_PLUGIN_ROOT}`:
 }
 ```
 
-**`${CLAUDE_PLUGIN_ROOT}`** resolves to the plugin's cache root (e.g., `~/.claude/plugins/cache/bit-agora/i-am/0.0.1/`), NOT to `.claude-plugin/`. Reference scripts as `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/script.py`.
+**`${CLAUDE_PLUGIN_ROOT}`** resolves to the plugin's cache root (e.g., `~/.claude/plugins/cache/bit-agora/i-am/0.0.1/`), NOT to `.claude-plugin/`. Reference scripts as `${CLAUDE_PLUGIN_ROOT}/hooks/script.py`.
 
 ## The Dual-Registration Pattern
 
@@ -66,7 +66,7 @@ Praxion maintains two hook configurations that must stay in sync:
 2. **`~/.claude/settings.json`** — runtime-active hooks with absolute paths. Written by the installer. This is what actually executes.
 
 **When adding a new hook:**
-1. Add the script to `.claude-plugin/hooks/`
+1. Add the script to `hooks/`
 2. Register it in `hooks.json` (reference)
 3. Update the installer to register it in `settings.json` (activation)
 
@@ -148,7 +148,7 @@ claude --debug
 
 ## Checklist: Adding a New Hook
 
-1. Write the hook script in `.claude-plugin/hooks/`
+1. Write the hook script in `hooks/`
 2. Test manually: `echo '{"tool_name":"Bash","tool_input":{"command":"git status"}}' | python3 hook.py`
 3. Add to `hooks.json` (reference, with `${CLAUDE_PLUGIN_ROOT}` paths)
 4. Add to installer's `prompt_hooks_install()` (activation, with absolute paths)

@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 # Load the hook module from its file path (it's not a regular package)
-_HOOK_DIR = Path(__file__).resolve().parents[2] / ".claude-plugin" / "hooks"
+_HOOK_DIR = Path(__file__).resolve().parents[2] / "hooks"
 _REMIND_MEMORY = _HOOK_DIR / "remind_memory.py"
 
 

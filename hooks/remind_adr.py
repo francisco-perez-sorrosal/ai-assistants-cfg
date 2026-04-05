@@ -28,7 +28,7 @@ ARCHITECTURAL_PATTERNS = [
     "skills/*/SKILL.md",
     "rules/**/*.md",
     "commands/*.md",
-    ".claude-plugin/hooks/**",
+    "hooks/**",
     ".claude-plugin/plugin.json",
     ".github/workflows/**",
 ]

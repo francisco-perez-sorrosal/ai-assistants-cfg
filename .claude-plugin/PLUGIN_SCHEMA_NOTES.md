@@ -20,17 +20,30 @@ Directory paths are rejected for agents. Enumerate each file:
 "agents": ["./agents/"]                                       // fails
 ```
 
-## Plugin Hooks Do NOT Auto-Fire
+## Plugin Hooks Auto-Fire from `hooks/hooks.json`
 
-Despite claims in third-party sources, placing `hooks/hooks.json` inside `.claude-plugin/` does **not** cause Claude Code to auto-discover and execute those hooks (tested in v2.1.37). The file is installed into the plugin cache but never invoked.
+Plugin hooks are auto-discovered and executed when placed at `<plugin-root>/hooks/hooks.json`. This is the **plugin root** directory (where `plugin.json` lives inside `.claude-plugin/`), **not** inside `.claude-plugin/` itself.
 
-**Workaround:** Define hooks in project-level `.claude/settings.local.json` (or `settings.json`) with absolute paths to the hook scripts. The plugin's `hooks.json` is retained as a reference for what hooks are available, but does not activate them.
+```
+my-plugin/                     ← plugin root
+├── .claude-plugin/plugin.json
+└── hooks/hooks.json           ← hooks go HERE
+```
 
-**`${CLAUDE_PLUGIN_ROOT}` resolution:** When used in plugin hooks, this variable resolves to the installed plugin's root directory in the cache (e.g., `~/.claude/plugins/cache/bit-agora/i-am/0.0.1/`), NOT to the `.claude-plugin/` subdirectory. Scripts at `.claude-plugin/hooks/send_event.py` would need to be referenced as `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/send_event.py`.
+**Wrong** (never discovered by Claude Code):
+```
+my-plugin/
+└── .claude-plugin/
+    └── hooks/hooks.json       ← NOT here
+```
+
+Reference: the official `hookify` plugin uses `<plugin-root>/hooks/hooks.json`.
+
+**`${CLAUDE_PLUGIN_ROOT}` resolution:** Resolves to the installed plugin's root directory in the cache (e.g., `~/.claude/plugins/cache/bit-agora/i-am/0.1.1.dev0/`). Scripts at `hooks/send_event.py` are referenced as `${CLAUDE_PLUGIN_ROOT}/hooks/send_event.py`.
 
 ## Do Not Declare Hooks in plugin.json
 
-Adding `"hooks"` to the manifest causes a duplicate file error. The hooks config lives separately in `hooks/hooks.json` within the `.claude-plugin/` directory.
+Adding `"hooks"` to the manifest causes a duplicate file error. The hooks config lives separately in `hooks/hooks.json` at the plugin root.
 
 ## mcpServers Auto-Registers MCP Servers
 

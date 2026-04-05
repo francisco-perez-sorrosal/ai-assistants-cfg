@@ -262,7 +262,7 @@ The memory system is designed for future extraction as a standalone project.
 **Extractable unit:**
 
 - `memory-mcp/` — self-contained Python package with own `pyproject.toml`, source, and tests
-- Five hooks in `.claude-plugin/hooks/` (`inject_memory.py`, `validate_memory.py`, `capture_memory.py`, `capture_session.py`, `promote_learnings.py`)
+- Five hooks in `hooks/` (`inject_memory.py`, `validate_memory.py`, `capture_memory.py`, `capture_session.py`, `promote_learnings.py`)
 - `skills/memory/` — memory skill documentation
 
 **Integration seam** (stays with Praxion):

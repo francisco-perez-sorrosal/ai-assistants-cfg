@@ -69,7 +69,7 @@ When a new secret type needs detection:
 1. **Identify the pattern**: Find the token format from the service's documentation (prefix, character set, length)
 2. **Write a regex**: Match the minimum distinguishing prefix plus the secret body. Use `\S+` for variable-length secrets or `[a-zA-Z0-9]{N}` for fixed-length ones
 3. **Test for false positives**: Run the regex against a sample of non-secret text to verify it does not match common identifiers, variable names, or prose
-4. **Add to `SECRET_PATTERNS`**: Append the compiled regex to the list in `.claude-plugin/hooks/send_event.py`
+4. **Add to `SECRET_PATTERNS`**: Append the compiled regex to the list in `hooks/send_event.py`
 5. **Update this catalog**: Add a row to the pattern table and known prefixes table above
 6. **Consider ordering**: More specific patterns (like `sk-ant-`) should appear before more general ones (like `sk-`) to ensure the specific pattern matches first. Currently `sk-ant-` is listed after `sk-` but both will match independently since regex substitution runs sequentially
 

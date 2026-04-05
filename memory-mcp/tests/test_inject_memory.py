@@ -11,7 +11,7 @@ import pytest
 
 # -- Load the hook module from its file path (not a package) ------------------
 
-_HOOK_PATH = Path(__file__).resolve().parents[2] / ".claude-plugin" / "hooks" / "inject_memory.py"
+_HOOK_PATH = Path(__file__).resolve().parents[2] / "hooks" / "inject_memory.py"
 
 
 def _load_hook_module():

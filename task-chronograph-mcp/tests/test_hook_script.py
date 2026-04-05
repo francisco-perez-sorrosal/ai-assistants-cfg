@@ -1,4 +1,4 @@
-"""Tests for the Claude Code hook script at .claude-plugin/hooks/send_event.py."""
+"""Tests for the Claude Code hook script at hooks/send_event.py."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 HOOK_SCRIPT_PATH = (
-    Path(__file__).resolve().parents[2] / ".claude-plugin" / "hooks" / "send_event.py"
+    Path(__file__).resolve().parents[2] / "hooks" / "send_event.py"
 )
 
 
