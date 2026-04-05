@@ -144,7 +144,7 @@ tail -f ~/.phoenix/phoenix.err   # stderr
 
 1. Verify Phoenix is running: `phoenix-ctl status`
 2. Verify chronograph is running: check MCP server in Claude Code
-3. Check `OTEL_ENABLED` is set to `true`
+3. Check `OTEL_ENABLED` is set to `true` (plugin.json sets this automatically)
 4. Verify hooks are registered: `./install.sh code --check`
 
 ## Backend Portability

@@ -47,7 +47,7 @@ commands/                            # Shared slash commands
 ├── create-worktree.md
 ├── full-security-scan.md
 ├── manage-readme.md
-├── memory.md
+├── cajalogic.md
 ├── merge-worktree.md
 ├── onboard-project.md
 ├── release.md
@@ -99,7 +99,9 @@ rules/                               # Rules (installed to ~/.claude/rules/ or .
     ├── promote_learnings.py
     ├── remind_adr.py
     ├── send_event.py
-    └── validate_memory.py
+    ├── test_send_event.py
+    ├── validate_memory.py
+    └── _hook_utils.py
 claude/config/                       # Claude personal config (symlinked to ~/.claude/)
 ├── README.md
 ├── CLAUDE.md
@@ -118,14 +120,20 @@ scripts/                             # Utility scripts
 ├── CLAUDE.md                        # Script conventions (lazy loaded)
 ├── ccwt                             # Multi-worktree Claude session launcher
 ├── chronograph-ctl                  # Task Chronograph dev helper (start/stop/status)
+├── git-post-merge-hook.sh           # Post-merge hook for .ai-state reconciliation
+├── merge_driver_memory.py           # Custom merge driver for memory.json
+├── merge_driver_observations.py     # Custom merge driver for observations.jsonl
 ├── phoenix-ctl                      # Phoenix observability daemon manager
-└── regenerate_adr_index.py          # Regenerate DECISIONS_INDEX.md from ADR files
+├── reconcile_ai_state.py            # Reconcile .ai-state/ after worktree merges
+├── regenerate_adr_index.py          # Regenerate DECISIONS_INDEX.md from ADR files
+└── test_reconcile_ai_state.py       # Tests for reconcile script
 docs/                                # Cross-cutting documentation
 ├── concepts.md
 ├── cursor-compat.md
 ├── decision-tracking.md              # Content updated to describe ADR system
 ├── external-api-docs.md
 ├── getting-started.md
+├── memory-architecture.md
 ├── observability.md
 └── spec-driven-development.md
 task-chronograph-mcp/                # Pipeline observability MCP server

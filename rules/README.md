@@ -7,10 +7,12 @@ Rules are **contextual domain knowledge files** that AI assistants load automati
 ```
 rules/
 ├── swe/
+│   ├── adr-conventions.md
 │   ├── agent-intermediate-documents.md
 │   ├── coding-style.md
-│   ├── adr-conventions.md
+│   ├── memory-protocol.md
 │   ├── swe-agent-coordination-protocol.md
+│   ├── testing-conventions.md
 │   └── vcs/
 │       └── git-conventions.md
 ├── writing/
@@ -25,6 +27,8 @@ rules/
 | `swe/adr-conventions.md` | ADR file format (YAML frontmatter + MADR body), naming convention, supersession protocol, agent authoring guidance |
 | `swe/swe-agent-coordination-protocol.md` | Agent selection, coordination pipeline, parallel execution — detailed tables in `software-planning` skill reference |
 | `swe/vcs/git-conventions.md` | Commit scope, staging discipline, secrets, exclusions, message format |
+| `swe/memory-protocol.md` | When and how to use the memory MCP — `remember()` triggers, tag vocabulary, conflict resolution between memory systems |
+| `swe/testing-conventions.md` | Test file placement, naming, coverage expectations, and test isolation. Path-scoped: loads only when accessing `tests/**` |
 | `writing/readme-style.md` | Precision-first technical writing and structural integrity conventions for README.md files. Path-scoped: loads only when accessing `**/README.md` or `**/README_DEV.md` |
 
 ## How Rules Work
