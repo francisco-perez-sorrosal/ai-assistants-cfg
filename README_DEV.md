@@ -81,28 +81,28 @@ rules/                               # Rules (installed to ~/.claude/rules/ or .
 │       └── git-conventions.md
 └── writing/
     └── readme-style.md              # Path-scoped: loads only for README files
+hooks/                               # Hook scripts (auto-discovered by Claude Code)
+├── hooks.json                       # Hook manifest (single source of truth)
+├── _hook_utils.py
+├── capture_memory.py
+├── capture_session.py
+├── check_code_quality.py
+├── commit_gate.sh
+├── detect_duplication.py
+├── format_python.py
+├── inject_memory.py
+├── memory_gate.py
+├── precompact_state.py
+├── promote_learnings.py
+├── remind_adr.py
+├── remind_memory.py
+├── send_event.py
+├── test_send_event.py
+└── validate_memory.py
 .claude-plugin/                      # Claude Code plugin manifest
 ├── CLAUDE.md                        # Plugin config conventions (lazy loaded)
 ├── plugin.json
-├── PLUGIN_SCHEMA_NOTES.md
-└── hooks/                           # Plugin hook scripts
-    ├── hooks.json
-    ├── capture_memory.py
-    ├── capture_session.py
-    ├── check_code_quality.py
-    ├── commit_gate.sh
-    ├── detect_duplication.py
-    ├── format_python.py
-    ├── inject_memory.py
-    ├── memory_gate.py
-    ├── precompact_state.py
-    ├── promote_learnings.py
-    ├── remind_adr.py
-    ├── remind_memory.py
-    ├── send_event.py
-    ├── test_send_event.py
-    ├── validate_memory.py
-    └── _hook_utils.py
+└── PLUGIN_SCHEMA_NOTES.md
 claude/config/                       # Claude personal config (symlinked to ~/.claude/)
 ├── README.md
 ├── CLAUDE.md

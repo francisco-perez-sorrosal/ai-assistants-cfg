@@ -18,7 +18,7 @@ Hooks are shell commands, prompts, or agents that Claude Code executes in respon
 
 - [references/event-reference.md](references/event-reference.md) -- All 24 hook events with input schemas and blocking semantics
 - [references/output-patterns.md](references/output-patterns.md) -- JSON output formats: additionalContext, decision, permissionDecision, updatedInput
-- [references/registration-guide.md](references/registration-guide.md) -- Where hooks live, how they get loaded, installer integration
+- [references/registration-guide.md](references/registration-guide.md) -- Where hooks live, how they get loaded
 - [references/testing-guide.md](references/testing-guide.md) -- Manual testing, debugging, environment setup
 
 **Relationship to built-in skill**: Use `plugin-dev:hook-development` for writing hook scripts (prompt vs command types, security best practices, matcher patterns, bash validation examples). Use this skill for everything around the scripts: registration lifecycle, why hooks don't fire, output patterns (`additionalContext`, `updatedInput`, `decision`), the `if` conditional field, the 15 events the built-in skill doesn't document, known bugs, and installer integration. The built-in skill tells you how to write a hook; this skill tells you how to ship one.
@@ -27,7 +27,7 @@ Hooks are shell commands, prompts, or agents that Claude Code executes in respon
 
 Hard-won lessons from production use. Read these before writing or debugging hooks.
 
-- **Plugin hooks.json does NOT auto-fire.** Placing `hooks/hooks.json` inside `.claude-plugin/` installs the file into the plugin cache but Claude Code does not execute those hooks (tested v2.1.37, documented in `PLUGIN_SCHEMA_NOTES.md`). Workaround: register hooks in `~/.claude/settings.json` or `.claude/settings.json` with absolute paths. The `hooks.json` file serves as a reference manifest, not an activation mechanism.
+- **Plugin hooks auto-discover from the repo root.** Hooks placed at `<repo-root>/hooks/hooks.json` are auto-discovered by Claude Code when the plugin is installed. The `hooks.json` file at the plugin root is the single source of truth — do NOT also register hooks in `~/.claude/settings.json`, as that causes double-firing.
 
 - **Async hooks cannot deliver feedback.** A hook with `"async": true` runs in the background — its stdout JSON (including `additionalContext`) may not reach Claude before it moves on. Use sync for any hook that needs to provide feedback, inject context, or block a tool call.
 
@@ -41,7 +41,7 @@ Hard-won lessons from production use. Read these before writing or debugging hoo
 
 - **Exit code 2 has known bugs.** PreToolUse exit code 2 (block) can intermittently cause Claude to stop instead of acting on the error (#24327). It may also fail to block Task tool calls (#26923) and Write/Edit operations (#13744). For critical gates, verify the block actually worked.
 
-- **hooks.json and settings.json drift.** The project maintains two hook configurations: `hooks.json` (declarative reference, uses `${CLAUDE_PLUGIN_ROOT}`) and `settings.json` (runtime-active, absolute paths). Adding a hook to one without updating the other is the most common registration bug. Always update both.
+- **Single registration authority.** All hooks are registered in `hooks/hooks.json` at the repo root, using `${CLAUDE_PLUGIN_ROOT}` for portable paths. Claude Code auto-discovers this file. Do NOT duplicate hooks into `~/.claude/settings.json` — that causes double-firing and path portability issues.
 
 ## Registration Lifecycle
 
@@ -49,14 +49,14 @@ Hooks can be defined in 6 locations. They are additive (merged, not overridden):
 
 | Location | Scope | When to Use |
 |----------|-------|-------------|
+| `<repo-root>/hooks/hooks.json` | Plugin enabled | **Auto-discovered** — single source of truth for plugin hooks |
 | `~/.claude/settings.json` | All projects | User-wide hooks (formatting, observability) |
 | `.claude/settings.json` | This project | Project-specific hooks (committed to git) |
 | `.claude/settings.local.json` | This project | Local-only hooks (gitignored) |
 | Managed policy | Organization | Org-enforced hooks |
-| Plugin `hooks/hooks.json` | Plugin enabled | **Reference only** — does not auto-fire |
 | Skill/agent frontmatter | Component lifetime | Scoped to skill activation or agent spawn |
 
-**For Praxion hooks**: Register in `~/.claude/settings.json` via the installer (`install_claude.sh`). Keep `hooks.json` as the declarative manifest. See [references/registration-guide.md](references/registration-guide.md) for the installer integration pattern.
+**For Praxion hooks**: All hooks live in `hooks/hooks.json` at the repo root and are auto-discovered by Claude Code. Do NOT also register in `~/.claude/settings.json`. See [references/registration-guide.md](references/registration-guide.md) for the hook structure.
 
 ## Hook Types
 

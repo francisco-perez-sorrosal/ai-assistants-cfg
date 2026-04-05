@@ -1,10 +1,10 @@
 # Hook Registration Guide
 
-How hooks get from source files to active execution, including installer integration.
+How hooks get from source files to active execution.
 
-## The Registration Problem
+## Auto-Discovery Model
 
-Claude Code hooks must be registered in a settings file to execute. The most common bug is writing a hook script, adding it to `hooks.json`, and assuming it will fire. It won't — `hooks.json` is a reference manifest, not an activation mechanism.
+Plugin hooks placed at `<repo-root>/hooks/hooks.json` are auto-discovered by Claude Code when the plugin is installed. The `hooks.json` file is the single source of truth for plugin hooks — scripts referenced there execute automatically. Do NOT duplicate hooks into `~/.claude/settings.json`, as that causes double-firing and path portability issues.
 
 ## Configuration Format
 
@@ -58,59 +58,21 @@ Wrapped in a `hooks` object, uses `${CLAUDE_PLUGIN_ROOT}`:
 
 **`${CLAUDE_PLUGIN_ROOT}`** resolves to the plugin's cache root (e.g., `~/.claude/plugins/cache/bit-agora/i-am/0.0.1/`), NOT to `.claude-plugin/`. Reference scripts as `${CLAUDE_PLUGIN_ROOT}/hooks/script.py`.
 
-## The Dual-Registration Pattern
+## Single Registration Authority
 
-Praxion maintains two hook configurations that must stay in sync:
+Praxion uses a single hook configuration:
 
-1. **`hooks.json`** — declarative manifest with `${CLAUDE_PLUGIN_ROOT}` paths. Documents what hooks are available. Does NOT auto-fire.
-2. **`~/.claude/settings.json`** — runtime-active hooks with absolute paths. Written by the installer. This is what actually executes.
+- **`hooks/hooks.json`** at the repo root — uses `${CLAUDE_PLUGIN_ROOT}` paths. Auto-discovered by Claude Code.
 
 **When adding a new hook:**
 1. Add the script to `hooks/`
-2. Register it in `hooks.json` (reference)
-3. Update the installer to register it in `settings.json` (activation)
+2. Register it in `hooks/hooks.json`
 
-Missing step 3 is why hooks silently fail to fire.
+That's it. No installer step needed — Claude Code discovers `hooks.json` automatically.
 
-## Installer Integration
+## Plugin Cache Mechanics
 
-The Praxion installer (`install_claude.sh`) uses an inline Python script to write hooks into `~/.claude/settings.json`:
-
-```python
-def hook(script, matcher="", timeout=10, is_async=True):
-    return {
-        "matcher": matcher,
-        "hooks": [{
-            "type": "command",
-            "command": f"python3 {hooks_dir}/{script}",
-            "timeout": timeout,
-            "async": is_async,
-        }],
-    }
-
-settings["hooks"] = {
-    "SubagentStart": [hook("send_event.py")],
-    "SubagentStop": [hook("send_event.py")],
-    "PostToolUse": [
-        hook("send_event.py", "Write|Edit"),
-        hook("format_python.py", "Write|Edit"),
-    ],
-    "PreToolUse": [{
-        "matcher": "Bash",
-        "hooks": [{
-            "type": "command",
-            "command": f"python3 {hooks_dir}/check_code_quality.py",
-            "timeout": 30,
-            "async": False,
-        }],
-    }],
-}
-```
-
-**Key patterns:**
-- Uses absolute paths (`{hooks_dir}/script.py`), not `${CLAUDE_PLUGIN_ROOT}`
-- Overwrites the entire `hooks` section — existing hooks are replaced
-- Async for observability hooks, sync for quality gates
+When a plugin is installed, Claude Code copies the plugin directory into `~/.claude/plugins/cache/<publisher>/<name>/<version>/`. The `${CLAUDE_PLUGIN_ROOT}` variable resolves to this cache path at runtime. Hook scripts referenced from `hooks.json` execute from the cached copy, ensuring consistent paths across machines.
 
 ## Hook Configuration Fields
 
@@ -149,9 +111,7 @@ claude --debug
 ## Checklist: Adding a New Hook
 
 1. Write the hook script in `hooks/`
-2. Test manually: `echo '{"tool_name":"Bash","tool_input":{"command":"git status"}}' | python3 hook.py`
-3. Add to `hooks.json` (reference, with `${CLAUDE_PLUGIN_ROOT}` paths)
-4. Add to installer's `prompt_hooks_install()` (activation, with absolute paths)
-5. Run `./install.sh code` and choose Install hooks
-6. Verify: `grep hook_name ~/.claude/settings.json`
-7. Test in a Claude session — check `claude --debug` output if it doesn't fire
+2. Test manually: `echo '{"tool_name":"Bash","tool_input":{"command":"git status"}}' | python3 hooks/hook.py`
+3. Add to `hooks/hooks.json` with `${CLAUDE_PLUGIN_ROOT}` paths
+4. Reinstall the plugin (so the cache updates)
+5. Verify: start a Claude session — check `claude --debug` output if it doesn't fire
