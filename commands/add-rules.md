@@ -1,6 +1,6 @@
 ---
 description: Copy rules into the current project for customization
-argument-hint: [rule-names... | all]
+argument-hint: "[rule-names... | all]"
 allowed-tools: [Bash(mkdir:*), Bash(cp:*), Bash(ls:*), Bash(find:*), Read, Glob, Grep]
 ---
 
