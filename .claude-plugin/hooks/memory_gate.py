@@ -6,7 +6,9 @@ to memory, blocks the stop (exit 2) with a stderr message prompting the
 agent to call remember().
 
 Synchronous hook (async: false). Uses exit 2 + stderr for blocking.
-Checks stop_hook_active to prevent infinite loops.
+On second attempt (stop_hook_active), re-scans the transcript — only
+passes through if remember() was actually called or on the second block
+to prevent infinite loops.
 """
 
 from __future__ import annotations
@@ -74,9 +76,7 @@ def main() -> None:
     except (json.JSONDecodeError, ValueError):
         return
 
-    # Prevent infinite loops — second invocation after a block
-    if payload.get("stop_hook_active"):
-        return
+    is_retry = payload.get("stop_hook_active", False)
 
     transcript_path = payload.get("transcript_path")
     if not transcript_path:
@@ -84,32 +84,48 @@ def main() -> None:
 
     edit_count, remember_count, spawned_agents = _scan_transcript(transcript_path)
 
+    # If remember() was called, always pass through
+    if remember_count > 0:
+        return
+
     significant_work = edit_count >= MIN_EDITS_FOR_SIGNIFICANT or spawned_agents
+    if not significant_work:
+        return
 
-    if significant_work and remember_count == 0:
-        detail = []
-        if edit_count > 0:
-            detail.append(f"{edit_count} file edits")
-        if spawned_agents:
-            detail.append("agent delegation")
-        work_summary = ", ".join(detail)
+    # Second attempt and still no remember() — let through to avoid infinite loop
+    if is_retry:
+        return
 
-        message = (
-            f"[memory-gate] You did significant work this session ({work_summary}) "
-            f"but never called remember(). Before finishing, review what you learned "
-            f"and call remember(category, key, value, tags, importance, summary, type) "
-            f"for any gotchas, patterns, conventions, or insights that future agents "
-            f"should know. If nothing is worth remembering, you can stop again."
-        )
-        print(
-            json.dumps({"decision": "block", "reason": message}),
-            file=sys.stderr,
-        )
-        sys.exit(2)
+    detail = []
+    if edit_count > 0:
+        detail.append(f"{edit_count} file edits")
+    if spawned_agents:
+        detail.append("agent delegation")
+    work_summary = ", ".join(detail)
+
+    message = (
+        f"[memory-gate] You did significant work ({work_summary}) but never "
+        f"called remember(). You MUST call the mcp__plugin_i-am_memory__remember "
+        f"tool now before stopping. Examples of what to remember:\n"
+        f"- Gotchas or non-obvious behaviors you discovered\n"
+        f"- Patterns that worked well and should be reused\n"
+        f"- User corrections or preferences expressed this session\n"
+        f"- Conventions or constraints not documented elsewhere\n"
+        f"- Architectural insights or trade-off rationales\n\n"
+        f'Call: mcp__plugin_i-am_memory__remember with category="learnings", '
+        f"a descriptive key, the insight as value, relevant tags, "
+        f"importance (3-8), a one-line summary, and type "
+        f"(decision/gotcha/pattern/convention/preference/correction/insight)."
+    )
+    print(
+        json.dumps({"decision": "block", "reason": message}),
+        file=sys.stderr,
+    )
+    sys.exit(2)
 
 
 if __name__ == "__main__":
     try:
         main()
     except Exception:
-        pass  # fail-open — never crash the session
+        pass  # fail-open ��� never crash the session

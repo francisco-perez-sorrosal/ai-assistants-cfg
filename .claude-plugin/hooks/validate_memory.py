@@ -6,7 +6,8 @@ calls. If the agent made substantial edits but never persisted learnings,
 blocks completion (exit 2) with a stderr message.
 
 Synchronous hook (async: false). Uses exit 2 + stderr for blocking.
-Exit 0 unconditionally on second invocation or when thresholds are not met.
+On retry, re-scans — only passes if remember() was called or to break
+infinite loops.
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ EXEMPT_AGENTS = frozenset(
     }
 )
 
-MIN_EDITS_FOR_SIGNIFICANT = 5
+MIN_EDITS_FOR_SIGNIFICANT = 3
 REMEMBER_TOOL_SUBSTRING = "remember"
 SIGNIFICANT_TOOLS = frozenset({"Write", "Edit"})
 
@@ -78,6 +79,11 @@ def _scan_transcript(transcript_path: str) -> tuple[int, int, bool]:
     return edit_count, remember_count, wrote_learnings
 
 
+def _is_retry(payload: dict) -> bool:
+    """Detect retry via stop_hook_active (main agent) or SubagentStop re-entry."""
+    return bool(payload.get("stop_hook_active"))
+
+
 def main() -> None:
     raw = sys.stdin.read()
     try:
@@ -95,27 +101,45 @@ def main() -> None:
     if not transcript_path:
         return
 
+    is_retry = _is_retry(payload)
+
     edit_count, remember_count, wrote_learnings = _scan_transcript(transcript_path)
 
+    # If remember() was called, always pass through
+    if remember_count > 0:
+        return
+
     significant_work = edit_count >= MIN_EDITS_FOR_SIGNIFICANT
+    if not significant_work:
+        return
 
-    if significant_work and remember_count == 0:
-        detail = f"{edit_count} file edits"
-        if wrote_learnings:
-            detail += " including LEARNINGS.md"
+    # Second attempt and still no remember() — let through to avoid infinite loop
+    if is_retry:
+        return
 
-        message = (
-            f"[validate-memory] Agent [{agent_type}] did significant work "
-            f"({detail}) but never called remember(). Before completing, "
-            f"evaluate whether you discovered gotchas, patterns, or conventions "
-            f"worth persisting. Call remember() for cross-session insights, "
-            f"then finish. If nothing is worth remembering, you can complete again."
-        )
-        print(
-            json.dumps({"decision": "block", "reason": message}),
-            file=sys.stderr,
-        )
-        sys.exit(2)
+    detail = f"{edit_count} file edits"
+    if wrote_learnings:
+        detail += " including LEARNINGS.md"
+
+    message = (
+        f"[validate-memory] Agent [{agent_type}] did significant work "
+        f"({detail}) but never called remember(). You MUST call the "
+        f"mcp__plugin_i-am_memory__remember tool now before completing. "
+        f"Examples of what to remember:\n"
+        f"- Gotchas or non-obvious behaviors you discovered\n"
+        f"- Patterns that worked well and should be reused\n"
+        f"- Conventions or constraints not documented elsewhere\n"
+        f"- Debugging insights that took effort to discover\n\n"
+        f'Call: mcp__plugin_i-am_memory__remember with category="learnings", '
+        f"a descriptive key, the insight as value, relevant tags, "
+        f"importance (3-8), a one-line summary, and type "
+        f"(decision/gotcha/pattern/convention/preference/correction/insight)."
+    )
+    print(
+        json.dumps({"decision": "block", "reason": message}),
+        file=sys.stderr,
+    )
+    sys.exit(2)
 
 
 if __name__ == "__main__":
