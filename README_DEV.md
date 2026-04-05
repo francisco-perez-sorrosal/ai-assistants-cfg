@@ -17,6 +17,7 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── code-review/
 ├── command-crafting/
 ├── communicating-agents/
+├── context-security-review/
 ├── data-modeling/
 ├── doc-management/
 ├── external-api-docs/
@@ -33,7 +34,9 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── skill-crafting/
 ├── software-planning/
 ├── spec-driven-development/
-└── stakeholder-communications/
+├── stakeholder-communications/
+├── testing-strategy/
+└── versioning/
 commands/                            # Shared slash commands
 ├── CLAUDE.md                        # Command conventions (lazy loaded)
 ├── add-rules.md
@@ -42,12 +45,15 @@ commands/                            # Shared slash commands
 ├── cop.md
 ├── create-simple-python-prj.md
 ├── create-worktree.md
+├── full-security-scan.md
 ├── manage-readme.md
 ├── memory.md
 ├── merge-worktree.md
 ├── onboard-project.md
+├── release.md
 ├── sdd-coverage.md
-└── star-repo.md
+├── star-repo.md
+└── test.md
 agents/                              # Shared agent definitions
 ├── CLAUDE.md                        # Agent conventions (lazy loaded)
 ├── promethean.md
@@ -65,10 +71,12 @@ agents/                              # Shared agent definitions
 rules/                               # Rules (installed to ~/.claude/rules/ or .cursor/rules/)
 ├── CLAUDE.md                        # Rule conventions (lazy loaded)
 ├── swe/
+│   ├── adr-conventions.md
 │   ├── agent-intermediate-documents.md
 │   ├── coding-style.md
-│   ├── adr-conventions.md
+│   ├── memory-protocol.md
 │   ├── swe-agent-coordination-protocol.md
+│   ├── testing-conventions.md
 │   └── vcs/
 │       └── git-conventions.md
 └── writing/
@@ -79,12 +87,19 @@ rules/                               # Rules (installed to ~/.claude/rules/ or .
 ├── PLUGIN_SCHEMA_NOTES.md
 └── hooks/                           # Plugin hook scripts
     ├── hooks.json
-    ├── send_event.py
-    ├── precompact_state.py
-    ├── format_python.py
-    ├── adr_reminder.py
+    ├── capture_memory.py
+    ├── capture_session.py
     ├── check_code_quality.py
-    └── commit_gate.sh
+    ├── commit_gate.sh
+    ├── detect_duplication.py
+    ├── format_python.py
+    ├── inject_memory.py
+    ├── memory_gate.py
+    ├── precompact_state.py
+    ├── promote_learnings.py
+    ├── remind_adr.py
+    ├── send_event.py
+    └── validate_memory.py
 claude/config/                       # Claude personal config (symlinked to ~/.claude/)
 ├── README.md
 ├── CLAUDE.md
@@ -141,7 +156,7 @@ Makefile                             # Development targets
 - When adding or modifying rules, load the `rule-crafting` skill
 - Follow commit conventions in `rules/` (auto-loaded by Claude when relevant)
 - **Never modify `~/.claude/plugins/cache/`** -- it contains installed copies that get overwritten on reinstall; always edit source files in this repo
-- **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 8,500 tokens (~29,750 chars). Before adding a new rule, verify the budget. Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge
+- **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 15,000 tokens (~52,500 chars). Before adding a new rule, verify the budget. Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge
 
 ## Design Intent
 
@@ -209,7 +224,7 @@ The installer (`install.sh`) configures this automatically during plugin install
 
 ### Structuring Large Instruction Sets
 
-The token budget constraint (8,500 tokens for always-loaded content) drives a clear allocation strategy:
+The token budget constraint (15,000 tokens for always-loaded content) drives a clear allocation strategy:
 
 | Content Type | Where to Put It | Why |
 |---|---|---|

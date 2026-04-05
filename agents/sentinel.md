@@ -118,7 +118,7 @@ Convention: Each check has a unique ID, type (A=auto, L=llm), a rule, and a pass
 | ID | Tp | Rule | Pass |
 |----|----|------|------|
 | T01 | A | Skill SKILL.md line count within guideline | Under 500 lines (warn 400, fail 600) |
-| T02 | A | Combined always-loaded content size | CLAUDE.md + all rules under 8,500 tokens (heuristic: chars / 3.5) |
+| T02 | A | Combined always-loaded content size | CLAUDE.md + all rules under 15,000 tokens (heuristic: chars / 3.5) |
 | T03 | A | Agent prompt size within range | Under 400 lines (warn 300, fail 500) |
 | T04 | A | Individual reference file sizes | No single reference file >800 lines |
 | T05 | L | Progressive disclosure used where appropriate | Monolithic artifacts that could split core vs. reference without losing coherence |

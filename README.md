@@ -17,9 +17,9 @@ Compatible with **Claude Code** (mainly), **Claude Desktop**, and **Cursor**.
 
 ## What You Get
 
-- **26 skills** covering Python, API design, CI/CD, refactoring, spec-driven development, external API docs, and more -- loaded automatically when the task matches
+- **29 skills** covering Python, API design, CI/CD, refactoring, spec-driven development, external API docs, security review, testing strategy, and more -- loaded automatically when the task matches
 - **12 specialized agents** that collaborate on complex features (research, architecture, planning, implementation, testing, verification)
-- **12 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding
+- **15 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding, testing, releases
 - **Coding rules** auto-loaded by context -- coding style, git conventions, documentation standards, agent coordination
 - **MCP servers** for persistent memory and agent lifecycle observability
 
@@ -62,7 +62,8 @@ Reusable knowledge modules loaded automatically based on context. See [`skills/R
 | Planning & Communication | roadmap-planning, stakeholder-communications |
 | Design & Architecture | api-design, data-modeling, performance-architecture |
 | Documentation | doc-management |
-| Software Development | python-development, python-prj-mgmt, refactoring, code-review, software-planning, spec-driven-development, agent-evals, cicd |
+| Software Development | python-development, python-prj-mgmt, refactoring, code-review, software-planning, spec-driven-development, agent-evals, cicd, testing-strategy, versioning |
+| Security | context-security-review |
 | Project | memory, github-star |
 
 ### Commands
@@ -82,6 +83,9 @@ Slash commands invoked with `/<name>`. In Claude Code plugin mode, use `/i-am:<n
 | `/cajalogic` | Manage persistent memory (user prefs, learnings, conventions, observations) |
 | `/onboard-project` | Onboard the current project to work with the ecosystem |
 | `/sdd-coverage` | Report spec-to-test and spec-to-code coverage for REQ IDs |
+| `/full-security-scan` | Run a full-project security audit against all security-critical paths |
+| `/release` | Bump version, update changelog, and create a release tag |
+| `/test` | Auto-detect test framework and run tests |
 | `/star-repo` | Star the Praxion repo on GitHub |
 
 ### Agents

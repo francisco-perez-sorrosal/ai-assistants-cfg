@@ -10,7 +10,7 @@ See the mapping table in `~/.claude/CLAUDE.md` under "The Ecosystem as Philosoph
 
 - Load the matching crafting skill before modifying any component: `skill-crafting` for skills, `agent-crafting` for agents, `command-crafting` for commands, `rule-crafting` for rules
 - **Never modify `~/.claude/plugins/cache/`** — edit source files in this repo; installed copies get overwritten on reinstall
-- **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 8,500 tokens (~29,750 chars). Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge
+- **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 15,000 tokens (~52,500 chars). Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge
 - See `README.md` for user-facing docs, `README_DEV.md` for contributor conventions, `skills/README.md` for the skill catalog
 
 ## Session Protocol

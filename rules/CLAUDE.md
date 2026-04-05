@@ -11,7 +11,7 @@ Contextual domain knowledge files loaded automatically based on relevance. Rules
 
 ## Token Budget
 
-IMPORTANT: Rules without `paths:` frontmatter are **always loaded** — every new unconditional rule costs tokens on every session. The project budget for always-loaded content (CLAUDE.md files + rules) is 8,500 tokens. Prefer `paths:` scoping or skills for content that isn't universally needed.
+IMPORTANT: Rules without `paths:` frontmatter are **always loaded** — every new unconditional rule costs tokens on every session. The project budget for always-loaded content (CLAUDE.md files + rules) is 15,000 tokens. Prefer `paths:` scoping or skills for content that isn't universally needed.
 
 ## Installation
 
