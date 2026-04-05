@@ -42,8 +42,19 @@ ADR_SOFT_CAP = 2000  # soft cap for ADR content; trimmed when many ADRs exist
 _ADR_HEADER = "## Decision Context (auto-injected)\n\n"
 _MEM_HEADER = "## Memory Context (auto-injected)\n\n"
 _SECTION_JOIN = "\n\n"
-# Reserved overhead when both sections are present
-_MAX_OVERHEAD = len(_ADR_HEADER) + len(_MEM_HEADER) + len(_SECTION_JOIN)
+_OBLIGATION = (
+    "---\n"
+    "**Memory obligation**: Before completing, evaluate whether you "
+    "discovered a gotcha, pattern, convention, or architectural insight "
+    "that future agents should know. If yes, call "
+    "`remember(category, key, value, tags, importance, summary, type)`. "
+    "This is not optional — the memory gate will block session completion "
+    "if significant work was done without any remember() calls."
+)
+# Reserved overhead: headers + obligation footer + up to 2 join separators
+_MAX_OVERHEAD = (
+    len(_ADR_HEADER) + len(_MEM_HEADER) + len(_OBLIGATION) + 2 * len(_SECTION_JOIN)
+)
 
 IMPORTANCE_TIER_1 = 7  # always inject
 IMPORTANCE_TIER_2 = 4  # inject if budget allows
@@ -436,15 +447,6 @@ def main() -> None:
         sections.append(f"{_MEM_HEADER}{memory_body}")
 
     # Memory obligation footer — the only reliable injection point for agents
-    _OBLIGATION = (
-        "---\n"
-        "**Memory obligation**: Before completing, evaluate whether you "
-        "discovered a gotcha, pattern, convention, or architectural insight "
-        "that future agents should know. If yes, call "
-        "`remember(category, key, value, tags, importance, summary, type)`. "
-        "This is not optional — the memory gate will block session completion "
-        "if significant work was done without any remember() calls."
-    )
     sections.append(_OBLIGATION)
 
     context = _SECTION_JOIN.join(sections)

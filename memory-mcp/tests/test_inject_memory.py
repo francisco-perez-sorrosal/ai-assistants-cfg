@@ -957,7 +957,7 @@ class TestADREndToEnd:
     def test_hook_event_name_present(self, project_dir: Path):
         """Output JSON includes hookEventName: SubagentStart."""
         _make_decisions_index(_SAMPLE_ADR_ROWS[:1], path=project_dir)
-        payload = json.dumps({"cwd": str(project_dir)}).encode()
+        payload = json.dumps({"cwd": str(project_dir), "agent_type": "researcher"}).encode()
         import io
         from io import StringIO
 
