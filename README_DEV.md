@@ -98,6 +98,7 @@ rules/                               # Rules (installed to ~/.claude/rules/ or .
     ├── precompact_state.py
     ├── promote_learnings.py
     ├── remind_adr.py
+    ├── remind_memory.py
     ├── send_event.py
     ├── test_send_event.py
     ├── validate_memory.py
