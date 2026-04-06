@@ -43,4 +43,4 @@ Trigger explicitly by mentioning "performance-architecture skill" or referencing
 - [`refactoring`](../refactoring/) -- restructuring code for better performance characteristics
 - [`data-modeling`](../data-modeling/) -- schema design, indexing strategies, query patterns
 - [`api-design`](../api-design/) -- pagination contracts, rate limiting, payload design
-- `observability` (planned) -- monitoring, metrics, and alerting that validate performance decisions
+- [`observability`](../observability/) -- monitoring, metrics, and alerting that validate performance decisions

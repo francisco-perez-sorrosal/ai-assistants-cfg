@@ -241,6 +241,7 @@ GitHub Actions provides built-in usage and performance metrics on all plans (sin
 
 - **[Python Development](../python-development/SKILL.md)** -- pytest patterns, ruff/mypy configuration for CI steps
 - **[Python Project Management](../python-prj-mgmt/SKILL.md)** -- pixi/uv commands for dependency installation in CI workflows
+- **[Observability](../observability/SKILL.md)** -- application metrics and SLIs that complement DORA pipeline metrics
 
 ## Essential Marketplace Actions
 

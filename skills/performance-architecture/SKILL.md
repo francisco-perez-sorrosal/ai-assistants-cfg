@@ -226,7 +226,7 @@ Rate limiting is not just protection -- it is a performance architecture tool. U
 
 - **[Data Modeling](../data-modeling/SKILL.md)** -- schema design, indexing strategies, query patterns at the data layer
 - **[API Design](../api-design/SKILL.md)** -- pagination contracts, rate limiting policies, payload design
-- **`observability`** (planned) -- monitoring validates performance decisions; metrics, traces, and alerts
+- **[Observability](../observability/SKILL.md)** -- monitoring validates performance decisions; metrics, traces, and alerts
 - **[CI/CD](../cicd/SKILL.md)** -- performance regression detection in CI pipelines
 
 ## Verification Checklist

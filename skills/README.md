@@ -48,6 +48,7 @@ Reusable skill modules for AI coding assistants. Each skill is a self-contained 
 | --- | --- | --- |
 | **[api-design](api-design/)** | API-first design methodology covering REST, GraphQL, OpenAPI 3.1, versioning strategies, data contracts, and interface contracts. | Designing APIs, writing OpenAPI specs, choosing REST vs GraphQL, defining data or interface contracts, planning API versioning. |
 | **[data-modeling](data-modeling/)** | Database and data model design covering relational schemas, NoSQL patterns, migrations (expand-contract), ORM patterns, and schema evolution. | Designing database schemas, choosing between relational and NoSQL, planning migrations, modeling entities and relationships. |
+| **[observability](observability/)** | Application observability strategy: structured logging, metrics design, distributed tracing, alerting, SLI/SLO methodology, and OpenTelemetry instrumentation. | Adding observability, choosing logging/metrics/tracing strategies, designing alerts, defining SLIs and SLOs, instrumenting with OpenTelemetry. |
 | **[performance-architecture](performance-architecture/)** | Performance as an architectural concern: caching strategies, benchmarking methodology, capacity planning, concurrency patterns, and scaling decisions. | Designing for performance, choosing caching strategies, sizing connection pools, planning capacity, setting up load testing. |
 
 ### Software Development
