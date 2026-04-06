@@ -98,9 +98,9 @@
         "created_by": "main"
       },
       "ecosystem-health-latest": {
-        "value": "System verification 2026-04-05: Grade A (restored). 541 tests total (370 memory-mcp, 171 task-chronograph-mcp) — all pass (1 flaky test_02_multi_session_lifecycle passes in isolation). Lint: 8 ruff errors in peripheral scripts (cursor config, eval, skill-crafting scripts). Format: 6 files need reformatting. Token budget at 89.4% (~13,404/15,000). The prior Grade B findings (README_DEV.md hooks path, hook-crafting skill docs) were already fixed by commits eea34e7 and ab46551. 77 artifacts: 29 skills, 12 agents, 17 commands, 8 rules, 16 hook scripts, 13 ADRs, 2 MCP servers. Persistent warnings: 5 agents above 300-line threshold (monitoring only).",
+        "value": "System verification 2026-04-05: Grade A. 740/740 tests pass (370 memory-mcp, 370 chronograph), zero lint/format issues, all versions synchronized at 0.1.1.dev0, 13 ADRs with consistent index, 21 hooks all referencing valid scripts, 29 skills, 17 commands, 12 agents, 12 rules. No root-level tests exist — all tests are in the two MCP subprojects. Git status clean except runtime state files (memory.json, observations.jsonl).",
         "created_at": "2026-04-05T22:12:26.568635Z",
-        "updated_at": "2026-04-05T22:12:26.568635Z",
+        "updated_at": "2026-04-06T03:46:43.702814Z",
         "tags": [
           "audit",
           "health",
@@ -110,7 +110,7 @@
           "verification"
         ],
         "confidence": null,
-        "importance": 6,
+        "importance": 5,
         "source": {
           "type": "session",
           "detail": null,
@@ -127,10 +127,39 @@
             "relation": "related-to"
           }
         ],
-        "summary": "Latest system verification: Grade A, 541/541 tests pass, lint/format hygiene items only",
+        "summary": "Latest system verification: Grade A, 740/740 tests pass, zero lint issues, all cross-refs valid",
         "valid_at": "2026-04-05T22:12:26.568635Z",
         "invalid_at": null,
         "type": "insight",
+        "created_by": null
+      },
+      "praxion-plugin-architecture": {
+        "value": "Praxion plugin ecosystem architecture and patterns:\n\nCOMPONENT STRUCTURE:\n- Skills: 29 directories auto-discovered via glob \"./skills/\", each contains SKILL.md with name+description frontmatter and optional references/ subdirectory for lazy-loaded reference files\n- Commands: 15 files in ./commands/, auto-discovered via glob, use description field (not name) in frontmatter\n- Agents: 12 files in ./agents/, MANUALLY listed in plugin.json (no glob), each has name+description frontmatter\n- Rules: 8 files organized hierarchically (swe/, writing/), support path-scoped loading via YAML frontmatter\n- Hooks: 13 active hooks in ./hooks/, registered in hooks.json, invoked via python3 (not directly executable), use ${CLAUDE_PLUGIN_ROOT} for portability\n- MCP Servers: 2 Python servers (task-chronograph-mcp, memory-mcp) invoked via uv with environment variables\n\nCRITICAL PATTERNS:\n1. Hook Invocation: Hooks are called via \"python3 ${CLAUDE_PLUGIN_ROOT}/hooks/hookname.py\" in hooks.json - they are NOT made directly executable\n2. Agent Registration: Agents require EXPLICIT file paths in plugin.json array (e.g., \"./agents/researcher.md\") - NOT auto-discovered via glob\n3. Skills use progressive disclosure: frontmatter at startup, full SKILL.md on activation, reference files loaded on-demand\n4. MCP servers use uv run --project pattern with environment variable injection for configuration\n5. Hook exit codes: 0=allow (with optional JSON output), 2=block (stderr message); never mix patterns in one hook\n\nREFERENCE INTEGRITY:\nAll skill reference files declared in SKILL.md are present on disk. No broken paths found in documentation links.\n\nTOKEN BUDGET CONSTRAINT:\nRules without path-scoped frontmatter load on every session - project has 15,000 token budget for always-loaded content (CLAUDE.md files + unconditional rules). Currently 6 unconditional rules + CLAUDE.md files are in budget.\n\nREGISTRATION AUTHORITY:\n- plugin.json: manifest source of truth for skills, commands, agents, MCP servers\n- hooks.json: separate file for hook registration (single authority, never duplicate in ~/.claude/settings.json)",
+        "created_at": "2026-04-06T03:45:04.070996Z",
+        "updated_at": "2026-04-06T03:45:04.070996Z",
+        "tags": [
+          "architecture",
+          "patterns",
+          "plugin-structure",
+          "registration"
+        ],
+        "confidence": null,
+        "importance": 9,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Praxion plugin ecosystem architecture and patterns:\n\nCOMPONENT STRUCTURE:\n- Skills: 29 directories...",
+        "valid_at": "2026-04-06T03:45:04.070996Z",
+        "invalid_at": null,
+        "type": "pattern",
         "created_by": null
       }
     },
@@ -797,18 +826,24 @@
         "created_by": null
       },
       "parent-session-id-always-equals-session-id": {
-        "value": "In send_event.py:167, SubagentStart sets parent_session_id=sid where sid is the session_id from the hook payload. Claude Code gives all subagents the same session_id as the parent session (confirmed via Issue #7881, OPEN). This means parent_session_id always equals session_id, providing zero hierarchical information. The OTel relay stores it as praxion.parent_session_id attribute but cannot use it for actual span parenting. Issue #7881 proposes a subagent_session field but it is not yet implemented.",
+        "value": "parent_session_id == session_id in send_event.py (lines 271, 296) for SubagentStart/SubagentStop. Claude Code shares session_id across main agent and subagents — subagents don't get separate session_ids. This means parent_session_id provides zero hierarchical information. However, the earlier analysis attributing two Phoenix traces to this bug was INCORRECT — the two traces were from two separate Claude Code conversations (d89d4bc7 was a 5-hour research session, 03d7e609 was the verification session). The actual missing-hierarchy issue is caused by SubagentStart hooks not firing for background agents (see subagentstart-hook-skipped-background-agents). The parent_session_id bug is real but its impact is limited to being redundant data, not to creating duplicate traces. Issue #7881 still OPEN.",
         "created_at": "2026-04-05T22:37:48.746668Z",
-        "updated_at": "2026-04-05T22:37:48.746668Z",
+        "updated_at": "2026-04-06T04:13:39.692153Z",
         "tags": [
+          "bug",
           "chronograph",
           "claude-code",
+          "claude-code-hook",
+          "critical",
           "gotcha",
           "hooks",
-          "observability"
+          "observability",
+          "otel",
+          "session-id",
+          "trace-creation"
         ],
         "confidence": null,
-        "importance": 7,
+        "importance": 6,
         "source": {
           "type": "session",
           "detail": null,
@@ -833,7 +868,7 @@
             "relation": "related-to"
           }
         ],
-        "summary": "parent_session_id == session_id always; Claude Code shares session_id across subagents (Issue #7881 OPEN)",
+        "summary": "parent_session_id == session_id always; earlier dual-trace attribution was wrong — separate conversations, not this bug",
         "valid_at": "2026-04-05T22:37:48.746668Z",
         "invalid_at": null,
         "type": "gotcha",
@@ -876,6 +911,203 @@
         "valid_at": "2026-04-05T22:52:38.858920Z",
         "invalid_at": null,
         "type": "gotcha",
+        "created_by": null
+      },
+      "install-claude-sh-five-prompts": {
+        "value": "install_claude.sh code has 5 interactive prompts when run non-interactively: (1) plugin install vs skip, (2) user vs project scope, (3) context-hub MCP vs skip, (4) Phoenix daemon vs skip, (5) Claude Desktop link vs skip. All default to option 1. Pipe with: printf '1\\n1\\n1\\n1\\n1\\n' | ./install_claude.sh code. No --yes or non-interactive flag exists.",
+        "created_at": "2026-04-06T03:40:00.587404Z",
+        "updated_at": "2026-04-06T03:40:00.587404Z",
+        "tags": [
+          "automation",
+          "gotcha",
+          "installer"
+        ],
+        "confidence": null,
+        "importance": 4,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "install_claude.sh code needs 5 piped '1' inputs for non-interactive install; no --yes flag",
+        "valid_at": "2026-04-06T03:40:00.587404Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "hook-executability-gotcha": {
+        "value": "GOTCHA: Hook executability patterns in Praxion\n\nWhen auditing hooks, note that MOST hooks in /hooks/ are NOT directly executable. This is CORRECT and intentional.\n\nWHY:\n- Hooks are invoked via hooks.json configuration, which explicitly calls \"python3 ${CLAUDE_PLUGIN_ROOT}/hooks/hookname.py\"\n- The hooks.json handler itself resolves the python3 interpreter path and executes the script\n- Making hooks directly executable (chmod +x) is unnecessary and can cause confusion about invocation method\n\nEXCEPTION:\n- commit_gate.sh IS executable because it's a shell script wrapper that internally invokes Python hooks and handles exit codes\n- It's the only hook that should have executable permissions\n\nVERIFICATION:\nWhen auditing, check hooks.json for invocation patterns:\n- If pattern is \"python3 ${CLAUDE_PLUGIN_ROOT}/hooks/*.py\" → hook need NOT be executable\n- If pattern is \"${CLAUDE_PLUGIN_ROOT}/hooks/*.sh\" → shell wrapper MUST be executable\n\nIMPLICATION:\nNever assume a non-executable hook is broken. Always check hooks.json to confirm proper invocation registration.",
+        "created_at": "2026-04-06T03:45:12.709531Z",
+        "updated_at": "2026-04-06T03:45:12.709531Z",
+        "tags": [
+          "executability",
+          "executable-bits",
+          "gotcha",
+          "hooks"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.hook-output-requires-hookEventName",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.hook-additionalContext-supported-events",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.async-hooks-cannot-deliver-feedback",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "GOTCHA: Hook executability patterns in Praxion\n\nWhen auditing hooks, note that MOST hooks in...",
+        "valid_at": "2026-04-06T03:45:12.709531Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "plugin-agent-frontmatter-schema-no-model-color-required": {
+        "value": "Claude Code plugin agents do NOT require model and color in frontmatter. The actual required fields are name and description. Optional fields include: tools, skills, permissionMode, background, memory, maxTurns, hooks, model, color. The agents/CLAUDE.md explicitly states model and color are optional. A validator that checks for model and color as required will produce false positives on all 12 Praxion agents.",
+        "created_at": "2026-04-06T03:46:30.132857Z",
+        "updated_at": "2026-04-06T03:46:30.132857Z",
+        "tags": [
+          "agents",
+          "gotcha",
+          "plugin",
+          "validation"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.agent-background-flag-mismatch",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.agent-background-flag-protocol-drift",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Plugin agent frontmatter only requires name+description; model and color are optional",
+        "valid_at": "2026-04-06T03:46:30.132857Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "subagentstart-hook-skipped-background-agents": {
+        "value": "Claude Code does NOT fire SubagentStart hooks for agents launched with run_in_background: true. SubagentStop and PostToolUse hooks DO fire for background agents. This causes chronograph OTel relay to never create AGENT spans for background subagents — their tool calls fall back to main-agent parenting, producing a flat trace hierarchy in Phoenix. Workaround: auto-create synthetic agent spans from first tool_use event with an unknown agent_id, or retroactively create them from SubagentStop. Confirmed by examining observations.jsonl: 27 SubagentStart observations across earlier sessions (all foreground), zero for session 03d7e609 which used run_in_background: true.",
+        "created_at": "2026-04-06T04:13:19.022914Z",
+        "updated_at": "2026-04-06T04:13:19.022914Z",
+        "tags": [
+          "background-agents",
+          "chronograph",
+          "claude-code",
+          "gotcha",
+          "hooks",
+          "observability",
+          "phoenix"
+        ],
+        "confidence": null,
+        "importance": 9,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.hook-output-requires-hookEventName",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.hook-additionalContext-supported-events",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.async-hooks-cannot-deliver-feedback",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "SubagentStart hooks don't fire for background agents — causes missing agent spans in Phoenix traces",
+        "valid_at": "2026-04-06T04:13:19.022914Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "lazy-agent-span-workaround": {
+        "value": "Implemented _ensure_agent_context() in otel_relay.py to handle missing SubagentStart hooks for background agents. When a tool_use or agent_stop event arrives with an unknown agent_id but populated agent_type, a synthetic AGENT span is lazily created and parented under main-agent. This ensures background agent tool calls appear hierarchically in Phoenix traces instead of flat under main-agent. Key changes: otel_relay.py (new method + wired into record_tool and end_agent), server.py (passes agent_type/session_id to end_agent and record_tool). Filed upstream as anthropics/claude-code#44075. 8 new tests added in test_otel_relay.py, 220/220 passing.",
+        "created_at": "2026-04-06T04:51:19.324079Z",
+        "updated_at": "2026-04-06T04:51:19.324079Z",
+        "tags": [
+          "background-agents",
+          "chronograph",
+          "observability",
+          "otel",
+          "phoenix",
+          "workaround"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.chronograph-flat-span-hierarchy-gap",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.parent-session-id-always-equals-session-id",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.phoenix-graph-node-attrs-for-agent-graph",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Lazy agent span creation in OTel relay handles missing SubagentStart hooks for background agents",
+        "valid_at": "2026-04-06T04:51:19.324079Z",
+        "invalid_at": null,
+        "type": "pattern",
         "created_by": null
       }
     }
