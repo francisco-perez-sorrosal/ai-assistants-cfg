@@ -1109,6 +1109,146 @@
         "invalid_at": null,
         "type": "pattern",
         "created_by": null
+      },
+      "cwd-drift-git-staging": {
+        "value": "When running tests in subproject directories (e.g., task-chronograph-mcp/), CWD drifts from the repo root. Git staging then fails with 'pathspec did not match' if paths include the subproject prefix. Use relative paths from CWD (src/...) not from repo root (task-chronograph-mcp/src/...). The /cop command should always check pwd before staging.",
+        "created_at": "2026-04-06T04:53:49.745780Z",
+        "updated_at": "2026-04-06T04:53:49.745780Z",
+        "tags": [
+          "cwd",
+          "git",
+          "gotcha",
+          "staging"
+        ],
+        "confidence": null,
+        "importance": 4,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "CWD drift to subproject dirs causes git staging failures — use relative paths from CWD",
+        "valid_at": "2026-04-06T04:53:49.745780Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "sentinel-background-agent-stall-pattern": {
+        "value": "Sentinel background agent stalls are caused by maxTurns: 80 exhaustion, NOT context/output limits. The ecosystem grew from 31 to 77 artifacts but maxTurns was never increased. A full 7-phase audit needs ~120-150 turns; at 80, the agent barely finishes Phase 3 (automated checks) before silent termination. Evidence: exactly 80 tool_use blocks in output matching the configured limit. When maxTurns is hit: (1) agent is terminated after current tool call, (2) return type is error_max_turns, (3) last text block returned as result (not a summary), (4) post-tool-use hooks NOT fired, (5) status reports \"completed\" despite not finishing. Tool breakdown: 49 Bash (61%), 13 Glob (16%), 9 Read (11%), 8 Grep (10%), 1 Write (1%). Fix options: increase maxTurns to 150, restructure for fewer turns via batched checks, or add turn-budget awareness for partial reports.",
+        "created_at": "2026-04-06T05:34:19.613357Z",
+        "updated_at": "2026-04-06T05:45:17.127093Z",
+        "tags": [
+          "background-agents",
+          "gotcha",
+          "maxTurns",
+          "observability",
+          "root-cause",
+          "sentinel",
+          "stall"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.parent-session-id-always-equals-session-id",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.phoenix-graph-node-attrs-for-agent-graph",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.subagentstart-hook-skipped-background-agents",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Sentinel stalls caused by maxTurns:80 exhaustion — ecosystem outgrew turn budget, needs ~150 turns",
+        "valid_at": "2026-04-06T05:34:19.613357Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "ecosystem-health-latest": {
+        "value": "Sentinel audit 2026-04-05T22:13:53Z: Grade A, 77 artifacts, 0/0/6 findings (C/I/S), coherence A. All 781 tests pass (492 memory-mcp + 289 chronograph), zero lint issues. Token budget at 66.7% (10k/15k) — improved from 89.4%. Previous B-grade Important findings (stale hook-crafting docs, README_DEV.md tree) both resolved. Six persistent Suggested findings: 5 agents above 300-line WARN, 1 orphaned exit-code-semantics.md reference.",
+        "created_at": "2026-04-06T05:38:48.057510Z",
+        "updated_at": "2026-04-06T05:38:48.057510Z",
+        "tags": [
+          "audit",
+          "health",
+          "sentinel",
+          "tests",
+          "token-budget",
+          "verification"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Sentinel Grade A: 77 artifacts, 781 tests pass, 0 critical/important findings, token budget 66.7%",
+        "valid_at": "2026-04-06T05:38:48.057510Z",
+        "invalid_at": null,
+        "type": "insight",
+        "created_by": null
+      },
+      "sentinel-turn-budget-fix": {
+        "value": "Sentinel agent maxTurns increased from 80 to 150 and restructured for efficiency. Three changes: (1) maxTurns 80→150 to accommodate 77-artifact ecosystem, (2) batching guidance in Phase 2 (~5 turns) and Phase 3 (~15-20 turns) with Bash examples combining multiple checks per call, (3) turn-budget awareness — agent tracks usage, reserves last 10 turns for report writing, degrades gracefully with [PARTIAL] header at 80% budget. Previous 80 turns caused silent termination mid-Phase 3 with no output. Agent grew from 425 to 459 lines (still under 500-line FAIL threshold).",
+        "created_at": "2026-04-06T05:55:30.575530Z",
+        "updated_at": "2026-04-06T05:55:30.575530Z",
+        "tags": [
+          "agents",
+          "batching",
+          "maxTurns",
+          "resilience",
+          "sentinel"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.sentinel-background-agent-stall-pattern",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Sentinel: maxTurns 80→150, batching guidance, turn-budget awareness with graceful degradation",
+        "valid_at": "2026-04-06T05:55:30.575530Z",
+        "invalid_at": null,
+        "type": "decision",
+        "created_by": null
       }
     }
   }
