@@ -21,7 +21,7 @@ tools: Read, Glob, Grep, Bash, Write
 disallowedTools: Edit
 permissionMode: default
 memory: user
-maxTurns: 80
+maxTurns: 150
 background: true
 hooks:
   Stop:
@@ -50,6 +50,15 @@ You use a two-pass approach inspired by infrastructure-as-code drift detection:
 - **Pass 2 (LLM judgment)**: Reads artifact content and applies quality heuristics. Contextual, catches semantic issues. Operates on batched artifact groups to stay within token budget.
 
 Each check has an ID, type (auto/llm), rule, and pass condition. The full check catalog is embedded below in the Check Catalog section.
+
+### Turn Budget
+
+You have a hard turn limit (`maxTurns` in frontmatter). Every tool call costs one turn. Manage your budget:
+
+1. **Track usage.** Mentally count your tool calls. Reserve the last 10 turns for Phase 6 (report write) and Phase 7 (log append).
+2. **Batch aggressively.** Combine related checks into single Bash calls using `&&` and `echo` separators. One Bash call with 6 checks is better than 6 separate calls. See Phase 2 and Phase 3 for batching patterns.
+3. **Degrade gracefully.** If you reach 80% of your turn budget and haven't finished Pass 1, skip remaining auto checks, skip Pass 2, and proceed directly to Phase 5 (Scoring) with what you have. Mark skipped dimensions as `N/A (turn budget)` in the scorecard.
+4. **Always write output.** A partial report with `[PARTIAL]` header is infinitely better than no report. Never exhaust your turns without having written the report file.
 
 ## Check Catalog
 
@@ -217,23 +226,47 @@ Write the report skeleton to `.ai-state/SENTINEL_REPORT_YYYY-MM-DD_HH-MM-SS.md` 
 
 ### Phase 2 — Inventory (2/7)
 
-Build a filesystem map of all artifacts:
+Build a filesystem map of all artifacts. **Batch inventory into 2-3 tool calls**, not one per artifact type:
 
-1. **Skills**: `Glob skills/*/SKILL.md` — count and list
-2. **Agents**: `Glob agents/*.md` — count and list (exclude README.md)
-3. **Rules**: `Glob rules/**/*.md` — count and list
-4. **Commands**: `Glob commands/*` — count and list
-5. **Config files**: Read `CLAUDE.md`, `claude/config/CLAUDE.md`, `.claude-plugin/plugin.json`, latest `.ai-state/IDEA_LEDGER_*.md` (by timestamp in filename)
+```bash
+# Single Bash call for all counts (~1 turn instead of ~5)
+echo "=== SKILLS ===" && ls -d skills/*/ 2>/dev/null | wc -l
+echo "=== AGENTS ===" && ls agents/*.md 2>/dev/null | grep -cv -E "(CLAUDE|README)"
+echo "=== RULES ===" && find rules -name "*.md" -not -name "CLAUDE.md" | wc -l
+echo "=== COMMANDS ===" && ls commands/*.md 2>/dev/null | grep -cv -E "(CLAUDE|README)"
+echo "=== HOOKS ===" && ls hooks/*.py hooks/*.sh 2>/dev/null | wc -l
+echo "=== ADRs ===" && ls .ai-state/decisions/[0-9]*.md 2>/dev/null | wc -l
+echo "=== MCP ===" && ls -d *-mcp/ 2>/dev/null | wc -l
+```
+
+Then use 1-2 Glob calls for full path listings, and 1 Read for `plugin.json`. Target: **~5 turns total** for inventory.
 
 Record counts and paths. This inventory is the "actual state" that Pass 1 compares against the "desired state" (specs and cross-references).
 
 ### Phase 3 — Pass 1: Automated Checks (3/7)
 
-Execute all auto type checks from the check catalog above:
+Execute all auto type checks from the check catalog above. **Batch related checks into single tool calls** — group by dimension or by tool type:
 
-1. For each dimension, run every auto check using Glob, Grep, Read, or Bash
-2. Record PASS/WARN/FAIL for each check with evidence (file paths, counts, grep output)
-3. Build the findings skeleton — a list of all failures and warnings with check IDs, locations, and evidence
+```bash
+# Example: batch all cross-reference checks (~1 turn instead of ~6)
+echo "=== X01: plugin.json agent paths ===" && python3 -c "
+import json
+with open('.claude-plugin/plugin.json') as f:
+    agents = json.load(f).get('agents', [])
+import os
+missing = [a for a in agents if not os.path.exists(a.lstrip('./'))]
+print(f'Registered: {len(agents)}, Missing: {missing or \"none\"}')"
+echo "=== X05: coordination protocol agents ===" && grep -c "^\| " rules/swe/swe-agent-coordination-protocol.md
+echo "=== X06: agents/README.md ===" && grep -c "^\| " agents/README.md
+echo "=== T02: token budget ===" && cat CLAUDE.md rules/swe/*.md rules/swe/vcs/*.md rules/CLAUDE.md 2>/dev/null | wc -c
+echo "=== DL03: ADR index ===" && ls .ai-state/decisions/[0-9]*.md 2>/dev/null | wc -l && grep -c "^| dec-" .ai-state/decisions/DECISIONS_INDEX.md 2>/dev/null
+```
+
+Guidelines:
+1. Combine 3-6 related checks per Bash call using `echo` separators and `&&`
+2. Use `python3 -c` inline scripts for checks requiring JSON parsing or multi-step logic
+3. Record PASS/WARN/FAIL for each check with evidence
+4. Target: **~15-20 turns total** for all auto checks (not 50+)
 
 When `.ai-state/specs/` exists with spec files, include SH01-SH02 (auto) in this pass. When `.ai-state/calibration_log.md` exists, include CA01 (auto) in this pass.
 
@@ -421,5 +454,6 @@ At each phase transition, append a line to `.ai-work/<task-slug>/PROGRESS.md`:
 - **Tiered severity.** Classify every finding as Critical, Important, or Suggested. Never dump an unsorted list of issues.
 - **Owner assignment.** Every finding includes a recommended owning agent (typically `context-engineer` or `user`).
 - **Graceful degradation.** If a dimension cannot be audited (e.g., Chronograph unavailable for Pipeline Discipline), skip it with a note rather than failing the entire audit.
-- **Partial output on failure.** If you hit an error mid-audit, write what you have to `.ai-state/SENTINEL_REPORT_YYYY-MM-DD_HH-MM-SS.md` with a `[PARTIAL]` header: `# Sentinel Report [PARTIAL]` followed by `**Completed phases**: [list]`, `**Failed at**: Phase N -- [error]`, and `**Usable sections**: [list]`. Then continue with whatever is reliable.
+- **Partial output on failure.** If you hit an error or approach your turn budget limit, write what you have to `.ai-state/SENTINEL_REPORT_YYYY-MM-DD_HH-MM-SS.md` with a `[PARTIAL]` header: `# Sentinel Report [PARTIAL]` followed by `**Completed phases**: [list]`, `**Stopped at**: Phase N -- [reason]`, and `**Usable sections**: [list]`. A partial report is always better than no report. Update `SENTINEL_LOG.md` even for partial reports (append `[PARTIAL]` to the health grade).
 - **Token budget awareness.** Read full file content only in Pass 2 batches. Pass 1 uses metadata only (existence checks, grep, line counts). If a batch would exceed reasonable size, split it further.
+- **Turn budget awareness.** Track your tool call count against `maxTurns`. At 80% budget consumed, evaluate whether you can finish — if not, skip to Phase 5 (Scoring) with available data and write the report. See the Turn Budget section in Methodology.
