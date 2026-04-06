@@ -104,12 +104,26 @@ async def app_lifespan(app: Starlette):
             yield
 
 
+def _extract_git_context(event: Event) -> dict:
+    """Extract git context from event metadata or direct fields."""
+    git = event.metadata.get("git", {})
+    if event.git_branch:
+        git["git_branch"] = event.git_branch
+    if event.is_worktree:
+        git["is_worktree"] = event.is_worktree
+        git["worktree_name"] = event.worktree_name
+    if event.git_toplevel:
+        git["git_toplevel"] = event.git_toplevel
+    return git
+
+
 def _relay_event(relay: OTelRelay, event: Event) -> None:
     """Route an event to the OTel relay. Fail-open: never raises."""
     try:
+        git = _extract_git_context(event)
         match event.event_type:
             case EventType.SESSION_START:
-                relay.start_session(event.session_id, event.project_dir)
+                relay.start_session(event.session_id, event.project_dir, git_context=git)
             case EventType.SESSION_STOP:
                 relay.end_session(event.session_id)
             case EventType.AGENT_START:
@@ -119,6 +133,8 @@ def _relay_event(relay: OTelRelay, event: Event) -> None:
                     event.session_id,
                     event.parent_session_id,
                     project_dir=event.project_dir,
+                    git_context=git,
+                    task_slug=event.task_slug or event.metadata.get("task_slug", ""),
                 )
             case EventType.AGENT_STOP:
                 relay.end_agent(event.agent_id, event.message)
@@ -132,6 +148,7 @@ def _relay_event(relay: OTelRelay, event: Event) -> None:
                     error_msg="",
                     session_id=event.session_id,
                     project_dir=event.project_dir,
+                    metadata=event.metadata,
                 )
             case EventType.ERROR:
                 relay.record_tool(
@@ -141,6 +158,22 @@ def _relay_event(relay: OTelRelay, event: Event) -> None:
                     "",
                     is_error=True,
                     error_msg=event.message,
+                    session_id=event.session_id,
+                    project_dir=event.project_dir,
+                    metadata=event.metadata,
+                )
+            case EventType.SKILL_USE:
+                relay.record_skill(
+                    event.agent_id,
+                    event.metadata.get("artifact_name", event.tool_name),
+                    session_id=event.session_id,
+                    project_dir=event.project_dir,
+                    args=str(event.metadata.get("args", "")),
+                )
+            case EventType.COMMAND_USE:
+                relay.record_command(
+                    event.agent_id,
+                    event.metadata.get("artifact_name", event.tool_name),
                     session_id=event.session_id,
                     project_dir=event.project_dir,
                 )
@@ -171,6 +204,10 @@ async def receive_event(request: Request) -> JSONResponse:
             status_code=400,
         )
 
+    # Extract git context from metadata for first-class fields
+    meta = body.get("metadata", {})
+    git = meta.get("git", {})
+
     event = Event(
         event_type=event_type,
         agent_type=body.get("agent_type", ""),
@@ -183,9 +220,16 @@ async def receive_event(request: Request) -> JSONResponse:
         status=AgentStatus(body.get("status", "running")),
         message=body.get("message", ""),
         labels=body.get("labels", {}),
-        metadata=body.get("metadata", {}),
+        metadata=meta,
         tool_name=body.get("tool_name", ""),
         project_dir=body.get("project_dir", ""),
+        git_branch=body.get("git_branch", "") or git.get("git_branch", ""),
+        git_toplevel=body.get("git_toplevel", "") or git.get("git_toplevel", ""),
+        is_worktree=body.get("is_worktree", False) or git.get("is_worktree", False),
+        worktree_name=body.get("worktree_name", "") or git.get("worktree_name", ""),
+        artifact_type=body.get("artifact_type", "") or meta.get("artifact_type", ""),
+        artifact_name=body.get("artifact_name", "") or meta.get("artifact_name", ""),
+        task_slug=body.get("task_slug", "") or meta.get("task_slug", ""),
     )
 
     store: EventStore = request.app.state.store

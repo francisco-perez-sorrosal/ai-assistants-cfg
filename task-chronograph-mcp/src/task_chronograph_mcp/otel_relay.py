@@ -6,6 +6,7 @@ import logging
 import os
 import threading
 import time
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
@@ -72,6 +73,44 @@ def _clean_agent_type(agent_type: str) -> str:
     return agent_type
 
 
+# ---------------------------------------------------------------------------
+# Agent context tracking
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class AgentContext:
+    """Tracks an active agent's OTel context and hierarchy position."""
+
+    otel_context: context_api.Context
+    agent_id: str
+    agent_type: str
+    session_id: str
+    parent_agent_id: str  # "" for main-agent
+    depth: int
+    last_activity: float
+    child_count: int = 0
+    tool_count: int = 0
+    error_count: int = 0
+    skill_count: int = 0
+
+
+@dataclass
+class SessionStats:
+    """Tracks aggregate stats for a session, used in the summary span."""
+
+    agent_count: int = 0
+    tool_count: int = 0
+    skill_count: int = 0
+    error_count: int = 0
+    start_time: float = field(default_factory=time.monotonic)
+    git_branch: str = ""
+    is_worktree: bool = False
+    worktree_name: str = ""
+    task_slug: str = ""
+    pipeline_tier: str = ""
+
+
 class OTelRelay:
     """Translates chronograph events into OpenTelemetry spans exported to Phoenix.
 
@@ -84,6 +123,10 @@ class OTelRelay:
     only exports ended spans). Child spans reference their parent's
     SpanContext for linkage -- this works after the parent is closed because
     OTel links by IDs, not by live Span objects.
+
+    Agent spans are parented under their spawning agent (hierarchy-aware),
+    not flat under the session root. This produces accurate trace trees
+    in Phoenix that reflect the real delegation depth.
 
     A background reaper thread cleans up stale context entries (agents whose
     SubagentStop hook never fired) to prevent memory leaks.
@@ -106,16 +149,13 @@ class OTelRelay:
         self._provider: TracerProvider | None = None
         self._tracer: trace.Tracer | None = None
 
-        # Context tracking -- protected by _span_lock
-        # Stores the OTel Context (with embedded SpanContext) for each agent,
-        # used to parent child spans. Agent spans themselves are ended immediately.
+        # Hierarchy-aware context tracking -- protected by _span_lock
         self._span_lock = threading.Lock()
-        self._context_map: dict[str, context_api.Context] = {}
-        self._span_last_activity: dict[str, float] = {}
+        self._agent_contexts: dict[str, AgentContext] = {}
 
         self._session_span: trace.Span | None = None
         self._session_context: context_api.Context | None = None
-        self._trace_type_set = False
+        self._session_stats: SessionStats | None = None
 
         # Reaper thread
         self._reaper_stop = threading.Event()
@@ -125,7 +165,12 @@ class OTelRelay:
     # Session lifecycle
     # ------------------------------------------------------------------
 
-    def start_session(self, session_id: str, project_dir: str) -> None:
+    def start_session(
+        self,
+        session_id: str,
+        project_dir: str,
+        git_context: dict[str, Any] | None = None,
+    ) -> None:
         """Initialise the TracerProvider and open the root SESSION span.
 
         The chronograph-ctl instance persists across Claude Code session
@@ -140,26 +185,26 @@ class OTelRelay:
         try:
             if self._provider is None:
                 self._init_provider(project_dir)
-            self._open_session_span(session_id, project_dir)
+            self._open_session_span(session_id, project_dir, git_context or {})
         except Exception:
             logger.warning("Failed to start OTel session", exc_info=True)
 
     def end_session(self, session_id: str) -> None:
-        """Flush pending spans and clear session state.
+        """Create session summary span, flush pending spans, and clear state.
 
         All spans (session, agents, tools) are already ended at creation
-        time. This method cleans up tracking state and flushes the
-        exporter.
+        time. This method creates a summary span with aggregate stats,
+        cleans up tracking state, and flushes the exporter.
         """
         if not _is_otel_enabled():
             return
         try:
+            self._create_session_summary()
             with self._span_lock:
-                self._context_map.clear()
-                self._span_last_activity.clear()
+                self._agent_contexts.clear()
             self._session_span = None
             self._session_context = None
-            self._trace_type_set = False
+            self._session_stats = None
             if self._provider is not None:
                 self._provider.force_flush()
         except Exception:
@@ -179,7 +224,12 @@ class OTelRelay:
         except Exception:
             logger.warning("Failed to shutdown OTel provider", exc_info=True)
 
-    def _ensure_initialized(self, session_id: str = "", project_dir: str = "") -> bool:
+    def _ensure_initialized(
+        self,
+        session_id: str = "",
+        project_dir: str = "",
+        git_context: dict[str, Any] | None = None,
+    ) -> bool:
         """Lazy init: if no session was started, initialise from available context.
 
         Uses the first available project_dir from: the event, CLAUDE_PROJECT_DIR
@@ -194,7 +244,7 @@ class OTelRelay:
         if self._provider is None:
             self._init_provider(effective_dir)
         if session_id and self._session_context is None:
-            self._open_session_span(session_id, effective_dir)
+            self._open_session_span(session_id, effective_dir, git_context or {})
         return self._provider is not None
 
     # ------------------------------------------------------------------
@@ -209,42 +259,57 @@ class OTelRelay:
         parent_session_id: str = "",
         *,
         project_dir: str = "",
+        git_context: dict[str, Any] | None = None,
+        task_slug: str = "",
     ) -> None:
-        """Open an AGENT child span under the session root (ended immediately)."""
+        """Open an AGENT child span under the spawning agent (hierarchy-aware)."""
         if not _is_otel_enabled():
             return
         try:
-            self._ensure_initialized(session_id, project_dir=project_dir)
-            self._start_agent_span(agent_id, agent_type, session_id, parent_session_id)
+            self._ensure_initialized(session_id, project_dir=project_dir, git_context=git_context)
+            self._start_agent_span(
+                agent_id,
+                agent_type,
+                session_id,
+                parent_session_id,
+                git_context=git_context or {},
+                task_slug=task_slug,
+            )
         except Exception:
             logger.warning("Failed to start OTel agent span for %s", agent_id, exc_info=True)
 
     def end_agent(self, agent_id: str, output: str = "") -> None:
-        """Record agent completion and clean up the context entry.
+        """Record agent completion: create summary span and clean up context.
 
-        If *output* is provided, creates a short ``agent-result`` child
-        span carrying the output value so it appears in the Phoenix trace.
+        Creates an ``agent-summary`` child span carrying output value and
+        aggregate stats (tool_count, error_count, child_count) so they
+        appear in the Phoenix trace.
         """
         if not _is_otel_enabled():
             return
         try:
             with self._span_lock:
-                agent_context = self._context_map.pop(agent_id, None)
-                self._span_last_activity.pop(agent_id, None)
-            if agent_context is None:
+                agent_ctx = self._agent_contexts.pop(agent_id, None)
+            if agent_ctx is None:
                 logger.debug("No context found for agent_id=%s", agent_id)
                 return
-            if output and self._tracer is not None:
+            if self._tracer is not None:
+                attrs: dict[str, Any] = {
+                    SpanAttributes.OPENINFERENCE_SPAN_KIND: (
+                        OpenInferenceSpanKindValues.CHAIN.value
+                    ),
+                    "praxion.tool_count": agent_ctx.tool_count,
+                    "praxion.error_count": agent_ctx.error_count,
+                    "praxion.child_count": agent_ctx.child_count,
+                    "praxion.skill_count": agent_ctx.skill_count,
+                }
+                if output:
+                    attrs[SpanAttributes.OUTPUT_VALUE] = output
                 span = self._tracer.start_span(
-                    name="agent-result",
-                    context=agent_context,
+                    name="agent-summary",
+                    context=agent_ctx.otel_context,
                     kind=SpanKind.INTERNAL,
-                    attributes={
-                        SpanAttributes.OPENINFERENCE_SPAN_KIND: (
-                            OpenInferenceSpanKindValues.CHAIN.value
-                        ),
-                        SpanAttributes.OUTPUT_VALUE: output,
-                    },
+                    attributes=attrs,
                 )
                 span.end()
         except Exception:
@@ -265,6 +330,7 @@ class OTelRelay:
         error_msg: str = "",
         session_id: str = "",
         project_dir: str = "",
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Create a TOOL child span under the given agent (or main agent)."""
         if not _is_otel_enabled():
@@ -272,10 +338,89 @@ class OTelRelay:
         try:
             self._ensure_initialized(session_id, project_dir=project_dir)
             self._record_tool_span(
-                agent_id, tool_name, input_summary, output_summary, is_error, error_msg
+                agent_id,
+                tool_name,
+                input_summary,
+                output_summary,
+                is_error,
+                error_msg,
+                metadata or {},
             )
         except Exception:
             logger.warning("Failed to record OTel tool span for %s", tool_name, exc_info=True)
+
+    # ------------------------------------------------------------------
+    # Artifact recording (skills, commands)
+    # ------------------------------------------------------------------
+
+    def record_skill(
+        self,
+        agent_id: str,
+        skill_name: str,
+        *,
+        session_id: str = "",
+        project_dir: str = "",
+        args: str = "",
+    ) -> None:
+        """Create a CHAIN span for a skill invocation under the given agent."""
+        if not _is_otel_enabled():
+            return
+        try:
+            self._ensure_initialized(session_id, project_dir=project_dir)
+            parent_context = self._get_parent_context(agent_id)
+            if parent_context is None or self._tracer is None:
+                return
+            span = self._tracer.start_span(
+                name=f"skill:{skill_name}",
+                context=parent_context,
+                kind=SpanKind.INTERNAL,
+                attributes={
+                    SpanAttributes.OPENINFERENCE_SPAN_KIND: (
+                        OpenInferenceSpanKindValues.CHAIN.value
+                    ),
+                    "praxion.artifact_type": "skill",
+                    "praxion.skill_name": skill_name,
+                    SpanAttributes.INPUT_VALUE: args,
+                },
+            )
+            span.end()
+            self._increment_stat(agent_id, "skill_count")
+            if self._session_stats:
+                self._session_stats.skill_count += 1
+        except Exception:
+            logger.warning("Failed to record skill span for %s", skill_name, exc_info=True)
+
+    def record_command(
+        self,
+        agent_id: str,
+        command_name: str,
+        *,
+        session_id: str = "",
+        project_dir: str = "",
+    ) -> None:
+        """Create a CHAIN span for a command invocation under the given agent."""
+        if not _is_otel_enabled():
+            return
+        try:
+            self._ensure_initialized(session_id, project_dir=project_dir)
+            parent_context = self._get_parent_context(agent_id)
+            if parent_context is None or self._tracer is None:
+                return
+            span = self._tracer.start_span(
+                name=f"command:{command_name}",
+                context=parent_context,
+                kind=SpanKind.INTERNAL,
+                attributes={
+                    SpanAttributes.OPENINFERENCE_SPAN_KIND: (
+                        OpenInferenceSpanKindValues.CHAIN.value
+                    ),
+                    "praxion.artifact_type": "command",
+                    "praxion.command_name": command_name,
+                },
+            )
+            span.end()
+        except Exception:
+            logger.warning("Failed to record command span for %s", command_name, exc_info=True)
 
     # ------------------------------------------------------------------
     # Span events (emitted as child spans for immediate Phoenix visibility)
@@ -294,15 +439,16 @@ class OTelRelay:
             return
         try:
             with self._span_lock:
-                agent_context = self._context_map.get(agent_id)
-                if agent_id in self._span_last_activity:
-                    self._span_last_activity[agent_id] = time.monotonic()
-            if agent_context is None or self._tracer is None:
+                agent_ctx = self._agent_contexts.get(agent_id)
+                if agent_ctx:
+                    agent_ctx.last_activity = time.monotonic()
+            parent_context = agent_ctx.otel_context if agent_ctx else None
+            if parent_context is None or self._tracer is None:
                 logger.debug("No context for phase event, agent_id=%s", agent_id)
                 return
             span = self._tracer.start_span(
                 name=f"phase:{name}",
-                context=agent_context,
+                context=parent_context,
                 kind=SpanKind.INTERNAL,
                 attributes={
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: (
@@ -329,13 +475,14 @@ class OTelRelay:
             return
         try:
             with self._span_lock:
-                agent_context = self._context_map.get(agent_id)
-            if agent_context is None or self._tracer is None:
+                agent_ctx = self._agent_contexts.get(agent_id)
+            parent_context = agent_ctx.otel_context if agent_ctx else None
+            if parent_context is None or self._tracer is None:
                 logger.debug("No context for decision event, agent_id=%s", agent_id)
                 return
             span = self._tracer.start_span(
                 name="decision",
-                context=agent_context,
+                context=parent_context,
                 kind=SpanKind.INTERNAL,
                 attributes={
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: (
@@ -383,12 +530,11 @@ class OTelRelay:
         with self._span_lock:
             stale = [
                 aid
-                for aid, last in self._span_last_activity.items()
-                if now - last > AGENT_SPAN_TIMEOUT_S
+                for aid, ctx in self._agent_contexts.items()
+                if now - ctx.last_activity > AGENT_SPAN_TIMEOUT_S
             ]
             for agent_id in stale:
-                self._context_map.pop(agent_id, None)
-                self._span_last_activity.pop(agent_id, None)
+                self._agent_contexts.pop(agent_id, None)
                 logger.info("Reaped stale agent context: %s", agent_id)
 
     # ------------------------------------------------------------------
@@ -428,7 +574,12 @@ class OTelRelay:
 
         self._tracer = self._provider.get_tracer(TRACER_NAME)
 
-    def _open_session_span(self, session_id: str, project_dir: str) -> None:
+    def _open_session_span(
+        self,
+        session_id: str,
+        project_dir: str,
+        git_context: dict[str, Any],
+    ) -> None:
         """Create the root SESSION span and end it immediately.
 
         The span is ended right away so Phoenix receives it and shows the
@@ -448,24 +599,41 @@ class OTelRelay:
 
         project_name = os.path.basename(project_dir) if project_dir else self._default_project_name
 
+        git_branch = git_context.get("git_branch", "")
+        is_worktree = git_context.get("is_worktree", False)
+        worktree_name = git_context.get("worktree_name", "")
+
         # No parent context -> true root span.
+        attrs: dict[str, Any] = {
+            SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.CHAIN.value,
+            SpanAttributes.SESSION_ID: session_id,
+            "praxion.project_name": project_name,
+            "praxion.project_dir": project_dir,
+            "praxion.session_start": datetime.now(UTC).isoformat(),
+        }
+        if git_branch:
+            attrs["praxion.git.branch"] = git_branch
+        if is_worktree:
+            attrs["praxion.git.is_worktree"] = True
+            attrs["praxion.git.worktree_name"] = worktree_name
+
         self._session_span = self._tracer.start_span(
             name="session",
             kind=SpanKind.INTERNAL,
-            attributes={
-                SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.CHAIN.value,
-                SpanAttributes.SESSION_ID: session_id,
-                "praxion.project_name": project_name,
-                "praxion.project_dir": project_dir,
-                "praxion.session_start": datetime.now(UTC).isoformat(),
-            },
+            attributes=attrs,
         )
         # Capture context BEFORE ending -- child spans parent under this.
         self._session_context = trace.set_span_in_context(self._session_span)
         # End immediately so Phoenix receives the root span right away.
         # Child spans still link to it via the saved _session_context.
         self._session_span.end()
-        self._trace_type_set = False
+
+        # Initialize session stats
+        self._session_stats = SessionStats(
+            git_branch=git_branch,
+            is_worktree=is_worktree,
+            worktree_name=worktree_name,
+        )
 
         # Create synthetic main-agent span for the main Claude agent.
         # Tool calls with empty agent_id will be parented under this span.
@@ -475,17 +643,29 @@ class OTelRelay:
             kind=SpanKind.INTERNAL,
             attributes={
                 SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.AGENT.value,
+                SpanAttributes.AGENT_NAME: MAIN_AGENT_TYPE,
+                SpanAttributes.GRAPH_NODE_ID: MAIN_AGENT_ID,
+                SpanAttributes.GRAPH_NODE_NAME: MAIN_AGENT_TYPE,
+                SpanAttributes.GRAPH_NODE_PARENT_ID: "",
                 "praxion.agent_type": MAIN_AGENT_TYPE,
                 "praxion.agent_origin": "claude-code",
                 "praxion.agent_id": MAIN_AGENT_ID,
                 "praxion.session_id": session_id,
+                "praxion.depth": 0,
             },
         )
         main_context = trace.set_span_in_context(main_span)
         main_span.end()  # End immediately for Phoenix visibility
         with self._span_lock:
-            self._context_map[MAIN_AGENT_ID] = main_context
-            self._span_last_activity[MAIN_AGENT_ID] = time.monotonic()
+            self._agent_contexts[MAIN_AGENT_ID] = AgentContext(
+                otel_context=main_context,
+                agent_id=MAIN_AGENT_ID,
+                agent_type=MAIN_AGENT_TYPE,
+                session_id=session_id,
+                parent_agent_id="",
+                depth=0,
+                last_activity=time.monotonic(),
+            )
 
         # Start reaper to handle stale context cleanup
         self._start_reaper()
@@ -496,12 +676,19 @@ class OTelRelay:
         agent_type: str,
         session_id: str,
         parent_session_id: str,
+        *,
+        git_context: dict[str, Any] | None = None,
+        task_slug: str = "",
     ) -> None:
-        """Create an AGENT span as a child of the session root, ended immediately.
+        """Create an AGENT span parented under the spawning agent (hierarchy-aware).
 
         The span is ended right away so Phoenix shows the trace hierarchy
         without waiting for SubagentStop. The span's context is stored in
-        ``_context_map`` for parenting child spans (tools, phases, decisions).
+        ``_agent_contexts`` for parenting child spans (tools, phases, decisions).
+
+        Parent resolution:
+        - Look up MAIN_AGENT_ID as the default parent (depth-1 agents)
+        - This naturally handles the common case where the main agent spawns subagents
         """
         if self._tracer is None or self._session_context is None:
             return
@@ -509,32 +696,71 @@ class OTelRelay:
         origin = _detect_agent_origin(agent_type)
         clean_type = _clean_agent_type(agent_type)
 
-        # Set trace_type on each agent span (session span is already ended)
+        # Determine parent: use main-agent as default parent for depth-1 agents
+        parent_id = MAIN_AGENT_ID
+        with self._span_lock:
+            parent_ctx = self._agent_contexts.get(parent_id)
+        parent_otel_context = parent_ctx.otel_context if parent_ctx else self._session_context
+        parent_depth = parent_ctx.depth if parent_ctx else 0
+
+        # Set trace_type on each agent span
         trace_type = TRACE_TYPE_PIPELINE if origin == "praxion" else TRACE_TYPE_NATIVE
 
         # Ensure a meaningful span name for Phoenix display
         span_name = clean_type or agent_id or "unknown-agent"
 
+        git = git_context or {}
+        attrs: dict[str, Any] = {
+            SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.AGENT.value,
+            SpanAttributes.AGENT_NAME: span_name,
+            SpanAttributes.GRAPH_NODE_ID: agent_id or span_name,
+            SpanAttributes.GRAPH_NODE_NAME: span_name,
+            SpanAttributes.GRAPH_NODE_PARENT_ID: parent_id,
+            "praxion.agent_type": clean_type,
+            "praxion.agent_origin": origin,
+            "praxion.trace_type": trace_type,
+            "praxion.agent_id": agent_id,
+            "praxion.session_id": session_id,
+            "praxion.parent_session_id": parent_session_id,
+            "praxion.depth": parent_depth + 1,
+            "praxion.parent_agent_id": parent_id,
+        }
+        if git.get("git_branch"):
+            attrs["praxion.git.branch"] = git["git_branch"]
+        if git.get("is_worktree"):
+            attrs["praxion.git.is_worktree"] = True
+            attrs["praxion.git.worktree_name"] = git.get("worktree_name", "")
+        if task_slug:
+            attrs["praxion.task_slug"] = task_slug
+
         span = self._tracer.start_span(
             name=span_name,
-            context=self._session_context,
+            context=parent_otel_context,
             kind=SpanKind.INTERNAL,
-            attributes={
-                SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.AGENT.value,
-                "praxion.agent_type": clean_type,
-                "praxion.agent_origin": origin,
-                "praxion.trace_type": trace_type,
-                "praxion.agent_id": agent_id,
-                "praxion.session_id": session_id,
-                "praxion.parent_session_id": parent_session_id,
-            },
+            attributes=attrs,
         )
         agent_context = trace.set_span_in_context(span)
         span.end()  # End immediately for Phoenix visibility
 
         with self._span_lock:
-            self._context_map[agent_id] = agent_context
-            self._span_last_activity[agent_id] = time.monotonic()
+            self._agent_contexts[agent_id] = AgentContext(
+                otel_context=agent_context,
+                agent_id=agent_id,
+                agent_type=clean_type,
+                session_id=session_id,
+                parent_agent_id=parent_id,
+                depth=parent_depth + 1,
+                last_activity=time.monotonic(),
+            )
+            # Increment parent's child count
+            if parent_ctx:
+                parent_ctx.child_count += 1
+
+        # Update session stats
+        if self._session_stats:
+            self._session_stats.agent_count += 1
+            if task_slug and not self._session_stats.task_slug:
+                self._session_stats.task_slug = task_slug
 
     def _record_tool_span(
         self,
@@ -544,27 +770,17 @@ class OTelRelay:
         output_summary: str,
         is_error: bool,
         error_msg: str,
+        metadata: dict[str, Any],
     ) -> None:
         """Create a TOOL span as a child of the agent span or main agent."""
         if self._tracer is None:
             return
 
-        # Determine parent: agent context if available, main agent for empty
-        # agent_id, or session root as last resort
-        lookup_id = agent_id if agent_id else MAIN_AGENT_ID
-
-        with self._span_lock:
-            parent_context = self._context_map.get(lookup_id)
-            # Update activity timestamp for the parent agent
-            if lookup_id in self._span_last_activity:
-                self._span_last_activity[lookup_id] = time.monotonic()
-
-        if parent_context is None:
-            parent_context = self._session_context
+        parent_context = self._get_parent_context(agent_id)
         if parent_context is None:
             return
 
-        attributes: dict[str, str] = {
+        attributes: dict[str, Any] = {
             SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.TOOL.value,
             SpanAttributes.TOOL_NAME: tool_name,
         }
@@ -572,6 +788,12 @@ class OTelRelay:
             attributes[SpanAttributes.INPUT_VALUE] = input_summary
         if output_summary:
             attributes[SpanAttributes.OUTPUT_VALUE] = output_summary
+
+        # MCP tool enrichment
+        if metadata.get("artifact_type") == "mcp_tool":
+            attributes["praxion.artifact_type"] = "mcp_tool"
+            attributes["praxion.mcp_server"] = metadata.get("mcp_server", "")
+            attributes["praxion.mcp_tool"] = metadata.get("mcp_tool", "")
 
         span = self._tracer.start_span(
             name=tool_name,
@@ -590,4 +812,75 @@ class OTelRelay:
                 },
             )
 
+        span.end()
+
+        # Update stats
+        self._increment_stat(agent_id, "tool_count")
+        if is_error:
+            self._increment_stat(agent_id, "error_count")
+        if self._session_stats:
+            self._session_stats.tool_count += 1
+            if is_error:
+                self._session_stats.error_count += 1
+
+    def _get_parent_context(self, agent_id: str) -> context_api.Context | None:
+        """Look up the OTel context for parenting a child span.
+
+        Checks agent context map, falls back to main-agent, then session root.
+        """
+        lookup_id = agent_id if agent_id else MAIN_AGENT_ID
+        with self._span_lock:
+            agent_ctx = self._agent_contexts.get(lookup_id)
+            if agent_ctx:
+                agent_ctx.last_activity = time.monotonic()
+                return agent_ctx.otel_context
+            # Fallback to main-agent
+            main_ctx = self._agent_contexts.get(MAIN_AGENT_ID)
+            if main_ctx:
+                return main_ctx.otel_context
+        return self._session_context
+
+    def _increment_stat(self, agent_id: str, stat_name: str) -> None:
+        """Increment a counter on an agent context. Thread-safe."""
+        lookup_id = agent_id if agent_id else MAIN_AGENT_ID
+        with self._span_lock:
+            agent_ctx = self._agent_contexts.get(lookup_id)
+            if agent_ctx:
+                current = getattr(agent_ctx, stat_name, 0)
+                setattr(agent_ctx, stat_name, current + 1)
+
+    def _create_session_summary(self) -> None:
+        """Create a session-summary CHAIN span with aggregate stats."""
+        if self._tracer is None or self._session_context is None or self._session_stats is None:
+            return
+        stats = self._session_stats
+        duration_s = round(time.monotonic() - stats.start_time, 1)
+        attrs: dict[str, Any] = {
+            SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.CHAIN.value,
+            "praxion.agent_count": stats.agent_count,
+            "praxion.tool_count": stats.tool_count,
+            "praxion.skill_count": stats.skill_count,
+            "praxion.error_count": stats.error_count,
+            "praxion.duration_s": duration_s,
+            "praxion.session_summary": (
+                f"{stats.agent_count} agents, {stats.tool_count} tools, "
+                f"{stats.skill_count} skills, {stats.error_count} errors"
+            ),
+        }
+        if stats.git_branch:
+            attrs["praxion.git.branch"] = stats.git_branch
+        if stats.is_worktree:
+            attrs["praxion.git.is_worktree"] = True
+            attrs["praxion.git.worktree_name"] = stats.worktree_name
+        if stats.task_slug:
+            attrs["praxion.task_slug"] = stats.task_slug
+        if stats.pipeline_tier:
+            attrs["praxion.pipeline_tier"] = stats.pipeline_tier
+
+        span = self._tracer.start_span(
+            name="session-summary",
+            context=self._session_context,
+            kind=SpanKind.INTERNAL,
+            attributes=attrs,
+        )
         span.end()

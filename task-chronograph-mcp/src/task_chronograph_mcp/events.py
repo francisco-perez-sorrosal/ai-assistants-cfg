@@ -19,6 +19,8 @@ class EventType(StrEnum):
     ERROR = "error"
     SESSION_START = "session_start"
     SESSION_STOP = "session_stop"
+    SKILL_USE = "skill_use"
+    COMMAND_USE = "command_use"
 
 
 class AgentStatus(StrEnum):
@@ -55,9 +57,19 @@ class Event:
     metadata: dict = field(default_factory=dict)
     tool_name: str = ""
     project_dir: str = ""
+    # Git context
+    git_branch: str = ""
+    git_toplevel: str = ""
+    is_worktree: bool = False
+    worktree_name: str = ""
+    # Artifact context
+    artifact_type: str = ""
+    artifact_name: str = ""
+    # Pipeline context
+    task_slug: str = ""
 
     def to_dict(self) -> dict:
-        return {
+        d = {
             "event_type": self.event_type.value,
             "agent_type": self.agent_type,
             "timestamp": self.timestamp.isoformat(),
@@ -75,6 +87,19 @@ class Event:
             "tool_name": self.tool_name,
             "project_dir": self.project_dir,
         }
+        if self.git_branch:
+            d["git_branch"] = self.git_branch
+        if self.git_toplevel:
+            d["git_toplevel"] = self.git_toplevel
+        if self.is_worktree:
+            d["is_worktree"] = self.is_worktree
+            d["worktree_name"] = self.worktree_name
+        if self.artifact_type:
+            d["artifact_type"] = self.artifact_type
+            d["artifact_name"] = self.artifact_name
+        if self.task_slug:
+            d["task_slug"] = self.task_slug
+        return d
 
 
 @dataclass(frozen=True)

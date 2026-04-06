@@ -15,9 +15,7 @@ import pytest
 # Import the hook script via importlib (it is outside the package)
 # ---------------------------------------------------------------------------
 
-HOOK_SCRIPT_PATH = (
-    Path(__file__).resolve().parents[2] / "hooks" / "send_event.py"
-)
+HOOK_SCRIPT_PATH = Path(__file__).resolve().parents[2] / "hooks" / "send_event.py"
 
 
 @pytest.fixture
@@ -613,3 +611,156 @@ class TestHookScriptProcess:
             timeout=10,
         )
         assert result.returncode == 0
+
+
+# ---------------------------------------------------------------------------
+# Git context capture
+# ---------------------------------------------------------------------------
+
+
+class TestGitContextInEvents:
+    def test_session_start_includes_git_metadata(self, build_events):
+        payload = {
+            "hook_event_name": "SessionStart",
+            "session_id": "sess-001",
+            "cwd": "/test/project",
+        }
+        events, _ = build_events(payload)
+        assert "git" in events[0].get("metadata", {})
+
+    def test_subagent_start_includes_git_metadata(self, build_events):
+        payload = {
+            "hook_event_name": "SubagentStart",
+            "session_id": "sess-001",
+            "agent_type": "researcher",
+            "agent_id": "a1",
+            "cwd": "/test/project",
+        }
+        events, _ = build_events(payload)
+        assert "git" in events[0].get("metadata", {})
+
+
+# ---------------------------------------------------------------------------
+# Skill invocation detection
+# ---------------------------------------------------------------------------
+
+
+class TestSkillDetection:
+    def test_skill_tool_produces_skill_use_event(self, build_events):
+        payload = {
+            "hook_event_name": "PostToolUse",
+            "session_id": "sess-001",
+            "tool_name": "Skill",
+            "tool_input": {"skill": "software-planning", "args": ""},
+        }
+        events, _ = build_events(payload)
+        skill_events = [e for e in events if e["event_type"] == "skill_use"]
+        assert len(skill_events) == 1
+        assert skill_events[0]["tool_name"] == "skill:software-planning"
+        assert skill_events[0]["metadata"]["artifact_type"] == "skill"
+        assert skill_events[0]["metadata"]["artifact_name"] == "software-planning"
+
+    def test_skill_tool_also_produces_tool_use_event(self, build_events):
+        payload = {
+            "hook_event_name": "PostToolUse",
+            "session_id": "sess-001",
+            "tool_name": "Skill",
+            "tool_input": {"skill": "testing-strategy"},
+        }
+        events, _ = build_events(payload)
+        tool_events = [e for e in events if e["event_type"] == "tool_use"]
+        assert len(tool_events) == 1
+        assert tool_events[0]["tool_name"] == "Skill"
+
+    def test_non_skill_tool_does_not_produce_skill_use(self, build_events):
+        payload = {
+            "hook_event_name": "PostToolUse",
+            "session_id": "sess-001",
+            "tool_name": "Read",
+            "tool_input": {"file_path": "/test.py"},
+        }
+        events, _ = build_events(payload)
+        skill_events = [e for e in events if e["event_type"] == "skill_use"]
+        assert len(skill_events) == 0
+
+
+# ---------------------------------------------------------------------------
+# MCP tool classification
+# ---------------------------------------------------------------------------
+
+
+class TestMcpToolClassification:
+    def test_praxion_mcp_tool_enriched_with_metadata(self, build_events):
+        payload = {
+            "hook_event_name": "PostToolUse",
+            "session_id": "sess-001",
+            "tool_name": "mcp__plugin_i-am_memory__remember",
+            "tool_input": {"key": "test"},
+        }
+        events, _ = build_events(payload)
+        tool_event = [e for e in events if e["event_type"] == "tool_use"][0]
+        assert tool_event["metadata"]["artifact_type"] == "mcp_tool"
+        assert tool_event["metadata"]["mcp_server"] == "memory"
+        assert tool_event["metadata"]["mcp_tool"] == "remember"
+
+    def test_non_praxion_mcp_tool_not_enriched(self, build_events):
+        payload = {
+            "hook_event_name": "PostToolUse",
+            "session_id": "sess-001",
+            "tool_name": "mcp__other_server__tool",
+            "tool_input": {},
+        }
+        events, _ = build_events(payload)
+        tool_event = [e for e in events if e["event_type"] == "tool_use"][0]
+        assert "artifact_type" not in tool_event["metadata"]
+
+    def test_chronograph_mcp_tool_classified(self, build_events):
+        payload = {
+            "hook_event_name": "PostToolUse",
+            "session_id": "sess-001",
+            "tool_name": "mcp__plugin_i-am_task-chronograph__get_pipeline_status",
+            "tool_input": {},
+        }
+        events, _ = build_events(payload)
+        tool_event = [e for e in events if e["event_type"] == "tool_use"][0]
+        assert tool_event["metadata"]["mcp_server"] == "task-chronograph"
+        assert tool_event["metadata"]["mcp_tool"] == "get_pipeline_status"
+
+
+# ---------------------------------------------------------------------------
+# Task slug extraction
+# ---------------------------------------------------------------------------
+
+
+class TestTaskSlugExtraction:
+    def test_task_slug_extracted_from_prompt(self, build_events):
+        payload = {
+            "hook_event_name": "SubagentStart",
+            "session_id": "sess-001",
+            "agent_type": "researcher",
+            "agent_id": "a1",
+            "prompt": "Research the auth flow.\n\nTask slug: auth-flow",
+        }
+        events, _ = build_events(payload)
+        assert events[0]["metadata"].get("task_slug") == "auth-flow"
+
+    def test_task_slug_extracted_from_description(self, build_events):
+        payload = {
+            "hook_event_name": "SubagentStart",
+            "session_id": "sess-001",
+            "agent_type": "researcher",
+            "agent_id": "a1",
+            "description": "Task slug: payment-api research",
+        }
+        events, _ = build_events(payload)
+        assert events[0]["metadata"].get("task_slug") == "payment-api"
+
+    def test_no_task_slug_when_absent(self, build_events):
+        payload = {
+            "hook_event_name": "SubagentStart",
+            "session_id": "sess-001",
+            "agent_type": "researcher",
+            "agent_id": "a1",
+        }
+        events, _ = build_events(payload)
+        assert "task_slug" not in events[0].get("metadata", {})

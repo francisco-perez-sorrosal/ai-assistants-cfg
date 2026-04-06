@@ -179,11 +179,18 @@ class TestPhoenixDiagnostic:
         assert len(agent_spans) == 2, f"Expected 2 agent spans, got {len(agent_spans)}"
         assert len(tool_spans) == 2, f"Expected 2 tool spans, got {len(tool_spans)}"
 
-        # Check hierarchy: agent parented to session
+        # Check hierarchy: main-agent is child of session, researcher is child of main-agent
         session_span_id = session_spans[0]["context"]["spanId"]
-        for a in agent_spans:
-            assert a["parentId"] == session_span_id, (
-                f"Agent span parent={a['parentId']} != session span={session_span_id}"
+        main_spans = [a for a in agent_spans if a["name"] == "main-agent"]
+        assert len(main_spans) == 1, "Expected exactly 1 main-agent span"
+        main_span_id = main_spans[0]["context"]["spanId"]
+        assert main_spans[0]["parentId"] == session_span_id, (
+            f"main-agent parent={main_spans[0]['parentId']} != session span={session_span_id}"
+        )
+        researcher_spans_check = [a for a in agent_spans if a["name"] == "researcher"]
+        for a in researcher_spans_check:
+            assert a["parentId"] == main_span_id, (
+                f"Agent span parent={a['parentId']} != main-agent span={main_span_id}"
             )
 
         # Check hierarchy: tools parented to the researcher agent (not main-agent)

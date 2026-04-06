@@ -3,7 +3,7 @@
 Exits 0 unconditionally -- must never block agent execution.
 """
 
-import hashlib, json, os, re, sys, urllib.request  # noqa: E401
+import hashlib, json, os, re, subprocess, sys, urllib.request  # noqa: E401
 
 PROGRESS_MARKER = "PROGRESS.md"
 DEFAULT_PORT = 8765
@@ -21,6 +21,80 @@ def _derive_port(project_dir):
     digest = hashlib.sha256(os.path.abspath(project_dir).encode()).digest()
     offset = int.from_bytes(digest[:2], "big") % PORT_RANGE_SIZE
     return DEFAULT_PORT + offset
+
+
+TASK_SLUG_RE = re.compile(r"Task\s+slug:\s*(\S+)")
+
+
+def _git_context(cwd):
+    """Capture current git branch and worktree info. Fail-open: returns empty dict."""
+    if not cwd:
+        return {}
+    context = {}
+    try:
+        branch = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                cwd=cwd,
+                timeout=2,
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+        context["git_branch"] = branch
+    except Exception:
+        pass
+    try:
+        toplevel = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--show-toplevel"],
+                cwd=cwd,
+                timeout=2,
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+        context["git_toplevel"] = toplevel
+        git_dir = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--git-dir"],
+                cwd=cwd,
+                timeout=2,
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+        common_dir = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--git-common-dir"],
+                cwd=cwd,
+                timeout=2,
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+        # Worktree detection: git-dir differs from git-common-dir
+        is_worktree = os.path.abspath(os.path.join(cwd, git_dir)) != os.path.abspath(
+            os.path.join(cwd, common_dir)
+        )
+        context["is_worktree"] = is_worktree
+        if is_worktree:
+            context["worktree_name"] = os.path.basename(toplevel)
+    except Exception:
+        pass
+    return context
+
+
+def _extract_task_slug(description):
+    """Extract task slug from agent description (e.g. 'Task slug: auth-flow')."""
+    if not description:
+        return ""
+    match = TASK_SLUG_RE.search(description)
+    return match.group(1) if match else ""
 
 
 PROGRESS_LINE_RE = re.compile(
@@ -126,12 +200,39 @@ def _project_dir(data):
     return data.get("cwd", "") or os.environ.get("CLAUDE_PROJECT_DIR", "")
 
 
+_MCP_PRAXION_PREFIX = "mcp__plugin_i-am_"
+
+
+def _classify_mcp_tool(tool_name):
+    """Extract MCP server and tool name from Praxion MCP tool names.
+
+    Returns (server, tool) tuple, or None if not a Praxion MCP tool.
+
+    Claude Code MCP tool names use ``__`` as the primary delimiter, but
+    the plugin name (``i-am``) and server name are joined with ``_`` inside
+    the second segment. Actual format:
+        mcp__plugin_i-am_<server>__<tool>
+    Split on ``__`` gives: ``['mcp', 'plugin_i-am_<server>', '<tool>']``
+    We strip the known prefix to get ``<server>__<tool>``, then split once.
+    """
+    if not tool_name.startswith(_MCP_PRAXION_PREFIX):
+        return None
+    remainder = tool_name[len(_MCP_PRAXION_PREFIX) :]
+    if "__" in remainder:
+        server, tool = remainder.split("__", 1)
+    else:
+        server = remainder
+        tool = ""
+    return (server, tool)
+
+
 def _build_events(data):
     """Map a Claude Code hook payload to Chronograph events + interactions."""
     hook = data.get("hook_event_name", "")
     sid = data.get("session_id", "")
     aid = data.get("agent_id", "")
     proj = _project_dir(data)
+    git = _git_context(proj)
     events = []
     interactions = []
 
@@ -142,6 +243,7 @@ def _build_events(data):
                 "agent_type": "",
                 "session_id": sid,
                 "project_dir": proj,
+                "metadata": {"git": git},
             }
         )
 
@@ -152,23 +254,28 @@ def _build_events(data):
                 "agent_type": "",
                 "session_id": sid,
                 "project_dir": proj,
+                "metadata": {"git": git},
             }
         )
 
     elif hook == "SubagentStart":
         agent = data.get("agent_type", "")
         label = _agent_label(data)
-        events.append(
-            {
-                "event_type": "agent_start",
-                "agent_type": agent or label,
-                "session_id": sid,
-                "agent_id": aid,
-                "parent_session_id": sid,
-                "message": f"Agent {label} started",
-                "project_dir": proj,
-            }
-        )
+        description = data.get("description", "")
+        task_slug = _extract_task_slug(data.get("prompt", "") or description)
+        event = {
+            "event_type": "agent_start",
+            "agent_type": agent or label,
+            "session_id": sid,
+            "agent_id": aid,
+            "parent_session_id": sid,
+            "message": f"Agent {label} started",
+            "project_dir": proj,
+            "metadata": {"git": git},
+        }
+        if task_slug:
+            event["metadata"]["task_slug"] = task_slug
+        events.append(event)
         interactions.append(
             {
                 "source": "main_agent",
@@ -181,20 +288,19 @@ def _build_events(data):
     elif hook == "SubagentStop":
         agent = data.get("agent_type", "")
         label = _agent_label(data)
-        events.append(
-            {
-                "event_type": "agent_stop",
-                "agent_type": agent or label,
-                "session_id": sid,
-                "agent_id": aid,
-                "parent_session_id": sid,
-                "message": f"Agent {label} stopped",
-                "project_dir": proj,
-            }
-        )
+        event = {
+            "event_type": "agent_stop",
+            "agent_type": agent or label,
+            "session_id": sid,
+            "agent_id": aid,
+            "parent_session_id": sid,
+            "message": f"Agent {label} stopped",
+            "project_dir": proj,
+        }
         transcript = data.get("agent_transcript_path", "")
         if transcript:
-            events[-1]["metadata"] = {"agent_transcript_path": transcript}
+            event["metadata"] = {"agent_transcript_path": transcript}
+        events.append(event)
         interactions.append(
             {
                 "source": aid or agent or label,
@@ -206,7 +312,41 @@ def _build_events(data):
 
     elif hook == "PostToolUse":
         tool_name = data.get("tool_name", "")
-        fp = data.get("tool_input", {}).get("file_path", "")
+        tool_input = data.get("tool_input", {})
+        fp = tool_input.get("file_path", "") if isinstance(tool_input, dict) else ""
+
+        # Detect Skill invocations
+        if tool_name == "Skill":
+            skill_name = tool_input.get("skill", "") if isinstance(tool_input, dict) else ""
+            if skill_name:
+                events.append(
+                    {
+                        "event_type": "skill_use",
+                        "agent_type": data.get("agent_type", ""),
+                        "agent_id": aid,
+                        "session_id": sid,
+                        "tool_name": f"skill:{skill_name}",
+                        "project_dir": proj,
+                        "metadata": {
+                            "artifact_type": "skill",
+                            "artifact_name": skill_name,
+                            "args": tool_input.get("args", "")
+                            if isinstance(tool_input, dict)
+                            else "",
+                        },
+                    }
+                )
+
+        # Build metadata for tool_use event with MCP enrichment
+        meta = {
+            "input_summary": _summarize_tool_input(data),
+            "output_summary": _summarize_tool_output(data),
+        }
+        mcp_info = _classify_mcp_tool(tool_name)
+        if mcp_info:
+            meta["artifact_type"] = "mcp_tool"
+            meta["mcp_server"] = mcp_info[0]
+            meta["mcp_tool"] = mcp_info[1]
 
         # Always emit a tool_use event for every tool call
         events.append(
@@ -217,18 +357,15 @@ def _build_events(data):
                 "session_id": sid,
                 "tool_name": tool_name,
                 "project_dir": proj,
-                "metadata": {
-                    "input_summary": _summarize_tool_input(data),
-                    "output_summary": _summarize_tool_output(data),
-                },
+                "metadata": meta,
             }
         )
 
         # Additionally detect PROGRESS.md writes for phase transitions
         if PROGRESS_MARKER in fp:
-            content = data.get("tool_input", {}).get("content", "")
+            content = tool_input.get("content", "") if isinstance(tool_input, dict) else ""
             if not content:
-                content = data.get("tool_input", {}).get("new_string", "")
+                content = tool_input.get("new_string", "") if isinstance(tool_input, dict) else ""
             parsed = _parse_last_progress_line(content) if content else None
             if parsed:
                 events.append(

@@ -155,17 +155,20 @@ class TestAgentSpanLifecycle:
         agent_spans = harness.spans_with_attribute("praxion.agent_id", "agent-r1")
         assert len(agent_spans) == 1
 
-    def test_agent_span_is_child_of_session_root(self, harness: OTelRelayTestHarness):
+    def test_agent_span_is_child_of_main_agent(self, harness: OTelRelayTestHarness):
         harness.relay.start_session(SESSION_ID, harness.project_dir)
         harness.relay.start_agent("agent-r1", "researcher", SESSION_ID)
         harness.relay.end_agent("agent-r1", "Done")
         harness.relay.end_session(SESSION_ID)
 
         root = harness.session_span()
+        main = harness.spans_with_attribute("praxion.agent_type", "main-agent")[0]
         agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
 
+        # Agent is a child of main-agent (hierarchy-aware parenting)
         assert agent.parent is not None
-        assert agent.parent.span_id == root.context.span_id
+        assert agent.parent.span_id == main.context.span_id
+        # All spans share the same trace
         assert agent.context.trace_id == root.context.trace_id
 
     def test_agent_span_kind_is_agent(self, harness: OTelRelayTestHarness):
@@ -177,19 +180,20 @@ class TestAgentSpanLifecycle:
         agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
         assert agent.attributes["openinference.span.kind"] == "AGENT"
 
-    def test_agent_stop_creates_result_span_with_output(self, harness: OTelRelayTestHarness):
+    def test_agent_stop_creates_summary_span_with_output(self, harness: OTelRelayTestHarness):
         harness.relay.start_session(SESSION_ID, harness.project_dir)
         harness.relay.start_agent("agent-r1", "researcher", SESSION_ID)
         harness.relay.end_agent("agent-r1", "Findings: auth uses OAuth2")
         harness.relay.end_session(SESSION_ID)
 
-        result_spans = harness.spans_named("agent-result")
-        assert len(result_spans) == 1
-        assert result_spans[0].attributes["output.value"] == "Findings: auth uses OAuth2"
+        summary_spans = harness.spans_named("agent-summary")
+        assert len(summary_spans) == 1
+        assert summary_spans[0].attributes["output.value"] == "Findings: auth uses OAuth2"
+        assert summary_spans[0].attributes["praxion.tool_count"] == 0
 
-        # Result span is a child of the agent span
+        # Summary span is a child of the agent span
         agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
-        assert result_spans[0].parent.span_id == agent.context.span_id
+        assert summary_spans[0].parent.span_id == agent.context.span_id
 
     def test_praxion_agent_origin_detected(self, harness: OTelRelayTestHarness):
         harness.relay.start_session(SESSION_ID, harness.project_dir)
@@ -305,7 +309,7 @@ class TestToolSpanCreation:
         assert tool.parent is not None
         assert tool.parent.span_id == main_agent.context.span_id
 
-    def test_tool_span_under_session_root_when_unknown_agent_id(
+    def test_tool_span_falls_back_to_main_agent_when_unknown_agent_id(
         self, harness: OTelRelayTestHarness
     ):
         harness.relay.start_session(SESSION_ID, harness.project_dir)
@@ -318,9 +322,10 @@ class TestToolSpanCreation:
         harness.relay.end_session(SESSION_ID)
 
         tool = harness.spans_with_attribute("tool.name", "Write")[0]
-        root = harness.session_span()
+        main_agent = harness.spans_with_attribute("praxion.agent_id", "__main_agent__")[0]
         assert tool.parent is not None
-        assert tool.parent.span_id == root.context.span_id
+        # Falls back to main-agent when the agent_id is unknown
+        assert tool.parent.span_id == main_agent.context.span_id
 
     def test_tool_span_has_tool_name_attribute(self, harness: OTelRelayTestHarness):
         harness.relay.start_session(SESSION_ID, harness.project_dir)
@@ -409,9 +414,9 @@ class TestErrorToolRecord:
 
 
 class TestParallelAgentSpans:
-    """Verify parallel agents both parent under session root, not nested."""
+    """Verify parallel agents both parent under main-agent, not nested."""
 
-    def test_parallel_agents_are_siblings_under_session_root(self, harness: OTelRelayTestHarness):
+    def test_parallel_agents_are_siblings_under_main_agent(self, harness: OTelRelayTestHarness):
         harness.relay.start_session(SESSION_ID, harness.project_dir)
         harness.relay.start_agent("agent-i1", "implementer", SESSION_ID)
         harness.relay.start_agent("agent-t1", "test-engineer", SESSION_ID)
@@ -419,13 +424,13 @@ class TestParallelAgentSpans:
         harness.relay.end_agent("agent-t1", "Tests written")
         harness.relay.end_session(SESSION_ID)
 
-        root = harness.session_span()
+        main = harness.spans_with_attribute("praxion.agent_id", "__main_agent__")[0]
         impl_span = harness.spans_with_attribute("praxion.agent_id", "agent-i1")[0]
         test_span = harness.spans_with_attribute("praxion.agent_id", "agent-t1")[0]
 
-        # Both should be children of the root span
-        assert impl_span.parent.span_id == root.context.span_id
-        assert test_span.parent.span_id == root.context.span_id
+        # Both should be children of the main-agent span (hierarchy-aware)
+        assert impl_span.parent.span_id == main.context.span_id
+        assert test_span.parent.span_id == main.context.span_id
 
     def test_parallel_agents_have_distinct_span_ids(self, harness: OTelRelayTestHarness):
         harness.relay.start_session(SESSION_ID, harness.project_dir)
@@ -817,7 +822,7 @@ class TestContextReaper:
 
             # Context should be cleaned up
             with harness.relay._span_lock:
-                assert "bg-agent" not in harness.relay._context_map
+                assert "bg-agent" not in harness.relay._agent_contexts
 
             harness.relay.end_session(SESSION_ID)
         finally:
@@ -839,7 +844,7 @@ class TestContextReaper:
 
             # Agent should still be in context map (not reaped)
             with harness.relay._span_lock:
-                assert "active-agent" in harness.relay._context_map
+                assert "active-agent" in harness.relay._agent_contexts
 
             harness.relay.end_agent("active-agent")
             harness.relay.end_session(SESSION_ID)
@@ -855,7 +860,7 @@ class TestContextReaper:
 
         # Context already removed by end_agent -- nothing to reap
         with harness.relay._span_lock:
-            assert "agent-x" not in harness.relay._context_map
+            assert "agent-x" not in harness.relay._agent_contexts
         harness.relay.end_session(SESSION_ID)
 
     def test_reaper_thread_stops_on_shutdown(self, harness: OTelRelayTestHarness):
@@ -867,3 +872,387 @@ class TestContextReaper:
         harness.relay.shutdown()
 
         assert harness.relay._reaper_thread is None or not harness.relay._reaper_thread.is_alive()
+
+
+# ---------------------------------------------------------------------------
+# Git context on spans
+# ---------------------------------------------------------------------------
+
+
+class TestGitContextOnSpans:
+    """Verify that git context (branch, worktree) is attached to spans."""
+
+    def test_session_span_has_git_branch_attribute(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(
+            SESSION_ID, harness.project_dir, git_context={"git_branch": "feat/auth"}
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        root = harness.session_span()
+        assert root.attributes["praxion.git.branch"] == "feat/auth"
+
+    def test_session_span_has_worktree_attributes(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(
+            SESSION_ID,
+            harness.project_dir,
+            git_context={"git_branch": "feat/auth", "is_worktree": True, "worktree_name": "auth"},
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        root = harness.session_span()
+        assert root.attributes["praxion.git.is_worktree"] is True
+        assert root.attributes["praxion.git.worktree_name"] == "auth"
+
+    def test_session_span_omits_git_when_not_provided(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.end_session(SESSION_ID)
+
+        root = harness.session_span()
+        assert "praxion.git.branch" not in root.attributes
+
+    def test_agent_span_has_git_branch_attribute(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent(
+            "agent-r1",
+            "researcher",
+            SESSION_ID,
+            git_context={"git_branch": "feat/auth"},
+        )
+        harness.relay.end_agent("agent-r1")
+        harness.relay.end_session(SESSION_ID)
+
+        agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
+        assert agent.attributes["praxion.git.branch"] == "feat/auth"
+
+
+# ---------------------------------------------------------------------------
+# Agent hierarchy depth
+# ---------------------------------------------------------------------------
+
+
+class TestAgentDepthAttribute:
+    """Verify that agent spans carry correct depth attribute."""
+
+    def test_main_agent_has_depth_zero(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.end_session(SESSION_ID)
+
+        main = harness.spans_with_attribute("praxion.agent_type", "main-agent")[0]
+        assert main.attributes["praxion.depth"] == 0
+
+    def test_depth_one_agent(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-r1", "researcher", SESSION_ID)
+        harness.relay.end_agent("agent-r1")
+        harness.relay.end_session(SESSION_ID)
+
+        agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
+        assert agent.attributes["praxion.depth"] == 1
+
+    def test_parent_agent_id_attribute(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-r1", "researcher", SESSION_ID)
+        harness.relay.end_agent("agent-r1")
+        harness.relay.end_session(SESSION_ID)
+
+        agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
+        assert agent.attributes["praxion.parent_agent_id"] == "__main_agent__"
+
+
+# ---------------------------------------------------------------------------
+# Skill invocation spans
+# ---------------------------------------------------------------------------
+
+
+class TestSkillInvocationSpans:
+    """Verify that record_skill creates CHAIN spans with correct attributes."""
+
+    def test_skill_span_created_with_name(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_skill("", "software-planning", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        skill_spans = harness.spans_named("skill:software-planning")
+        assert len(skill_spans) == 1
+
+    def test_skill_span_has_artifact_type(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_skill("", "python-development", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        skill = harness.spans_named("skill:python-development")[0]
+        assert skill.attributes["praxion.artifact_type"] == "skill"
+        assert skill.attributes["praxion.skill_name"] == "python-development"
+
+    def test_skill_span_is_chain_kind(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_skill("", "testing-strategy", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        skill = harness.spans_named("skill:testing-strategy")[0]
+        assert skill.attributes["openinference.span.kind"] == "CHAIN"
+
+    def test_skill_span_parented_under_agent(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-r1", "researcher", SESSION_ID)
+        harness.relay.record_skill("agent-r1", "refactoring", session_id=SESSION_ID)
+        harness.relay.end_agent("agent-r1")
+        harness.relay.end_session(SESSION_ID)
+
+        agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
+        skill = harness.spans_named("skill:refactoring")[0]
+        assert skill.parent.span_id == agent.context.span_id
+
+
+# ---------------------------------------------------------------------------
+# Command invocation spans
+# ---------------------------------------------------------------------------
+
+
+class TestCommandInvocationSpans:
+    """Verify that record_command creates CHAIN spans."""
+
+    def test_command_span_created(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_command("", "co", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        cmd_spans = harness.spans_named("command:co")
+        assert len(cmd_spans) == 1
+        assert cmd_spans[0].attributes["praxion.artifact_type"] == "command"
+        assert cmd_spans[0].attributes["praxion.command_name"] == "co"
+
+
+# ---------------------------------------------------------------------------
+# MCP tool enrichment
+# ---------------------------------------------------------------------------
+
+
+class TestMcpToolEnrichment:
+    """Verify that MCP tool spans carry server/tool metadata."""
+
+    def test_mcp_tool_has_server_and_tool_attributes(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_tool(
+            "",
+            "mcp__plugin_i-am_memory__remember",
+            "key=test",
+            "ok",
+            session_id=SESSION_ID,
+            metadata={
+                "artifact_type": "mcp_tool",
+                "mcp_server": "memory",
+                "mcp_tool": "remember",
+            },
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        tool = harness.spans_named("mcp__plugin_i-am_memory__remember")[0]
+        assert tool.attributes["praxion.artifact_type"] == "mcp_tool"
+        assert tool.attributes["praxion.mcp_server"] == "memory"
+        assert tool.attributes["praxion.mcp_tool"] == "remember"
+
+
+# ---------------------------------------------------------------------------
+# Session summary span
+# ---------------------------------------------------------------------------
+
+
+class TestSessionSummarySpan:
+    """Verify that end_session creates a session-summary span with aggregates."""
+
+    def test_session_summary_span_created(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("a1", "researcher", SESSION_ID)
+        harness.relay.record_tool("a1", "Read", "f", "ok", session_id=SESSION_ID)
+        harness.relay.record_tool("a1", "Write", "f", "ok", session_id=SESSION_ID)
+        harness.relay.end_agent("a1")
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("session-summary")
+        assert len(summary) == 1
+
+    def test_session_summary_has_agent_count(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("a1", "researcher", SESSION_ID)
+        harness.relay.start_agent("a2", "implementer", SESSION_ID)
+        harness.relay.end_agent("a1")
+        harness.relay.end_agent("a2")
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("session-summary")[0]
+        assert summary.attributes["praxion.agent_count"] == 2
+
+    def test_session_summary_has_tool_count(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_tool("", "Read", "f", "ok", session_id=SESSION_ID)
+        harness.relay.record_tool("", "Write", "f", "ok", session_id=SESSION_ID)
+        harness.relay.record_tool("", "Bash", "cmd", "ok", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("session-summary")[0]
+        assert summary.attributes["praxion.tool_count"] == 3
+
+    def test_session_summary_has_error_count(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_tool(
+            "", "Bash", "cmd", "", is_error=True, error_msg="fail", session_id=SESSION_ID
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("session-summary")[0]
+        assert summary.attributes["praxion.error_count"] == 1
+
+    def test_session_summary_has_git_branch(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(
+            SESSION_ID, harness.project_dir, git_context={"git_branch": "main"}
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("session-summary")[0]
+        assert summary.attributes["praxion.git.branch"] == "main"
+
+    def test_session_summary_has_skill_count(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_skill("", "python-dev", session_id=SESSION_ID)
+        harness.relay.record_skill("", "testing", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("session-summary")[0]
+        assert summary.attributes["praxion.skill_count"] == 2
+
+    def test_session_summary_has_duration(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("session-summary")[0]
+        assert "praxion.duration_s" in summary.attributes
+        assert summary.attributes["praxion.duration_s"] >= 0
+
+    def test_session_summary_has_readable_text(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("a1", "researcher", SESSION_ID)
+        harness.relay.record_tool("a1", "Read", "f", "ok", session_id=SESSION_ID)
+        harness.relay.end_agent("a1")
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("session-summary")[0]
+        text = summary.attributes["praxion.session_summary"]
+        assert "1 agents" in text
+        assert "1 tools" in text
+
+
+# ---------------------------------------------------------------------------
+# Agent summary spans with stats
+# ---------------------------------------------------------------------------
+
+
+class TestAgentSummaryStats:
+    """Verify that agent-summary spans carry tool/error/child counts."""
+
+    def test_agent_summary_tracks_tool_count(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("a1", "researcher", SESSION_ID)
+        harness.relay.record_tool("a1", "Read", "f", "ok", session_id=SESSION_ID)
+        harness.relay.record_tool("a1", "Grep", "p", "ok", session_id=SESSION_ID)
+        harness.relay.end_agent("a1", "done")
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("agent-summary")[0]
+        assert summary.attributes["praxion.tool_count"] == 2
+
+    def test_agent_summary_tracks_error_count(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("a1", "researcher", SESSION_ID)
+        harness.relay.record_tool(
+            "a1", "Bash", "cmd", "", is_error=True, error_msg="fail", session_id=SESSION_ID
+        )
+        harness.relay.end_agent("a1", "done")
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("agent-summary")[0]
+        assert summary.attributes["praxion.error_count"] == 1
+
+    def test_agent_summary_tracks_skill_count(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("a1", "researcher", SESSION_ID)
+        harness.relay.record_skill("a1", "python-dev", session_id=SESSION_ID)
+        harness.relay.end_agent("a1", "done")
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("agent-summary")[0]
+        assert summary.attributes["praxion.skill_count"] == 1
+
+    def test_agent_summary_without_output(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("a1", "researcher", SESSION_ID)
+        harness.relay.end_agent("a1")  # no output
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("agent-summary")[0]
+        assert "output.value" not in summary.attributes
+
+
+# ---------------------------------------------------------------------------
+# Task slug propagation
+# ---------------------------------------------------------------------------
+
+
+class TestTaskSlugPropagation:
+    """Verify task_slug is captured on agent spans."""
+
+    def test_task_slug_on_agent_span(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("a1", "researcher", SESSION_ID, task_slug="auth-flow")
+        harness.relay.end_agent("a1")
+        harness.relay.end_session(SESSION_ID)
+
+        agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
+        assert agent.attributes["praxion.task_slug"] == "auth-flow"
+
+    def test_task_slug_propagated_to_session_summary(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("a1", "researcher", SESSION_ID, task_slug="auth-flow")
+        harness.relay.end_agent("a1")
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("session-summary")[0]
+        assert summary.attributes["praxion.task_slug"] == "auth-flow"
+
+
+# ---------------------------------------------------------------------------
+# Phoenix Agent Graph attributes (graph.node.*)
+# ---------------------------------------------------------------------------
+
+
+class TestGraphNodeAttributes:
+    """Verify graph.node.* attributes for Phoenix Agent Graph view."""
+
+    def test_main_agent_has_graph_node_id(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.end_session(SESSION_ID)
+
+        main = harness.spans_with_attribute("praxion.agent_type", "main-agent")[0]
+        assert main.attributes["graph.node.id"] == "__main_agent__"
+        assert main.attributes["graph.node.name"] == "main-agent"
+        assert main.attributes["graph.node.parent_id"] == ""
+
+    def test_agent_has_graph_node_with_parent(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-r1", "researcher", SESSION_ID)
+        harness.relay.end_agent("agent-r1")
+        harness.relay.end_session(SESSION_ID)
+
+        agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
+        assert agent.attributes["graph.node.id"] == "agent-r1"
+        assert agent.attributes["graph.node.name"] == "researcher"
+        assert agent.attributes["graph.node.parent_id"] == "__main_agent__"
+
+    def test_agent_has_agent_name_attribute(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-r1", "i-am:researcher", SESSION_ID)
+        harness.relay.end_agent("agent-r1")
+        harness.relay.end_session(SESSION_ID)
+
+        agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
+        assert agent.attributes["agent.name"] == "researcher"
