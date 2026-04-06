@@ -137,7 +137,12 @@ def _relay_event(relay: OTelRelay, event: Event) -> None:
                     task_slug=event.task_slug or event.metadata.get("task_slug", ""),
                 )
             case EventType.AGENT_STOP:
-                relay.end_agent(event.agent_id, event.message)
+                relay.end_agent(
+                    event.agent_id,
+                    event.message,
+                    agent_type=event.agent_type,
+                    session_id=event.session_id,
+                )
             case EventType.TOOL_USE:
                 relay.record_tool(
                     event.agent_id,
@@ -149,6 +154,7 @@ def _relay_event(relay: OTelRelay, event: Event) -> None:
                     session_id=event.session_id,
                     project_dir=event.project_dir,
                     metadata=event.metadata,
+                    agent_type=event.agent_type,
                 )
             case EventType.ERROR:
                 relay.record_tool(
@@ -161,6 +167,7 @@ def _relay_event(relay: OTelRelay, event: Event) -> None:
                     session_id=event.session_id,
                     project_dir=event.project_dir,
                     metadata=event.metadata,
+                    agent_type=event.agent_type,
                 )
             case EventType.SKILL_USE:
                 relay.record_skill(

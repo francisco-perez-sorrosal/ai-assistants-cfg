@@ -302,7 +302,9 @@ class TestRelayWiring:
             },
         )
         assert resp.status_code == 201
-        mock.end_agent.assert_called_once_with("agent-r1", "Research complete")
+        mock.end_agent.assert_called_once_with(
+            "agent-r1", "Research complete", agent_type="researcher", session_id=""
+        )
 
     async def test_tool_use_routes_to_relay(self, relay_client):
         client, mock = relay_client

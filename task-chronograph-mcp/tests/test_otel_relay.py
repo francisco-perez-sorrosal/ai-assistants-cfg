@@ -1256,3 +1256,118 @@ class TestGraphNodeAttributes:
 
         agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
         assert agent.attributes["agent.name"] == "researcher"
+
+
+# ---------------------------------------------------------------------------
+# Lazy agent context creation for background agents
+# ---------------------------------------------------------------------------
+
+
+class TestLazyAgentContextCreation:
+    """Verify that agent spans are auto-created when tool events arrive
+    for an unknown agent_id with a populated agent_type.
+
+    This handles Claude Code not firing SubagentStart hooks for background
+    agents (run_in_background: true).
+    """
+
+    def test_tool_creates_agent_span_for_unknown_agent(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        # No start_agent call — simulates missing SubagentStart hook
+        harness.relay.record_tool(
+            "bg-agent-001", "Bash", agent_type="Explore", session_id=SESSION_ID
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        agent_spans = harness.spans_with_attribute("praxion.agent_type", "Explore")
+        assert len(agent_spans) == 1, "Lazy agent span should be created"
+        assert agent_spans[0].attributes["praxion.agent_id"] == "bg-agent-001"
+
+    def test_lazy_agent_span_parents_tool_spans(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_tool(
+            "bg-agent-001", "Bash", agent_type="Explore", session_id=SESSION_ID
+        )
+        harness.relay.record_tool(
+            "bg-agent-001", "Read", agent_type="Explore", session_id=SESSION_ID
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        agent_spans = harness.spans_with_attribute("praxion.agent_type", "Explore")
+        assert len(agent_spans) == 1, "Only one agent span despite multiple tools"
+        tool_spans = [s for s in harness.finished_spans if s.name in ("Bash", "Read")]
+        assert len(tool_spans) == 2
+        # Tool spans should be parented under the lazy agent span
+        agent_ctx = agent_spans[0].context
+        for tool in tool_spans:
+            assert tool.parent.span_id == agent_ctx.span_id
+
+    def test_no_lazy_span_without_agent_type(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        # Empty agent_type should fall back to main-agent, not create lazy span
+        harness.relay.record_tool("bg-agent-001", "Bash", agent_type="", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        agent_spans = harness.spans_with_attribute("praxion.agent_id", "bg-agent-001")
+        assert len(agent_spans) == 0, "No lazy span without agent_type"
+
+    def test_no_lazy_span_without_agent_id(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_tool("", "Bash", agent_type="Explore", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        agent_spans = harness.spans_with_attribute("praxion.agent_type", "Explore")
+        assert len(agent_spans) == 0, "No lazy span without agent_id"
+
+    def test_lazy_span_not_duplicated_on_subsequent_tools(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        for _ in range(5):
+            harness.relay.record_tool(
+                "bg-agent-001", "Bash", agent_type="Explore", session_id=SESSION_ID
+            )
+        harness.relay.end_session(SESSION_ID)
+
+        agent_spans = harness.spans_with_attribute("praxion.agent_type", "Explore")
+        assert len(agent_spans) == 1, "Agent span created only once"
+
+    def test_end_agent_creates_summary_for_lazy_agent(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        # Tools arrive before end_agent (no start_agent)
+        harness.relay.record_tool(
+            "bg-agent-001", "Bash", agent_type="Explore", session_id=SESSION_ID
+        )
+        harness.relay.end_agent("bg-agent-001", "Done", agent_type="Explore", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        summaries = harness.spans_named("agent-summary")
+        assert len(summaries) >= 1
+        summary = summaries[-1]
+        assert summary.attributes["praxion.tool_count"] == 1
+
+    def test_end_agent_without_prior_tools_creates_agent_span(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        # end_agent arrives with no prior tool events or start_agent
+        harness.relay.end_agent(
+            "bg-agent-001", "Done", agent_type="plugin-dev:plugin-validator", session_id=SESSION_ID
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        agent_spans = harness.spans_with_attribute(
+            "praxion.agent_type", "plugin-dev:plugin-validator"
+        )
+        assert len(agent_spans) == 1
+
+    def test_explicit_start_agent_not_overwritten_by_lazy(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        # Normal flow: start_agent then tools
+        harness.relay.start_agent("fg-agent-001", "i-am:researcher", SESSION_ID)
+        harness.relay.record_tool(
+            "fg-agent-001", "Bash", agent_type="i-am:researcher", session_id=SESSION_ID
+        )
+        harness.relay.end_agent(
+            "fg-agent-001", "Done", agent_type="i-am:researcher", session_id=SESSION_ID
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        agent_spans = harness.spans_with_attribute("praxion.agent_type", "researcher")
+        assert len(agent_spans) == 1, "Explicit agent span not duplicated by lazy check"

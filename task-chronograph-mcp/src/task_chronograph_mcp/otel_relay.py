@@ -278,16 +278,28 @@ class OTelRelay:
         except Exception:
             logger.warning("Failed to start OTel agent span for %s", agent_id, exc_info=True)
 
-    def end_agent(self, agent_id: str, output: str = "") -> None:
+    def end_agent(
+        self,
+        agent_id: str,
+        output: str = "",
+        *,
+        agent_type: str = "",
+        session_id: str = "",
+    ) -> None:
         """Record agent completion: create summary span and clean up context.
 
         Creates an ``agent-summary`` child span carrying output value and
         aggregate stats (tool_count, error_count, child_count) so they
         appear in the Phoenix trace.
+
+        If no agent context exists (SubagentStart hook was skipped for
+        background agents), creates a synthetic agent span first so the
+        summary still appears in the trace hierarchy.
         """
         if not _is_otel_enabled():
             return
         try:
+            self._ensure_agent_context(agent_id, agent_type, session_id)
             with self._span_lock:
                 agent_ctx = self._agent_contexts.pop(agent_id, None)
             if agent_ctx is None:
@@ -331,12 +343,14 @@ class OTelRelay:
         session_id: str = "",
         project_dir: str = "",
         metadata: dict[str, Any] | None = None,
+        agent_type: str = "",
     ) -> None:
         """Create a TOOL child span under the given agent (or main agent)."""
         if not _is_otel_enabled():
             return
         try:
             self._ensure_initialized(session_id, project_dir=project_dir)
+            self._ensure_agent_context(agent_id, agent_type, session_id)
             self._record_tool_span(
                 agent_id,
                 tool_name,
@@ -822,6 +836,26 @@ class OTelRelay:
             self._session_stats.tool_count += 1
             if is_error:
                 self._session_stats.error_count += 1
+
+    def _ensure_agent_context(self, agent_id: str, agent_type: str, session_id: str) -> None:
+        """Lazily create an agent span if agent_id is unknown but agent_type is available.
+
+        This handles the case where Claude Code doesn't fire SubagentStart hooks
+        for background agents (run_in_background: true), but does fire PostToolUse
+        hooks for their tool calls. Without this, tool spans from background agents
+        would be misattributed to main-agent.
+        """
+        if not agent_id or not agent_type:
+            return
+        with self._span_lock:
+            if agent_id in self._agent_contexts:
+                return
+        logger.info(
+            "Lazy-creating agent span for %s (%s) — no prior agent_start received",
+            agent_id,
+            agent_type,
+        )
+        self._start_agent_span(agent_id, agent_type, session_id, parent_session_id="")
 
     def _get_parent_context(self, agent_id: str) -> context_api.Context | None:
         """Look up the OTel context for parenting a child span.
