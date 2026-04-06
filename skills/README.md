@@ -66,6 +66,12 @@ Reusable skill modules for AI coding assistants. Each skill is a self-contained 
 | **[context-security-review](context-security-review/)** | Security review methodology for Claude Code plugin ecosystems covering context artifact injection, hook compromise, dependency supply chain, secrets exposure, and GitHub Actions security. | Reviewing PRs for security issues, conducting security audits, verifying agent permissions, reviewing hook scripts, checking for secrets. |
 | **[testing-strategy](testing-strategy/)** | Language-agnostic testing methodology covering test strategy selection, test pyramid, mocking philosophy, fixture patterns, property-based testing, and coverage philosophy. Language-specific references via progressive disclosure. | Choosing test strategies, designing test architecture, deciding what to mock, writing fixtures, adding property-based tests, planning coverage. |
 
+### OSS Contribution
+
+| Skill | Description | When to Use |
+| --- | --- | --- |
+| **[upstream-stewardship](upstream-stewardship/)** | Methodology for responsibly reporting bugs and contributing fixes to upstream open-source projects. Covers deduplication, sanitization, template compliance, and responsible disclosure. | Filing upstream issues, reviewing bug report drafts, discovering upstream bugs during development, contributing fixes to dependencies. |
+
 ### Project
 
 | Skill | Description | When to Use |

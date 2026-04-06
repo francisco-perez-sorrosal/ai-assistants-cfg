@@ -18,6 +18,7 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | `/merge-worktree` | Merge a worktree branch back into current branch |
 | `/onboard-project` | Onboard the current project for the Praxion plugin ecosystem |
 | `/release` | Bump version, update changelog, and create a release tag |
+| `/report-upstream` | File a well-formed bug report on an upstream open-source project |
 | `/sdd-coverage` | Report spec-to-test and spec-to-code coverage for REQ IDs |
 | `/star-repo` | Star the Praxion repo on GitHub |
 | `/test` | Auto-detect test framework and run tests |

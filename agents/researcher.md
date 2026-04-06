@@ -197,6 +197,10 @@ Your codebase findings help the implementation planner understand:
 - What patterns to follow
 - What technical debt to work around or address
 
+### With Upstream Stewardship
+
+When research reveals a potential bug in an upstream dependency, document the evidence in `RESEARCH_FINDINGS.md` (affected dependency, version, observed vs. expected behavior, reproduction context) and recommend the user invoke `/report-upstream` for formal filing. Check `.ai-state/UPSTREAM_ISSUES.md` first — the issue may already be tracked.
+
 ### With the Context Engineer
 
 - Request domain expertise when researching context engineering topics — the context-engineer knows artifact types, loading semantics, token implications, and the existing artifact inventory

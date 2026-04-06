@@ -186,6 +186,11 @@ edit → PostToolUse hook (advisory) → implementer may self-correct
 - If the verifier finds the design was flawed (not just the implementation), it flags for re-invocation of the systems-architect
 - The verifier does not make design judgments
 
+### With Upstream Stewardship
+
+- If verification reveals behavior that appears to be a bug in an upstream dependency (not in the implementation under review), document the evidence in `VERIFICATION_REPORT.md` and recommend the user invoke `/report-upstream` for formal filing
+- Check `.ai-state/UPSTREAM_ISSUES.md` first — the issue may already be tracked
+
 ### With the Context Engineer
 
 - The verifier checks completeness of planned context artifact updates (was the update made?) but not quality (is the artifact well-structured?)
