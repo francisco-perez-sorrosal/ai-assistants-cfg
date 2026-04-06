@@ -763,6 +763,120 @@
         "invalid_at": null,
         "type": "correction",
         "created_by": null
+      },
+      "chronograph-flat-span-hierarchy-gap": {
+        "value": "RESOLVED: Chronograph OTel relay now uses hierarchy-aware parenting. Agent spans are children of main-agent (not session root). AgentContext dataclass tracks otel_context, depth, parent_agent_id, and per-agent stats (tool_count, error_count, child_count, skill_count). Session-summary and agent-summary spans provide aggregate stats for progressive disclosure. Git branch/worktree context attached to session and agent spans. Skill/command/MCP tool artifact tracking via new SKILL_USE/COMMAND_USE event types. MCP tool classifier strips 'mcp__plugin_i-am_' prefix for server/tool extraction.",
+        "created_at": "2026-04-05T22:37:32.911218Z",
+        "updated_at": "2026-04-05T22:49:25.242274Z",
+        "tags": [
+          "chronograph",
+          "gap",
+          "hierarchy",
+          "observability",
+          "otel",
+          "phoenix",
+          "resolved"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Chronograph hierarchy gap RESOLVED: agents now parent under main-agent with depth tracking, git context, artifact spans",
+        "valid_at": "2026-04-05T22:37:32.911218Z",
+        "invalid_at": null,
+        "type": "insight",
+        "created_by": null
+      },
+      "parent-session-id-always-equals-session-id": {
+        "value": "In send_event.py:167, SubagentStart sets parent_session_id=sid where sid is the session_id from the hook payload. Claude Code gives all subagents the same session_id as the parent session (confirmed via Issue #7881, OPEN). This means parent_session_id always equals session_id, providing zero hierarchical information. The OTel relay stores it as praxion.parent_session_id attribute but cannot use it for actual span parenting. Issue #7881 proposes a subagent_session field but it is not yet implemented.",
+        "created_at": "2026-04-05T22:37:48.746668Z",
+        "updated_at": "2026-04-05T22:37:48.746668Z",
+        "tags": [
+          "chronograph",
+          "claude-code",
+          "gotcha",
+          "hooks",
+          "observability"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.hook-output-requires-hookEventName",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.hook-additionalContext-supported-events",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.async-hooks-cannot-deliver-feedback",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "parent_session_id == session_id always; Claude Code shares session_id across subagents (Issue #7881 OPEN)",
+        "valid_at": "2026-04-05T22:37:48.746668Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "phoenix-graph-node-attrs-for-agent-graph": {
+        "value": "Phoenix Agent Graph & Path view requires graph.node.id, graph.node.name, and graph.node.parent_id attributes on AGENT spans — without these, the Agent Graph tab shows nothing even if the OTel span tree is correct. These are standard OpenInference attributes (SpanAttributes.GRAPH_NODE_ID etc.) available in openinference-semantic-conventions 0.1.28. Also set SpanAttributes.AGENT_NAME for proper Phoenix agent identification. The graph.node.parent_id provides a logical delegation hierarchy independent of the OTel span parent-child tree — useful when agents are flat siblings in the span tree but have a logical delegation chain. Key insight from Phoenix researcher: the Agent Graph view may only be available in Arize AX (commercial), not self-hosted Phoenix — needs verification.",
+        "created_at": "2026-04-05T22:52:38.858920Z",
+        "updated_at": "2026-04-05T22:52:38.858920Z",
+        "tags": [
+          "gotcha",
+          "graph-node",
+          "observability",
+          "openinference",
+          "phoenix"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.chronograph-flat-span-hierarchy-gap",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.parent-session-id-always-equals-session-id",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Phoenix Agent Graph requires graph.node.* attrs on AGENT spans; may be AX-only feature",
+        "valid_at": "2026-04-05T22:52:38.858920Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
       }
     }
   }
