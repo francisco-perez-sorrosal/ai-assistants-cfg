@@ -8,6 +8,41 @@ from datetime import UTC, datetime
 from memory_mcp.observations import ObservationStore
 from memory_mcp.schema import VALID_CATEGORIES
 
+# Bare tool names for all memory MCP operations.
+_MEMORY_TOOL_NAMES = frozenset(
+    {
+        "remember",
+        "recall",
+        "search",
+        "forget",
+        "hard_delete",
+        "consolidate",
+        "session_start",
+        "reflect",
+        "browse_index",
+        "connections",
+        "add_link",
+        "remove_link",
+        "about_me",
+        "about_us",
+        "export_memories",
+        "status",
+        "timeline",
+        "session_narrative",
+        "metrics",
+    }
+)
+
+
+def _bare_tool_name(tool_name: str) -> str:
+    """Extract bare tool name from MCP-qualified names.
+
+    Handles both bare names ("remember") and qualified names
+    ("mcp__plugin_i-am_memory__remember") by taking the last
+    ``__``-delimited segment.
+    """
+    return tool_name.rsplit("__", 1)[-1] if "__" in tool_name else tool_name
+
 
 def compute_metrics(
     data: dict,
@@ -207,28 +242,10 @@ def _compute_observation_metrics(obs_store: ObservationStore) -> dict:
         tool_name = obs.get("tool_name")
         if tool_name:
             tools[tool_name] += 1
-            # Track memory-specific operations
-            if tool_name in (
-                "remember",
-                "recall",
-                "search",
-                "forget",
-                "hard_delete",
-                "consolidate",
-                "session_start",
-                "reflect",
-                "browse_index",
-                "connections",
-                "add_link",
-                "remove_link",
-                "about_me",
-                "about_us",
-                "export_memories",
-                "status",
-                "timeline",
-                "session_narrative",
-            ):
-                memory_ops[tool_name] += 1
+            # Track memory-specific operations (handles MCP-qualified names)
+            bare = _bare_tool_name(tool_name)
+            if bare in _MEMORY_TOOL_NAMES:
+                memory_ops[bare] += 1
 
         session_id = obs.get("session_id")
         if session_id:
@@ -251,11 +268,17 @@ def _compute_observation_metrics(obs_store: ObservationStore) -> dict:
             except (ValueError, TypeError):
                 pass
 
-        # Count memory ops in this session
+        # Count memory ops in this session (handles MCP-qualified names)
         sess_memory_ops = sum(
-            1 for o in sess_obs if o.get("tool_name") in ("remember", "recall", "search", "forget")
+            1
+            for o in sess_obs
+            if o.get("tool_name") and _bare_tool_name(o["tool_name"]) in _MEMORY_TOOL_NAMES
         )
-        sess_remembers = sum(1 for o in sess_obs if o.get("tool_name") == "remember")
+        sess_remembers = sum(
+            1
+            for o in sess_obs
+            if o.get("tool_name") and _bare_tool_name(o["tool_name"]) == "remember"
+        )
 
         session_stats.append(
             {

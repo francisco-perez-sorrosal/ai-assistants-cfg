@@ -7,6 +7,7 @@ import json
 import pytest
 
 from memory_mcp.metrics import (
+    _bare_tool_name,
     _compute_observation_metrics,
     _compute_store_metrics,
     _fmt_duration,
@@ -301,6 +302,52 @@ class TestObservationMetrics:
         assert sess1["remembers"] == 2
         assert sess1["duration_s"] == 900  # 15 minutes
 
+    def test_mcp_qualified_memory_operations(self, tmp_path):
+        """MCP-qualified tool names are recognized as memory operations."""
+        obs_file = tmp_path / "obs_qualified.jsonl"
+        observations = [
+            {
+                "timestamp": "2026-04-05T10:00:00Z",
+                "session_id": "sess-mcp",
+                "agent_type": "main",
+                "event_type": "tool_use",
+                "tool_name": "mcp__plugin_i-am_memory__remember",
+                "classification": "tool_use",
+                "outcome": "success",
+            },
+            {
+                "timestamp": "2026-04-05T10:01:00Z",
+                "session_id": "sess-mcp",
+                "agent_type": "main",
+                "event_type": "tool_use",
+                "tool_name": "mcp__plugin_i-am_memory__search",
+                "classification": "tool_use",
+                "outcome": "success",
+            },
+            {
+                "timestamp": "2026-04-05T10:02:00Z",
+                "session_id": "sess-mcp",
+                "agent_type": "main",
+                "event_type": "tool_use",
+                "tool_name": "mcp__plugin_i-am_memory__remember",
+                "classification": "tool_use",
+                "outcome": "success",
+            },
+        ]
+        with obs_file.open("w") as f:
+            for obs in observations:
+                f.write(json.dumps(obs) + "\n")
+
+        store = ObservationStore(obs_file)
+        result = _compute_observation_metrics(store)
+
+        assert result["memory_operations"]["remember"] == 2
+        assert result["memory_operations"]["search"] == 1
+        # Session summary should also reflect the counts
+        sess = result["session_summary"][0]
+        assert sess["memory_ops"] == 3
+        assert sess["remembers"] == 2
+
     def test_empty_observations(self, tmp_path):
         obs_file = tmp_path / "empty.jsonl"
         obs_file.touch()
@@ -374,6 +421,20 @@ class TestStats:
         result = _stats([42.0], "seconds")
         assert result["min"] == 42.0
         assert result["median"] == 42.0
+
+
+class TestBareToolName:
+    def test_bare_name_passthrough(self):
+        assert _bare_tool_name("remember") == "remember"
+
+    def test_mcp_qualified_name(self):
+        assert _bare_tool_name("mcp__plugin_i-am_memory__remember") == "remember"
+
+    def test_short_qualified_name(self):
+        assert _bare_tool_name("mcp__memory__metrics") == "metrics"
+
+    def test_no_underscores(self):
+        assert _bare_tool_name("Bash") == "Bash"
 
 
 class TestFmtDuration:
