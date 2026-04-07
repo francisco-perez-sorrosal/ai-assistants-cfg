@@ -67,6 +67,13 @@ For your assigned step:
 5. **Type check** — run the project's type checker if one is configured.
 6. **Run tests** — execute tests or validation commands specified in the step's Testing field. If no testing field exists, run available project-level test commands. For **integration checkpoint steps**: run the full test suite (new behavioral tests from the test-engineer + all pre-existing tests). Fix any test failures — adjust production code for new test failures, fix pre-existing tests broken by your changes (boy scout rule). Iterate until all tests pass.
 7. **Self-review** — check your changes against the coding-style conventions (see below).
+7.5. **Update deployment doc** — if the step's `Files` field includes deployment configuration files (`compose.yaml`, `Dockerfile`, `Caddyfile`, `systemd` units, `.env.example`), update the corresponding section of `.ai-state/SYSTEM_DEPLOYMENT.md`:
+   - `compose.yaml` changes → update Section 3 (Service Topology: ports, health checks, restart policies) and Section 8 (Scaling: resource limits)
+   - `Dockerfile` changes → update Section 3 (image/build info)
+   - `Caddyfile` changes → update Section 3 (reverse proxy entry)
+   - `.env.example` changes → update Section 4 (Configuration: environment variables table)
+   - `systemd` unit changes → update Section 5 (Deployment Process)
+   If `.ai-state/SYSTEM_DEPLOYMENT.md` does not exist, skip this step — the systems-architect creates it.
 8. **Update WIP.md** — mark your step as complete (see WIP.md Update Protocol).
 9. **Update LEARNINGS.md** — record any discoveries (see LEARNINGS.md Protocol).
 10. **Report** — stop and report one of: `[COMPLETE]`, `[BLOCKED]`, or `[CONFLICT]`.

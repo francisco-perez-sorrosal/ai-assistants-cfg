@@ -105,6 +105,10 @@ When a parallel group adds, removes, or renames files, introduces new APIs, or c
 - Doc steps target documentation files only (disjoint with production and test code)
 - Skip the doc step when changes are internal with no documentation impact
 
+**Deployment step annotations:**
+
+When a step creates or modifies deployment configuration files (`compose.yaml`, `Dockerfile`, `Caddyfile`, `systemd` units, `.env.example`), annotate it with `[Deployment]`. This signals the implementer to update `.ai-state/SYSTEM_DEPLOYMENT.md` as part of step completion. When multiple deployment steps exist, the last one in sequence should include a `Done when` clause verifying the deployment doc is consistent with actual configs.
+
 **Parallel step annotations:**
 
 When steps can execute concurrently (disjoint file sets, no shared mutable state), annotate them:

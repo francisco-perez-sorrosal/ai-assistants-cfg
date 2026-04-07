@@ -76,6 +76,7 @@ Convention: Each check has a unique ID, type (A=auto, L=llm), a rule, and a pass
 | C06 | L | Skill descriptions enable activation | Could Claude load this skill based on description alone? Vague = fail |
 | C07 | L | Agent descriptions enable delegation | Could Claude select the right agent based on description alone? Overlap/thin = fail |
 | C08 | L | No unfilled `[CUSTOMIZE]` sections | Grep `[CUSTOMIZE]`; each must be filled or have a justification comment |
+| C09 | L | Deployment doc exists when deployment configs exist | If `compose.yaml` or `Dockerfile` exists, `.ai-state/SYSTEM_DEPLOYMENT.md` should exist |
 
 ### Consistency (N)
 
@@ -96,6 +97,8 @@ Convention: Each check has a unique ID, type (A=auto, L=llm), a rule, and a pass
 | F02 | A | Skill `references/` files exist | For each skill, paths to reference files in SKILL.md exist on disk |
 | F03 | L | Content references current tools/patterns | No references to replaced tools, APIs, or patterns |
 | F04 | L | Agent prompts reflect current pipeline | Collaboration sections reference correct agent names, outputs, stages |
+| F05 | A | `SYSTEM_DEPLOYMENT.md` referenced file paths exist | All file paths in deployment doc resolve to existing files |
+| F06 | L | Deployment doc service list matches compose.yaml | Service names and ports in deployment doc consistent with actual compose files |
 
 ### Spec Compliance (S)
 
@@ -121,6 +124,7 @@ Convention: Each check has a unique ID, type (A=auto, L=llm), a rule, and a pass
 | X06 | A | `agents/README.md` table matches `agents/` | Agent names in README table match agent files 1:1 |
 | X07 | L | README catalog entries match artifacts | Descriptions in README tables consistent with frontmatter descriptions |
 | X08 | L | Agent collaboration sections reference correct counterparts | Cross-agent refs name agents that actually exist |
+| X09 | A | Deployment doc ADR cross-references valid | ADR IDs referenced in deployment doc Section 9 exist in `.ai-state/decisions/` |
 
 ### Token Efficiency (T)
 

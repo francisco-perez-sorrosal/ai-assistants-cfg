@@ -83,6 +83,7 @@ If the pipeline change is significant:
 
 - Update or create workflow documentation (inline YAML comments for non-obvious choices)
 - Flag any README updates needed for changed build/deploy instructions
+- If `.ai-state/SYSTEM_DEPLOYMENT.md` exists and the pipeline change involves deployment (deploy jobs, environment promotion, rollback steps), update Section 5 (Deployment Process) with CI/CD integration details: trigger conditions, deployment gates, environment promotion flow, and rollback automation
 
 ### Phase 6 -- Report (6/6)
 

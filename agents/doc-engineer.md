@@ -60,6 +60,7 @@ Discover all documentation files in the project:
 4. **Changelogs** -- `Glob **/CHANGELOG.md`
 5. **Contributing guides** -- `Glob **/CONTRIBUTING.md`
 6. **Other documentation** -- `Glob **/*.md` filtered to documentation files (exclude context artifacts: CLAUDE.md, SKILL.md, agent definitions, rule files, command files)
+7. **Deployment documentation** -- `Glob .ai-state/SYSTEM_DEPLOYMENT*.md`. Include in freshness check (Phase 3): compare last-modified against deployment config files (`compose.yaml`, `Dockerfile`, `Caddyfile`). Include in cross-reference validation (Phase 4): verify file paths in deployment doc resolve.
 
 Record the inventory with file paths and types. This is the "actual documentation set" that subsequent phases operate on.
 

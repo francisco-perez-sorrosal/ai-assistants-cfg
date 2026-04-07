@@ -55,6 +55,7 @@ Opinionated guidance for deploying applications -- from local Docker Compose thr
 - **Port 5432 conflicts** -- if PostgreSQL is installed locally AND in Docker, port conflicts are silent until connection errors appear. Use non-default host ports in compose: `"5433:5432"`
 - **`docker compose up` without `-d` blocks the terminal** -- always use `docker compose up -d` for background operation, then `docker compose logs -f` for streaming logs
 - **Caddy vs nginx default behavior** -- Caddy enables HTTPS by default (even locally with self-signed certs). If you want plain HTTP for local dev, use `http://` explicitly in the Caddyfile
+- **Deployment doc drift in Direct/Lightweight tier** -- when modifying `compose.yaml`, `Dockerfile`, `Caddyfile`, or `.env.example` outside a pipeline (Direct/Lightweight work), check if `.ai-state/SYSTEM_DEPLOYMENT.md` exists and update the affected sections. Pipeline agents handle this automatically; the main agent must do it manually
 
 ## Deployment Primitives
 
@@ -284,6 +285,16 @@ When ready to move beyond local deployment:
 | **Cloud containers** | Cloud Run, ECS/Fargate, Azure Container Apps | Managed scaling, cloud-native apps | [cloud-containers.md](references/cloud-containers.md) |
 | **Kubernetes** | GKE, EKS, AKS | 5+ services, complex networking, team has K8s expertise | [kubernetes-patterns.md](references/kubernetes-patterns.md) |
 | **AI-native** | Modal, CoreWeave, RunPod, Nebius | GPU workloads, model serving, ML training | [ai-native-platforms.md](references/ai-native-platforms.md) |
+
+## Project Deployment Documentation
+
+This skill provides generic deployment *knowledge* (primitives, patterns, decision framework). Each project captures its specific deployment *state* in `.ai-state/SYSTEM_DEPLOYMENT.md` -- a living document maintained by the agent pipeline.
+
+**Template**: [`assets/SYSTEM_DEPLOYMENT_TEMPLATE.md`](assets/SYSTEM_DEPLOYMENT_TEMPLATE.md) -- 10-section template with Mermaid diagrams, FMA tables, and runbook structure. The systems-architect creates the initial document from this template during Phase 3 when the project has deployable components.
+
+**Methodology**: [`references/deployment-documentation.md`](references/deployment-documentation.md) -- living document lifecycle, section ownership model, and staleness mitigation strategy.
+
+When loaded, agents working on deployment should check for `.ai-state/SYSTEM_DEPLOYMENT.md` and read current state before making deployment decisions. The document is complementary to ADRs -- it captures *what is deployed now*; ADRs capture *why those decisions were made*.
 
 ## Integration with Other Skills
 

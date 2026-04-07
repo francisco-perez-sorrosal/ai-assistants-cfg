@@ -128,6 +128,20 @@ SCOPE: Only files in the current change set. Never scan the full project -- that
 
 Skip this phase if the `context-security-review` skill is not loaded.
 
+### Phase 4.7 -- Deployment Documentation Validation
+
+If `.ai-state/SYSTEM_DEPLOYMENT.md` exists and the implementation changed deployment files (`compose.yaml`, `Dockerfile`, `Caddyfile`, `.env.example`):
+
+1. **Port consistency** — verify ports listed in Section 3 match actual `ports:` entries in `compose.yaml`
+2. **Environment variables** — verify variables listed in Section 4 match actual `environment:` and `env_file:` entries, and match `.env.example` if it exists
+3. **Service names** — verify service names in Section 3 match `services:` keys in `compose.yaml`
+4. **File paths** — verify file paths referenced in the deployment doc exist on disk
+5. **Health checks** — verify health check details in Section 7 match `healthcheck:` entries in `compose.yaml`
+
+Classify each as `PASS` / `WARN` / `FAIL` with `[Deployment]` tag. A stale or missing deployment doc when deployment files were changed is a `WARN`, not a `FAIL` — the doc is advisory, not a gate.
+
+Skip this phase if `.ai-state/SYSTEM_DEPLOYMENT.md` does not exist or no deployment files were changed.
+
 ### Phase 5 -- Test Coverage Assessment
 
 When tests exist or are expected:

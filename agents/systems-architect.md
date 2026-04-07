@@ -120,6 +120,18 @@ Design the architecture by working through these questions:
 - Favor composition over inheritance, interfaces over concrete coupling
 - Make the architecture testable — if it can't be tested, redesign it
 
+### Phase 3.7 — Deployment Documentation
+
+If the architecture includes deployable components (services, containers, infrastructure):
+
+1. **Check** if `.ai-state/SYSTEM_DEPLOYMENT.md` exists
+2. **If not**: create it from the template at `skills/deployment/assets/SYSTEM_DEPLOYMENT_TEMPLATE.md`. Fill in sections 1 (Overview), 2 (System Context), 3 (Service Topology skeleton), 6 (Failure Analysis with known risks), and 9 (Decisions with relevant ADR references). Leave other sections with template guidance for downstream agents.
+3. **If yes**: read the existing document and update sections you own (1, 2, 3 topology, 6, 9) if the current architecture changes the deployment picture. Do not overwrite sections owned by other agents (4 Configuration, 5 Deployment Process, 10 Runbook).
+
+The deployment skill provides generic deployment knowledge; `SYSTEM_DEPLOYMENT.md` captures THIS project's deployment state. Reference ADR IDs for deployment decisions rather than duplicating rationale. Follow diagram conventions from `rules/writing/diagram-conventions.md` for all Mermaid diagrams.
+
+Skip this phase for projects with no deployable components (pure libraries, CLI tools without infrastructure).
+
 ### Phase 3.5 — Spec Delta Production (conditional)
 
 When Phase 1 identified a prior spec baseline (brownfield detection):
