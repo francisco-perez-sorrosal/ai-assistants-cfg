@@ -346,6 +346,41 @@
         "invalid_at": null,
         "type": "decision",
         "created_by": null
+      },
+      "system-deployment-md-artifact-initiative": {
+        "value": "New SYSTEM_DEPLOYMENT.md artifact initiative: a living deployment document that captures deployment architecture, strategy, failure points, mitigations, and component diagrams (C4-style, high-level to detail). It evolves across the full SDLC:\n\nLIFECYCLE: Created by systems-architect during architecture phase, refined by implementation-planner, updated by implementer with as-built configs, validated by verifier, quality-reviewed by doc-engineer, audited by sentinel for freshness.\n\nKEY DESIGN QUESTION: Where does it live? Likely .ai-state/ since it's persistent and committed to git. How do multiple agents contribute without conflicts? Fragment pattern or section ownership.\n\nUSER VISION: The document should include component diagrams (building blocks at multiple abstraction levels), deployment strategy and process, points of failure with mitigations, and future work. Systems-architect drives creation, implementation-planner as copilot, context-engineer and researcher as advisors.\n\nTwo parallel researchers launched covering: (1) deployment doc best practices (C4, arc42, SRE runbooks, living docs, Mermaid diagrams), (2) agent pipeline integration (responsibility matrix, lifecycle events, required rule/agent changes). Next: systems-architect designs the integration.",
+        "created_at": "2026-04-07T17:02:45.228837Z",
+        "updated_at": "2026-04-07T17:02:45.228837Z",
+        "tags": [
+          "architecture",
+          "artifact",
+          "deployment",
+          "pipeline",
+          "sdlc"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "project.deployment-skill-research-initiative",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "SYSTEM_DEPLOYMENT.md: living deployment artifact across SDLC — architect creates, pipeline agents refine",
+        "valid_at": "2026-04-07T17:02:45.228837Z",
+        "invalid_at": null,
+        "type": "decision",
+        "created_by": null
       }
     },
     "relationships": {},
@@ -1569,18 +1604,19 @@
         "created_by": null
       },
       "memory-metrics-tool-implementation": {
-        "value": "Implemented metrics() MCP tool in memory-mcp server. New module metrics.py computes stats from both memory.json (store metrics) and observations.jsonl (observation metrics). Returns structured JSON with summary_markdown for display. Key findings from live data: 77.8% of entries never accessed, 72% are importance 7+ (tier1), memory ops show 0 in session stats because capture_memory.py records full MCP tool name (mcp__plugin_i-am_memory__remember) not short name — needs follow-up to match both patterns. Store._load() is the method to read raw data (not _read). 28 tests added, 520 total passing.",
+        "value": "Implemented metrics() MCP tool in memory-mcp server. Module metrics.py computes stats from both memory.json (store metrics) and observations.jsonl (observation metrics). Returns structured JSON with summary_markdown for display. RESOLVED: memory_ops showed 0 in session stats because capture_memory.py records full MCP-qualified tool names (mcp__plugin_i-am_memory__remember) but metrics.py checked bare names. Fixed with _bare_tool_name() normalizer using rsplit(\"__\", 1)[-1] applied at all three counting sites. Also added metrics to cajalogic command's allowed-tools (was missing from the 18-tool list). 403 tests passing.",
         "created_at": "2026-04-06T06:54:32.224478Z",
-        "updated_at": "2026-04-06T06:54:32.224478Z",
+        "updated_at": "2026-04-07T17:52:32.277184Z",
         "tags": [
           "gotcha",
           "implementation",
           "mcp",
           "memory",
-          "metrics"
+          "metrics",
+          "resolved"
         ],
         "confidence": null,
-        "importance": 6,
+        "importance": 7,
         "source": {
           "type": "session",
           "detail": null,
@@ -1605,7 +1641,7 @@
             "relation": "related-to"
           }
         ],
-        "summary": "Memory metrics() MCP tool implemented; 77.8% entries never accessed; MCP tool name matching gap in observations",
+        "summary": "Memory metrics tool implemented; MCP-qualified tool name mismatch in memory_ops counting now resolved",
         "valid_at": "2026-04-06T06:54:32.224478Z",
         "invalid_at": null,
         "type": "insight",
@@ -2645,6 +2681,324 @@
         "valid_at": "2026-04-07T06:35:10.705138Z",
         "invalid_at": null,
         "type": "pattern",
+        "created_by": null
+      },
+      "cross-cutting-convention-rule-skill-pair": {
+        "value": "Cross-cutting conventions that multiple agents must follow use a rule+skill reference pair: a path-scoped rule for declarative constraints (auto-loaded by context) and a reference file in the relevant skill for procedural depth (loaded on demand). Examples: readme-style rule + doc-management skill, testing-conventions rule + testing-strategy skill, diagram-conventions rule + doc-management/references/diagram-conventions.md. This avoids always-loaded token budget pressure while ensuring enforcement reaches all agents contextually.",
+        "created_at": "2026-04-07T17:23:06.334010Z",
+        "updated_at": "2026-04-07T17:23:06.334010Z",
+        "tags": [
+          "architecture",
+          "conventions",
+          "pattern",
+          "rules",
+          "skills",
+          "token-budget"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.proactive-memory-vs-enforcement",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.observability-skill-structure-pattern",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.upstream-stewardship-artifact-pattern",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Cross-cutting conventions use rule+skill reference pairs: rule for WHAT (auto-loaded), skill ref for HOW (on-demand)",
+        "valid_at": "2026-04-07T17:23:06.334010Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "living-document-pattern-ai-state": {
+        "value": "SYSTEM_DEPLOYMENT.md introduces a new .ai-state/ pattern: a living document edited by multiple agents over time. All current .ai-state/ artifacts are immutable (ADRs, specs) or append-only (sentinel log, calibration log). Key design mitigations for this new pattern:\n\n1. Section ownership prevents conflicts — each agent owns specific sections per responsibility matrix\n2. Natural pipeline sequencing — architect writes first (Phase 3), implementer updates later (Execution), verifier validates last\n3. Staleness is the #1 risk — mitigated by sentinel freshness checks (4 new IDs: F05, F06, X09, C09), verifier validation, implementer post-step protocol\n4. Azure FMA table format for failure docs: Component | Risk | Likelihood | Impact/Mitigation | Outage Level\n5. Six frameworks (C4, arc42, SRE, 12-Factor, Azure FMA, AWS Well-Architected) converge on a 10-section structure\n6. Five Mermaid diagram types serve different sections: C4Deployment for topology, architecture-beta for simplified views, flowchart for processes\n7. 10 files need changes across the ecosystem: agent-intermediate-documents rule, 7 agent definitions, deployment skill, coordination protocol",
+        "created_at": "2026-04-07T17:25:00.465734Z",
+        "updated_at": "2026-04-07T17:25:00.465734Z",
+        "tags": [
+          "ai-state",
+          "architecture",
+          "deployment",
+          "living-document",
+          "pattern"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.proactive-memory-vs-enforcement",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.observability-skill-structure-pattern",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.upstream-stewardship-artifact-pattern",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "SYSTEM_DEPLOYMENT.md: first living doc in .ai-state/ — section ownership, staleness mitigation, 10-section structure",
+        "valid_at": "2026-04-07T17:25:00.465734Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "mermaid-conventions-rule-skill-pair": {
+        "value": "Mermaid diagram conventions merged (commit f019b57) as a cross-cutting rule+skill reference pair:\n\nRULE: rules/writing/diagram-conventions.md (path-scoped to **/*.md, auto-loads)\n- 10-12 nodes max per diagram, one concept per diagram\n- L0/L1/L2 decomposition strategy (Context → Components → Internals)\n- Node shapes: rectangles for components, [(Database)] for storage, ([Queue]) for messages, {{Decision}} for decisions\n- Edge conventions: solid --> for direct, dotted -.-> for async, labeled -->|label| when not obvious\n- Subgraph by domain/boundary, NOT technical layer\n- Labels over IDs: A[Auth Service] not bare A\n\nSKILL REFERENCE: skills/doc-management/references/diagram-conventions.md\n- Start with L1 first, create L2 only when needed\n- 5-6 participants max in sequence diagrams\n- Validation heuristic: every arrow must map to actual code\n- Use claude-mermaid MCP tools (mermaid_preview, mermaid_save) for visual validation\n\nGOTCHA: When delegating to agents that produce Mermaid diagrams (like systems-architect for SYSTEM_DEPLOYMENT.md), include these conventions in the prompt — agents don't auto-load path-scoped rules unless they're editing files matching the path pattern.",
+        "created_at": "2026-04-07T17:28:04.039886Z",
+        "updated_at": "2026-04-07T17:28:04.039886Z",
+        "tags": [
+          "convention",
+          "diagrams",
+          "gotcha",
+          "mermaid",
+          "rule"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.agent-background-flag-protocol-drift",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Mermaid conventions: rule+skill pair, 10-12 node limit, L0/L1/L2 decomposition, include in agent prompts",
+        "valid_at": "2026-04-07T17:28:04.039886Z",
+        "invalid_at": null,
+        "type": "convention",
+        "created_by": null
+      },
+      "worktree-observations-merge-pattern": {
+        "value": "When merging a worktree back to main, observations.jsonl diverges because each worktree gets its own copy (gitignored). Merge pattern: use `comm -13` on sorted versions to find unique worktree entries, append them to main's file, then sort by timestamp field. Must use `git worktree remove --force` after merge because the uncommitted observations.jsonl change triggers the dirty-worktree guard. The branch deletion also requires `-D` (force) since it's merged to local main but not pushed to origin.",
+        "created_at": "2026-04-07T17:34:11.142722Z",
+        "updated_at": "2026-04-07T17:34:11.142722Z",
+        "tags": [
+          "git",
+          "observations",
+          "pattern",
+          "worktree"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.worktree-merge-state-file-stash-pattern",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.worktree-rebase-merge-requires-removal-first",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.stale-branch-fast-forward-pattern",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Worktree observations.jsonl must be merged via comm/sort before worktree removal (force required)",
+        "valid_at": "2026-04-07T17:34:11.142722Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "cajalogic-tab-complete-truncation": {
+        "value": "Tab-completion in Claude Code displays \"i-am:calalog\" (missing 'j') for the cajalogic command during autocomplete, but the command name is correct. This appears to be a Claude Code tab-completion UI rendering issue, not a file system or naming problem. The actual command file name is correct (cajalogic.md), and it's properly registered in plugin.json via glob pattern \"./commands/\"",
+        "created_at": "2026-04-07T17:38:52.337853Z",
+        "updated_at": "2026-04-07T17:38:52.337853Z",
+        "tags": [
+          "cajalogic",
+          "claude-code",
+          "gotcha",
+          "tab-completion"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.hook-output-requires-hookEventName",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.hook-additionalContext-supported-events",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.async-hooks-cannot-deliver-feedback",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Tab-completion in Claude Code displays \"i-am:calalog\" (missing 'j') for the cajalogic command...",
+        "valid_at": "2026-04-07T17:38:52.337853Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "metrics-tool-missing-from-allowed-tools": {
+        "value": "The metrics() tool is properly defined in memory MCP server (memory-mcp/src/memory_mcp/server.py, line 500) with @mcp.tool() decorator and full implementation. However, it's NOT listed in the allowed-tools array of the cajalogic command (commands/cajalogic.md). The allowed-tools list has 18 tools but omits \"mcp__memory__metrics\". This is why the tool doesn't appear in Claude Code's tool browser when running /cajalogic. The fix is to add \"mcp__memory__metrics\" to the allowed-tools list in cajalogic.md",
+        "created_at": "2026-04-07T17:38:56.389423Z",
+        "updated_at": "2026-04-07T17:38:56.389423Z",
+        "tags": [
+          "allowed-tools",
+          "bug",
+          "cajalogic",
+          "memory-mcp",
+          "metrics"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "The metrics() tool is properly defined in memory MCP server (memory-mcp/src/memory_mcp/server.py,...",
+        "valid_at": "2026-04-07T17:38:56.389423Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "system-deployment-md-implementation-complete": {
+        "value": "SYSTEM_DEPLOYMENT.md living artifact fully implemented (dec-019). 13 files touched: 2 new (template + reference), 7 agent definitions, 1 skill, 2 rules, 1 ADR.\n\nAGENT ADDITIONS (all small, 3-15 lines each):\n- systems-architect: Phase 3.7 (create/update deployment doc)\n- implementer: Step 7.5 (update doc when deployment files change)\n- implementation-planner: [Deployment] step annotation\n- verifier: Phase 4.7 (cross-check doc vs configs)\n- cicd-engineer: Phase 5 bullet (update Section 5)\n- doc-engineer: Phase 2 item 7 (documentation inventory)\n- sentinel: 4 new checks — F05, F06, X09, C09\n\nKEY GOTCHA: sentinel at 463 lines (warn 400, ceiling 500). No further growth without extracting check catalog to reference file.",
+        "created_at": "2026-04-07T18:08:32.616705Z",
+        "updated_at": "2026-04-07T18:08:32.616705Z",
+        "tags": [
+          "agents",
+          "ai-state",
+          "deployment",
+          "implementation",
+          "living-document"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.deployment-skill-implementation-pattern",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.living-document-pattern-ai-state",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "SYSTEM_DEPLOYMENT.md implemented: 13 files, 7 agents updated, sentinel at 463/500 — watch ceiling",
+        "valid_at": "2026-04-07T18:08:32.616705Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "direct-tier-artifact-drift-gap": {
+        "value": "Pipeline-maintained artifacts like SYSTEM_DEPLOYMENT.md have a blind spot in Direct/Lightweight tier: the main agent modifies deployment files without any pipeline agent running, so no automatic update occurs. Self-healing requires 4 layers:\n\n1. Skill gotcha (proactive) — skill auto-loads when editing deployment files, gotcha reminds main agent to check .ai-state/SYSTEM_DEPLOYMENT.md\n2. Implementer step 7.5 (pipeline only) — updates doc per-step\n3. Verifier Phase 4.7 (pipeline only) — cross-checks doc vs configs\n4. Sentinel audit (periodic, any tier) — detects drift via F05/F06/C09, routes to owner via report's Recommended Action + Owner columns\n\nThe sentinel is the safety net for Direct/Lightweight, but it only DETECTS — never fixes. The fix happens when the next session (main agent or pipeline) picks up the finding. This gap applies to ANY future living document in .ai-state/, not just SYSTEM_DEPLOYMENT.md.",
+        "created_at": "2026-04-07T18:12:00.235723Z",
+        "updated_at": "2026-04-07T18:12:00.235723Z",
+        "tags": [
+          "architecture",
+          "deployment",
+          "direct-tier",
+          "gotcha",
+          "self-healing"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.memory-enforcement-gap-commit-hook",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.inject-memory-session-start-gap",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.deployment-skill-ecosystem-patterns",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Direct/Lightweight tier skips pipeline agents — living docs need skill gotchas + sentinel as safety net",
+        "valid_at": "2026-04-07T18:12:00.235723Z",
+        "invalid_at": null,
+        "type": "gotcha",
         "created_by": null
       }
     }
