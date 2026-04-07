@@ -1,0 +1,89 @@
+# Starter: Web Application + PostgreSQL + Redis
+# Usage: Copy to your project root as compose.yaml, then customize.
+#
+# Assumes:
+#   - Python app with Dockerfile in project root
+#   - FastAPI/Django/Flask on port 8000
+#   - PostgreSQL as primary database
+#   - Redis for caching/sessions (optional, enable via profile)
+#
+# Adapt for Node.js: change port, build context, and health check.
+
+services:
+  app:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/app"
+      REDIS_URL: "redis://cache:6379"
+    env_file: [.env]
+    depends_on:
+      db:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+          ignore: [__pycache__/]
+        - action: rebuild
+          path: ./requirements.txt
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+    restart: unless-stopped
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: app
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports: ["5433:5432"]  # Non-default host port to avoid conflicts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    restart: unless-stopped
+
+  cache:
+    image: redis:7-alpine
+    profiles: ["cache"]
+    ports: ["6380:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    restart: unless-stopped
+
+  # Optional admin tools
+  pgadmin:
+    image: dpage/pgadmin4
+    profiles: ["admin"]
+    ports: ["5050:80"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -1,0 +1,38 @@
+# Local development reverse proxy with mkcert TLS
+#
+# Prerequisites:
+#   brew install mkcert nss
+#   mkcert -install
+#   mkcert localhost 127.0.0.1 ::1 myapp.local
+#
+# Add to /etc/hosts: 127.0.0.1 myapp.local
+#
+# Usage in Docker Compose:
+#   caddy:
+#     image: caddy:2-alpine
+#     ports: ["80:80", "443:443"]
+#     volumes:
+#       - ./Caddyfile:/etc/caddy/Caddyfile
+#       - ./localhost+3.pem:/etc/caddy/cert.pem
+#       - ./localhost+3-key.pem:/etc/caddy/key.pem
+#       - caddy_data:/data
+#       - caddy_config:/config
+
+myapp.local {
+	tls /etc/caddy/cert.pem /etc/caddy/key.pem
+
+	# API backend
+	handle /api/* {
+		reverse_proxy app:8000
+	}
+
+	# Frontend (if separate)
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
+
+# Plain HTTP alternative (no TLS setup needed)
+# http://localhost:8080 {
+#     reverse_proxy app:8000
+# }

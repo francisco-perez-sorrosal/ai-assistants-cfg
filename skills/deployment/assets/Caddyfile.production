@@ -1,0 +1,43 @@
+# Production reverse proxy with automatic HTTPS (Let's Encrypt)
+#
+# Caddy automatically obtains and renews TLS certificates.
+# Ensure DNS points to this server and ports 80/443 are open.
+#
+# Usage in Docker Compose:
+#   caddy:
+#     image: caddy:2-alpine
+#     ports: ["80:80", "443:443"]
+#     volumes:
+#       - ./Caddyfile:/etc/caddy/Caddyfile
+#       - caddy_data:/data      # TLS certificates (critical -- back up this volume)
+#       - caddy_config:/config
+#     restart: unless-stopped
+
+myapp.example.com {
+	# API backend
+	handle /api/* {
+		reverse_proxy app:8000
+	}
+
+	# Frontend
+	handle {
+		reverse_proxy frontend:3000
+	}
+
+	# Access logging (JSON format for structured log processing)
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 100mb
+			roll_keep 5
+		}
+		format json
+	}
+
+	# Security headers
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}

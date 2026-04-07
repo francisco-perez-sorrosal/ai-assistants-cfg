@@ -1,0 +1,44 @@
+# systemd unit for managing Docker Compose lifecycle
+#
+# Install:
+#   sudo cp systemd-compose.service /etc/systemd/system/myapp.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable myapp
+#   sudo systemctl start myapp
+#
+# Customize:
+#   - Replace /opt/app with your application directory
+#   - Replace 'app' user with your service user
+#   - Adjust TimeoutStartSec for slow-starting services
+
+[Unit]
+Description=Docker Compose Application Stack
+Documentation=https://docs.docker.com/compose/
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=app
+Group=docker
+WorkingDirectory=/opt/app
+
+# Start all services in detached mode
+ExecStart=/usr/bin/docker compose up -d --remove-orphans
+
+# Stop all services gracefully
+ExecStop=/usr/bin/docker compose down
+
+# Reload: recreate only changed services
+ExecReload=/usr/bin/docker compose up -d --remove-orphans
+
+# Allow time for containers to start (increase for GPU/ML services)
+TimeoutStartSec=120
+
+# Restart the compose stack if it exits unexpectedly
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
