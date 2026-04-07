@@ -316,6 +316,36 @@
         "invalid_at": null,
         "type": "decision",
         "created_by": null
+      },
+      "deployment-skill-research-initiative": {
+        "value": "Initiated multi-angle research for a new deployment skill in Praxion. The skill targets local/single-machine deployment first (laptops/desktops with multi-CPU/GPU), but must be architecturally flexible to extend to: traditional cloud (AWS, GCP, Azure), AI-native clouds (Modal, Nebius, CoreWeave), and modern PaaS (Render, Vercel, Fly.io, Railway). Four parallel research agents launched covering: (1) deployment abstractions & mental models (IaC vs IfC, descriptor formats, taxonomies), (2) local deployment patterns (process management, containers, GPU sharing, AI/ML serving), (3) cloud/AI-cloud/PaaS patterns (provider comparison, portability, lifecycle). Next step after research: systems-architect to design skill structure, abstraction layers, and progressive disclosure model.",
+        "created_at": "2026-04-07T04:38:32.684367Z",
+        "updated_at": "2026-04-07T04:38:32.684367Z",
+        "tags": [
+          "architecture",
+          "deployment",
+          "infrastructure",
+          "research",
+          "skill-design"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Deployment skill research: local-first, extensible to cloud/AI-cloud/PaaS — 4 parallel researchers launched",
+        "valid_at": "2026-04-07T04:38:32.684367Z",
+        "invalid_at": null,
+        "type": "decision",
+        "created_by": null
       }
     },
     "relationships": {},
@@ -2489,6 +2519,130 @@
         ],
         "summary": "Use git branch -f to fast-forward stale branches with no unique commits instead of rebasing",
         "valid_at": "2026-04-06T21:49:51.916014Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "deployment-skill-ecosystem-patterns": {
+        "value": "Deployment skill design should follow Praxion ecosystem patterns:\n\nSKILL ANATOMY (Progressive Disclosure):\n- SKILL.md: Frontmatter (name, description, allowed-tools, compatibility) + core content (~500 lines)\n- references/ subdirectory: Deep-dive docs loaded on-demand (patterns, examples, reference material)\n- contexts/ subdirectory: Task-oriented implementations (language-specific, framework-specific)\n- scripts/ subdirectory: Executable utilities and tooling\n- assets/ subdirectory: Templates, schemas, data files\n- README.md: Human-facing quick reference\n\nDESCRIPTION FIELD (Critical for Activation):\n- Third-person, trigger-focused (used in system prompt to auto-activate)\n- Include: what it does, when to trigger it, key terms\n- All \"when to use\" info goes in description, NOT body (body loaded after activation)\n- Example from cicd: \"CI/CD pipeline design... deployment strategies... Use when creating CI/CD pipelines, writing GitHub Actions workflows, configuring automated testing, setting up deployment automation...\"\n\nREFERENCE FILES PATTERN:\n- Ordered by frequency of use/complexity depth\n- Backlinks recommended (~40% adoption in existing skills)\n- Named as: github-actions.md, patterns-and-examples.md, performance-patterns.md, benchmarking.md, etc.\n- Satellite files listed as YAML at start of SKILL.md body\n\nSKILL CROSS-LINKING:\n- Section: \"Integration with Other Skills\" with markdown links to related skills\n- Example: cicd links to [Python Development], [Python Project Management], [Observability]\n- Links establish skill ecosystem topology without creating circular dependencies\n- Skill-to-command integration: commands use Bash tool to invoke skill content\n\nGOTCHAS SECTION:\n- High-signal content: non-obvious failure points\n- Bullet list of gotchas early in SKILL.md body\n- More valuable than generic instructions\n- Examples: cardinality explosion, PII in logs, trace sampling, test isolation\n\nAGENT INTEGRATION:\n- Agents list skills in frontmatter: `skills: [cicd, python-development]`\n- Skills injected into agent context\n- Agents don't inherit parent skills\n- Example: cicd-engineer agent uses [cicd, python-development, python-prj-mgmt]\n\nDEPLOYMENT-ADJACENT SKILLS:\n- cicd: Pipeline architecture, GitHub Actions, deployment strategies (blue-green, canary, rolling)\n- performance-architecture: Capacity planning, scaling decisions\n- observability: Deployment environment tracking, alerting for deployments\n- api-design: Service boundary contracts for deployed services\n- testing-strategy: E2E testing of deployments\n- data-modeling: Schema migrations for deployments\n\nKEY PATTERNS FOR DEPLOYMENT SKILL:\n1. Cover: deployment strategies, environment promotion, infrastructure-as-code, service orchestration, monitoring deployments\n2. Avoid duplication: cicd already covers deployment automation in GitHub Actions; deployment skill should focus on *operational* deployment patterns, not workflow automation\n3. Separate concerns: cicd is automation + testing; deployment skill is deployment mechanics + infrastructure + observability integration\n4. Boundary: cicd covers \"how to deploy via GH Actions\"; deployment skill covers \"how to design for deployable systems, rollout strategies, traffic management\"\n5. Integration points: cicd skill for deployment automation, observability skill for deployment health, performance-architecture for capacity planning, api-design for service contracts",
+        "created_at": "2026-04-07T04:37:50.073912Z",
+        "updated_at": "2026-04-07T04:37:50.073912Z",
+        "tags": [
+          "architecture",
+          "conventions",
+          "deployment",
+          "pattern",
+          "skill-ecosystem"
+        ],
+        "confidence": null,
+        "importance": 9,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.proactive-memory-vs-enforcement",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.observability-skill-structure-pattern",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.upstream-stewardship-artifact-pattern",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Deployment skill design should follow Praxion ecosystem patterns:\n\nSKILL ANATOMY (Progressive...",
+        "valid_at": "2026-04-07T04:37:50.073912Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "deployment-research-key-findings": {
+        "value": "Multi-angle deployment research (4 parallel researchers) produced converging findings:\n\nKEY FINDINGS:\n1. Seven universal deployment primitives: compute, networking, storage, configuration, health/lifecycle, scaling, dependencies (maps to 12-factor app)\n2. Minimal common schema of ~10 fields recurs across ALL deployment tools regardless of syntax\n3. Six deployment target categories: Local, PaaS, Self-hosted PaaS, Serverless, Container Orchestration, AI-Native\n4. Four abstraction strategies: Config Overlay (K8s+Helm), Platform Abstraction (PaaS), Infrastructure from Code (Modal/Encore), Imperative Scripting (Kamal/Ansible)\n5. Docker Compose is the de facto local standard — modern features (watch mode GA, profiles, native GPU) cover full dev-to-prod spectrum\n6. TGI entered maintenance mode Dec 2025 — recommend vLLM (prod) and Ollama (dev) for model serving\n7. IfC (Infrastructure from Code) is promising but fragile — Wing and Klotho failed; only Encore and Nitric survive\n8. Deployment portability remains unsolved — Score (CNCF Sandbox) most promising but tightly scoped; K8s is de facto portability layer\n9. Clear skill boundary: cicd = pipeline automation (how to trigger), deployment = what happens at the target (how to configure and run)\n10. Dev-to-production spectrum on single machine has four clear levels: bare dev → dev compose → prod-like compose → single-server production\n11. Secrets management progression: .env → direnv → SOPS+age → 1Password CLI\n12. Local AI/ML: Ollama dominates dev, vLLM dominates prod; consumer GPUs only support time-slicing for GPU sharing",
+        "created_at": "2026-04-07T04:57:54.596567Z",
+        "updated_at": "2026-04-07T04:57:54.596567Z",
+        "tags": [
+          "architecture",
+          "deployment",
+          "insight",
+          "research",
+          "skill-design"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.onboarding-research-convergence-skill-command",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.deployment-skill-ecosystem-patterns",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Deployment research: 7 primitives, 6 target categories, 4 abstraction strategies, Docker Compose is local standard",
+        "valid_at": "2026-04-07T04:57:54.596567Z",
+        "invalid_at": null,
+        "type": "insight",
+        "created_by": null
+      },
+      "deployment-skill-implementation-pattern": {
+        "value": "Deployment skill implemented with three-layer mental model (primitives vocabulary + target navigation + decision framework entry point). Key implementation details:\n\nSTRUCTURE: SKILL.md (294 lines, well under 500 target) + 5 reference files + 5 asset templates. Validation passed after trimming description to 1024 char limit.\n\nDESIGN DECISIONS (ADRs dec-017, dec-018):\n- Docker Compose as gravity center — SKILL.md focuses on Compose; remote targets are reference files\n- Opinionated defaults — Caddy, Railway/Render, Ollama, gunicorn+uvicorn as starting points\n- Hybrid reference organization — primary by target with cross-cutting files where depth warrants\n\nGOTCHA: skill-crafting validator enforces 1024 char max on description field. Initial description was 1067 chars.\n\nEXTENSION PATTERN: New deployment targets added by creating a reference file only — no SKILL.md changes. Four placeholder references remain: paas-deployment, self-hosted-paas, cloud-containers, kubernetes-patterns.",
+        "created_at": "2026-04-07T06:35:10.705138Z",
+        "updated_at": "2026-04-07T06:35:10.705138Z",
+        "tags": [
+          "deployment",
+          "implementation",
+          "pattern",
+          "skill-design"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.skill-command-tracker-implementation-pattern",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.deployment-skill-ecosystem-patterns",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.deployment-research-key-findings",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Deployment skill: 294-line SKILL.md + 5 refs + 5 assets, three-layer model, 1024-char description gotcha",
+        "valid_at": "2026-04-07T06:35:10.705138Z",
         "invalid_at": null,
         "type": "pattern",
         "created_by": null
