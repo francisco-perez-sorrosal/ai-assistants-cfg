@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from pathlib import Path
 
 # Tool classification for significance detection
 EDIT_TOOLS = frozenset({"Write", "Edit"})
@@ -15,6 +16,7 @@ READ_TOOLS = frozenset({"Read"})
 SEARCH_TOOLS = frozenset({"Grep", "Glob"})
 DELEGATION_TOOLS = frozenset({"Agent"})
 REMEMBER_SUBSTRING = "remember"
+MEMORY_TOOL_PREFIX = "mcp__plugin_i-am_memory__"
 
 # Significance thresholds — any single criterion triggers the gate
 MIN_EDITS = 3  # substantial code changes
@@ -40,6 +42,7 @@ class TranscriptStats:
     agent_count: int = 0
     total_tool_count: int = 0
     wrote_learnings: bool = False
+    memory_tools_seen: bool = False
 
     # Counts of work done AFTER the last remember() call
     edits_since_last_remember: int = 0
@@ -136,6 +139,7 @@ def scan_transcript(transcript_path: str) -> TranscriptStats:
     agent_count = 0
     total_tool_count = 0
     wrote_learnings = False
+    memory_tools_seen = False
 
     # Counters that reset on each remember() call
     edits_since = 0
@@ -188,6 +192,9 @@ def scan_transcript(transcript_path: str) -> TranscriptStats:
                         agent_count += 1
                         agents_since += 1
 
+                    if name.startswith(MEMORY_TOOL_PREFIX):
+                        memory_tools_seen = True
+
                     if REMEMBER_SUBSTRING in name.lower():
                         remember_count += 1
                         # Reset post-remember counters
@@ -207,12 +214,27 @@ def scan_transcript(transcript_path: str) -> TranscriptStats:
         agent_count=agent_count,
         total_tool_count=total_tool_count,
         wrote_learnings=wrote_learnings,
+        memory_tools_seen=memory_tools_seen,
         edits_since_last_remember=edits_since,
         reads_since_last_remember=reads_since,
         searches_since_last_remember=searches_since,
         agents_since_last_remember=agents_since,
         tools_since_last_remember=tools_since,
     )
+
+
+def is_memory_system_active(cwd: str, stats: TranscriptStats) -> bool:
+    """Check if the memory system is active for this project.
+
+    Returns True if either:
+    - .ai-state/memory.json exists (memory system initialized for this project)
+    - Memory MCP tools were used in the transcript (MCP server is running)
+
+    When neither is true, the memory system isn't functional and the gate
+    should not block.
+    """
+    memory_path = Path(cwd) / ".ai-state" / "memory.json"
+    return memory_path.exists() or stats.memory_tools_seen
 
 
 REMEMBER_PROMPT = (

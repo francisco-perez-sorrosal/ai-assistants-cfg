@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import sys
 
-from _hook_utils import REMEMBER_PROMPT, scan_transcript
+from _hook_utils import REMEMBER_PROMPT, is_memory_system_active, scan_transcript
 
 
 def main() -> None:
@@ -32,9 +32,14 @@ def main() -> None:
     if not transcript_path:
         return
 
+    cwd = payload.get("cwd", ".")
+
     stats = scan_transcript(transcript_path)
 
     if not stats.has_unmemorized_work:
+        return
+
+    if not is_memory_system_active(cwd, stats):
         return
 
     # Second attempt and still no remember() — let through to avoid infinite loop
