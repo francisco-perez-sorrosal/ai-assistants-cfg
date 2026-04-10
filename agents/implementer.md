@@ -74,6 +74,13 @@ For your assigned step:
    - `.env.example` changes → update Section 4 (Configuration: environment variables table)
    - `systemd` unit changes → update Section 5 (Deployment Process)
    If `.ai-state/SYSTEM_DEPLOYMENT.md` does not exist, skip this step — the systems-architect creates it.
+7.6. **Update architecture doc** — if the step is annotated with `[Architecture]` or its `Files` field includes structural changes (new modules/packages, interface changes, dependency additions/removals), update the corresponding section of `.ai-state/ARCHITECTURE.md`:
+   - New module/package created → update Section 3 (Components: add to component table and L1 diagram)
+   - Interface/API changes → update Section 4 (Interfaces: update contract table)
+   - Data model changes → update Section 5 (Data Flow: update flow descriptions)
+   - New dependency added/removed → update Section 6 (Dependencies: update dependencies table)
+   - ADR created → update Section 8 (Decisions: add cross-reference row)
+   If `.ai-state/ARCHITECTURE.md` does not exist, skip this step — the systems-architect creates it.
 8. **Update WIP.md** — mark your step as complete (see WIP.md Update Protocol).
 9. **Update LEARNINGS.md** — record any discoveries (see LEARNINGS.md Protocol).
 10. **Report** — stop and report one of: `[COMPLETE]`, `[BLOCKED]`, or `[CONFLICT]`.

@@ -272,6 +272,8 @@ Append-only. Entries in chronological order by timestamp.
 | `SENTINEL_REPORT_*.md` | None — timestamped filenames are unique | Git merge handles distinct file additions natively |
 | `IDEA_LEDGER_*.md` | Medium — each promethean run carries forward previous entries | If two worktrees both run promethean, the later ledger may miss the earlier's new entries. Create a reconciled ledger with suffix `_reconciled` containing the union of both |
 | `specs/SPEC_*.md` | None — unique feature-name + date filenames | Git merge handles distinct file additions natively |
+| `SYSTEM_DEPLOYMENT.md` | Low — single evolving file, section ownership prevents concurrent edits | Standard git merge. If conflict, later worktree's version wins for architect-owned sections; review implementer/cicd-owned sections manually |
+| `ARCHITECTURE.md` | Low — single evolving file, section ownership prevents concurrent edits | Standard git merge. If conflict, later worktree's version wins for architect-owned sections; review implementer-owned sections manually |
 
 **Automated reconciliation:** Three layers of protection:
 1. **Git merge drivers** (`.gitattributes`) — handle `memory.json` and `observations.jsonl` automatically during `git merge`. Registered by `install.sh code` Step 2.

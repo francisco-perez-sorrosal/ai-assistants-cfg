@@ -18,6 +18,8 @@ Create and maintain planning documents (IMPLEMENTATION_PLAN.md, WIP.md, LEARNING
 - [references/adr-authoring-protocols.md](references/adr-authoring-protocols.md) -- ADR file creation, index regeneration, supersession protocol
 - [phases/refactoring.md](phases/refactoring.md) -- refactoring phase integration
 - [contexts/python.md](contexts/python.md) -- Python-specific quality gates and step templates
+- [assets/ARCHITECTURE_TEMPLATE.md](assets/ARCHITECTURE_TEMPLATE.md) -- 8-section template for `.ai-state/ARCHITECTURE.md` living document
+- [references/architecture-documentation.md](references/architecture-documentation.md) -- architecture documentation methodology: lifecycle, section ownership, staleness mitigation
 
 ## Three-Document Model
 

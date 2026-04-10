@@ -70,6 +70,7 @@ This scoping prevents collisions when multiple pipelines or multiple instances o
     specs/
       SPEC_<name>_YYYY-MM-DD.md
     SYSTEM_DEPLOYMENT.md
+    ARCHITECTURE.md
 ```
 
 - Committed to git — versioned, shareable, accumulates value over time
@@ -88,7 +89,9 @@ This scoping prevents collisions when multiple pipelines or multiple instances o
 
 `SYSTEM_DEPLOYMENT.md` — living deployment architecture document. Created by systems-architect, updated by implementer (configurations), cicd-engineer (CI/CD), and validated by verifier and sentinel. Section ownership prevents conflicts. Unlike timestamped artifacts, this is a single evolving file. Template at `skills/deployment/assets/SYSTEM_DEPLOYMENT_TEMPLATE.md`.
 
-Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log), implementation-planner (spec archival), main agent (calibration log), systems-architect and implementation-planner (ADR files in `decisions/`), systems-architect, implementer, and cicd-engineer (deployment doc). Artifact inventory is not stored here — it is derivable from the filesystem.
+`ARCHITECTURE.md` — living architecture document. Created by systems-architect, updated by implementer (structural changes), validated by verifier and sentinel. Section ownership prevents conflicts. Template at `skills/software-planning/assets/ARCHITECTURE_TEMPLATE.md`.
+
+Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log), implementation-planner (spec archival), main agent (calibration log), systems-architect and implementation-planner (ADR files in `decisions/`), systems-architect, implementer, and cicd-engineer (deployment doc), systems-architect and implementer (architecture doc). Artifact inventory is not stored here — it is derivable from the filesystem.
 
 ### Document Lifecycle
 
@@ -96,7 +99,7 @@ Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log
 |------|----------|-----------|----------|
 | Ephemeral | `.ai-work/<task-slug>/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `CONTEXT_REVIEW.md`, `SYSTEMS_PLAN.md`, `SPEC_DELTA.md`, `SKILL_GENESIS_REPORT.md`, `VERIFICATION_REPORT.md`, `PROGRESS.md` | Single pipeline run — delete after downstream consumption (merge `VERIFICATION_REPORT.md` patterns into `LEARNINGS.md` first) |
 | Session-persistent | `.ai-work/<task-slug>/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions — merge learnings into permanent locations at feature end |
-| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md`, `SPEC_*.md`, `calibration_log.md`, `decisions/<NNN>-<slug>.md`, `SYSTEM_DEPLOYMENT.md` | Project lifetime — committed to git, timestamped per run or living document |
+| Permanent | `.ai-state/` | `IDEA_LEDGER_*.md`, `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md`, `SPEC_*.md`, `calibration_log.md`, `decisions/<NNN>-<slug>.md`, `SYSTEM_DEPLOYMENT.md`, `ARCHITECTURE.md` | Project lifetime — committed to git, timestamped per run or living document |
 
 ### Version Control and Cleanup
 

@@ -201,6 +201,17 @@ Conditional activation: skip DL checks when no `.ai-state/decisions/` directory 
 | DL04 | L | No orphaned supersession pointers | If an ADR has `supersedes: dec-NNN`, the referenced ADR file exists; if `superseded_by: dec-MMM`, that file exists and points back |
 | DL05 | L | Recent features have associated ADR files | Features with archived specs have corresponding ADR files (frequency check) |
 
+### Architecture Completeness (AC)
+
+Conditional activation: skip AC checks when `.ai-state/ARCHITECTURE.md` does not exist and project has fewer than 3 interacting components.
+
+| ID | Tp | Rule | Pass |
+|----|----|------|------|
+| AC01 | L | Architecture doc exists when project has 3+ interacting components | `.ai-state/ARCHITECTURE.md` exists when project has 3+ modules with inter-module dependencies |
+| AC02 | A | Component names in ARCHITECTURE.md match actual modules | Component names in Section 3 match `Glob` of actual module/directory names |
+| AC03 | A | File paths in ARCHITECTURE.md resolve to existing files | Every file path in component table points to an existing file |
+| AC04 | A | ADR cross-references in ARCHITECTURE.md Section 8 are valid | Every `dec-NNN` in Section 8 has a corresponding `.ai-state/decisions/NNN-*.md` file |
+
 ### Self-Verification (V)
 
 The sentinel includes itself in the audit.

@@ -53,7 +53,7 @@ See [agent-pipeline-details.md](../../skills/software-planning/references/agent-
 |-------|---------|--------|---------|
 | `promethean` | Feature-level ideation from project state | `IDEA_PROPOSAL.md`, `IDEA_LEDGER_*.md` | No |
 | `researcher` | Codebase exploration, external docs, comparative analysis | `RESEARCH_FINDINGS.md` | Yes |
-| `systems-architect` | Trade-off analysis, system design | `SYSTEMS_PLAN.md`, `SPEC_DELTA.md` (conditional), `SYSTEM_DEPLOYMENT.md` (conditional) | Yes |
+| `systems-architect` | Trade-off analysis, system design | `SYSTEMS_PLAN.md`, `SPEC_DELTA.md` (conditional), `SYSTEM_DEPLOYMENT.md` (conditional), `ARCHITECTURE.md` (conditional) | Yes |
 | `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Yes |
 | `context-engineer` | Context artifact domain expert; any pipeline stage | Audit report + artifact changes, `CONTEXT_REVIEW.md` (shadowing) | Yes |
 | `implementer` | Executes implementation steps with self-review | Code changes + `WIP.md` update | Yes |

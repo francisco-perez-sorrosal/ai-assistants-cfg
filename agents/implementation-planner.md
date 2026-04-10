@@ -109,6 +109,10 @@ When a parallel group adds, removes, or renames files, introduces new APIs, or c
 
 When a step creates or modifies deployment configuration files (`compose.yaml`, `Dockerfile`, `Caddyfile`, `systemd` units, `.env.example`), annotate it with `[Deployment]`. This signals the implementer to update `.ai-state/SYSTEM_DEPLOYMENT.md` as part of step completion. When multiple deployment steps exist, the last one in sequence should include a `Done when` clause verifying the deployment doc is consistent with actual configs.
 
+**Architecture step annotations:**
+
+When a step creates new modules/packages, changes interfaces, modifies data models, or adds/removes dependencies, annotate it with `[Architecture]`. This signals the implementer to update `.ai-state/ARCHITECTURE.md` as part of step completion (step 7.6). When multiple architecture steps exist, the last one in sequence should include a `Done when` clause verifying the architecture doc is consistent with actual code structure.
+
 **Parallel step annotations:**
 
 When steps can execute concurrently (disjoint file sets, no shared mutable state), annotate them:

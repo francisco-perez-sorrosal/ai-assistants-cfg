@@ -142,6 +142,20 @@ Classify each as `PASS` / `WARN` / `FAIL` with `[Deployment]` tag. A stale or mi
 
 Skip this phase if `.ai-state/SYSTEM_DEPLOYMENT.md` does not exist or no deployment files were changed.
 
+### Phase 4.8 -- Architecture Documentation Validation
+
+If `.ai-state/ARCHITECTURE.md` exists and the implementation changed structural files (new modules, interfaces, data models, dependencies):
+
+1. **Component names** -- verify component names in Section 3 match actual module/directory names on disk
+2. **File paths** -- verify file paths referenced in the component table exist on disk
+3. **ADR cross-references** -- verify ADR IDs referenced in Section 8 correspond to actual files in `.ai-state/decisions/`
+4. **Dependency list** -- verify dependencies in Section 6 match actual project dependencies (e.g., pyproject.toml, package.json)
+5. **Staleness indicator** -- check if Section 3 component count is significantly different from actual module count
+
+Classify each as `PASS` / `WARN` / `FAIL` with `[Architecture]` tag. A stale or missing architecture doc when structural files were changed is a `WARN`, not a `FAIL` -- the doc is advisory, not a gate.
+
+Skip this phase if `.ai-state/ARCHITECTURE.md` does not exist or no structural files were changed.
+
 ### Phase 5 -- Test Coverage Assessment
 
 When tests exist or are expected:

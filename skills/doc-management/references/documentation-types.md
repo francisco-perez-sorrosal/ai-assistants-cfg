@@ -121,6 +121,12 @@ System design documentation for complex projects. Not every project needs this.
 - Referenced files or modules no longer exist
 - New major components exist that are not mentioned
 
+### Living Architecture Document
+
+For projects using the Praxion agent pipeline (Standard/Full tier), architecture documentation is maintained as `.ai-state/ARCHITECTURE.md` -- a living document with section ownership and four-layer staleness mitigation. The systems-architect creates it from a template; the implementer updates structural sections; the verifier and sentinel validate it. See the [architecture documentation methodology](../../software-planning/references/architecture-documentation.md) for the full lifecycle.
+
+The static conventions above still apply to projects not using the agent pipeline.
+
 ## Changelog
 
 Version history documenting what changed and when.
