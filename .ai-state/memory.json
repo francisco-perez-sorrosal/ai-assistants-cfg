@@ -383,19 +383,21 @@
         "created_by": null
       },
       "architecture-md-living-document-design": {
-        "value": "User wants a living ARCHITECTURE.md in .ai-state/ for projects managed by Praxion. Key design decisions:\n\n1. **Creation**: Joint effort by systems-architect + implementation-planner after first pipeline run\n2. **Major changes**: systems-architect produces new plan based on existing ARCHITECTURE.md, then implementation-planner updates it\n3. **Minor architectural changes**: implementation-planner alone updates ARCHITECTURE.md\n4. **Non-architectural changes**: ARCHITECTURE.md untouched\n5. **Location**: .ai-state/ARCHITECTURE.md (persistent, committed to git)\n6. **Critical constraint**: Coordinator agents (Claude Code, Cursor main agents) MUST be aware of ARCHITECTURE.md even when they bypass Praxion agents — they cannot act architecture-agnostic\n7. **Vision metaphor**: \"A breathing tree, ever mutating towards the sun of clarity, simplicity and cleanliness\"\n\nThis is a Standard/Full tier feature touching agents, rules, skills, hooks, and CLAUDE.md files. Research phase launched with external (reputable engineer practices) and internal (ecosystem mapping) tracks.",
+        "value": "ARCHITECTURE.md bootstrapped at .ai-state/ARCHITECTURE.md from current codebase state (2026-04-10). Follows template at skills/software-planning/assets/ARCHITECTURE_TEMPLATE.md and methodology at skills/software-planning/references/architecture-documentation.md.\n\nCovers all 8 sections: Overview, System Context (L0 Mermaid), Components (L1 Mermaid + table), Interfaces (9 contracts), Data Flow (pipeline sequence + memory/observability flow), Dependencies (10 entries), Constraints (10 entries), Decisions (14 ADR cross-refs).\n\nVerified ecosystem counts: 33 skills, 12 agents, 19 commands, 10 rules, 14 hook scripts, 2 MCP servers, 20 ADRs. All ADR filenames verified on disk.\n\nArchitecture organized around three layers: Knowledge (skills, rules, commands), Orchestration (agents, hooks, .ai-work/), Persistent Intelligence (Memory MCP, Chronograph MCP, .ai-state/).\n\n**Why:** dec-020 accepted the living artifact; sentinel AC01 would flag the gap (10+ interacting components, no ARCHITECTURE.md).\n**How to apply:** Pipeline agents maintain per section ownership model. Main agent updates for Direct/Lightweight structural changes. Verifier cross-checks Section 3 components vs actual modules.",
         "created_at": "2026-04-10T17:50:58.947620Z",
-        "updated_at": "2026-04-10T17:50:58.947620Z",
+        "updated_at": "2026-04-10T20:11:07.323329Z",
         "tags": [
           "agents",
           "ai-state",
           "architecture",
+          "bootstrap",
           "design",
+          "documentation",
           "ecosystem",
           "living-document"
         ],
         "confidence": null,
-        "importance": 8,
+        "importance": 7,
         "source": {
           "type": "session",
           "detail": null,
@@ -407,10 +409,38 @@
         "last_accessed": null,
         "status": "active",
         "links": [],
-        "summary": "Living ARCHITECTURE.md design: created by architect+planner, updated on changes, coordinator-agent-aware",
+        "summary": "ARCHITECTURE.md bootstrapped — 8 sections, 3-layer model, 14 ADR refs, verified ecosystem counts",
         "valid_at": "2026-04-10T17:50:58.947620Z",
         "invalid_at": null,
-        "type": "decision",
+        "type": "pattern",
+        "created_by": null
+      },
+      "skill-reference-file-conventions": {
+        "value": "Skill reference files follow a standard format: `# Title\\n\\nOne-line description. Back to [SKILL.md](../SKILL.md).` as the header. Target 100-300 lines, max 400. Use tables, code blocks, and bullet lists for scannability. The artifact-naming.md reference is shared across agent-crafting, command-crafting, mcp-crafting, rule-crafting, and skill-crafting -- all 5 have copies with identical content. Existing references in the repo use varied header styles (~40% include back-links per skills/CLAUDE.md), but new files should use the standard format.",
+        "created_at": "2026-04-10T21:03:15.466501Z",
+        "updated_at": "2026-04-10T21:03:15.466501Z",
+        "tags": [
+          "convention",
+          "reference-files",
+          "skills"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Skill reference files: standard header format, 100-300 line target, artifact-naming.md shared across 5 crafting skills",
+        "valid_at": "2026-04-10T21:03:15.466501Z",
+        "invalid_at": null,
+        "type": "convention",
         "created_by": null
       }
     },
@@ -3386,15 +3416,16 @@
         "created_by": null
       },
       "architecture-md-implementation-complete": {
-        "value": "ARCHITECTURE.md living artifact fully implemented (dec-020). 15 files touched: 2 new (template + methodology reference in software-planning skill), 7 agent definitions, 2 rules, 3 skill references, 1 ADR.\n\nAGENT ADDITIONS (all small, 2-15 lines each):\n- systems-architect: Phase 3.8 (create/update architecture doc)\n- implementer: Step 7.6 (update doc when structural files change)\n- implementation-planner: [Architecture] step annotation\n- verifier: Phase 4.8 (cross-check doc vs code structure)\n- sentinel: 4 new checks — AC01, AC02, AC03, AC04\n- researcher: Phase 2 item 10 (architecture context source)\n- promethean: Phase 3 Source 1 bullet (architecture context)\n\nKEY FACTS:\n- Sentinel at 474 lines (was 463, ceiling 500) — approaching limit\n- SYSTEM_DEPLOYMENT.md was missing from reconciliation table — added alongside ARCHITECTURE.md (closed pre-existing dec-019 gap)\n- software-planning/assets/ directory created (didn't exist before)\n- Documentation triad established: ADRs (WHY) + ARCHITECTURE.md (WHAT) + SYSTEM_DEPLOYMENT.md (HOW)\n- Phase/step numbering: .7 = deployment, .8 = architecture, extensible to .9 for future living docs",
+        "value": "ARCHITECTURE.md living artifact fully implemented and verified (dec-020, accepted). Commit 476a67b. 16 files, 453 insertions. Verifier passed all 8 ACs, 9 gaps, 10 cross-references, 5 pattern checks, 9 additional points — zero FAIL or WARN. Documentation triad complete: ADRs (WHY) + ARCHITECTURE.md (WHAT) + SYSTEM_DEPLOYMENT.md (HOW). Sentinel at 474/500 lines. Phase/step numbering: .7=deployment, .8=architecture. Also closed dec-019 gap (SYSTEM_DEPLOYMENT.md missing from reconciliation table).",
         "created_at": "2026-04-10T19:04:48.583007Z",
-        "updated_at": "2026-04-10T19:04:48.583007Z",
+        "updated_at": "2026-04-10T19:44:29.405589Z",
         "tags": [
           "agents",
           "architecture",
           "dec-020",
           "implementation",
-          "living-document"
+          "living-document",
+          "verified"
         ],
         "confidence": null,
         "importance": 7,
@@ -3422,7 +3453,7 @@
             "relation": "related-to"
           }
         ],
-        "summary": "Dec-020 implemented: 15 files, 7 agents, 2 rules, 3 skill refs; sentinel at 474/500; documentation triad complete",
+        "summary": "Dec-020 implemented, verified, accepted, committed (476a67b): 16 files, all ACs pass, documentation triad complete",
         "valid_at": "2026-04-10T19:04:48.583007Z",
         "invalid_at": null,
         "type": "pattern",
@@ -3469,6 +3500,91 @@
         "valid_at": "2026-04-10T19:34:04.928145Z",
         "invalid_at": null,
         "type": "gotcha",
+        "created_by": null
+      },
+      "architecture-bootstrap-from-codebase": {
+        "value": "When bootstrapping ARCHITECTURE.md for an existing project, verify all file path references against the actual filesystem before considering the doc complete. Explorer/researcher agents may return slightly incorrect filenames (e.g., wrong ADR slugs). The fix is a post-write verification pass: glob the actual files and diff against the references in the doc.\n\n**Why:** During Praxion's bootstrap, the explorer returned ADR filenames that didn't match the actual files on disk (e.g., dec-003 slug was phoenix-isolated-venv not dedicated-phoenix-venv). Had to fix 4 filenames post-write.\n**How to apply:** After any architecture doc creation or major update, run a verification step that checks every file path reference resolves to an actual file.",
+        "created_at": "2026-04-10T20:17:35.482690Z",
+        "updated_at": "2026-04-10T20:17:35.482690Z",
+        "tags": [
+          "architecture",
+          "gotcha",
+          "living-document",
+          "verification"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.memory-enforcement-gap-commit-hook",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.inject-memory-session-start-gap",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.living-document-pattern-ai-state",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Verify all file refs in ARCHITECTURE.md against disk — explorer agents return wrong filenames",
+        "valid_at": "2026-04-10T20:17:35.482690Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "sentinel-audit-remediation-pattern": {
+        "value": "Sentinel remediation workflow: read the full report first, then classify fixes into direct (main agent), doc-engineer (README surfaces), and general-purpose (bulk file creation). Parallelize independent workstreams. Key findings from 2026-04-10 audit (Health C, down from A): documentation surfaces lag behind artifact growth — 5 READMEs stale after a 4-skill, 4-command, 1-rule burst. ARCHITECTURE.md had 4 broken forward-references to SYSTEM_DEPLOYMENT.md (not yet instantiated for Praxion) and was missing 6 ADRs from Section 8. Rule count inconsistency (10 vs 9) caused by counting rules/CLAUDE.md as a rule. Token budget at 5.2% headroom — approaching breach.\n\n**Why:** The degradation pattern is systemic: artifacts are added without updating documentation surfaces. This will recur with every growth burst.\n**How to apply:** After adding new skills/commands/rules, check the 5 catalog surfaces (README.md, README_DEV.md, skills/README.md, commands/README.md, rules/README.md) and ARCHITECTURE.md. Consider a post-pipeline doc-engineer step for artifact additions.",
+        "created_at": "2026-04-10T20:39:20.295518Z",
+        "updated_at": "2026-04-10T20:39:20.295518Z",
+        "tags": [
+          "audit",
+          "documentation",
+          "pattern",
+          "remediation",
+          "sentinel"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.praxion-ecosystem-inventory-2026-04-04",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.praxion-ecosystem-inventory",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.ecosystem-health-latest",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Sentinel remediation: doc surfaces lag artifact growth — 5 READMEs stale after burst, systemic pattern",
+        "valid_at": "2026-04-10T20:39:20.295518Z",
+        "invalid_at": null,
+        "type": "pattern",
         "created_by": null
       }
     }

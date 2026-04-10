@@ -19,13 +19,16 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── communicating-agents/
 ├── context-security-review/
 ├── data-modeling/
+├── deployment/
 ├── doc-management/
 ├── external-api-docs/
 ├── github-star/
 ├── hook-crafting/
 ├── mcp-crafting/
 ├── memory/
+├── observability/
 ├── performance-architecture/
+├── project-exploration/
 ├── python-development/
 ├── python-prj-mgmt/
 ├── refactoring/
@@ -36,6 +39,7 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── spec-driven-development/
 ├── stakeholder-communications/
 ├── testing-strategy/
+├── upstream-stewardship/
 └── versioning/
 commands/                            # Shared slash commands
 ├── CLAUDE.md                        # Command conventions (lazy loaded)
@@ -45,12 +49,16 @@ commands/                            # Shared slash commands
 ├── cop.md
 ├── create-simple-python-prj.md
 ├── create-worktree.md
+├── explore-project.md
 ├── full-security-scan.md
 ├── manage-readme.md
 ├── cajalogic.md
 ├── merge-worktree.md
 ├── onboard-project.md
 ├── release.md
+├── report-upstream.md
+├── review-pr.md
+├── save-changes.md
 ├── sdd-coverage.md
 ├── star-repo.md
 └── test.md
@@ -80,6 +88,7 @@ rules/                               # Rules (installed to ~/.claude/rules/ or .
 │   └── vcs/
 │       └── git-conventions.md
 └── writing/
+    ├── diagram-conventions.md       # Path-scoped: loads only for diagram work
     └── readme-style.md              # Path-scoped: loads only for README files
 hooks/                               # Hook scripts (auto-discovered by Claude Code)
 ├── hooks.json                       # Hook manifest (single source of truth)

@@ -12,6 +12,7 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | `/cop` | Create a commit and push to remote |
 | `/create-simple-python-prj` | Create a basic Python project with pixi or uv |
 | `/create-worktree` | Create a new git worktree in `.trees/` |
+| `/explore-project` | Explore and understand an unfamiliar project's architecture, patterns, and workflow |
 | `/full-security-scan` | Run a full-project security audit against all security-critical paths |
 | `/manage-readme` | Create or refine README.md files |
 | `/cajalogic` | Manage persistent memory (user prefs, assistant learnings, project conventions, observations) |
@@ -19,6 +20,8 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | `/onboard-project` | Onboard the current project for the Praxion plugin ecosystem |
 | `/release` | Bump version, update changelog, and create a release tag |
 | `/report-upstream` | File a well-formed bug report on an upstream open-source project |
+| `/review-pr` | Code review a pull request |
+| `/save-changes` | Save current working changes to project memory with secret filtering |
 | `/sdd-coverage` | Report spec-to-test and spec-to-code coverage for REQ IDs |
 | `/star-repo` | Star the Praxion repo on GitHub |
 | `/test` | Auto-detect test framework and run tests |

@@ -26,6 +26,7 @@ flowchart TD
         I["<b>implementer</b> → code"]
         TE["<b>test-engineer</b> → tests"]
         DE["<b>doc-engineer</b> → docs<br/>(when planner assigns)"]
+        CI["<b>cicd-engineer</b> → pipelines<br/>(when CI/CD steps exist)"]
     end
 
     EX -->|"VERIFICATION_REPORT.md"| V["<b>verifier</b><br/>(optional)"]
