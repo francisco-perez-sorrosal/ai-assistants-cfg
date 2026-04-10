@@ -1,7 +1,8 @@
 ---
 id: dec-020
 title: Living ARCHITECTURE.md artifact in .ai-state/
-status: accepted
+status: superseded
+superseded_by: dec-021
 category: architectural
 date: 2026-04-10
 summary: Persistent architecture document maintained by pipeline agents via section ownership, stored in .ai-state/, following the SYSTEM_DEPLOYMENT.md precedent

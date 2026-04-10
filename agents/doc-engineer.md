@@ -56,7 +56,7 @@ Discover all documentation files in the project:
 
 1. **Project README** -- `Glob README.md` at the project root
 2. **Catalog READMEs** -- `Glob **/README.md` in artifact directories (skills, agents, commands, rules)
-3. **Architecture docs** -- `Glob **/ARCHITECTURE.md`
+3. **Architecture docs** -- `Glob **/ARCHITECTURE.md` and `Glob docs/architecture.md`. Note: `docs/architecture.md` is a distinct document type -- a developer navigation guide where every component name and file path must be verified against the filesystem. It is derived from `.ai-state/ARCHITECTURE.md` but contains only Built components with present-tense framing.
 4. **Changelogs** -- `Glob **/CHANGELOG.md`
 5. **Contributing guides** -- `Glob **/CONTRIBUTING.md`
 6. **Other documentation** -- `Glob **/*.md` filtered to documentation files (exclude context artifacts: CLAUDE.md, SKILL.md, agent definitions, rule files, command files)
@@ -213,6 +213,7 @@ When both agents are invoked, the doc-engineer runs AFTER the context-engineer t
 - In parallel execution mode, the doc-engineer runs concurrently with the implementer on disjoint file sets (documentation files vs production code)
 - After implementation steps outside parallel groups that add, remove, or rename files, the doc-engineer updates affected documentation at pipeline checkpoints
 - The implementer does not update documentation beyond its step scope; the doc-engineer handles cross-cutting documentation changes
+- When `docs/architecture.md` exists, verify it reflects only Built components and all file paths resolve to existing files on disk. This developer guide must stay code-verified -- stale paths or Planned/Designed items indicate a freshness failure
 
 ### With the User
 

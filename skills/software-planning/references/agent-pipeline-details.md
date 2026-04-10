@@ -274,6 +274,7 @@ Append-only. Entries in chronological order by timestamp.
 | `specs/SPEC_*.md` | None — unique feature-name + date filenames | Git merge handles distinct file additions natively |
 | `SYSTEM_DEPLOYMENT.md` | Low — single evolving file, section ownership prevents concurrent edits | Standard git merge. If conflict, later worktree's version wins for architect-owned sections; review implementer/cicd-owned sections manually |
 | `ARCHITECTURE.md` | Low — single evolving file, section ownership prevents concurrent edits | Standard git merge. If conflict, later worktree's version wins for architect-owned sections; review implementer-owned sections manually |
+| `docs/architecture.md` | Low — developer-facing, derived from `.ai-state/ARCHITECTURE.md` | Standard git merge. Developer doc is regenerable from architect doc + filesystem verification. If conflict, prefer later version (freshest data) and re-verify paths against disk |
 
 **Automated reconciliation:** Three layers of protection:
 1. **Git merge drivers** (`.gitattributes`) — handle `memory.json` and `observations.jsonl` automatically during `git merge`. Registered by `install.sh code` Step 2.

@@ -81,6 +81,12 @@ For your assigned step:
    - New dependency added/removed → update Section 6 (Dependencies: update dependencies table)
    - ADR created → update Section 8 (Decisions: add cross-reference row)
    If `.ai-state/ARCHITECTURE.md` does not exist, skip this step — the systems-architect creates it.
+7.7. **Update developer architecture guide** — if `.ai-state/ARCHITECTURE.md` was updated in step 7.6 AND `docs/architecture.md` exists, propagate the change to `docs/architecture.md` with developer framing:
+   - Only include components that exist on disk (verify with Glob/ls)
+   - Use present tense ("handles" not "will handle")
+   - Include actual file paths verified against filesystem
+   - No Status column — omit Planned/Designed items
+   If `docs/architecture.md` does not exist, skip — the systems-architect creates it.
 8. **Update WIP.md** — mark your step as complete (see WIP.md Update Protocol).
 9. **Update LEARNINGS.md** — record any discoveries (see LEARNINGS.md Protocol).
 10. **Report** — stop and report one of: `[COMPLETE]`, `[BLOCKED]`, or `[CONFLICT]`.

@@ -203,14 +203,19 @@ Conditional activation: skip DL checks when no `.ai-state/decisions/` directory 
 
 ### Architecture Completeness (AC)
 
-Conditional activation: skip AC checks when `.ai-state/ARCHITECTURE.md` does not exist and project has fewer than 3 interacting components.
+Conditional activation: skip AC01-AC04 checks when `.ai-state/ARCHITECTURE.md` does not exist and project has fewer than 3 interacting components. Skip AC05-AC09 checks when neither `.ai-state/ARCHITECTURE.md` nor `docs/architecture.md` exists.
 
 | ID | Tp | Rule | Pass |
 |----|----|------|------|
 | AC01 | L | Architecture doc exists when project has 3+ interacting components | `.ai-state/ARCHITECTURE.md` exists when project has 3+ modules with inter-module dependencies |
-| AC02 | A | Component names in ARCHITECTURE.md match actual modules | Component names in Section 3 match `Glob` of actual module/directory names |
-| AC03 | A | File paths in ARCHITECTURE.md resolve to existing files | Every file path in component table points to an existing file |
-| AC04 | A | ADR cross-references in ARCHITECTURE.md Section 8 are valid | Every `dec-NNN` in Section 8 has a corresponding `.ai-state/decisions/NNN-*.md` file |
+| AC02 | L | Component names in `.ai-state/ARCHITECTURE.md` are internally consistent and account for existing modules | Component names in Section 3 are internally consistent (every component in Data Flow appears in Components table); abstract names are allowed |
+| AC03 | A | File paths in `.ai-state/ARCHITECTURE.md` are illustrative | WARN if >50% of file paths in component table do not resolve to existing files; PASS otherwise |
+| AC04 | A | ADR cross-references in `.ai-state/ARCHITECTURE.md` Section 8 are valid | Every `dec-NNN` in Section 8 has a corresponding `.ai-state/decisions/NNN-*.md` file |
+| AC05 | A | `docs/architecture.md` exists when `.ai-state/ARCHITECTURE.md` exists | `docs/architecture.md` exists |
+| AC06 | A | Every component name in developer guide matches actual module | Component names in `docs/architecture.md` Section 3 match `Glob` of module names |
+| AC07 | A | File paths in developer guide resolve | Every file path in `docs/architecture.md` component table points to existing file |
+| AC08 | L | No Status column or Planned items in developer guide | `docs/architecture.md` has no Status column and no Planned/Designed items |
+| AC09 | L | Cross-consistency: developer guide is subset of architect doc | Every component in `docs/architecture.md` also appears in `.ai-state/ARCHITECTURE.md` |
 
 ### Self-Verification (V)
 

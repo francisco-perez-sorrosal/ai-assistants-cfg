@@ -13,6 +13,7 @@ Procedural expertise for writing, maintaining, and validating project-facing doc
 - [references/cross-reference-patterns.md](references/cross-reference-patterns.md) -- cross-reference validation procedures, catalog sync, drift scenarios
 - [references/documentation-types.md](references/documentation-types.md) -- per-type guidelines for README, architecture, changelog, contributing, API docs
 - [references/diagram-conventions.md](references/diagram-conventions.md) -- Mermaid diagram creation, decomposition methodology, type recipes, styling guide
+- [assets/ARCHITECTURE_GUIDE_TEMPLATE.md](assets/ARCHITECTURE_GUIDE_TEMPLATE.md) -- 8-section template for developer-facing `docs/architecture.md` navigation guide
 
 ## Gotchas
 

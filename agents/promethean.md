@@ -80,7 +80,7 @@ Build a picture of what exists from three information sources:
 - Plugin config: `.claude-plugin/plugin.json`
 - Archived specs: `Glob .ai-state/specs/SPEC_*.md` — review completed feature specs for context on prior formal specifications and decisions
 - Past decisions: read `.ai-state/decisions/DECISIONS_INDEX.md` — scan for rejected alternatives and superseded decisions to avoid re-proposing ideas that were already evaluated and declined
-- Architecture context: `.ai-state/ARCHITECTURE.md` — if present, read for current system structure and component inventory
+- Architecture context: `.ai-state/ARCHITECTURE.md` — if present, read for design intent, system structure, and component inventory (includes planned components). Also check `docs/architecture.md` — if present, read for verified current component inventory with filesystem-confirmed file paths
 - Structure gaps: thin or missing categories
 
 **Source 2 — Idea ledger** (ideation history):

@@ -53,13 +53,13 @@ See [agent-pipeline-details.md](../../skills/software-planning/references/agent-
 |-------|---------|--------|---------|
 | `promethean` | Feature-level ideation from project state | `IDEA_PROPOSAL.md`, `IDEA_LEDGER_*.md` | No |
 | `researcher` | Codebase exploration, external docs, comparative analysis | `RESEARCH_FINDINGS.md` | Yes |
-| `systems-architect` | Trade-off analysis, system design | `SYSTEMS_PLAN.md`, `SPEC_DELTA.md` (conditional), `SYSTEM_DEPLOYMENT.md` (conditional), `ARCHITECTURE.md` (conditional) | Yes |
+| `systems-architect` | Trade-off analysis, system design | `SYSTEMS_PLAN.md`, `SPEC_DELTA.md` (conditional), `SYSTEM_DEPLOYMENT.md` (conditional), `ARCHITECTURE.md` (conditional), `docs/architecture.md` (conditional) | Yes |
 | `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Yes |
 | `context-engineer` | Context artifact domain expert; any pipeline stage | Audit report + artifact changes, `CONTEXT_REVIEW.md` (shadowing) | Yes |
 | `implementer` | Executes implementation steps with self-review | Code changes + `WIP.md` update | Yes |
 | `test-engineer` | Dedicated testing: complex test design, test suite refactoring, testing infrastructure | Test code + `WIP.md` update | Yes |
 | `verifier` | Post-implementation review against acceptance criteria | `VERIFICATION_REPORT.md` | Yes |
-| `doc-engineer` | Documentation quality (READMEs, catalogs, changelogs) | Doc report or file fixes | Yes |
+| `doc-engineer` | Documentation quality (READMEs, catalogs, changelogs, developer architecture guide) | Doc report or file fixes | Yes |
 | `sentinel` | Read-only ecosystem auditor (independent, not a pipeline stage) | `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md` | Yes |
 | `skill-genesis` | Learning triage, artifact proposal from experience | `SKILL_GENESIS_REPORT.md` | No |
 | `cicd-engineer` | CI/CD pipeline design, GitHub Actions, deployment automation | Workflow files + pipeline config | Yes |

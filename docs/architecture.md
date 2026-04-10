@@ -1,9 +1,10 @@
-# Architecture
+# Architecture Guide
 
-<!-- Design-target architecture document. Abstracts above concrete code to define the space of valid
-     implementations. Component names may be abstract; file paths are illustrative; planned components
-     are included with Status markers. For code-verified developer navigation, see docs/architecture.md.
-     Maintained by pipeline agents via section ownership.
+<!-- Developer navigation guide. Every component name and file path in this document has been
+     verified against the codebase. Only components that exist on disk are included.
+     For design rationale, planned components, and architectural evolution, see .ai-state/ARCHITECTURE.md.
+     Maintained by pipeline agents: created by systems-architect, updated by implementer,
+     verified by doc-engineer at pipeline checkpoints.
      See skills/software-planning/references/architecture-documentation.md for the full methodology. -->
 
 ## 1. Overview
@@ -14,10 +15,9 @@
 | **Type** | AI development meta-framework (plugin + MCP servers + knowledge artifacts) |
 | **Language / Framework** | Python 3.13+ (MCP servers), Markdown (skills/agents/rules/commands), Shell/Python (hooks, scripts) |
 | **Architecture pattern** | Plugin-based knowledge ecosystem with progressive disclosure and agent pipeline orchestration |
-| **Source stage** | Phase 3.8 creation, 2026-04-10 by systems-architect |
-| **Last verified** | 2026-04-10 by systems-architect |
+| **Last verified against code** | 2026-04-10 |
 
-Praxion is a meta-project that provides the operational infrastructure for AI-assisted software development. Rather than being an application itself, it is an ecosystem of reusable skills, specialized agents, declarative rules, slash commands, lifecycle hooks, and MCP servers that compose into a coherent development workflow. It ships as the `i-am` Claude Code plugin, with secondary targets for Claude Desktop and Cursor.
+Praxion provides the operational infrastructure for AI-assisted software development. It is an ecosystem of reusable skills, specialized agents, declarative rules, slash commands, lifecycle hooks, and MCP servers that compose into a coherent development workflow. It ships as the `i-am` Claude Code plugin, with secondary targets for Claude Desktop and Cursor.
 
 The architecture is organized around three core concerns: **knowledge delivery** (skills and rules that bring domain expertise into agent context windows), **agent orchestration** (a pipeline of specialized agents that collaborate through shared documents), and **persistent intelligence** (MCP servers that maintain memory and observability state across sessions).
 
@@ -38,10 +38,10 @@ graph LR
     subgraph Praxion["Praxion (i-am plugin)"]
         Skills[Skills<br/>33 modules]
         Agents[Agents<br/>12 types]
-        Hooks[Hooks<br/>14 scripts]
+        Hooks[Hooks<br/>16 scripts]
         MCP[MCP Servers<br/>Memory + Chronograph]
-        Rules[Rules<br/>9 files]
-        Cmds[Commands<br/>19 slash commands]
+        Rules[Rules<br/>8 files]
+        Cmds[Commands<br/>21 slash commands]
     end
     Dev --> CC
     Dev --> CD
@@ -60,7 +60,6 @@ graph LR
 ```
 
 > **Component detail:** [Components](#3-components)
-> **Code-verified paths:** [docs/architecture.md](../docs/architecture.md) (when available)
 
 ## 3. Components
 
@@ -103,19 +102,19 @@ graph TD
     INS -->|deploy| CM
 ```
 
-| Component | Responsibility | Status | Key Files |
-|-----------|---------------|--------|-----------|
-| Skills | Domain expertise delivered via progressive disclosure (metadata, body, references) | Built | `skills/*/SKILL.md`, `skills/*/references/` |
-| Agents | Autonomous subprocesses for multi-step software engineering work | Built | `agents/*.md` |
-| Rules | Declarative conventions auto-loaded by relevance | Built | `rules/swe/`, `rules/writing/` |
-| Commands | User-invoked slash commands for repeatable workflows | Built | `commands/*.md` |
-| Hooks | Python/shell scripts triggered by Claude Code lifecycle events | Built | `hooks/*.py`, `hooks/*.sh`, `hooks/hooks.json` |
-| Memory MCP | Persistent dual-layer memory (curated JSON + observations JSONL) | Built | `memory-mcp/src/memory_mcp/` |
-| Chronograph MCP | Agent pipeline observability via OpenTelemetry spans | Built | `task-chronograph-mcp/src/task_chronograph_mcp/` |
-| `.ai-state/` | Persistent project intelligence: ADRs, specs, sentinel reports, memory | Built | `.ai-state/decisions/`, `.ai-state/memory.json` |
-| `.ai-work/` | Ephemeral pipeline documents scoped by task slug | Built | `.ai-work/<task-slug>/` |
-| Installers | Target-specific deployment (Claude Code, Claude Desktop, Cursor) | Built | `install.sh`, `install_claude.sh`, `install_cursor.sh` |
-| Scripts | Developer tooling: worktree management, merge drivers, daemon control | Built | `scripts/` |
+| Component | Responsibility | Key Files |
+|-----------|---------------|-----------|
+| Skills | Domain expertise delivered via progressive disclosure (metadata, body, references) | `skills/*/SKILL.md`, `skills/*/references/` |
+| Agents | Autonomous subprocesses for multi-step software engineering work | `agents/*.md` |
+| Rules | Declarative conventions auto-loaded by relevance | `rules/swe/`, `rules/writing/` |
+| Commands | User-invoked slash commands for repeatable workflows | `commands/*.md` |
+| Hooks | Python/shell scripts triggered by Claude Code lifecycle events | `hooks/*.py`, `hooks/*.sh`, `hooks/hooks.json` |
+| Memory MCP | Persistent dual-layer memory (curated JSON + observations JSONL) | `memory-mcp/src/memory_mcp/` |
+| Chronograph MCP | Agent pipeline observability via OpenTelemetry spans | `task-chronograph-mcp/src/task_chronograph_mcp/` |
+| `.ai-state/` | Persistent project intelligence: ADRs, specs, sentinel reports, memory | `.ai-state/decisions/`, `.ai-state/memory.json` |
+| `.ai-work/` | Ephemeral pipeline documents scoped by task slug | `.ai-work/<task-slug>/` |
+| Installers | Target-specific deployment (Claude Code, Claude Desktop, Cursor) | `install.sh`, `install_claude.sh`, `install_cursor.sh` |
+| Scripts | Developer tooling: worktree management, merge drivers, daemon control | `scripts/` |
 
 ## 4. Interfaces
 
@@ -200,7 +199,7 @@ graph LR
 
 ## 6. Dependencies
 
-<!-- External dependencies the system relies on. -->
+<!-- External dependencies verified against pyproject.toml and project config. -->
 
 | Dependency | Version | Purpose | Criticality |
 |-----------|---------|---------|-------------|
@@ -217,7 +216,7 @@ graph LR
 
 ## 7. Constraints
 
-<!-- Known limitations, performance boundaries, quality attributes, and compatibility requirements. -->
+<!-- Known limitations that affect developers working in this codebase. -->
 
 | Constraint | Type | Rationale |
 |-----------|------|-----------|
@@ -239,26 +238,26 @@ graph LR
 
 | ADR | Decision | Impact on Architecture |
 |-----|----------|----------------------|
-| [dec-001](decisions/001-skill-wrapper-over-mcp-server.md) | Skill wrapper for context-hub integration | Skills are the primary knowledge delivery mechanism, not MCP tools |
-| [dec-002](decisions/002-otel-relay-architecture.md) | Chronograph as OTel relay for hook telemetry | Hooks POST to chronograph HTTP; chronograph creates OTel spans — separation of collection from export |
-| [dec-003](decisions/003-phoenix-isolated-venv.md) | Dedicated Phoenix venv separate from chronograph | Phoenix heavy deps isolated at `~/.phoenix/venv/`; chronograph stays lightweight |
-| [dec-004](decisions/004-openinference-span-kinds.md) | CHAIN span kind for session root, AGENT for pipeline agents | OpenInference semantic conventions structure the trace hierarchy |
-| [dec-005](decisions/005-dual-storage-eventstore-otel.md) | Dual storage: EventStore (real-time) + Phoenix (persistent) | In-memory for MCP queries; OTel/Phoenix for historical traces |
-| [dec-006](decisions/006-commitizen-over-release-please.md) | Commitizen over Release Please for versioning | Local-first CLI workflow; PEP 440 dev releases; multi-file version sync |
-| [dec-007](decisions/007-skill-centric-security-watchdog.md) | Skill-centric security watchdog instead of dedicated agent | Shared skill consumed by CI and verifier; avoids agent proliferation |
-| [dec-009](decisions/009-dual-layer-memory-architecture.md) | Dual-layer memory (curated JSON + observations JSONL) | Two complementary stores: human-curated institutional knowledge + zero-cost automatic observations |
-| [dec-010](decisions/010-zero-llm-observation-capture.md) | Zero-LLM observation capture via pattern extraction | Observations use regex, not LLM — zero marginal cost per event |
-| [dec-012](decisions/012-command-hook-over-prompt-hook.md) | Deterministic duplication detection in hooks, LLM in verifier | AST/heuristic in PostToolUse hook; LLM judgment reserved for cross-module analysis |
-| [dec-013](decisions/013-layered-duplication-prevention.md) | Layered duplication: rule + hook + verifier (no new agent) | Three enforcement layers reuse existing agents; preserves boundary discipline |
-| [dec-017](decisions/017-deployment-skill-local-first-compose-center.md) | Docker Compose as deployment skill gravity center | Local-first deployment with primitives vocabulary |
-| [dec-008](decisions/008-diff-mode-default-security-review.md) | Diff mode by default for security review | Changed-files-only by default; full-scan on explicit command — balances speed with coverage |
-| [dec-011](decisions/011-adr-injection-memory-first-budget.md) | Memory-first budget allocation for ADR injection | ADRs injected into SubagentStart with 2,000-char soft cap; memory takes priority in token budget |
-| [dec-014](decisions/014-upstream-stewardship-skill-command-composition.md) | Skill+Command composition for upstream stewardship | Reusable skill + user-trigger command instead of dedicated agent; validates composition pattern |
-| [dec-015](decisions/015-project-exploration-skill-command-composition.md) | Skill+Command composition for project exploration | Interactive exploration requires main conversation context; agent would lose interactivity |
-| [dec-016](decisions/016-explore-project-naming.md) | Naming convention for project exploration components | `/explore-project` command + `project-exploration` skill; verb-first command, noun-first skill |
-| [dec-018](decisions/018-deployment-skill-opinionated-defaults.md) | Opinionated tool defaults in deployment skill | Recommends specific tools (Caddy, Railway/Render) rather than equal-weight comparison |
-| [dec-019](decisions/019-system-deployment-living-artifact.md) | Living SYSTEM_DEPLOYMENT.md in .ai-state/ | Persistent deployment doc with section ownership, staleness mitigation (not yet instantiated for Praxion) |
-| [dec-020](decisions/020-architecture-md-living-artifact.md) | Living ARCHITECTURE.md in .ai-state/ | This document — persistent architecture doc maintained by pipeline agents (superseded by dec-021) |
-| [dec-021](decisions/021-dual-audience-architecture-docs.md) | Dual-audience architecture documentation | Splits architecture docs into design target (.ai-state/) and navigation guide (docs/); distinct validation models |
+| [dec-001](../.ai-state/decisions/001-skill-wrapper-over-mcp-server.md) | Skill wrapper for context-hub integration | Skills are the primary knowledge delivery mechanism, not MCP tools |
+| [dec-002](../.ai-state/decisions/002-otel-relay-architecture.md) | Chronograph as OTel relay for hook telemetry | Hooks POST to chronograph HTTP; chronograph creates OTel spans — separation of collection from export |
+| [dec-003](../.ai-state/decisions/003-phoenix-isolated-venv.md) | Dedicated Phoenix venv separate from chronograph | Phoenix heavy deps isolated at `~/.phoenix/venv/`; chronograph stays lightweight |
+| [dec-004](../.ai-state/decisions/004-openinference-span-kinds.md) | CHAIN span kind for session root, AGENT for pipeline agents | OpenInference semantic conventions structure the trace hierarchy |
+| [dec-005](../.ai-state/decisions/005-dual-storage-eventstore-otel.md) | Dual storage: EventStore (real-time) + Phoenix (persistent) | In-memory for MCP queries; OTel/Phoenix for historical traces |
+| [dec-006](../.ai-state/decisions/006-commitizen-over-release-please.md) | Commitizen over Release Please for versioning | Local-first CLI workflow; PEP 440 dev releases; multi-file version sync |
+| [dec-007](../.ai-state/decisions/007-skill-centric-security-watchdog.md) | Skill-centric security watchdog instead of dedicated agent | Shared skill consumed by CI and verifier; avoids agent proliferation |
+| [dec-009](../.ai-state/decisions/009-dual-layer-memory-architecture.md) | Dual-layer memory (curated JSON + observations JSONL) | Two complementary stores: human-curated institutional knowledge + zero-cost automatic observations |
+| [dec-010](../.ai-state/decisions/010-zero-llm-observation-capture.md) | Zero-LLM observation capture via pattern extraction | Observations use regex, not LLM — zero marginal cost per event |
+| [dec-012](../.ai-state/decisions/012-command-hook-over-prompt-hook.md) | Deterministic duplication detection in hooks, LLM in verifier | AST/heuristic in PostToolUse hook; LLM judgment reserved for cross-module analysis |
+| [dec-013](../.ai-state/decisions/013-layered-duplication-prevention.md) | Layered duplication: rule + hook + verifier (no new agent) | Three enforcement layers reuse existing agents; preserves boundary discipline |
+| [dec-017](../.ai-state/decisions/017-deployment-skill-local-first-compose-center.md) | Docker Compose as deployment skill gravity center | Local-first deployment with primitives vocabulary |
+| [dec-008](../.ai-state/decisions/008-diff-mode-default-security-review.md) | Diff mode by default for security review | Changed-files-only by default; full-scan on explicit command — balances speed with coverage |
+| [dec-011](../.ai-state/decisions/011-adr-injection-memory-first-budget.md) | Memory-first budget allocation for ADR injection | ADRs injected into SubagentStart with 2,000-char soft cap; memory takes priority in token budget |
+| [dec-014](../.ai-state/decisions/014-upstream-stewardship-skill-command-composition.md) | Skill+Command composition for upstream stewardship | Reusable skill + user-trigger command instead of dedicated agent; validates composition pattern |
+| [dec-015](../.ai-state/decisions/015-project-exploration-skill-command-composition.md) | Skill+Command composition for project exploration | Interactive exploration requires main conversation context; agent would lose interactivity |
+| [dec-016](../.ai-state/decisions/016-explore-project-naming.md) | Naming convention for project exploration components | `/explore-project` command + `project-exploration` skill; verb-first command, noun-first skill |
+| [dec-018](../.ai-state/decisions/018-deployment-skill-opinionated-defaults.md) | Opinionated tool defaults in deployment skill | Recommends specific tools (Caddy, Railway/Render) rather than equal-weight comparison |
+| [dec-019](../.ai-state/decisions/019-system-deployment-living-artifact.md) | Living SYSTEM_DEPLOYMENT.md in .ai-state/ | Persistent deployment doc with section ownership, staleness mitigation |
+| [dec-020](../.ai-state/decisions/020-architecture-md-living-artifact.md) | Living ARCHITECTURE.md in .ai-state/ | Persistent architecture doc maintained by pipeline agents (superseded by dec-021) |
+| [dec-021](../.ai-state/decisions/021-dual-audience-architecture-docs.md) | Dual-audience architecture documentation | Splits architecture docs into design target (.ai-state/) and navigation guide (docs/); distinct validation models |
 
 [Add new rows as architecture-related ADRs are created.]

@@ -142,19 +142,34 @@ Classify each as `PASS` / `WARN` / `FAIL` with `[Deployment]` tag. A stale or mi
 
 Skip this phase if `.ai-state/SYSTEM_DEPLOYMENT.md` does not exist or no deployment files were changed.
 
-### Phase 4.8 -- Architecture Documentation Validation
+### Phase 4.8a -- Architecture Design Document Validation (Design Coherence)
 
 If `.ai-state/ARCHITECTURE.md` exists and the implementation changed structural files (new modules, interfaces, data models, dependencies):
 
-1. **Component names** -- verify component names in Section 3 match actual module/directory names on disk
-2. **File paths** -- verify file paths referenced in the component table exist on disk
+1. **Component names** -- component names in Section 3 MAY be abstract (e.g., "Auth Service" for an `auth/` module). Do not require exact module name match -- verify internal consistency instead: every component referenced in Data Flow (Section 5) should appear in the Components table (Section 3)
+2. **File paths** -- file paths in the component table are advisory. WARN if more than 50% of listed paths do not resolve to existing files; PASS otherwise
 3. **ADR cross-references** -- verify ADR IDs referenced in Section 8 correspond to actual files in `.ai-state/decisions/`
-4. **Dependency list** -- verify dependencies in Section 6 match actual project dependencies (e.g., pyproject.toml, package.json)
-5. **Staleness indicator** -- check if Section 3 component count is significantly different from actual module count
+4. **Status column** -- verify the Status column is present in the Components table with valid values (`Designed`, `Built`, `Planned`, `Deprecated`)
+5. **Dependency list** -- verify dependencies in Section 6 match actual project dependencies (e.g., pyproject.toml, package.json)
+6. **Staleness indicator** -- check if Section 3 component count is significantly different from actual module count
 
-Classify each as `PASS` / `WARN` / `FAIL` with `[Architecture]` tag. A stale or missing architecture doc when structural files were changed is a `WARN`, not a `FAIL` -- the doc is advisory, not a gate.
+Classify each as `PASS` / `WARN` / `FAIL` with `[Architecture:design]` tag. A stale or missing architecture doc when structural files were changed is a `WARN`, not a `FAIL` -- the doc is advisory, not a gate.
 
-Skip this phase if `.ai-state/ARCHITECTURE.md` does not exist or no structural files were changed.
+Skip this sub-phase if `.ai-state/ARCHITECTURE.md` does not exist or no structural files were changed.
+
+### Phase 4.8b -- Developer Architecture Guide Validation (Code Verification)
+
+If `docs/architecture.md` exists:
+
+1. **Component names** -- component names in Section 3 MUST match actual module or directory names on disk. Abstract names that do not correspond to real code locations are a FAIL
+2. **File paths** -- every file path in the component table MUST resolve to an existing file on disk
+3. **No planned items** -- the developer guide must not contain any `Planned`, `Designed`, or `Status` column entries. Only Built components belong here
+4. **Last verified date** -- verify the "Last verified against code" metadata field exists and falls within the current pipeline timeframe
+5. **Cross-consistency** -- every component listed in the developer guide must also appear in `.ai-state/ARCHITECTURE.md` (the developer guide is a subset of the architect doc)
+
+Classify each as `PASS` / `WARN` / `FAIL` with `[Architecture:guide]` tag.
+
+Skip this sub-phase if `docs/architecture.md` does not exist.
 
 ### Phase 5 -- Test Coverage Assessment
 

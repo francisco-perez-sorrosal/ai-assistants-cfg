@@ -111,7 +111,7 @@ When a step creates or modifies deployment configuration files (`compose.yaml`, 
 
 **Architecture step annotations:**
 
-When a step creates new modules/packages, changes interfaces, modifies data models, or adds/removes dependencies, annotate it with `[Architecture]`. This signals the implementer to update `.ai-state/ARCHITECTURE.md` as part of step completion (step 7.6). When multiple architecture steps exist, the last one in sequence should include a `Done when` clause verifying the architecture doc is consistent with actual code structure.
+When a step creates new modules/packages, changes interfaces, modifies data models, or adds/removes dependencies, annotate it with `[Architecture]`. This signals the implementer to update both `.ai-state/ARCHITECTURE.md` (design-target, step 7.6) and `docs/architecture.md` (developer guide, step 7.7) as part of step completion. When multiple architecture steps exist, the last one in sequence should include a `Done when` clause verifying both architecture documents are consistent -- the architect doc reflects the design intent, the developer guide reflects only Built components with verified file paths, and every component in the developer guide appears in the architect doc.
 
 **Parallel step annotations:**
 

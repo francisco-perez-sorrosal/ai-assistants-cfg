@@ -121,9 +121,17 @@ System design documentation for complex projects. Not every project needs this.
 - Referenced files or modules no longer exist
 - New major components exist that are not mentioned
 
-### Living Architecture Document
+### Dual-Audience Architecture (Agent Pipeline)
 
-For projects using the Praxion agent pipeline (Standard/Full tier), architecture documentation is maintained as `.ai-state/ARCHITECTURE.md` -- a living document with section ownership and four-layer staleness mitigation. The systems-architect creates it from a template; the implementer updates structural sections; the verifier and sentinel validate it. See the [architecture documentation methodology](../../software-planning/references/architecture-documentation.md) for the full lifecycle.
+For projects using the Praxion agent pipeline (Standard/Full tier), architecture documentation is maintained as two purpose-built documents with distinct audiences and validation models:
+
+**`.ai-state/ARCHITECTURE.md`** -- architect-facing design target. Abstracts above concrete code to define the space of valid implementations. Includes a Status column (Designed/Built/Planned/Deprecated) and Source stage metadata. Validated via design coherence (internal consistency, not strict code matching). Template at `skills/software-planning/assets/ARCHITECTURE_TEMPLATE.md`.
+
+**`docs/architecture.md`** -- developer-facing navigation guide. Every component name and file path is verified against the codebase. Present-tense only, no planned items. Validated via code verification (every name and path resolves on disk). Template at `skills/doc-management/assets/ARCHITECTURE_GUIDE_TEMPLATE.md`.
+
+The developer guide is derived from the architect doc -- it is a code-verified subset of the architect doc's Built components. Both share the same 8-section structure. The systems-architect creates both; the implementer updates both; the doc-engineer maintains the developer guide at pipeline checkpoints.
+
+See the [architecture documentation methodology](../../software-planning/references/architecture-documentation.md) for the full lifecycle, section ownership, and validation models.
 
 The static conventions above still apply to projects not using the agent pipeline.
 

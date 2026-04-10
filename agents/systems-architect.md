@@ -136,11 +136,20 @@ Skip this phase for projects with no deployable components (pure libraries, CLI 
 
 If this is a Standard or Full tier pipeline:
 
+**Architect document (`.ai-state/ARCHITECTURE.md`):**
+
 1. **Check** if `.ai-state/ARCHITECTURE.md` exists
 2. **If not**: create it from the template at `skills/software-planning/assets/ARCHITECTURE_TEMPLATE.md`. Fill in sections 1 (Overview), 2 (System Context), 3 (Components skeleton), 5 (Data Flow), 7 (Constraints), and 8 (Decisions with relevant ADR references). Leave sections 4 (Interfaces) and 6 (Dependencies) with template guidance for the implementer.
 3. **If yes**: read the existing document and update sections you own (1, 2, 3 skeleton, 5, 7, 8) if the current architecture changes the structural picture. Do not overwrite sections owned by other agents (3 as-built details, 4 Interfaces, 6 Dependencies).
 
-The software-planning skill provides the methodology; `.ai-state/ARCHITECTURE.md` captures THIS project's architecture. Reference ADR IDs for architectural decisions rather than duplicating rationale. Follow diagram conventions from `rules/writing/diagram-conventions.md` for all Mermaid diagrams. Cross-reference `SYSTEM_DEPLOYMENT.md` in sections 2 and 6 if it exists.
+**Developer guide (`docs/architecture.md`):**
+
+4. **Check** if `docs/architecture.md` exists
+5. **If not**: create it from the template at `skills/doc-management/assets/ARCHITECTURE_GUIDE_TEMPLATE.md`. Fill only components with Status `Built` from the architect document. Verify each file path and component name against disk before including. Use present-tense framing throughout. Set "Last verified against code" to the current date.
+6. **If yes**: read the existing document and update sections you own (1, 2, 3 skeleton, 5, 7, 8) filtering to Built components only. Do not overwrite sections owned by other agents (3 as-built details, 4 Interfaces, 6 Dependencies).
+7. **Cross-consistency**: verify that every component in `docs/architecture.md` appears in `.ai-state/ARCHITECTURE.md` with Status `Built`. The developer guide must be a strict subset of the architect document's Built components.
+
+The software-planning skill provides the methodology; `.ai-state/ARCHITECTURE.md` captures THIS project's architecture as a design target; `docs/architecture.md` provides developer-facing navigation verified against the codebase. Reference ADR IDs for architectural decisions rather than duplicating rationale. Follow diagram conventions from `rules/writing/diagram-conventions.md` for all Mermaid diagrams. Cross-reference `SYSTEM_DEPLOYMENT.md` in sections 2 and 6 if it exists.
 
 Skip this phase for trivially simple projects (single module, no external dependencies).
 
@@ -327,7 +336,7 @@ Your `SYSTEMS_PLAN.md` is the implementation planner's primary input. Focus on:
 
 ## Output
 
-After creating `SYSTEMS_PLAN.md` (and `SPEC_DELTA.md` for brownfield features, `ARCHITECTURE.md` for Standard/Full pipelines), return a concise summary:
+After creating `SYSTEMS_PLAN.md` (and `SPEC_DELTA.md` for brownfield features, `ARCHITECTURE.md` + `docs/architecture.md` for Standard/Full pipelines), return a concise summary:
 
 1. **Goal** — one sentence
 2. **Architecture approach** — brief description of the design

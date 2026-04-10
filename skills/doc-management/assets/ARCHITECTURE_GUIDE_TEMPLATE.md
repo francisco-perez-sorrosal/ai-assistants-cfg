@@ -1,10 +1,10 @@
-# Architecture
+# Architecture Guide
 
-<!-- Design-target architecture document. Abstracts above concrete code to define the space of valid
-     implementations. Component names may be abstract; file paths are illustrative; planned components
-     are included with Status markers. For code-verified developer navigation, see docs/architecture.md.
-     Maintained by pipeline agents via section ownership.
-     Created by systems-architect, updated by implementer, validated by verifier/sentinel.
+<!-- Developer navigation guide. Every component name and file path in this document has been
+     verified against the codebase. Only components that exist on disk are included.
+     For design rationale, planned components, and architectural evolution, see .ai-state/ARCHITECTURE.md.
+     Maintained by pipeline agents: created by systems-architect, updated by implementer,
+     verified by doc-engineer at pipeline checkpoints.
      See skills/software-planning/references/architecture-documentation.md for the full methodology. -->
 
 ## 1. Overview
@@ -15,8 +15,7 @@
 | **Type** | [e.g., Web application, CLI tool, Library, API service] |
 | **Language / Framework** | [e.g., Python 3.13 / FastAPI] |
 | **Architecture pattern** | [e.g., Layered, Hexagonal, Microservices, Monolith] |
-| **Source stage** | [Phase 3.8 creation / Step N update / Pipeline `<slug>`] |
-| **Last verified** | [YYYY-MM-DD by agent or human] |
+| **Last verified against code** | [YYYY-MM-DD] |
 
 [One paragraph describing the system's purpose and high-level architectural approach.]
 
@@ -25,8 +24,7 @@
 <!-- L0 diagram: system boundary + external actors/dependencies. Max 6-8 elements.
      Shows WHAT interacts with the system, not internals.
      Node shapes: rectangles for components, [(Database)] for storage, ([Queue]) for messaging.
-     May include planned external integrations with a note.
-     Cross-reference docs/architecture.md for code-verified component details. -->
+     Only include integrations that exist in the current codebase. -->
 
 ```mermaid
 graph LR
@@ -49,10 +47,8 @@ graph LR
 
 <!-- L1 diagram: major building blocks and their relationships. Max 10-12 nodes.
      Use subgraphs for logical boundaries (layers, bounded contexts).
-     Dual ownership: systems-architect writes the skeleton, implementer fills as-built details.
      Solid arrows for direct dependencies, dotted for async/event-based.
-     Status values: Designed (interface defined, not yet implemented), Built (code exists on disk),
-     Planned (roadmap item, no interface yet), Deprecated (scheduled for removal). -->
+     Every component listed here MUST exist on disk -- verify with ls/Glob before including. -->
 
 ```mermaid
 graph TD
@@ -69,17 +65,16 @@ graph TD
     C --> D
 ```
 
-| Component | Responsibility | Status | Key Files |
-|-----------|---------------|--------|-----------|
-| [Component A] | [What it does] | Built | `src/component_a/` |
-| [Component B] | [What it does] | Built | `src/component_b/` |
-| [Component C] | [What it does] | Designed | `src/component_c/` |
+| Component | Responsibility | Key Files |
+|-----------|---------------|-----------|
+| [Component A] | [What it does] | `src/component_a/` |
+| [Component B] | [What it does] | `src/component_b/` |
+| [Component C] | [What it does] | `src/component_c/` |
 
 ## 4. Interfaces
 
 <!-- Key APIs, contracts, and integration points between components.
-     Dual ownership: systems-architect documents design-time contracts,
-     implementer updates as-built details.
+     Only include interfaces that are implemented and callable.
      Focus on boundaries that other components or external systems depend on. -->
 
 | Interface | Type | Provider | Consumer(s) | Contract |
@@ -91,7 +86,8 @@ graph TD
 
 <!-- How data moves through the system for key scenarios.
      Use sequence diagrams for request flows, flowcharts for data pipelines.
-     Focus on the 2-3 most important scenarios, not exhaustive coverage. -->
+     Focus on the 2-3 most important scenarios, not exhaustive coverage.
+     Only describe flows that exist in the current codebase. -->
 
 ### [Primary Scenario Name]
 
@@ -112,9 +108,8 @@ sequenceDiagram
 ## 6. Dependencies
 
 <!-- External dependencies the system relies on.
-     Dual ownership: systems-architect lists initial dependencies,
-     implementer updates as dependencies are added/removed.
-     May include planned dependencies with a note. -->
+     Verify against pyproject.toml, package.json, or equivalent before including.
+     Only list dependencies that are currently installed and used. -->
 
 | Dependency | Version | Purpose | Criticality |
 |-----------|---------|---------|-------------|
@@ -123,7 +118,7 @@ sequenceDiagram
 
 ## 7. Constraints
 
-<!-- Known limitations, performance boundaries, quality attributes, and compatibility requirements.
+<!-- Known limitations that affect developers working in this codebase.
      Type: Performance, Security, Compatibility, Regulatory, Technical, Quality. -->
 
 | Constraint | Type | Rationale |
@@ -136,11 +131,10 @@ sequenceDiagram
 
 <!-- Architectural decisions are recorded as ADRs in .ai-state/decisions/.
      This section provides quick cross-references to decisions that shaped the architecture.
-     Never duplicate ADR rationale here -- just link.
-     Include ALL architecture-related ADRs -- omissions weaken the design record. -->
+     Never duplicate ADR rationale here -- just link. -->
 
 | ADR | Decision | Impact on Architecture |
 |-----|----------|----------------------|
-| [dec-NNN](decisions/NNN-slug.md) | [Decision title] | [How it shapes the architecture] |
+| [dec-NNN](../.ai-state/decisions/NNN-slug.md) | [Decision title] | [How it shapes the architecture] |
 
 [Add new rows as architecture-related ADRs are created.]
