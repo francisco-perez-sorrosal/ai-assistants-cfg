@@ -3,10 +3,12 @@
 <!-- Design-target architecture document. Abstracts above concrete code to define the space of valid
      implementations. Component names may be abstract; file paths are illustrative; planned components
      are included with Status markers. For code-verified developer navigation, see docs/architecture.md.
-     Maintained by pipeline agents via section ownership.
+     Created by systems-architect, updated by implementer, validated by verifier/sentinel.
      See skills/software-planning/references/architecture-documentation.md for the full methodology. -->
 
 ## 1. Overview
+
+<!-- OWNER: systems-architect | LAST UPDATED: 2026-04-10 by systems-architect -->
 
 | Attribute | Value |
 |-----------|-------|
@@ -19,10 +21,11 @@
 
 Praxion is a meta-project that provides the operational infrastructure for AI-assisted software development. Rather than being an application itself, it is an ecosystem of reusable skills, specialized agents, declarative rules, slash commands, lifecycle hooks, and MCP servers that compose into a coherent development workflow. It ships as the `i-am` Claude Code plugin, with secondary targets for Claude Desktop and Cursor.
 
-The architecture is organized around three core concerns: **knowledge delivery** (skills and rules that bring domain expertise into agent context windows), **agent orchestration** (a pipeline of specialized agents that collaborate through shared documents), and **persistent intelligence** (MCP servers that maintain memory and observability state across sessions).
+The architecture is organized around three core concerns: **knowledge delivery** (skills and rules that bring domain expertise into agent context windows), **agent orchestration** (a pipeline of specialized agents that collaborate through shared documents), and **persistent intelligence** (MCP servers that maintain memory and observability state across sessions). This document defines the design space — the set of valid implementations and their relationships — rather than documenting what currently exists on disk. For code-verified navigation, see [docs/architecture.md](../docs/architecture.md).
 
 ## 2. System Context
 
+<!-- OWNER: systems-architect | LAST UPDATED: 2026-04-10 by systems-architect -->
 <!-- L0 diagram: system boundary + external actors/dependencies. -->
 
 ```mermaid
@@ -41,7 +44,7 @@ graph LR
         Hooks[Hooks<br/>14 scripts]
         MCP[MCP Servers<br/>Memory + Chronograph]
         Rules[Rules<br/>9 files]
-        Cmds[Commands<br/>19 slash commands]
+        Cmds[Commands<br/>21 slash commands]
     end
     Dev --> CC
     Dev --> CD
@@ -60,11 +63,14 @@ graph LR
 ```
 
 > **Component detail:** [Components](#3-components)
-> **Code-verified paths:** [docs/architecture.md](../docs/architecture.md) (when available)
+> **Code-verified paths:** [docs/architecture.md](../docs/architecture.md)
 
 ## 3. Components
 
-<!-- L1 diagram: major building blocks and their relationships. -->
+<!-- OWNER: systems-architect (skeleton), implementer (as-built) | LAST UPDATED: 2026-04-10 by systems-architect -->
+<!-- L1 diagram: major building blocks and their relationships.
+     Status values: Designed (interface defined, not yet implemented), Built (code exists on disk),
+     Planned (roadmap item, no interface yet), Deprecated (scheduled for removal). -->
 
 ```mermaid
 graph TD
@@ -103,22 +109,23 @@ graph TD
     INS -->|deploy| CM
 ```
 
-| Component | Responsibility | Status | Key Files |
-|-----------|---------------|--------|-----------|
+| Component | Responsibility | Status | Key Files (illustrative) |
+|-----------|---------------|--------|--------------------------|
 | Skills | Domain expertise delivered via progressive disclosure (metadata, body, references) | Built | `skills/*/SKILL.md`, `skills/*/references/` |
-| Agents | Autonomous subprocesses for multi-step software engineering work | Built | `agents/*.md` |
-| Rules | Declarative conventions auto-loaded by relevance | Built | `rules/swe/`, `rules/writing/` |
+| Agents | Autonomous subprocesses with distinct specialties for multi-step software engineering work | Built | `agents/*.md` |
+| Rules | Declarative conventions auto-loaded by relevance into every session | Built | `rules/swe/`, `rules/writing/` |
 | Commands | User-invoked slash commands for repeatable workflows | Built | `commands/*.md` |
-| Hooks | Python/shell scripts triggered by Claude Code lifecycle events | Built | `hooks/*.py`, `hooks/*.sh`, `hooks/hooks.json` |
-| Memory MCP | Persistent dual-layer memory (curated JSON + observations JSONL) | Built | `memory-mcp/src/memory_mcp/` |
-| Chronograph MCP | Agent pipeline observability via OpenTelemetry spans | Built | `task-chronograph-mcp/src/task_chronograph_mcp/` |
-| `.ai-state/` | Persistent project intelligence: ADRs, specs, sentinel reports, memory | Built | `.ai-state/decisions/`, `.ai-state/memory.json` |
-| `.ai-work/` | Ephemeral pipeline documents scoped by task slug | Built | `.ai-work/<task-slug>/` |
-| Installers | Target-specific deployment (Claude Code, Claude Desktop, Cursor) | Built | `install.sh`, `install_claude.sh`, `install_cursor.sh` |
-| Scripts | Developer tooling: worktree management, merge drivers, daemon control | Built | `scripts/` |
+| Hooks | Python/shell scripts triggered by Claude Code lifecycle events for enforcement and observability | Built | `hooks/*.py`, `hooks/*.sh`, `hooks/hooks.json` |
+| Memory MCP | Persistent dual-layer memory: curated institutional knowledge (JSON) + zero-cost automatic observations (JSONL) | Built | `memory-mcp/src/memory_mcp/` |
+| Chronograph MCP | Agent pipeline observability via OpenTelemetry spans with HTTP event ingestion and OTLP export | Built | `task-chronograph-mcp/src/task_chronograph_mcp/` |
+| `.ai-state/` | Persistent project intelligence: ADRs, specs, sentinel reports, architecture docs, memory store | Built | `.ai-state/decisions/`, `.ai-state/memory.json` |
+| `.ai-work/` | Ephemeral pipeline documents scoped by task slug; gitignored, worktree-isolated | Built | `.ai-work/<task-slug>/` |
+| Installers | Target-specific deployment scripts (Claude Code, Claude Desktop, Cursor) | Built | `install.sh`, `install_claude.sh`, `install_cursor.sh` |
+| Scripts | Developer tooling: worktree management, merge drivers, daemon control, ADR index generation | Built | `scripts/` |
 
 ## 4. Interfaces
 
+<!-- OWNER: systems-architect (design), implementer (as-built) | LAST UPDATED: 2026-04-10 by systems-architect -->
 <!-- Key APIs, contracts, and integration points between components. -->
 
 | Interface | Type | Provider | Consumer(s) | Contract |
@@ -134,6 +141,8 @@ graph TD
 | Hook registration | JSON | `hooks/hooks.json` | Claude Code plugin system | Event type, command, timeout, sync/async per hook |
 
 ## 5. Data Flow
+
+<!-- OWNER: systems-architect | LAST UPDATED: 2026-04-10 by systems-architect -->
 
 ### Agent Pipeline Execution (Standard/Full Tier)
 
@@ -200,6 +209,7 @@ graph LR
 
 ## 6. Dependencies
 
+<!-- OWNER: systems-architect (initial), implementer (as-built) | LAST UPDATED: 2026-04-10 by systems-architect -->
 <!-- External dependencies the system relies on. -->
 
 | Dependency | Version | Purpose | Criticality |
@@ -217,6 +227,7 @@ graph LR
 
 ## 7. Constraints
 
+<!-- OWNER: systems-architect | LAST UPDATED: 2026-04-10 by systems-architect -->
 <!-- Known limitations, performance boundaries, quality attributes, and compatibility requirements. -->
 
 | Constraint | Type | Rationale |
@@ -234,8 +245,10 @@ graph LR
 
 ## 8. Decisions
 
+<!-- OWNER: systems-architect | LAST UPDATED: 2026-04-10 by systems-architect -->
 <!-- Architectural decisions are recorded as ADRs in .ai-state/decisions/.
-     This section provides quick cross-references to decisions that shaped the architecture. -->
+     This section provides quick cross-references to decisions that shaped the architecture.
+     Never duplicate ADR rationale here — just link. -->
 
 | ADR | Decision | Impact on Architecture |
 |-----|----------|----------------------|

@@ -17,13 +17,16 @@
 | **Architecture pattern** | Plugin-based knowledge ecosystem with progressive disclosure and agent pipeline orchestration |
 | **Last verified against code** | 2026-04-10 |
 
+<!-- OWNER: systems-architect (creation), doc-engineer (verification) | LAST UPDATED: 2026-04-10 -->
+
 Praxion provides the operational infrastructure for AI-assisted software development. It is an ecosystem of reusable skills, specialized agents, declarative rules, slash commands, lifecycle hooks, and MCP servers that compose into a coherent development workflow. It ships as the `i-am` Claude Code plugin, with secondary targets for Claude Desktop and Cursor.
 
-The architecture is organized around three core concerns: **knowledge delivery** (skills and rules that bring domain expertise into agent context windows), **agent orchestration** (a pipeline of specialized agents that collaborate through shared documents), and **persistent intelligence** (MCP servers that maintain memory and observability state across sessions).
+The architecture is organized around three core concerns: **knowledge delivery** (skills and rules that bring domain expertise into agent context windows), **agent orchestration** (a pipeline of specialized agents that collaborate through shared documents), and **persistent intelligence** (MCP servers that maintain memory and observability state across sessions). For design rationale and architectural evolution, see [.ai-state/ARCHITECTURE.md](../.ai-state/ARCHITECTURE.md).
 
 ## 2. System Context
 
-<!-- L0 diagram: system boundary + external actors/dependencies. -->
+<!-- OWNER: systems-architect, doc-engineer (verification) | LAST UPDATED: 2026-04-10 -->
+<!-- L0 diagram: system boundary + external actors/dependencies. Only existing integrations. -->
 
 ```mermaid
 graph LR
@@ -38,9 +41,9 @@ graph LR
     subgraph Praxion["Praxion (i-am plugin)"]
         Skills[Skills<br/>33 modules]
         Agents[Agents<br/>12 types]
-        Hooks[Hooks<br/>16 scripts]
+        Hooks[Hooks<br/>14 scripts]
         MCP[MCP Servers<br/>Memory + Chronograph]
-        Rules[Rules<br/>8 files]
+        Rules[Rules<br/>9 files]
         Cmds[Commands<br/>21 slash commands]
     end
     Dev --> CC
@@ -63,7 +66,9 @@ graph LR
 
 ## 3. Components
 
-<!-- L1 diagram: major building blocks and their relationships. -->
+<!-- OWNER: implementer (as-built), doc-engineer (verification) | LAST UPDATED: 2026-04-10 -->
+<!-- L1 diagram: major building blocks and their relationships.
+     Every component listed here MUST exist on disk — verify with ls/Glob before including. -->
 
 ```mermaid
 graph TD
@@ -104,21 +109,23 @@ graph TD
 
 | Component | Responsibility | Key Files |
 |-----------|---------------|-----------|
-| Skills | Domain expertise delivered via progressive disclosure (metadata, body, references) | `skills/*/SKILL.md`, `skills/*/references/` |
-| Agents | Autonomous subprocesses for multi-step software engineering work | `agents/*.md` |
-| Rules | Declarative conventions auto-loaded by relevance | `rules/swe/`, `rules/writing/` |
-| Commands | User-invoked slash commands for repeatable workflows | `commands/*.md` |
-| Hooks | Python/shell scripts triggered by Claude Code lifecycle events | `hooks/*.py`, `hooks/*.sh`, `hooks/hooks.json` |
-| Memory MCP | Persistent dual-layer memory (curated JSON + observations JSONL) | `memory-mcp/src/memory_mcp/` |
-| Chronograph MCP | Agent pipeline observability via OpenTelemetry spans | `task-chronograph-mcp/src/task_chronograph_mcp/` |
-| `.ai-state/` | Persistent project intelligence: ADRs, specs, sentinel reports, memory | `.ai-state/decisions/`, `.ai-state/memory.json` |
-| `.ai-work/` | Ephemeral pipeline documents scoped by task slug | `.ai-work/<task-slug>/` |
-| Installers | Target-specific deployment (Claude Code, Claude Desktop, Cursor) | `install.sh`, `install_claude.sh`, `install_cursor.sh` |
-| Scripts | Developer tooling: worktree management, merge drivers, daemon control | `scripts/` |
+| Skills | Delivers domain expertise via progressive disclosure (metadata at startup, body on activation, references on demand) | `skills/*/SKILL.md`, `skills/*/references/` |
+| Agents | Runs as autonomous subprocesses for multi-step software engineering work | `agents/*.md` |
+| Rules | Provides declarative conventions auto-loaded by relevance into every session | `rules/swe/`, `rules/writing/` |
+| Commands | Exposes user-invoked slash commands for repeatable workflows | `commands/*.md` |
+| Hooks | Executes Python/shell scripts on Claude Code lifecycle events for enforcement and observability | `hooks/*.py`, `hooks/*.sh`, `hooks/hooks.json` |
+| Memory MCP | Stores persistent dual-layer memory: curated knowledge (JSON) + automatic observations (JSONL) | `memory-mcp/src/memory_mcp/` |
+| Chronograph MCP | Provides agent pipeline observability via OpenTelemetry spans | `task-chronograph-mcp/src/task_chronograph_mcp/` |
+| `.ai-state/` | Holds persistent project intelligence: ADRs, specs, sentinel reports, architecture docs, memory | `.ai-state/decisions/`, `.ai-state/memory.json` |
+| `.ai-work/` | Contains ephemeral pipeline documents scoped by task slug | `.ai-work/<task-slug>/` |
+| Installers | Deploys target-specific configurations (Claude Code, Claude Desktop, Cursor) | `install.sh`, `install_claude.sh`, `install_cursor.sh` |
+| Scripts | Provides developer tooling: worktree management, merge drivers, daemon control | `scripts/` |
 
 ## 4. Interfaces
 
-<!-- Key APIs, contracts, and integration points between components. -->
+<!-- OWNER: implementer (as-built) | LAST UPDATED: 2026-04-10 -->
+<!-- Key APIs, contracts, and integration points between components.
+     Only interfaces that are implemented and callable. -->
 
 | Interface | Type | Provider | Consumer(s) | Contract |
 |-----------|------|----------|-------------|----------|
@@ -133,6 +140,8 @@ graph TD
 | Hook registration | JSON | `hooks/hooks.json` | Claude Code plugin system | Event type, command, timeout, sync/async per hook |
 
 ## 5. Data Flow
+
+<!-- OWNER: systems-architect | LAST UPDATED: 2026-04-10 -->
 
 ### Agent Pipeline Execution (Standard/Full Tier)
 
@@ -199,6 +208,7 @@ graph LR
 
 ## 6. Dependencies
 
+<!-- OWNER: implementer (as-built), doc-engineer (verification) | LAST UPDATED: 2026-04-10 -->
 <!-- External dependencies verified against pyproject.toml and project config. -->
 
 | Dependency | Version | Purpose | Criticality |
@@ -216,6 +226,7 @@ graph LR
 
 ## 7. Constraints
 
+<!-- OWNER: systems-architect | LAST UPDATED: 2026-04-10 -->
 <!-- Known limitations that affect developers working in this codebase. -->
 
 | Constraint | Type | Rationale |
@@ -233,8 +244,10 @@ graph LR
 
 ## 8. Decisions
 
+<!-- OWNER: systems-architect | LAST UPDATED: 2026-04-10 -->
 <!-- Architectural decisions are recorded as ADRs in .ai-state/decisions/.
-     This section provides quick cross-references to decisions that shaped the architecture. -->
+     This section provides quick cross-references to decisions that shaped the architecture.
+     Never duplicate ADR rationale here — just link. -->
 
 | ADR | Decision | Impact on Architecture |
 |-----|----------|----------------------|
