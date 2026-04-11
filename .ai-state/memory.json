@@ -3719,6 +3719,199 @@
         "invalid_at": null,
         "type": "pattern",
         "created_by": null
+      },
+      "git-diff-stat-flag-order": {
+        "value": "git diff --stat must come before path arguments. Wrong: `git diff file.md --stat`. Right: `git diff --stat -- file.md`. The `--` separator is optional but clarifies intent.",
+        "created_at": "2026-04-11T00:48:59.126291Z",
+        "updated_at": "2026-04-11T00:48:59.126291Z",
+        "tags": [
+          "cli",
+          "git",
+          "gotcha"
+        ],
+        "confidence": null,
+        "importance": 3,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.cwd-drift-git-staging",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.worktree-rebase-merge-requires-removal-first",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "git diff --stat flag must precede path args; use -- separator",
+        "valid_at": "2026-04-11T00:48:59.126291Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "target-project-main-agent-context-gap": {
+        "value": "TARGET PROJECT MAIN AGENT VISIBILITY GAP\n\nWhen i-am plugin is installed in a TARGET project (not Praxion repo), the main Claude Code agent lacks critical knowledge about the agent pipeline and architecture responsibilities.\n\nINSTALL FLOW:\n- install_claude.sh links Praxion's CLAUDE.md to ~/.claude/CLAUDE.md (single global copy, shared across all projects)\n- install_claude.sh links Praxion's rules to ~/.claude/rules (9 rules auto-loaded unconditionally)\n- Plugin is installed globally (user scope) or per-project (project scope)\n- /onboard-project command checks for .gitignore, plugin installation, creates project CLAUDE.md if missing via `claude init`\n\nWHAT TARGET PROJECT GETS:\n\n1. GLOBAL CLAUDE.md (~105 lines):\n   - Principles: pragmatism, context engineering, BDD, incremental evolution, structural beauty\n   - Methodology: Understand, Plan, Verify\n   - Learning loop: persistent memory patterns\n   - Operating conventions: response style, code style\n   - Links ecosystem to principles (skills, agents, rules, memory)\n   - But NO mention of:\n     * Which agents exist and what they do\n     * When to use which agent\n     * That systems-architect MUST produce ARCHITECTURE.md\n     * Naming conventions for any output documents\n     * The pipeline communication pattern through .ai-work/\n\n2. GLOBAL RULES (9 files):\n   - swe-agent-coordination-protocol: Tier selection, agent purposes, proactive usage\n   - agent-intermediate-documents: .ai-work/ and .ai-state/ structure\n   - agent-intermediate-documents: Document lifecycle (ephemeral vs persistent)\n   - adr-conventions: Decision record format\n   - memory-protocol: Memory MCP interaction rules\n   - coding-style, testing-conventions, git-conventions, vcs/git-conventions\n   - writing/readme-style, writing/diagram-conventions\n   \n   These are excellent but have problems for a new target project:\n   * swe-agent-coordination-protocol lists agent purposes but assumes familiarity with agents\n   * agent-intermediate-documents explains .ai-work/<task-slug>/ structure but doesn't say WHO creates it or how\n   * Agent definitions live at agents/*.md in the plugin, but target project has NO LOCAL COPY to read\n   * Agent descriptions are embedded in agent frontmatter, not in a centralized reference the main agent sees at startup\n\n3. PROJECT CLAUDE.md (target project only):\n   - Created by /onboard-project command via `claude init` (analyzes codebase)\n   - /onboard-project appends single line: \"Follow Understand, Plan, Verify methodology...\"\n   - The generated content is entirely project-specific (codebase summary)\n   - NO reference to available agents in the Praxion plugin ecosystem\n   - NO hint about ARCHITECTURE.md expectations\n\n4. INJECT_MEMORY.PY HOOK (SessionStart + SubagentStart):\n   - Injects decision context (from .ai-state/decisions/DECISIONS_INDEX.md if exists)\n   - Injects memory context (from .ai-state/memory.json if exists)\n   - Adds memory obligation footer\n   - But .ai-state/ doesn't exist on first use of target project\n   - And DECISIONS_INDEX.md is only created AFTER first architecture decision\n\nTHE CORE GAP:\n\nThe main agent in a target project knows:\n✓ General principles and methodology (from global CLAUDE.md)\n✓ Coordination protocol and tier selection (from swe-agent-coordination-protocol rule)\n✓ Agent names exist somewhere (from rule text: \"promethean\", \"researcher\", \"systems-architect\", etc.)\n✗ WHICH AGENTS are available to delegate to\n✗ WHAT OUTPUT each agent produces (SYSTEMS_PLAN.md vs SYSTEMS_ARCHITECTURE.md vs what?)\n✗ THAT systems-architect MUST PRODUCE ARCHITECTURE.md (not optional)\n✗ WHERE to find agent definitions to read their descriptions\n✗ THE PIPELINE ORDERING AND COMMUNICATION PATTERN clearly\n✗ WHAT TO TELL agents when delegating (e.g., \"architect: produce ARCHITECTURE.md alongside SYSTEMS_PLAN.md\")\n\nROOT CAUSE:\n\nThe agent catalog (.agents/README.md + individual agents/*.md) is a PRAXION REPO ARTIFACT, not something installed into target projects. The plugin.json registers agents as explicit file paths:\n\n  \"agents\": [\n    \"./agents/researcher.md\",\n    \"./agents/systems-architect.md\",\n    ...\n  ]\n\nClaude Code's plugin system auto-discovers these and makes them available for delegation. But:\n\n1. The plugin does NOT expose agent metadata (description, skills, output expectations) through any standard channel the main agent accesses at startup\n2. The main agent sees only the frontmatter when it delegates (which is minimal)\n3. There's no centralized \"Here's what each agent does and what to expect\" document that travels with the plugin to target projects\n\nWHAT'S MISSING IN TARGET PROJECTS:\n\n1. Agent catalog in target project's .claude/ context (or injectable at SessionStart):\n   - List of all agents with descriptions\n   - Output documentation for each agent (what files they create)\n   - When to use which agent (proactive usage signals)\n   - The pipeline flow diagram (researcher → architect → planner → implementer, etc.)\n\n2. Explicit ARCHITECTURE.md contract:\n   - When systems-architect is called, IT MUST produce ARCHITECTURE.md\n   - This is buried in the systems-architect.md frontmatter and agent prompt\n   - Not visible to the main agent planning the delegation\n   - Lead to the original problem: main agent forgets to tell architect to create ARCHITECTURE.md\n\n3. Project-level CLAUDE.md guidance:\n   - /onboard-project appends only ONE LINE\n   - Could append a much more complete skeleton that references the global version + adds local guidance\n   - Or SessionStart hook could inject a synthesized \"Agent Quick Reference\" that lists all available agents\n\nSOLUTION PATHS:\n\nOption A (SessionStart hook injection):\n  - inject_memory.py already constructs additionalContext for SessionStart\n  - Extend it to include \"## Available Agents\" section with agent catalog\n  - Requires reading .claude-plugin/plugin.json and extracting agent definitions\n  - Main agent sees agent catalog at session start\n\nOption B (Target project onboard enhancement):\n  - /onboard-project could generate a much richer skeleton CLAUDE.md\n  - Include \"## Available Agents\" section copied from Praxion repo\n  - Include agent output contracts (systems-architect → SYSTEMS_PLAN.md + ARCHITECTURE.md)\n  - Requires /onboard-project to be smarter about scaffold generation\n\nOption C (Agent frontend skill):\n  - Create new skill \"agent-catalog\" that lists all available agents\n  - Main agent loads it at relevant moments\n  - But doesn't solve the problem of agent availability being non-obvious\n\nOption D (Plugin manifest enhancement):\n  - Extend plugin.json to include agent metadata (outputs, triggers, tier)\n  - Add hook to inject agent catalog at SessionStart\n  - Requires Claude Code to surface agent metadata beyond frontmatter\n\nPREFERRED SOLUTION:\n\nCombination of B + A:\n1. /onboard-project generates a richer project CLAUDE.md skeleton with \"## Agents\" section describing available pipeline agents\n2. SessionStart hook (inject_memory.py) includes a \"## Agent Quick Reference\" section listing agents that can be delegated to\n3. systems-architect.md frontmatter makes the ARCHITECTURE.md output explicit and required in its description\n\nThis ensures the main agent in a target project:\n- Knows at session start what agents exist (via SessionStart injection)\n- Has persistent reference in project CLAUDE.md (via onboard-project)\n- Understands architecture responsibilities when delegating to systems-architect",
+        "created_at": "2026-04-11T06:12:12.728755Z",
+        "updated_at": "2026-04-11T06:12:12.728755Z",
+        "tags": [
+          "agents",
+          "architecture",
+          "gap-analysis",
+          "plugin",
+          "target-projects",
+          "visibility"
+        ],
+        "confidence": null,
+        "importance": 9,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.plugin-agent-frontmatter-schema-no-model-color-required",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.architecture-md-implementation-complete",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.architecture-docs-differentiation-gap",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "TARGET PROJECT MAIN AGENT VISIBILITY GAP\n\nWhen i-am plugin is installed in a TARGET project (not...",
+        "valid_at": "2026-04-11T06:12:12.728755Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "main-agent-deliverable-gap": {
+        "value": "Main agent has no structured way to know or communicate expected deliverables to subagents. The coordination protocol table lists outputs (e.g., systems-architect should produce ARCHITECTURE.md + docs/architecture.md), but:\n\n1. This is human-facing documentation only — not machine-readable metadata\n2. Agent definitions don't have an \"expectedOutputs\" field in frontmatter\n3. When the main agent spawns a subagent, it has no canonical source to extract deliverables and include in the delegation prompt\n4. SubagentStart hooks don't include deliverable context\n5. No validation mechanism to check \"did agent produce X, Y, Z?\"\n\nThis is particularly risky for conditional outputs like docs/architecture.md, which:\n- Only created for Standard/Full pipelines\n- Easy to forget if not explicitly called out\n- Requires active syncing with .ai-state/ARCHITECTURE.md\n- Verifier checks expect it (AC05-AC09 in sentinel) but agent may not produce it if not reminded\n\nImpact: Subagents may miss deliverables; main agent cannot verify completeness; no feedback loop to systems-architect if docs/architecture.md was skipped. Coordination protocol table provides the spec, but there's a gap between spec (human-readable) and execution (agent-autonomous).\n\nWorkaround: Systems-architect agent definition includes Phase 3.8 instructions, but systems-architect may deprioritize docs/architecture.md if the main agent's initial prompt doesn't emphasize its importance. The two-stage pattern (architect doc → developer doc) is clear in the prompt but requires active manual attention.",
+        "created_at": "2026-04-11T06:12:34.928289Z",
+        "updated_at": "2026-04-11T06:12:34.928289Z",
+        "tags": [
+          "architecture",
+          "claude-code",
+          "coordination",
+          "deliverables",
+          "gap",
+          "main-agent",
+          "systems-architect"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Main agent has no structured way to know or communicate expected deliverables to subagents. The...",
+        "valid_at": "2026-04-11T06:12:34.928289Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "main-agent-deliverable-awareness-gap": {
+        "value": "Main Claude Code agent doesn't reliably tell subagents to produce all expected deliverables. Three-layer root cause:\n\n1. DISCOVERY VS KNOWLEDGE: Claude Code auto-discovers plugin agents (names + descriptions) but main agent doesn't see full agent definitions — only subagent does. Main agent knows systems-architect exists but not that it must produce ARCHITECTURE.md.\n\n2. PROMPT CONSTRUCTION GAP: Main agent writes delegation prompts from its own understanding. Subagent's full .md body becomes its system prompt, but main agent doesn't read it before delegating. If main agent says \"produce SYSTEMS_PLAN.md\", subagent does exactly that.\n\n3. NO VALIDATION LOOP: No SubagentStop hook checks expected deliverables were produced. Verifier/sentinel detect gaps later but pipeline has moved on.\n\nSOLUTION PRIORITY (from research):\nA. Enhance agent frontmatter descriptions to mention key outputs explicitly\nB. Add delegation checklists to coordination protocol with clear conditions for conditionals\nC. Enrich /onboard-project to add agent/output awareness to target project CLAUDE.md\nD. Extend SessionStart hook with compact agent capability summary\nE. Add SubagentStop deliverable validation hook",
+        "created_at": "2026-04-11T06:14:07.914700Z",
+        "updated_at": "2026-04-11T06:14:07.914700Z",
+        "tags": [
+          "agents",
+          "context-engineering",
+          "coordination-protocol",
+          "delegation",
+          "deliverables",
+          "gap-analysis"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.target-project-main-agent-context-gap",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Main agent misses subagent deliverables: discovery-vs-knowledge gap, prompt gap, no validation loop",
+        "valid_at": "2026-04-11T06:14:07.914700Z",
+        "invalid_at": null,
+        "type": "insight",
+        "created_by": null
+      },
+      "delegation-checklist-pattern": {
+        "value": "Delegation checklists solve the main-agent-to-subagent deliverable gap. Pattern: add \"Delegation Checklists\" section to coordination protocol with per-agent \"always include in prompt\" items. Main agent's prompt determines what subagent prioritizes — even though subagent has full instructions.\n\nFour complementary injection points:\n1. AGENT DESCRIPTIONS (frontmatter): \"Outputs: X, Y, Z\" — what Claude Code uses for delegation matching\n2. COORDINATION PROTOCOL (rule): Delegation Checklists section + footnotes replacing vague \"(conditional)\"\n3. ONBOARD-PROJECT (command): \"## Agent Pipeline\" section with numbered flow + deliverables for target projects\n4. GLOBAL CLAUDE.md: Bold instruction + deliverable reference for top 3 agents\n\nMulti-layer: descriptions for discovery, protocol for orchestration, onboard for cold-start, CLAUDE.md for reinforcement. Solutions A+B+C+F from the gap analysis — D (SessionStart hook) and E (SubagentStop validation) remain for follow-up.",
+        "created_at": "2026-04-11T06:20:18.152729Z",
+        "updated_at": "2026-04-11T06:20:18.152729Z",
+        "tags": [
+          "agents",
+          "context-engineering",
+          "coordination-protocol",
+          "delegation",
+          "deliverables",
+          "pattern"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.maxturns-exhaustion-across-agents",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.skill-command-pairing-review-checklist",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.skill-command-not-agent-for-interactive-exploration",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Four-layer delegation checklist pattern: descriptions + protocol + onboard + CLAUDE.md solve deliverable gap",
+        "valid_at": "2026-04-11T06:20:18.152729Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
       }
     }
   }
