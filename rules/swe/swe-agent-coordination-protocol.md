@@ -49,22 +49,24 @@ See [agent-pipeline-details.md](../../skills/software-planning/references/agent-
 
 ### Available Agents
 
+Outputs use path prefixes to signal lifecycle: `.ai-work/<slug>/` = ephemeral (deleted after pipeline), `.ai-state/` = permanent (committed to git).
+
 | Agent | Purpose | Output | Bg Safe |
 |-------|---------|--------|---------|
-| `promethean` | Feature-level ideation from project state | `IDEA_PROPOSAL.md`, `IDEA_LEDGER_*.md` | No |
-| `researcher` | Codebase exploration, external docs, comparative analysis | `RESEARCH_FINDINGS.md` | Yes |
-| `systems-architect` | Trade-off analysis, system design | `SYSTEMS_PLAN.md`, ADRs, `SPEC_DELTA.md`^1, `SYSTEM_DEPLOYMENT.md`^2, `.ai-state/ARCHITECTURE.md`^3, `docs/architecture.md`^3 | Yes |
-| `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Yes |
-| `context-engineer` | Context artifact domain expert; any pipeline stage | Audit report + artifact changes, `CONTEXT_REVIEW.md` (shadowing) | Yes |
-| `implementer` | Executes implementation steps with self-review | Code changes + `WIP.md` update | Yes |
-| `test-engineer` | Dedicated testing: complex test design, test suite refactoring, testing infrastructure | Test code + `WIP.md` update | Yes |
-| `verifier` | Post-implementation review against acceptance criteria | `VERIFICATION_REPORT.md` | Yes |
+| `promethean` | Feature-level ideation from project state | `.ai-work/<slug>/IDEA_PROPOSAL.md`, `.ai-state/IDEA_LEDGER_*.md` | No |
+| `researcher` | Codebase exploration, external docs, comparative analysis | `.ai-work/<slug>/RESEARCH_FINDINGS.md` | Yes |
+| `systems-architect` | Trade-off analysis, system design | `.ai-work/<slug>/SYSTEMS_PLAN.md`, `.ai-state/decisions/` (ADRs), `.ai-state/ARCHITECTURE.md`^1, `docs/architecture.md`^1 | Yes |
+| `implementation-planner` | Step decomposition, execution supervision | `.ai-work/<slug>/IMPLEMENTATION_PLAN.md`, `.ai-work/<slug>/WIP.md`, `.ai-work/<slug>/LEARNINGS.md` | Yes |
+| `context-engineer` | Context artifact domain expert; any pipeline stage | Audit report + artifact changes, `.ai-work/<slug>/CONTEXT_REVIEW.md` (shadowing) | Yes |
+| `implementer` | Executes implementation steps with self-review | Code changes + `.ai-work/<slug>/WIP.md` update | Yes |
+| `test-engineer` | Dedicated testing: complex test design, test suite refactoring, testing infrastructure | Test code + `.ai-work/<slug>/WIP.md` update | Yes |
+| `verifier` | Post-implementation review against acceptance criteria | `.ai-work/<slug>/VERIFICATION_REPORT.md` | Yes |
 | `doc-engineer` | Documentation quality (READMEs, catalogs, changelogs, developer architecture guide) | Doc report or file fixes | Yes |
-| `sentinel` | Read-only ecosystem auditor (independent, not a pipeline stage) | `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md` | Yes |
-| `skill-genesis` | Learning triage, artifact proposal from experience | `SKILL_GENESIS_REPORT.md` | No |
+| `sentinel` | Read-only ecosystem auditor (independent, not a pipeline stage) | `.ai-state/SENTINEL_REPORT_*.md`, `.ai-state/SENTINEL_LOG.md` | Yes |
+| `skill-genesis` | Learning triage, artifact proposal from experience | `.ai-work/<slug>/SKILL_GENESIS_REPORT.md` | No |
 | `cicd-engineer` | CI/CD pipeline design, GitHub Actions, deployment automation | Workflow files + pipeline config | Yes |
 
-**Conditional output footnotes:** ^1 When SDD spec exists and needs delta. ^2 When deployment infrastructure is part of the task. ^3 For Standard/Full tier pipelines — always create both architecture docs unless the project is trivially simple (single module, no external dependencies).
+**Conditional output footnotes:** ^1 For Standard/Full tier pipelines — always create both architecture docs unless the project is trivially simple (single module, no external dependencies).
 
 ### Delegation Checklists
 

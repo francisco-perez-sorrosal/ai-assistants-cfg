@@ -42,10 +42,10 @@ Find the actual problem. Temporary fixes are acceptable **only** during debuggin
 
 Use subagents liberally to keep the main context window clean — one focus per subagent. Offload research, exploration, and parallel analysis. The agent coordination protocol rule governs pipeline ordering and boundary discipline; consult it when orchestrating multi-agent work. **When delegating to any agent, always include expected deliverables in the prompt** — the agent's own system prompt has full instructions, but your prompt determines what it prioritizes. The coordination protocol has delegation checklists for each agent.
 
-**Standard/Full pipeline deliverables to always include:**
-- `systems-architect` → `SYSTEMS_PLAN.md` + ADRs + `.ai-state/ARCHITECTURE.md` + `docs/architecture.md`
-- `implementation-planner` → `IMPLEMENTATION_PLAN.md` + `WIP.md` + `LEARNINGS.md`
-- `verifier` → `VERIFICATION_REPORT.md` + architecture doc validation
+**Standard/Full pipeline deliverables to always include** (ephemeral `.ai-work/<slug>/` vs permanent `.ai-state/`):
+- `systems-architect` → `.ai-work/<slug>/SYSTEMS_PLAN.md` + `.ai-state/decisions/` (ADRs) + `.ai-state/ARCHITECTURE.md` + `docs/architecture.md`
+- `implementation-planner` → `.ai-work/<slug>/IMPLEMENTATION_PLAN.md` + `.ai-work/<slug>/WIP.md` + `.ai-work/<slug>/LEARNINGS.md`
+- `verifier` → `.ai-work/<slug>/VERIFICATION_REPORT.md` + architecture doc validation
 
 **Be proactive, not reactive.** Anticipate needs rather than waiting for instructions. Suggest the right agent when the user has no clear task. Run audits when state is stale. Load context at session start. The ecosystem rewards initiative.
 

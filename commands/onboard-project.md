@@ -43,13 +43,13 @@ Check whether a `CLAUDE.md` file exists at the project root.
 ```markdown
 ## Agent Pipeline
 
-Follow the Understand, Plan, Verify methodology. For multi-step work (Standard/Full tier), delegate to specialized agents in pipeline order:
+Follow the Understand, Plan, Verify methodology. For multi-step work (Standard/Full tier), delegate to specialized agents in pipeline order. Each pipeline operates in an ephemeral `.ai-work/<task-slug>/` directory (deleted after use); permanent artifacts go to `.ai-state/` (committed to git).
 
-1. **researcher** → `RESEARCH_FINDINGS.md` — codebase exploration, external docs
-2. **systems-architect** → `SYSTEMS_PLAN.md` + ADRs + `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` — system design
-3. **implementation-planner** → `IMPLEMENTATION_PLAN.md` + `WIP.md` — step decomposition
+1. **researcher** → `.ai-work/<slug>/RESEARCH_FINDINGS.md` — codebase exploration, external docs
+2. **systems-architect** → `.ai-work/<slug>/SYSTEMS_PLAN.md` (ephemeral feature plan) + `.ai-state/decisions/` (permanent ADRs) + `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` (permanent architecture docs)
+3. **implementation-planner** → `.ai-work/<slug>/IMPLEMENTATION_PLAN.md` + `WIP.md` — step decomposition
 4. **implementer** + **test-engineer** (concurrent) → code + tests — execute steps from the plan
-5. **verifier** → `VERIFICATION_REPORT.md` — post-implementation review
+5. **verifier** → `.ai-work/<slug>/VERIFICATION_REPORT.md` — post-implementation review
 
 Always include expected deliverables when delegating to an agent. The agent coordination protocol rule has full delegation checklists.
 ```
