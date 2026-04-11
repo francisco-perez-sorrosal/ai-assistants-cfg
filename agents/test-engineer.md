@@ -2,12 +2,12 @@
 name: test-engineer
 description: >
   Test engineering specialist that designs, writes, and refactors test suites
-  with expert-level test strategy. Use when specific testing work exceeds the
-  implementer's scope: designing test architectures, writing complex test
-  scenarios (property-based, contract, integration), refactoring brittle or
-  coupled test suites, or establishing testing infrastructure for a module.
-  Operates at the same pipeline level as the implementer, receiving steps from
-  the implementation-planner.
+  with expert-level test strategy. Outputs: test code + WIP.md update. Use when
+  specific testing work exceeds the implementer's scope: designing test
+  architectures, writing complex test scenarios (property-based, contract,
+  integration), refactoring brittle or coupled test suites, or establishing
+  testing infrastructure for a module. Operates at the same pipeline level as
+  the implementer, receiving steps from the implementation-planner.
 tools: Read, Write, Edit, Glob, Grep, Bash
 skills: [software-planning, code-review, refactoring]
 permissionMode: acceptEdits

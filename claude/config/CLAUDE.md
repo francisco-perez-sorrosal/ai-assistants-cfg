@@ -40,7 +40,12 @@ Find the actual problem. Temporary fixes are acceptable **only** during debuggin
 
 **Verify.** Never mark a task complete without proving it works. Run tests, check logs, diff behavior. Challenge your own work: look for weaknesses, edge cases, unvalidated assumptions. Ask "Would a staff engineer approve this?" For non-trivial changes, pause and ask "is there a more elegant way?" If the implementation — not a debug workaround, but the actual solution — feels hacky, step back: knowing everything you know now, implement the clean solution rather than patching on top. Match testing effort to risk and complexity, not to a blanket rule.
 
-Use subagents liberally to keep the main context window clean — one focus per subagent. Offload research, exploration, and parallel analysis. The agent coordination protocol rule governs pipeline ordering and boundary discipline; consult it when orchestrating multi-agent work.
+Use subagents liberally to keep the main context window clean — one focus per subagent. Offload research, exploration, and parallel analysis. The agent coordination protocol rule governs pipeline ordering and boundary discipline; consult it when orchestrating multi-agent work. **When delegating to any agent, always include expected deliverables in the prompt** — the agent's own system prompt has full instructions, but your prompt determines what it prioritizes. The coordination protocol has delegation checklists for each agent.
+
+**Standard/Full pipeline deliverables to always include:**
+- `systems-architect` → `SYSTEMS_PLAN.md` + ADRs + `.ai-state/ARCHITECTURE.md` + `docs/architecture.md`
+- `implementation-planner` → `IMPLEMENTATION_PLAN.md` + `WIP.md` + `LEARNINGS.md`
+- `verifier` → `VERIFICATION_REPORT.md` + architecture doc validation
 
 **Be proactive, not reactive.** Anticipate needs rather than waiting for instructions. Suggest the right agent when the user has no clear task. Run audits when state is stale. Load context at session start. The ecosystem rewards initiative.
 

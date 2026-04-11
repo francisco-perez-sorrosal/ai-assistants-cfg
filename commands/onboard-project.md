@@ -38,10 +38,20 @@ Check whether the i-am plugin is installed by looking for `i-am@bit-agora` in `~
 Check whether a `CLAUDE.md` file exists at the project root.
 
 - If missing, suggest: "No project-level CLAUDE.md found. Run `claude init` to generate one from the codebase." Do not create it directly -- `claude init` analyzes the project and produces better results.
-- After `claude init` completes (or if `CLAUDE.md` already exists), append this line if not already present:
+- After `claude init` completes (or if `CLAUDE.md` already exists), append the following block if not already present (check for the `## Agent Pipeline` heading to detect prior onboarding):
 
-```
-Follow the Understand, Plan, Verify methodology. Spawn specialized agents for multi-step work — each has a distinct specialty.
+```markdown
+## Agent Pipeline
+
+Follow the Understand, Plan, Verify methodology. For multi-step work (Standard/Full tier), delegate to specialized agents in pipeline order:
+
+1. **researcher** → `RESEARCH_FINDINGS.md` — codebase exploration, external docs
+2. **systems-architect** → `SYSTEMS_PLAN.md` + ADRs + `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` — system design
+3. **implementation-planner** → `IMPLEMENTATION_PLAN.md` + `WIP.md` — step decomposition
+4. **implementer** + **test-engineer** (concurrent) → code + tests — execute steps from the plan
+5. **verifier** → `VERIFICATION_REPORT.md` — post-implementation review
+
+Always include expected deliverables when delegating to an agent. The agent coordination protocol rule has full delegation checklists.
 ```
 
 ### 5. Existing `.ai-work/` leftovers

@@ -53,7 +53,7 @@ See [agent-pipeline-details.md](../../skills/software-planning/references/agent-
 |-------|---------|--------|---------|
 | `promethean` | Feature-level ideation from project state | `IDEA_PROPOSAL.md`, `IDEA_LEDGER_*.md` | No |
 | `researcher` | Codebase exploration, external docs, comparative analysis | `RESEARCH_FINDINGS.md` | Yes |
-| `systems-architect` | Trade-off analysis, system design | `SYSTEMS_PLAN.md`, `SPEC_DELTA.md` (conditional), `SYSTEM_DEPLOYMENT.md` (conditional), `ARCHITECTURE.md` (conditional), `docs/architecture.md` (conditional) | Yes |
+| `systems-architect` | Trade-off analysis, system design | `SYSTEMS_PLAN.md`, ADRs, `SPEC_DELTA.md`^1, `SYSTEM_DEPLOYMENT.md`^2, `.ai-state/ARCHITECTURE.md`^3, `docs/architecture.md`^3 | Yes |
 | `implementation-planner` | Step decomposition, execution supervision | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Yes |
 | `context-engineer` | Context artifact domain expert; any pipeline stage | Audit report + artifact changes, `CONTEXT_REVIEW.md` (shadowing) | Yes |
 | `implementer` | Executes implementation steps with self-review | Code changes + `WIP.md` update | Yes |
@@ -63,6 +63,33 @@ See [agent-pipeline-details.md](../../skills/software-planning/references/agent-
 | `sentinel` | Read-only ecosystem auditor (independent, not a pipeline stage) | `SENTINEL_REPORT_*.md`, `SENTINEL_LOG.md` | Yes |
 | `skill-genesis` | Learning triage, artifact proposal from experience | `SKILL_GENESIS_REPORT.md` | No |
 | `cicd-engineer` | CI/CD pipeline design, GitHub Actions, deployment automation | Workflow files + pipeline config | Yes |
+
+**Conditional output footnotes:** ^1 When SDD spec exists and needs delta. ^2 When deployment infrastructure is part of the task. ^3 For Standard/Full tier pipelines — always create both architecture docs unless the project is trivially simple (single module, no external dependencies).
+
+### Delegation Checklists
+
+When delegating to an agent, the main agent **must** include these deliverables in the prompt. The subagent's system prompt contains full instructions, but the main agent's prompt determines priority and scope.
+
+**systems-architect** — always include in prompt:
+- "Produce `SYSTEMS_PLAN.md` at `.ai-work/<task-slug>/`"
+- "Create ADRs in `.ai-state/decisions/` for significant trade-offs"
+- "Create or update `.ai-state/ARCHITECTURE.md` (architect-facing design target)"
+- "Create or update `docs/architecture.md` (developer-facing navigation guide, Built components only)"
+- If deployment is in scope: "Create or update `.ai-state/SYSTEM_DEPLOYMENT.md`"
+
+**implementation-planner** — always include in prompt:
+- "Produce `IMPLEMENTATION_PLAN.md`, `WIP.md`, and `LEARNINGS.md` at `.ai-work/<task-slug>/`"
+- "Read the `SYSTEMS_PLAN.md` at `.ai-work/<task-slug>/` for input"
+
+**implementer** — always include in prompt:
+- "Execute step N from `WIP.md` at `.ai-work/<task-slug>/`"
+- "Update `WIP.md` with completion status"
+- "If structural changes: update `.ai-state/ARCHITECTURE.md` (step 7.6) and `docs/architecture.md` (step 7.7)"
+
+**verifier** — always include in prompt:
+- "Produce `VERIFICATION_REPORT.md` at `.ai-work/<task-slug>/`"
+- "Verify against acceptance criteria in the `SYSTEMS_PLAN.md`"
+- "Check `.ai-state/ARCHITECTURE.md` design coherence (Phase 4.8a) and `docs/architecture.md` code accuracy (Phase 4.8b)"
 
 ### Proactive Agent Usage
 

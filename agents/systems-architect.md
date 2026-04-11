@@ -2,7 +2,10 @@
 name: systems-architect
 description: >
   System design architect that evaluates trade-offs, assesses codebase readiness,
-  and produces architectural decisions. Use proactively when the user needs
+  and produces architectural decisions. Outputs: SYSTEMS_PLAN.md, ADRs in
+  .ai-state/decisions/, and for Standard/Full pipelines also creates
+  .ai-state/ARCHITECTURE.md (design-target) and docs/architecture.md
+  (code-verified developer guide). Use proactively when the user needs
   architecture design, system design, trade-off analysis, technology selection,
   or structural assessment of a codebase before implementation.
 tools: Read, Glob, Grep, Bash, Write, Edit
