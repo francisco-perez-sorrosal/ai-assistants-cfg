@@ -3912,6 +3912,46 @@
         "invalid_at": null,
         "type": "pattern",
         "created_by": null
+      },
+      "transient-vs-permanent-document-clarity-gap": {
+        "value": "RESOLVED: Ephemeral vs permanent document lifecycle now conveyed consistently via path-prefix convention.\n\nConvention applied across all touchpoints:\n- .ai-work/<slug>/SYSTEMS_PLAN.md = ephemeral (task-scoped, deleted after pipeline)\n- .ai-state/ARCHITECTURE.md = permanent (committed to git, evolves over time)\n- .ai-state/decisions/ (ADRs) = permanent (accumulates)\n\nThree fixes applied:\n1. AVAILABLE AGENTS TABLE: all outputs now have full path prefixes + one-line legend explaining the convention\n2. GLOBAL CLAUDE.md: deliverable list uses full paths with parenthetical \"(ephemeral .ai-work/<slug>/ vs permanent .ai-state/)\"\n3. ONBOARD-PROJECT: pipeline section explains ephemeral directory + permanent artifacts distinction; mixed-lifecycle lines annotated \"(ephemeral feature plan)\" and \"(permanent ADRs)\"\n\nREMAINING: SYSTEMS_PLAN.md name still sounds permanent — renaming to FEATURE_PLAN.md would help but has large ripple effect across 34+ files. Deferred.",
+        "created_at": "2026-04-11T06:25:50.311141Z",
+        "updated_at": "2026-04-11T06:31:09.752822Z",
+        "tags": [
+          "ai-state",
+          "ai-work",
+          "convention",
+          "documentation",
+          "ephemeral",
+          "gap-analysis",
+          "lifecycle",
+          "naming",
+          "permanent",
+          "resolved"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.architecture-docs-differentiation-gap",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "RESOLVED: Path prefixes (.ai-work/<slug>/ vs .ai-state/) now consistently signal document lifecycle",
+        "valid_at": "2026-04-11T06:25:50.311141Z",
+        "invalid_at": null,
+        "type": "convention",
+        "created_by": null
       }
     }
   }
