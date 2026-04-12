@@ -442,6 +442,36 @@
         "invalid_at": null,
         "type": "convention",
         "created_by": null
+      },
+      "spring-cleaning-roadmap-created": {
+        "value": "ROADMAP.md created from 6-agent parallel audit. 5 phases: (1) Foundation Repair — token budget reclaim via coordination protocol refactor, CI pipeline, ADR promotion, memory hygiene, doc fixes; (2) Agent Pipeline Hardening — architect to Opus, sentinel check extraction, phase renumbering, test result handoff, coordinator burden reduction; (3) Quality & Automation — eval framework overhaul, shell gates, type checking, observation rotation; (4) Ecosystem Evolution — AGENTS.md portability, new skills (llm-prompt-engineering, typescript-development), staleness detection, cross-ref validation; (5) Strategic Horizons — Agent Teams integration, HTTP hooks, MCP gateway, pipeline shortcuts. Key metric targets: token budget <80%, memory recall usage >20/50 sessions, CI on 100% PRs.",
+        "created_at": "2026-04-12T02:33:44.628875Z",
+        "updated_at": "2026-04-12T02:33:44.628875Z",
+        "tags": [
+          "milestone",
+          "phases",
+          "planning",
+          "roadmap",
+          "spring-cleaning"
+        ],
+        "confidence": null,
+        "importance": 9,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "ROADMAP.md created: 5 phases from foundation repair to strategic horizons, driven by 6-agent audit",
+        "valid_at": "2026-04-12T02:33:44.628875Z",
+        "invalid_at": null,
+        "type": "decision",
+        "created_by": null
       }
     },
     "relationships": {},
@@ -3951,6 +3981,325 @@
         "valid_at": "2026-04-11T06:25:50.311141Z",
         "invalid_at": null,
         "type": "convention",
+        "created_by": null
+      },
+      "spring-cleaning-parallel-audit-pattern": {
+        "value": "Ultra-deep ecosystem evaluation pattern: launch 6 parallel researcher agents covering orthogonal dimensions (skills, agents/pipeline, rules/commands/hooks, infrastructure/MCP, knowledge/decisions, external state-of-art). Each writes to a scoped file in .ai-work/spring-cleaning/. Main agent synthesizes all reports into a ROADMAP.md. This pattern maximizes coverage while keeping each agent's scope manageable. Key dimensions for Praxion evaluation: automation, coordinator awareness, quality, evolution, pragmatism, creativity.",
+        "created_at": "2026-04-12T02:19:48.800001Z",
+        "updated_at": "2026-04-12T02:19:48.800001Z",
+        "tags": [
+          "evaluation",
+          "parallel-agents",
+          "pattern",
+          "roadmap",
+          "spring-cleaning"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "6-agent parallel audit pattern for comprehensive ecosystem evaluation → ROADMAP.md synthesis",
+        "valid_at": "2026-04-12T02:19:48.800001Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "spring-cleaning-audit-key-findings": {
+        "value": "Spring cleaning ultra-audit key findings across 6 dimensions:\n\nTOKEN BUDGET CRISIS: Always-loaded content at 96.8% (14,523/15,000 tokens). swe-agent-coordination-protocol.md alone is 3,653 tokens and mostly procedural (should be a skill reference, not a rule). Zero headroom for growth.\n\nMEMORY WRITE-ONLY: 147 remember() vs 3 recall() and 2 search(). The Apply phase of Learn/Recall/Apply is broken. 83% of entries never accessed. 6 entries exceed 2000 chars (should be condensed). Zero user profile entries after 55 sessions.\n\nAGENT PIPELINE GAPS: Systems-architect runs on Sonnet despite making most consequential decisions. Sentinel prompt at 479 lines exceeds its own check threshold. Phase numbering is inconsistent (3.5, 3.7, 4.8a). Test results have no formal handoff artifact between implementer and verifier.\n\nCOORDINATOR BURDEN: Main agent must make 30+ decisions per Standard pipeline. ~62% of token budget consumed by coordination rules.\n\nINDUSTRY VALIDATION: Praxion's progressive disclosure, document-mediated pipeline, and context-engineer role are ahead of industry curve. Standards convergence (MCP+AGENTS.md+A2A under AAIF) creates cross-tool portability opportunity. Agent Teams peer-to-peer pattern may evolve parallel execution model. Eval pipeline is the biggest gap vs industry standard.",
+        "created_at": "2026-04-12T02:27:57.551293Z",
+        "updated_at": "2026-04-12T02:27:57.551293Z",
+        "tags": [
+          "agents",
+          "audit",
+          "industry",
+          "memory",
+          "pipeline",
+          "spring-cleaning",
+          "token-budget"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.ecosystem-health-latest",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.memory-system-health-baseline-april",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Spring cleaning audit: token budget at 96.8%, memory write-only (147 writes/3 reads), agent pipeline gaps, 30+ coordinator decisions per pipeline",
+        "valid_at": "2026-04-12T02:27:57.551293Z",
+        "invalid_at": null,
+        "type": "insight",
+        "created_by": null
+      },
+      "aaif-standards-convergence-2026": {
+        "value": "The Agentic AI Foundation (AAIF) formed Dec 2025 under Linux Foundation with MCP (Anthropic, agent-to-tool), AGENTS.md (OpenAI, project instructions), A2A (Google, agent-to-agent), and goose (Block, agent framework). Platinum members: AWS, Anthropic, Block, Bloomberg, Cloudflare, Google, Microsoft, OpenAI. All four labs committed to full MCP support. MCP has 97M+ monthly SDK downloads. AGENTS.md is supported by Codex, Copilot, Jules, Cursor, Aider, Gemini CLI. This convergence means the tooling layer is commoditizing — differentiation moves to workflow design, context quality, and domain-specific orchestration, which is exactly where Praxion operates.",
+        "created_at": "2026-04-12T02:28:32.750600+00:00",
+        "updated_at": "2026-04-12T02:28:32.750600+00:00",
+        "tags": [
+          "standards",
+          "mcp",
+          "agents-md",
+          "a2a",
+          "aaif",
+          "landscape"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "agent": "researcher",
+          "task": "spring-cleaning-external-research"
+        },
+        "summary": "AAIF unifies MCP/AGENTS.md/A2A/goose under Linux Foundation; tooling commoditizes, workflow design differentiates",
+        "type": "insight"
+      },
+      "claude-code-agent-teams-peer-to-peer-2026": {
+        "value": "Claude Code Agent Teams (experimental, Feb 2026) uses peer-to-peer mailbox pattern: one lead session spawns teammates that communicate directly through shared task list and mailbox, not just parent-child. Unlike Praxion's fragment-file pattern for parallel agents, teammates can talk to each other, challenge findings, and self-assign tasks. Best for: parallel research, separate module ownership, competing debug hypotheses, cross-layer coordination. Enabled via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1. If this stabilizes, it could supplement or replace fragment files for implementer+test-engineer parallel execution in Praxion.",
+        "created_at": "2026-04-12T02:28:32.750600+00:00",
+        "updated_at": "2026-04-12T02:28:32.750600+00:00",
+        "tags": [
+          "claude-code",
+          "agent-teams",
+          "parallel-execution",
+          "pattern",
+          "praxion"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "agent": "researcher",
+          "task": "spring-cleaning-external-research"
+        },
+        "summary": "Agent Teams uses peer-to-peer mailbox (not parent-child); may evolve Praxion's fragment-file parallel pattern",
+        "type": "pattern"
+      },
+      "progressive-disclosure-industry-standard-2026": {
+        "value": "Progressive disclosure is now an industry-standard pattern adopted by Anthropic, OpenAI, Google, GitHub, and Cursor (Dec 2025 onwards). The three-stage model (Stage 1: lightweight metadata always loaded; Stage 2: capability details on activation; Stage 3: full implementation during execution) matches Praxion's SKILL.md -> satellite files -> reference files exactly. A 2025 Chroma study found every model performs worse as context grows — focused 300-token context often outperforms unfocused 113K-token context. This validates Praxion's 15,000-token budget for always-loaded content and aggressive context curation.",
+        "created_at": "2026-04-12T02:28:32.750600+00:00",
+        "updated_at": "2026-04-12T02:28:32.750600+00:00",
+        "tags": [
+          "context-engineering",
+          "progressive-disclosure",
+          "validation",
+          "industry-standard"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "agent": "researcher",
+          "task": "spring-cleaning-external-research"
+        },
+        "summary": "Progressive disclosure now industry standard; 300-token focused > 113K unfocused validates Praxion's approach",
+        "type": "insight"
+      },
+      "eval-pipeline-gap-praxion-2026": {
+        "value": "Praxion's most significant missing capability vs industry: no structured evaluation framework. Industry converging on: Promptfoo (YAML-driven, red-teaming, model-agnostic) for CI/CD eval pipelines; DeepEval (pytest-native, 50+ metrics) for Python teams; SWE-bench variants for agent benchmarking; LLM-as-judge for subjective quality. Best practice from Pragmatic Engineer: code-based evals for deterministic failures, LLM-as-judge for subjective cases. A Praxion eval framework could measure: agent output quality, pipeline completion rate, context efficiency (tokens vs complexity), decision quality (ADR accuracy).",
+        "created_at": "2026-04-12T02:28:32.750600+00:00",
+        "updated_at": "2026-04-12T02:28:32.750600+00:00",
+        "tags": [
+          "eval",
+          "gap-analysis",
+          "promptfoo",
+          "deepeval",
+          "praxion",
+          "quality"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "agent": "researcher",
+          "task": "spring-cleaning-external-research"
+        },
+        "summary": "Praxion lacks structured eval framework; industry uses Promptfoo/DeepEval/SWE-bench/LLM-as-judge",
+        "type": "insight"
+      },
+      "no-ci-test-workflow-gap": {
+        "value": "631 combined tests (405 memory-mcp + 226 chronograph) run only locally. No GitHub Actions workflow runs pytest, ruff check, or type checking on push/PR. The security review workflow exists but only runs Claude Code for context security scanning. This is the single highest-priority infrastructure gap.",
+        "created_at": "2026-04-12T02:29:32.996900Z",
+        "updated_at": "2026-04-12T02:29:32.996900Z",
+        "tags": [
+          "ci",
+          "gap",
+          "infrastructure",
+          "testing"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "No CI test/lint workflow exists for either MCP server (631 tests local-only)",
+        "valid_at": "2026-04-12T02:29:32.996900Z",
+        "invalid_at": null,
+        "type": "gap",
+        "created_by": null
+      },
+      "otel-relay-zero-duration-spans": {
+        "value": "All OTel spans in chronograph otel_relay.py are ended immediately after creation. This is deliberate for Phoenix visibility (BatchSpanProcessor only exports ended spans, and child spans reference parent SpanContext by ID not live object). Consequence: span duration metrics are always zero in Phoenix. Agent durations rely on the session-summary span praxion.duration_s attribute. Trade-off documented in code comments but causes confusion in Phoenix UI.",
+        "created_at": "2026-04-12T02:29:43.653569Z",
+        "updated_at": "2026-04-12T02:29:43.653569Z",
+        "tags": [
+          "chronograph",
+          "gotcha",
+          "observability",
+          "otel",
+          "phoenix"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.chronograph-flat-span-hierarchy-gap",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.parent-session-id-always-equals-session-id",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.phoenix-graph-node-attrs-for-agent-graph",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "All OTel spans ended immediately -- zero duration in Phoenix; deliberate for visibility",
+        "valid_at": "2026-04-12T02:29:43.653569Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "observations-jsonl-never-auto-rotates": {
+        "value": "ObservationStore.rotate_if_needed() exists with a 10MB threshold but is never called automatically. No hook, no cron, no session_start trigger invokes it. observations.jsonl grows indefinitely. Rotation must be added to session_start() in the memory MCP server or via a SessionStart hook.",
+        "created_at": "2026-04-12T02:29:52.725540Z",
+        "updated_at": "2026-04-12T02:29:52.725540Z",
+        "tags": [
+          "gap",
+          "maintenance",
+          "memory-mcp",
+          "observations"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "observations.jsonl rotation exists but is never triggered automatically -- grows unbounded",
+        "valid_at": "2026-04-12T02:29:52.725540Z",
+        "invalid_at": null,
+        "type": "gap",
+        "created_by": null
+      },
+      "install-scripts-link-all-files-to-path": {
+        "value": "install_claude.sh relink_all() links ALL files in scripts/ to ~/.local/bin/ including test_reconcile_ai_state.py, CLAUDE.md, and __pycache__. The for loop should filter to only executable files ([ -x script ] check). Currently pollutes PATH with non-executable artifacts.",
+        "created_at": "2026-04-12T02:30:04.013449Z",
+        "updated_at": "2026-04-12T02:30:04.013449Z",
+        "tags": [
+          "gotcha",
+          "install",
+          "scripts"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "install_claude.sh links all scripts/* to PATH including tests and docs -- needs -x filter",
+        "valid_at": "2026-04-12T02:30:04.013449Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "search-exclusive-lock-for-reads": {
+        "value": "memory-mcp search() runs inside _read_modify_write() because it updates access_count as a side effect. This means every search takes an exclusive file lock, preventing concurrent reads. For a single-user system this is not a performance issue yet, but architecturally couples read operations to write locks. Separating access tracking from search scoring would allow read-only search without locking.",
+        "created_at": "2026-04-12T02:30:13.005790Z",
+        "updated_at": "2026-04-12T02:30:13.005790Z",
+        "tags": [
+          "architecture",
+          "insight",
+          "memory-mcp",
+          "performance"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.deployment-research-key-findings",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "search() takes exclusive lock due to access_count side effect -- couples reads to writes",
+        "valid_at": "2026-04-12T02:30:13.005790Z",
+        "invalid_at": null,
+        "type": "insight",
         "created_by": null
       }
     }
