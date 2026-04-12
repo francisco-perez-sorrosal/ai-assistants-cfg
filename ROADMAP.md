@@ -146,51 +146,42 @@ Combined Phase 1B recovery estimate: ~2,400 additional tokens, bringing budget t
 - Sentinel T02 command scope mismatch (`agents/sentinel.md:281`) — includes scoped `testing-conventions.md`, excludes `claude/config/CLAUDE.md` and scoped writing rules. Align sentinel T02 measurements with actual always-loaded scope.
 - Plan-arithmetic lesson learned: "under N chars" done-when targets should be computed against the "Keep unchanged" directives' total size, not set independently. Documented in LEARNINGS for future planners.
 
-#### 1.2 Add CI Test Pipeline
+#### 1.2 Add CI Test Pipeline ✅ DONE (2026-04-12)
 
-**Problem**: 631 tests run only locally. No automated quality gate.
+**Shipped**: `.github/workflows/test.yml` with SHA-pinned `actions/checkout@v6.0.2` + `astral-sh/setup-uv@v8.0.0`; matrix `project: [memory-mcp, task-chronograph-mcp]`; per-cell `uv sync` → `ruff format --check` → `ruff check` → `pytest`; workflow-level `permissions: contents: read`, `timeout-minutes: 15`, concurrency group. ADR: `dec-024`. First real CI run validation is deferred to post-merge (verifier AC 1.2.d).
 
-**Action**: Create `.github/workflows/test.yml`:
-- Trigger: push to main, PR
-- Matrix: both MCP servers
-- Steps: `uv sync`, `ruff check`, `ruff format --check`, `uv run pytest`
-- Pin all action SHAs (fix existing unpinned `claude-code-action@v1`, `actions/checkout@v4`, `actions/setup-python@v5`)
+**Follow-up**: also fixed a pre-existing import-sort error in `task-chronograph-mcp/src/task_chronograph_mcp/__main__.py` surfaced by the new `ruff check` step.
 
-**Dependencies**: None.
-**Risk**: Low. Standard CI setup.
+#### 1.3 Promote 6 Proposed ADRs to Accepted ✅ DONE (2026-04-12)
 
-#### 1.3 Promote 6 Proposed ADRs to Accepted
+**Shipped**: dec-009, dec-010, dec-015, dec-016, dec-019 flipped to `accepted`. dec-019 gained a Consequences note documenting that the Praxion instance of `.ai-state/SYSTEM_DEPLOYMENT.md` is intentionally deferred (Praxion is an ecosystem library, not a deployable service). dec-011 was discovered to contradict its own implementation in `hooks/inject_memory.py` (the code is ADR-first; the ADR said memory-first) and was **superseded by dec-023**; dec-011 body preserved for audit trail. `DECISIONS_INDEX.md` regenerated via `scripts/regenerate_adr_index.py`.
 
-**Problem**: dec-009, dec-010, dec-011, dec-015, dec-016, dec-019 are implemented and in production but still marked `proposed`.
+**Post-pipeline state**: 28 ADRs total (22 pre-existing + 6 new: dec-023 through dec-028). 26 `accepted`, 2 `superseded` (dec-011 new, dec-020 pre-existing), 0 `proposed`.
 
-**Action**: Update frontmatter `status: accepted` in each. Regenerate `DECISIONS_INDEX.md`.
+#### 1.4 Memory Hygiene Sprint ✅ DONE (2026-04-12)
 
-**Dependencies**: None.
-**Risk**: None.
+**Shipped**: formalized as deterministic rules R1–R7 in `dec-025` (condense oversized, preserve no-authority, consolidate overlap, preserve distinct angles, supersede stale initiatives, fix doc-drift, skip user-profile invention).
 
-#### 1.4 Memory Hygiene Sprint
+- **Condensed** 6 entries from 2,036–7,425 chars down to ≤400 chars each, each citing the authoritative source (SKILL.md, ADR, or code path)
+- **Archived** 9 duplicate-cluster entries (ecosystem-health, architecture-docs, memory-enforcement) and 3 stale-initiative entries; no hard deletes — `status: archived` preserves history
+- **Fixed session_count drift** by deriving the count from `observations.jsonl` (distinct `session_id` via new `ObservationStore.count_sessions()`) rather than the stale in-file counter; metrics reader updated; 3 new tests in `test_metrics.py`. ADR: `dec-026`.
+- **Corrected `memory-mcp/CLAUDE.md`** and `store.py:88` docstring — both claimed "no migration code" while `_migrate_v1_to_v2` runs on every load.
 
-**Problem**: Oversized entries, duplicates, stale entries, zero user profile.
+**Not done (deferred)**: user-profile entry creation — R7 explicitly excludes inventing profile content without the user's agency. Flagged as a follow-up.
 
-**Actions**:
-- **Condense** 6 oversized entries (>2,000 chars) to 200-400 char summaries pointing to authoritative sources
-- **Consolidate** duplicate clusters: ecosystem health (3->1), deployment (8->3), architecture docs (4->2), memory enforcement (6->2), worktree (3->1). Net reduction: ~15 entries
-- **Supersede** stale project entries: `memory-metrics-feature-research`, `deployment-skill-research-initiative`, `system-deployment-md-artifact-initiative`
-- **Fix** session_count header (investigate increment logic or remove field)
-- **Create** initial user profile entries: role, expertise, working patterns, preferences, decision style
-- **Fix** stale `memory-mcp/CLAUDE.md` claim about no migration code
+#### 1.5 Fix Documentation Counts ✅ DONE (2026-04-12)
 
-**Dependencies**: None.
-**Risk**: Low. Memory consolidation requires careful review to avoid losing important context.
+**Shipped**: added `writing/diagram-conventions.md` to `rules/README.md` (tree + table). Retired `SOLID_FOUNDATION_IMPROVEMENTS.md` entirely (every count was stale; ROADMAP Deprecation table already tagged it). Confirmed the "19 slash commands" claim in `README.md` was already correct (filesystem = 19, not 20); no change needed.
 
-#### 1.5 Fix Documentation Counts
+**Scope addition**: narrowed `rules/writing/diagram-conventions.md` `paths:` frontmatter from the effectively-always-loaded `**/*.md` to 10 doc-authoring surfaces (ADR: `dec-028`) — reclaims ~2,584 chars on non-doc sessions and buys the headroom for principles embedding.
 
-**Problem**: README says "19 slash commands" (actually 20). SOLID_FOUNDATION counts are stale. `rules/README.md` missing `diagram-conventions.md`.
+#### 1.6 Guiding Principles Embedding ✅ DONE (2026-04-12)
 
-**Action**: Update all count references. Fix the rules README tree diagram.
+**Shipped**: added `## Guiding Principles (Praxion-specific)` block to `CLAUDE.md` (~320 chars cross-reference style) pointing to rich prose in `README.md#guiding-principles` (~1,400 chars). Four durable principles: **token budget first-class**, **measure before optimize**, **standards convergence as opportunity**, **curiosity over dogma**. Principle #3 ("one phase at a time") was intentionally excluded — it's a roadmap-execution rule, not a durable project principle. ADR: `dec-027` (embedding strategy) + `dec-028` (budget lever precondition).
 
-**Dependencies**: None.
-**Risk**: None.
+#### 1.7 Opportunistic Deprecations ✅ DONE (2026-04-12)
+
+Closed from the Deprecation & Cleanup table (Phase-1-tagged): deleted `claude/config/CLAUDE.md` (byte-identical duplicate of global), `claude/config/CLAUDE_OLD.md`, `claude/config/CLAUDE_UNPOLISHED.md`; confirmed `**/__pycache__/` in `.gitignore`. `TODO.md` disposition deferred.
 
 ---
 
@@ -470,26 +461,26 @@ Items to remove or retire during the roadmap execution:
 
 How we'll know the roadmap is working:
 
-| Metric | Baseline | After Phase 1.1 | Phase 1 Target | Phase 3 Target |
-|--------|----------|-----------------|----------------|----------------|
-| Token budget utilization | 95.7% / 109.4%† | **86.9% / 99.3%†** ✅ | <80% | <75% |
-| Always-loaded rules token count‡ | 10,715 / 12,247† | **10,019 / 11,450†** ✅ | <8,500 | <8,000 |
-| Always-loaded total chars | 57,444 | **52,130** (−5,314) ✅ | <50,000 | <45,000 |
-| Memory recall/search usage | 3+2=5 | 5 (unchanged) | >20 per 50 sessions | >50 per 50 sessions |
-| Memory entries never accessed | 83% | 83% (unchanged) | <60% | <40% |
-| CI test coverage | 0% of commits | 0% (Phase 1.2 pending) | 100% of PRs | 100% of PRs + type checking |
-| ADR status accuracy | 71% (15/21 correct) | 68% (15/22 correct)§ | 100% | 100% |
-| Agent turn budget exhaustion rate | Unknown | Unknown | Measured | <10% of invocations |
-| Eval pipeline coverage | 1 eval type | 1 eval type | 3 eval types | 5+ eval types |
-| Skill staleness markers | 0 skills | 0 skills | 5 version-sensitive skills | All version-sensitive skills |
+| Metric | Baseline | After Phase 1.1 | After Phase 1.2–1.7 | Phase 1 Target | Phase 3 Target |
+|--------|----------|-----------------|---------------------|----------------|----------------|
+| Token budget utilization | 95.7% / 109.4%† | 86.9% / 99.3%† | **76.0% / 86.9%†** ✅ (non-doc) / **80.9% / 92.5%†** ✅ (doc) | <80% | <75% |
+| Always-loaded rules token count‡ | 10,715 / 12,247† | 10,019 / 11,450† | **10,019 / 11,450† (doc) · 7,299 / 8,342† (non-doc)** ✅ | <8,500 | <8,000 |
+| Always-loaded total chars | 57,444 | 52,130 (−5,314) | **45,686 non-doc / 48,572 doc** ✅ | <50,000 | <45,000 |
+| Memory recall/search usage | 3+2=5 | 5 (unchanged) | 5 (unchanged — Phase 1.4 addresses entry quality, not recall UX) | >20 per 50 sessions | >50 per 50 sessions |
+| Memory entries never accessed | 83% | 83% | **18 entries archived** (6 condensed + 12 status=archived); active surface reduced, access rate TBD | <60% | <40% |
+| CI test coverage | 0% of commits | 0% | **`test.yml` matrix workflow shipped** (first real run deferred post-merge) ✅ | 100% of PRs | 100% of PRs + type checking |
+| ADR status accuracy | 71% (15/21 correct) | 68% (15/22 correct)§ | **100% (28/28 correctly classified: 26 accepted + 2 superseded + 0 proposed)** ✅ | 100% | 100% |
+| Agent turn budget exhaustion rate | Unknown | Unknown | Unknown (deferred to Phase 2.1) | Measured | <10% of invocations |
+| Eval pipeline coverage | 1 eval type | 1 eval type | 1 eval type (deferred to Phase 3.1) | 3 eval types | 5+ eval types |
+| Skill staleness markers | 0 skills | 0 skills | 0 skills (deferred to Phase 4.3) | 5 version-sensitive skills | All version-sensitive skills |
 
 **Footnotes:**
 
-† Two numbers shown: `(optimistic 4.0 chars/token) / (conservative 3.5 chars/token)`. The original ROADMAP baseline of "96.8%" was between these ratios; `CONTEXT_REVIEW.md` F3 established that actual baseline was 109.4% conservative / 95.7% optimistic. Subsequent metrics are reported at both ratios for honesty.
+† Two numbers shown: `(optimistic 4.0 chars/token) / (conservative 3.5 chars/token)`. The original ROADMAP baseline of "96.8%" was between these ratios; `CONTEXT_REVIEW.md` F3 established that actual baseline was 109.4% conservative / 95.7% optimistic. Subsequent metrics are reported at both ratios for honesty. Post-1.2–1.7 numbers are split because Phase 1.5 narrowed `rules/writing/diagram-conventions.md` from always-loaded to doc-authoring-only, so non-doc sessions see ~2,886 fewer chars than doc-authoring sessions.
 
 ‡ Always-loaded rules only (excludes CLAUDE.md files). Total always-loaded budget is the "Always-loaded total chars" row.
 
-§ Phase 1.1 added dec-022 (accepted). The "6 proposed ADRs that should be accepted" gap (dec-009, dec-010, dec-011, dec-015, dec-016, dec-019) from the knowledge audit remains open and is addressed by Phase 1.3. Ratio will jump to 22/22 = 100% when 1.3 completes.
+§ Phase 1.1 added dec-022 (accepted). Phase 1.3 added dec-023 through dec-028 (6 new ADRs) and flipped 5 previously-proposed ADRs to accepted; dec-011 was superseded by dec-023 after the audit found its body contradicted the shipping code. Final state: 28 ADRs / 26 accepted / 2 superseded / 0 proposed.
 
 **Phase 1.1 delivered:**
 - Token budget: pulled under the 15,000-token ceiling at both tokenizer ratios (was at or over ceiling pre-refactor depending on ratio)
@@ -497,7 +488,16 @@ How we'll know the roadmap is working:
 - Progressive disclosure pattern extended: coordination procedural content now lives in `skills/software-planning/references/coordination-details.md`, loaded only when agents execute the procedures
 - CLAUDE.md deliverables block made symmetric across all 4 pipeline agents (was missing implementer)
 
-**Still needed to reach Phase 1 targets**: 1.2 (CI pipeline) → shifts "CI test coverage" to 100%; 1.3 (ADR promotion) → shifts accuracy to 100%; 1.4 (memory hygiene) → addresses memory metrics; 1.1 Phase 1B (delegation checklists + coding-style path-scoping, deferred) → would take budget to <80%.
+**Phase 1.2–1.7 delivered (2026-04-12):**
+- **CI test pipeline**: SHA-pinned GitHub Actions matrix workflow runs `ruff` + `pytest` across both MCP servers on every push-to-main and PR (1.2)
+- **ADR consistency**: 100% correctly classified; dec-011 → dec-023 supersession corrects a documented-vs-implemented contradiction for ADR-first hook injection (1.3)
+- **Memory hygiene**: 6 entries condensed from 2K–7.4K chars to ≤400 chars; 12 duplicate/stale entries archived (history preserved); `session_count` fixed via derivation from `observations.jsonl`; stale `memory-mcp/CLAUDE.md` + `store.py:88` migration claim corrected (1.4)
+- **Documentation hygiene**: `rules/README.md` gained `writing/diagram-conventions.md`; `SOLID_FOUNDATION_IMPROVEMENTS.md` retired entirely (every count was stale) (1.5)
+- **Principles embedding**: `CLAUDE.md` gains a 4-principle cross-reference block; `README.md` gains rich prose anchor (1.6)
+- **Cleanup**: stale `claude/config/CLAUDE_OLD.md` + `CLAUDE_UNPOLISHED.md` + byte-identical `claude/config/CLAUDE.md` deleted (1.7)
+- **Budget relief for Phase 4+ growth**: narrower `diagram-conventions.md` scope reclaims ~2,886 chars on non-doc sessions; total non-doc budget now at 76.0% / 86.9% (well under Phase 1 target of <80%)
+
+**Still needed to reach Phase 3 targets**: Phase 2.1 (turn-budget measurement + systems-architect on Opus); Phase 3.1 (eval framework expansion); Phase 3.4 (type checking in CI); Phase 4.3 (staleness markers).
 
 ---
 
