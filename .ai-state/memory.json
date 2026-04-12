@@ -4177,65 +4177,406 @@
         "type": "gotcha",
         "created_by": null
       },
-      "roadmap-planning-skill-is-prioritization-only": {
-        "value": "The i-am:roadmap-planning skill (skills/roadmap-planning/SKILL.md, 260 lines) is explicitly scoped as the prioritization step between promethean ideation and SDD specification: IDEA_LEDGER -> ROADMAP.md/BACKLOG.md -> SYSTEMS_PLAN.md. It covers RICE/ICE/WSJF/MoSCoW/Kano + dependency mapping + Now-Next-Later formats. It does NOT cover: codebase audit, external research synthesis, six-dimension evaluation (automation/coordinator-awareness/quality/evolution/pragmatism/curiosity), 'preserve what works' section, quality metrics with baselines, deprecation tables, or methodology transparency. Praxion's own ROADMAP.md exemplar (524 lines, 9 sections) was produced by '6 parallel deep-dive audits + external research', NOT by following this skill. The skill is necessary but insufficient for an ultra-in-depth roadmap-creation capability.",
-        "created_at": "2026-04-12T19:28:39.904619+00:00",
-        "updated_at": "2026-04-12T19:28:39.904619+00:00",
+      "adr-affected-files-silent-drift": {
+        "value": "ADR `affected_files:` frontmatter silently drifts out of sync with the filesystem whenever referenced files are renamed or moved — no tool validates this invariant during the rename. Discovered during Phase 1 verifier cleanup: running a freshly-written `scripts/validate_adr_references.py` against the 28 ADRs found 7 orphan references predating this pipeline (security workflow renamed to `context-security-review.yml`; `.claude-plugin/hooks/` moved to `hooks/`; dec-019 listing `.ai-state/SYSTEM_DEPLOYMENT.md` that is intentionally never instantiated for Praxion). None of these had been caught by the sentinel's existing DL-series checks. Mitigations shipped: (1) the validator script lives at `scripts/validate_adr_references.py` and is wireable into CI or pre-commit; (2) a future sentinel dimension \"DL06: ADR affected_files integrity\" could add per-audit enforcement. Takeaway: any frontmatter field that names filesystem paths needs an integrity check — `affected_files`, `paths:` globs in scoped rules, `satellite_files:` in skill frontmatter, and similar fields are all candidates.",
+        "created_at": "2026-04-12T18:53:02.469083Z",
+        "updated_at": "2026-04-12T18:53:02.469083Z",
         "tags": [
-          "roadmap",
-          "skill-scope-gap",
-          "prioritization",
-          "pipeline"
+          "adr",
+          "drift",
+          "gotcha",
+          "quality-rail",
+          "validation"
         ],
         "confidence": null,
         "importance": 7,
         "source": {
           "type": "session",
-          "agent": "researcher",
-          "task": "roadmap-creation"
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
         },
-        "summary": "roadmap-planning skill is prioritization-only; does not cover audit/research/dimensions needed for exemplar-depth roadmaps",
-        "type": "insight"
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.plugin-agent-frontmatter-schema-no-model-color-required",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.adr-promotion-rationale-vs-implementation-check",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.architect-adr-creation-drift-gotcha",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "ADR affected_files frontmatter drifts silently on file renames; a 65-line validator caught 7 pre-existing orphans the sentinel had missed",
+        "valid_at": "2026-04-12T18:53:02.469083Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
       },
-      "major-agentic-projects-skip-roadmap-md": {
-        "value": "Verified 2026-04-12: LangChain v1.0, LangGraph, Goose (Block), and Aider have NO committed ROADMAP.md. They communicate forward direction via release notes, blog announcements, and GitHub Issues/Discussions. LangChain blog frames 1.0 as a completion milestone with one forward line ('Python 3.14 coming soon'). Goose has GOVERNANCE.md + RELEASE.md but no ROADMAP.md. Reflects 2026 PM trend (Product School) away from fixed feature roadmaps toward OKR-style learning machines. Implication for roadmap research: CNCF maintainer guidance (contribute.cncf.io) + smaller projects (Agentic-Tool-Optimization, AI-Engineering-Roadmap) are better structural references than major agentic projects. Also: Praxion's internal roadmap is structurally closer to a CNCF maintainer audit than to any major agentic project's public document.",
-        "created_at": "2026-04-12T19:28:39.904619+00:00",
-        "updated_at": "2026-04-12T19:28:39.904619+00:00",
+      "spirit-dimension-artifact-shape-asymmetry": {
+        "value": "When a pipeline's SPIRIT enumerates outcome dimensions (user-gate depth, coordinator-awareness, quality, evolution, pragmatism, curiosity), candidate artifact shapes serve dimensions asymmetrically — not every shape serves all dimensions equally. User-gate depth alone (AskUserQuestion phase loops are native to agents, awkward for skills, only scripted for commands) can flip the recommendation from skill-only to agent+skill. Coordinator-awareness is a discoverability dimension favoring shapes with formal delegation-table entries. Quality/curiosity are content-level, shape-neutral. Evolution is reference-file-friendly. Therefore artifact-shape decision matrices must include a SPIRIT-dimension-coverage column, not just token cost and progressive-disclosure fit — otherwise shape selection defaults to Shape A (skill only) and underserves the user-gate dimension.",
+        "created_at": "2026-04-12T19:26:15.070806Z",
+        "updated_at": "2026-04-12T19:26:15.070806Z",
         "tags": [
+          "artifact-shape",
+          "context-engineering",
+          "insight",
+          "pipeline",
+          "spirit"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "SPIRIT outcome dimensions map to artifact shapes asymmetrically; user-gate depth alone can flip skill-only to agent+skill — evaluate coverage, not just token cost",
+        "valid_at": "2026-04-12T19:26:15.070806Z",
+        "invalid_at": null,
+        "type": "insight",
+        "created_by": null
+      },
+      "roadmap-shape-b-hybrid-pattern": {
+        "value": "For capabilities demanding deep user-gates, coordinator discoverability, multi-phase procedure, and reusable domain knowledge, prefer an agent (isolated context + AskUserQuestion) + new skill (coexist with related skills, don't absorb) + slash command (explicit discovery). No new rule unless the budget can absolve it. Validated in roadmap-creation pipeline 2026-04-12 via dec-029..dec-035.",
+        "created_at": "2026-04-12T19:47:39.758832Z",
+        "updated_at": "2026-04-12T19:47:39.758832Z",
+        "tags": [
+          "architecture",
+          "coexistence",
+          "pattern",
           "roadmap",
-          "landscape",
-          "agentic-projects",
-          "research-pivot"
+          "shape-b"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.ai-state-living-document-recipe",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.architecture-docs-differentiation-gap",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.cross-cutting-convention-rule-skill-pair",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Agent + skill + command (Shape B-hybrid) is Praxion's canonical shape for capabilities needing deep user-gates + coordinator discovery + reusable domain knowledge",
+        "valid_at": "2026-04-12T19:47:39.758832Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "exemplar-as-north-star-acceptance-criterion": {
+        "value": "When the goal is to reproduce a high-caliber artifact, the exemplar's structure + methodology footer are stronger acceptance criteria than any abstract specification. Extract section structure, per-section schema, methodology footer, and trigger vocabulary from the exemplar; each becomes a concrete design requirement. The methodology footer tells you how the artifact was produced — that is the capability to reverse-engineer. Validated in roadmap-creation pipeline 2026-04-12: Praxion's ROADMAP.md's 9-section structure and \"6 parallel deep-dive audits\" footer directly drove the cartographer's Phase loop design.",
+        "created_at": "2026-04-12T19:47:46.323460Z",
+        "updated_at": "2026-04-12T19:47:46.323460Z",
+        "tags": [
+          "acceptance-criteria",
+          "architecture",
+          "pattern",
+          "reverse-engineering"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.ai-state-living-document-recipe",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.architecture-docs-differentiation-gap",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.cross-cutting-convention-rule-skill-pair",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "When reproducing a high-caliber artifact, the exemplar's structure + methodology footer are stronger acceptance criteria than abstract specs",
+        "valid_at": "2026-04-12T19:47:46.323460Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "budget-offset-via-redundant-content-prune": {
+        "value": "When a rule edit must add always-loaded content against a budget at capacity, prune equivalent redundant content in the same file; ASCII art that duplicates Mermaid diagrams is a common reclamation target. Information preserved by Mermaid diagrams, linked references, or adjacent prose is a reclamation candidate. Enforce net-zero delta in the same ADR. Preserve anchor stability per dec-022 stub-section pattern. Keep a graceful-degradation escape hatch if the offset turns out infeasible at implementation. Validated in dec-034 offset plan (2026-04-12).",
+        "created_at": "2026-04-12T19:48:15.126540Z",
+        "updated_at": "2026-04-12T19:48:15.126540Z",
+        "tags": [
+          "always-loaded",
+          "offset",
+          "pattern",
+          "rules",
+          "token-budget"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.cross-cutting-convention-rule-skill-pair",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "When a rule must add always-loaded content against a capped budget, prune equivalent redundant content in the same file (ASCII duplicating Mermaid is a common target)",
+        "valid_at": "2026-04-12T19:48:15.126540Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "broken-anchor-prereq-in-offset-proposals": {
+        "value": "When an ADR proposes pruning content and linking to an anchor in another file, verify the anchor exists before the ADR is accepted. dec-034 pointed to coordination-details.md#coordination-pipeline-diagram which did not exist; implementation would have produced a dangling link. Add an anchor-existence check to architect Phase 4 self-review or context-engineer Phase 2 shadow. When ADRs propose extraction targets (dec-022 pattern), the extraction destination must either already exist or be added as a prerequisite step in the implementation plan. Caught in roadmap-creation pipeline 2026-04-12 by context-engineer Phase 2.",
+        "created_at": "2026-04-12T19:54:07.644994Z",
+        "updated_at": "2026-04-12T19:54:07.644994Z",
+        "tags": [
+          "adr",
+          "architect-phase",
+          "cross-reference",
+          "gotcha",
+          "offset"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.agent-background-flag-protocol-drift",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.adr-promotion-rationale-vs-implementation-check",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.architect-adr-creation-drift-gotcha",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Verify link-target anchors exist before accepting an ADR that proposes pruning content and linking to them; dangling link risk is easy to miss",
+        "valid_at": "2026-04-12T19:54:07.644994Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "offset-measurement-as-explicit-step": {
+        "value": "When an ADR claims a net-zero always-loaded budget delta via additions + reclamations, the implementation plan must encode the measurement as an explicit, numbered step with `wc -c` before + after and an acceptance gate on net ≤ 0. Architect-claimed char deltas can understate by 2× or more on asymmetric prunes. Always include a graceful-degradation escape hatch (what to do if net delta exceeds threshold) so the plan does not hard-block on an estimation error. Pair the measurement step with the rule-edit step; do not defer to verifier. Validated in roadmap-creation plan step (dec-034 offset).",
+        "created_at": "2026-04-12T20:06:06.871555Z",
+        "updated_at": "2026-04-12T20:06:06.871555Z",
+        "tags": [
+          "implementation-planning",
+          "measurement",
+          "offset",
+          "pattern",
+          "token-budget"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.cross-cutting-convention-rule-skill-pair",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.budget-offset-via-redundant-content-prune",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Encode `wc -c` measurement + acceptance gate as explicit plan step when ADR claims net-zero delta; architect estimates can be 2× off",
+        "valid_at": "2026-04-12T20:06:06.871555Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "graceful-degradation-as-first-class-plan-path": {
+        "value": "ADRs for measurement-gated acceptance criteria should pre-register escape hatches that reduce but do not block functionality. The dec-034 roadmap-creation budget ADR documented: \"If the offset proves infeasible at implementation time, the rule edits are skipped entirely. The cartographer still ships; discovery then relies solely on the command + description-based semantic activation.\" At implementation, measured delta was +368 chars (fails AC-11); escape hatch was invoked; net delta became -301 chars (passes). Verifier classifies cleanly-invoked hatches as PASS-with-note, not WARN — the plan anticipated this branch and ranked it acceptable. Pattern generalizes: when an ADR claims something measured at commit (budget, latency, size), make the escape hatch part of the ADR, not an improvisation.",
+        "created_at": "2026-04-12T20:40:54.787691Z",
+        "updated_at": "2026-04-12T20:40:54.787691Z",
+        "tags": [
+          "adr",
+          "architecture",
+          "degradation",
+          "gating",
+          "pattern"
         ],
         "confidence": null,
         "importance": 6,
         "source": {
           "type": "session",
-          "agent": "researcher",
-          "task": "roadmap-creation"
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
         },
-        "summary": "Major agentic projects (LangChain/LangGraph/Goose/Aider) skip ROADMAP.md; use CNCF + smaller projects as references instead",
-        "type": "insight"
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.ai-state-living-document-recipe",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.architecture-docs-differentiation-gap",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.cross-cutting-convention-rule-skill-pair",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Pre-register escape hatches in ADRs for measurement-gated ACs; cleanly-invoked hatches are PASS-with-note, not WARN",
+        "valid_at": "2026-04-12T20:40:54.787691Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
       },
-      "spirit-document-pipeline-anchor-pattern": {
-        "value": "When a pipeline's success criterion is 'reproduce the quality of something the user produced by hand' (roadmaps, specs, architecture docs from a specific ultrathink prompt), create .ai-work/<task-slug>/SPIRIT.md containing: (1) the verbatim original user prompt blockquoted, (2) distilled dimensions/acceptance criteria, (3) what the feature must enable for the coordinator. Why it works: every subagent sees the same north star in one file; verbatim blockquote prevents summarization drift across pipeline stages; acceptance-criteria distillation below the prompt gives shared vocabulary for the whole pipeline. The researcher reads SPIRIT.md FIRST, before starting discovery. Apply to: any 'reproduce-this-quality' feature. Don't apply to: SDD/REQ-ID-driven work where traceability matrix already anchors intent. Observed in roadmap-creation pipeline 2026-04-12.",
-        "created_at": "2026-04-12T19:28:39.904619+00:00",
-        "updated_at": "2026-04-12T19:28:39.904619+00:00",
+      "spirit-is-exemplar-not-default": {
+        "value": "When building a reusable feature from a Praxion-specific exemplar (e.g., the six SPIRIT dimensions used for Praxion's own spring-cleaning ROADMAP), the exemplar must be framed as one instance of a generalized methodology — not imported as the canonical universal form. Cargo-culting the originating exemplar to arbitrary projects is the exact failure mode the roadmap-synthesis feature's own anti-patterns (R4 cargo-cult, R15 paradigm-mismatch) named. Apply the \"exemplar + derivation methodology + catalog of alternatives\" pattern: name the source exemplar, document how to derive a project-specific variant from the target's own values + domain constraints, and ship a catalog of peer exemplars (DORA, SPACE, FAIR, CNCF Platform Maturity, Custom) so users have fit-for-purpose starting points. Validated dec-036 in roadmap-creation rework 2026-04-12 — caught within hours of initial ship; contained fix across 8 active files + 1 new ADR.",
+        "created_at": "2026-04-12T21:11:00.521018Z",
+        "updated_at": "2026-04-12T21:11:00.521018Z",
         "tags": [
+          "architecture",
+          "cargo-cult",
+          "exemplar",
+          "generalization",
           "pattern",
-          "pipeline",
-          "subagent-coordination",
-          "ai-work"
+          "reusability"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.ai-state-living-document-recipe",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.architecture-docs-differentiation-gap",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.cross-cutting-convention-rule-skill-pair",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "When building a reusable feature from a Praxion-specific exemplar, frame the exemplar as one instance of a generalized methodology + catalog of alternatives — never as the default",
+        "valid_at": "2026-04-12T21:11:00.521018Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "opportunities-as-first-class-roadmap-section": {
+        "value": "A deficit-driven roadmap template cannot produce a forward-looking roadmap. If every Improvement Roadmap item has a required \"Problem addressed: Weakness Wn\" field, aspirational items (new capabilities, strategic bets, evolution trends) must retcon themselves as deficits — positioning opportunities as gaps. Fix (dec-037 canonical instance): catalogue Opportunities (O1..On) as a first-class section parallel to Weaknesses with forward-framed evidence (external trends + fetch date, user signals, adjacent-project traction); generalize the per-item field to \"Motivation\" with legal values Weakness | Opportunity | Evolution trend | Strategic bet | User request | Prior item. Lens-to-section mapping becomes explicit: deficit-oriented lenses feed Weaknesses; forward-oriented lenses (Evolution, Curiosity, Adoption) feed Opportunities. Pattern detection: any template field name that presumes its content (e.g., \"Problem addressed\") forecloses alternative framings — prefer neutral names (Motivation, Driver, Source).",
+        "created_at": "2026-04-12T21:35:22.027246Z",
+        "updated_at": "2026-04-12T21:35:22.027246Z",
+        "tags": [
+          "deficit-framing",
+          "forward-looking",
+          "pattern",
+          "roadmap",
+          "template"
         ],
         "confidence": null,
         "importance": 7,
         "source": {
           "type": "session",
-          "agent": "researcher",
-          "task": "roadmap-creation"
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
         },
-        "summary": "SPIRIT.md (verbatim user prompt + distilled dimensions) as pipeline north star prevents quality drift across subagents",
-        "type": "pattern"
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.spring-cleaning-parallel-audit-pattern",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.roadmap-shape-b-hybrid-pattern",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Deficit-biased templates foreclose forward vision; catalogue Opportunities separately + generalize per-item field names to neutral values (Motivation vs Problem)",
+        "valid_at": "2026-04-12T21:35:22.027246Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
       }
     },
     "project": {
@@ -4706,6 +5047,101 @@
         "invalid_at": null,
         "type": "decision",
         "created_by": null
+      },
+      "always-loaded-budget-at-106pct-apr-2026": {
+        "value": "As of 2026-04-12, Praxion's always-loaded context (CLAUDE.md files + unconditional rules) totals 56164 chars against a 52500-char ceiling = 106% of budget. ROADMAP.md W1 reports 96.8% — we are now past that. Dominant contributors: swe-agent-coordination-protocol.md (12577), claude/config/CLAUDE.md (9210), agent-intermediate-documents.md (8946), coding-style.md (6730). Any proposed new always-loaded artifact must bundle a reclamation offset of equal or greater size in the same ADR. This is a hard constraint on every pipeline that touches rules or root CLAUDE.md.",
+        "created_at": "2026-04-12T19:26:17.862309Z",
+        "updated_at": "2026-04-12T19:26:17.862309Z",
+        "tags": [
+          "always-loaded",
+          "budget",
+          "constraint",
+          "rules",
+          "token-budget"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Always-loaded budget at 106% of ceiling (56164/52500 chars); any new rule/CLAUDE.md content must bundle a reclamation offset",
+        "valid_at": "2026-04-12T19:26:17.862309Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "pointer-not-playbook-agent-discipline": {
+        "value": "Agents that compose skills via `skills:` frontmatter should be pointers-to-references, not playbook duplicates — halves the line count. The `roadmap-cartographer` agent landed at 210 lines vs promethean's 309. The difference is discipline: every phase in the cartographer points to a skill reference for procedural depth, while promethean inlines most of its procedure. Agents loading skills via `skills:` frontmatter can and should stay slim. The agent prompt's job is phase contracts + pointers, not playbooks. Validated 2026-04-12 in roadmap-cartographer implementation.",
+        "created_at": "2026-04-12T20:33:03.256900Z",
+        "updated_at": "2026-04-12T20:33:03.256900Z",
+        "tags": [
+          "agents",
+          "budget",
+          "composition",
+          "pattern",
+          "skills"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Agents composing skills via `skills:` frontmatter should be pointers, not playbooks — halves the line count (cartographer 210 vs promethean 309)",
+        "valid_at": "2026-04-12T20:33:03.256900Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "two-layer-discovery-sufficient-for-new-agents": {
+        "value": "A new agent can ship on (a) slash command + (b) description-based semantic activation alone when (c) the formal Available Agents table entry would break the always-loaded budget. Validated in roadmap-cartographer shipping 2026-04-12: formal Available Agents table entry + Delegation Checklist block were reverted when the budget offset proved infeasible; discovery via /roadmap command + agent description triggers still reliable. Two-layer is degraded vs three-layer (some coordinator workflows that read only the rule-level delegation protocol won't discover the agent) but ships the capability. When choosing to include or skip delegation-table entries for new agents, measure budget cost against actual discovery gain rather than defaulting to always-include.",
+        "created_at": "2026-04-12T20:41:00.684542Z",
+        "updated_at": "2026-04-12T20:41:00.684542Z",
+        "tags": [
+          "activation",
+          "agents",
+          "budget-tradeoff",
+          "discovery",
+          "pattern"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "project.pointer-not-playbook-agent-discipline",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "New agents can ship on /command + description activation alone when formal delegation-table entry would break budget; two-layer is degraded but functional",
+        "valid_at": "2026-04-12T20:41:00.684542Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
       }
     },
     "user": {
@@ -4771,6 +5207,35 @@
         ],
         "summary": "User prefers conditional worktree cleanup: verify branch fully merged and classify uncommitted changes before removing",
         "valid_at": "2026-04-12T16:48:56.377281Z",
+        "invalid_at": null,
+        "type": "preference",
+        "created_by": null
+      },
+      "claude-config-claude-md-versioned-mirror": {
+        "value": "`claude/config/CLAUDE.md` in the Praxion repo is an INTENTIONAL versioned mirror of the user's `~/.claude/CLAUDE.md` (global philosophy). It is byte-identical to the global file by design — the project preserves it under git so the user-level philosophy travels with the repo across checkouts and collaborators. Do NOT delete it even though automated audits will flag it as a \"duplicate.\" The byte-identity is the feature, not a bug. Sibling files `claude/config/CLAUDE_OLD.md` and `claude/config/CLAUDE_UNPOLISHED.md` WERE trial versions and were correctly deleted in Phase 1.7. Signal: after the Phase 1 foundation pipeline deleted all three, user said \"we should protect that one because precisely is the original user-level CLAUDE.md that I want to preserve to be versioned in this project.\"",
+        "created_at": "2026-04-12T18:49:18.263846Z",
+        "updated_at": "2026-04-12T18:49:18.263846Z",
+        "tags": [
+          "claude-md",
+          "do-not-delete",
+          "preference",
+          "versioning"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "claude/config/CLAUDE.md is an intentional versioned mirror of ~/.claude/CLAUDE.md — do not delete even when audits flag it as a duplicate",
+        "valid_at": "2026-04-12T18:49:18.263846Z",
         "invalid_at": null,
         "type": "preference",
         "created_by": null
