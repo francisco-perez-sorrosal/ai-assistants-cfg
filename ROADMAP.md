@@ -470,17 +470,34 @@ Items to remove or retire during the roadmap execution:
 
 How we'll know the roadmap is working:
 
-| Metric | Current | Phase 1 Target | Phase 3 Target |
-|--------|---------|----------------|----------------|
-| Token budget utilization | 96.8% | <80% | <75% |
-| Always-loaded rules token count | 10,715 | <8,500 | <8,000 |
-| Memory recall/search usage | 3+2=5 | >20 per 50 sessions | >50 per 50 sessions |
-| Memory entries never accessed | 83% | <60% | <40% |
-| CI test coverage | 0% of commits | 100% of PRs | 100% of PRs + type checking |
-| ADR status accuracy | 71% (15/21 correct) | 100% | 100% |
-| Agent turn budget exhaustion rate | Unknown | Measured | <10% of invocations |
-| Eval pipeline coverage | 1 eval type | 3 eval types | 5+ eval types |
-| Skill staleness markers | 0 skills | 5 version-sensitive skills | All version-sensitive skills |
+| Metric | Baseline | After Phase 1.1 | Phase 1 Target | Phase 3 Target |
+|--------|----------|-----------------|----------------|----------------|
+| Token budget utilization | 95.7% / 109.4%† | **86.9% / 99.3%†** ✅ | <80% | <75% |
+| Always-loaded rules token count‡ | 10,715 / 12,247† | **10,019 / 11,450†** ✅ | <8,500 | <8,000 |
+| Always-loaded total chars | 57,444 | **52,130** (−5,314) ✅ | <50,000 | <45,000 |
+| Memory recall/search usage | 3+2=5 | 5 (unchanged) | >20 per 50 sessions | >50 per 50 sessions |
+| Memory entries never accessed | 83% | 83% (unchanged) | <60% | <40% |
+| CI test coverage | 0% of commits | 0% (Phase 1.2 pending) | 100% of PRs | 100% of PRs + type checking |
+| ADR status accuracy | 71% (15/21 correct) | 68% (15/22 correct)§ | 100% | 100% |
+| Agent turn budget exhaustion rate | Unknown | Unknown | Measured | <10% of invocations |
+| Eval pipeline coverage | 1 eval type | 1 eval type | 3 eval types | 5+ eval types |
+| Skill staleness markers | 0 skills | 0 skills | 5 version-sensitive skills | All version-sensitive skills |
+
+**Footnotes:**
+
+† Two numbers shown: `(optimistic 4.0 chars/token) / (conservative 3.5 chars/token)`. The original ROADMAP baseline of "96.8%" was between these ratios; `CONTEXT_REVIEW.md` F3 established that actual baseline was 109.4% conservative / 95.7% optimistic. Subsequent metrics are reported at both ratios for honesty.
+
+‡ Always-loaded rules only (excludes CLAUDE.md files). Total always-loaded budget is the "Always-loaded total chars" row.
+
+§ Phase 1.1 added dec-022 (accepted). The "6 proposed ADRs that should be accepted" gap (dec-009, dec-010, dec-011, dec-015, dec-016, dec-019) from the knowledge audit remains open and is addressed by Phase 1.3. Ratio will jump to 22/22 = 100% when 1.3 completes.
+
+**Phase 1.1 delivered:**
+- Token budget: pulled under the 15,000-token ceiling at both tokenizer ratios (was at or over ceiling pre-refactor depending on ratio)
+- Always-loaded chars: 5,314-char reduction (~9.3% of pre-refactor budget)
+- Progressive disclosure pattern extended: coordination procedural content now lives in `skills/software-planning/references/coordination-details.md`, loaded only when agents execute the procedures
+- CLAUDE.md deliverables block made symmetric across all 4 pipeline agents (was missing implementer)
+
+**Still needed to reach Phase 1 targets**: 1.2 (CI pipeline) → shifts "CI test coverage" to 100%; 1.3 (ADR promotion) → shifts accuracy to 100%; 1.4 (memory hygiene) → addresses memory metrics; 1.1 Phase 1B (delegation checklists + coding-style path-scoping, deferred) → would take budget to <80%.
 
 ---
 
