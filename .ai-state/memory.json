@@ -3877,6 +3877,79 @@
         "invalid_at": null,
         "type": "gotcha",
         "created_by": null
+      },
+      "plan-char-count-done-when-miscalibration": {
+        "value": "Implementation plans with character-count done-when ceilings (e.g., \"under 10,000 chars\") can contradict their own \"Keep unchanged\" directives. In the token-budget-reclaim Phase 1.1 pipeline, 3 consecutive steps hit this: the plan set aggressive char targets without summing the \"Keep unchanged\" section sizes first. Implementer correctly flagged rather than violating retention rules. Lesson for future planners: compute ceiling as (sum of \"Keep unchanged\" sizes) + (reasonable slim overhead), not set independently. The directional goal (meaningful reduction) matters more than the arithmetic target when retention rules constrain the floor.",
+        "created_at": "2026-04-12T05:10:36.188090Z",
+        "updated_at": "2026-04-12T05:10:36.188090Z",
+        "tags": [
+          "done-when",
+          "gotcha",
+          "implementation-plan",
+          "pipeline",
+          "planning"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Plan char-count ceilings can contradict \"Keep unchanged\" retention rules — compute ceilings from retention floors, not independently",
+        "valid_at": "2026-04-12T05:10:36.188090Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "subagent-memory-mcp-tool-missing": {
+        "value": "Repeatedly confirmed across 7+ subagent invocations in Phase 1.1 pipeline (researcher, context-engineer, implementation-planner, implementer×5, verifier, doc-engineer): the mcp__plugin_i-am_memory__remember tool is NOT in any subagent's injected tool list. They only receive Read/Write/Edit/Glob/Grep/Bash. The SubagentStop hook's validate_memory.py fires expecting the MCP tool call but has no way to satisfy it. Subagents work around by writing to file-based agent memory at ~/.claude/agent-memory/i-am-<agent-type>/. Main agent is the only actor with MCP memory access. Fix options: (1) inject the memory MCP tool into all plugin subagents' allowed-tools; (2) make validate_memory.py exempt agents whose tool surface lacks the MCP tool; (3) recognize file-based agent memory as satisfying the gate.",
+        "created_at": "2026-04-12T05:10:56.849198Z",
+        "updated_at": "2026-04-12T05:10:56.849198Z",
+        "tags": [
+          "gotcha",
+          "mcp",
+          "memory-gate",
+          "subagents",
+          "tool-injection"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.memory-gate-requires-active-check",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.memory-metrics-tool-implementation",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.memory-schema-mismatch-cross-project",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Subagents lack mcp__plugin_i-am_memory__remember tool — memory_gate hook fires unavoidably; only main agent can call remember() directly",
+        "valid_at": "2026-04-12T05:10:56.849198Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
       }
     },
     "project": {
@@ -4346,6 +4419,74 @@
         "valid_at": "2026-04-06T17:43:35.068329Z",
         "invalid_at": null,
         "type": "decision",
+        "created_by": null
+      }
+    },
+    "user": {
+      "prefers-ff-merge-linear-history": {
+        "value": "User prefers fast-forward merges and linear git history over merge commits. When a feature branch needs main's changes (to edit a file added on main), don't do a bidirectional merge — instead rebase the branch onto main to linearize, then ff-merge into main. Rationale: cleaner history, easier to review, no merge-commit noise. Signal: user said \"I'd like to do a ff-merge on main and not the merge you've done\" after seeing a merge commit in the branch history.",
+        "created_at": "2026-04-12T05:10:29.310199Z",
+        "updated_at": "2026-04-12T05:10:29.310199Z",
+        "tags": [
+          "ff-merge",
+          "git",
+          "history",
+          "merge",
+          "preference",
+          "rebase"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "User prefers ff-merge with linear history; rebase branches onto main instead of creating merge commits",
+        "valid_at": "2026-04-12T05:10:29.310199Z",
+        "invalid_at": null,
+        "type": "preference",
+        "created_by": null
+      },
+      "prefers-conditional-worktree-cleanup": {
+        "value": "User prefers conditional worktree cleanup: \"remove the worktree if there's nothing that is not in main\". Signal-triggered cleanup pattern — don't auto-remove worktrees post-merge, wait for user signal, and when they signal, verify via `git log main..<branch>` that no unique commits exist before removing. Auto-generated observations.jsonl churn counts as safe-to-discard (not real work). The pattern: (1) verify branch fully merged, (2) check for uncommitted work, (3) classify uncommitted as hook-generated vs real work, (4) if only hook churn, force-remove worktree + delete branch.",
+        "created_at": "2026-04-12T16:48:56.377281Z",
+        "updated_at": "2026-04-12T16:48:56.377281Z",
+        "tags": [
+          "cleanup",
+          "git",
+          "preference",
+          "workflow",
+          "worktree"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "user.prefers-ff-merge-linear-history",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "User prefers conditional worktree cleanup: verify branch fully merged and classify uncommitted changes before removing",
+        "valid_at": "2026-04-12T16:48:56.377281Z",
+        "invalid_at": null,
+        "type": "preference",
         "created_by": null
       }
     }
