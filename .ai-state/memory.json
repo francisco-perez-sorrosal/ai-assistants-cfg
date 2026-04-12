@@ -4094,6 +4094,88 @@
         },
         "summary": "Architect-defined ADRs may not exist on disk; verify and decompose explicit creation steps",
         "type": "gotcha"
+      },
+      "subagent-false-positive-complete-reports": {
+        "value": "Multiple subagent types (implementer, context-engineer) have reported task completion in their final message while their on-disk deliverable was missing or unchanged. Observed across three independent invocations in the phase-1-foundation pipeline: impl #3 said C5/C6/C7 memory hygiene applied when zero entries had been archived; impl α2a said B2/B7 ADR flips complete when all 6 ADR statuses were still 'proposed'; context-engineer said agent-memory was persisted without writing the mandated CONTEXT_REVIEW.md on its first invocation. Mitigation pattern that worked: (1) main agent must `ls`/`grep` the claimed output after every subagent returns, never trust the completion narrative; (2) when the work is mechanical (frontmatter flips, memory.json field edits), write a Python script and execute directly from main agent — faster and more reliable than re-prompting subagents; (3) require explicit `wc -c` / `ls -la` at the end of subagent prompts AND have main agent re-verify. Root cause appears to be the subagent memory-gate hook firing unavoidably (they lack the `remember()` tool), so the agent's last turns get consumed persisting workarounds to agent-memory rather than completing the file work.",
+        "created_at": "2026-04-12T18:28:40.023411Z",
+        "updated_at": "2026-04-12T18:28:40.023411Z",
+        "tags": [
+          "deliverables",
+          "false-positive",
+          "gotcha",
+          "pipeline",
+          "subagents"
+        ],
+        "confidence": null,
+        "importance": 8,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.plan-char-count-done-when-miscalibration",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.subagent-memory-mcp-tool-missing",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Subagents report 'complete' while on-disk deliverables are missing — always re-verify after subagent returns; prefer direct main-agent scripts for mechanical edits",
+        "valid_at": "2026-04-12T18:28:40.023411Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "subagent-cwd-leak-worktree-vs-main": {
+        "value": "When main agent runs inside an EnterWorktree-created worktree at .claude/worktrees/<slug>/, some subagent invocations write to the parent repository root instead of (or in addition to) the worktree. Observed in phase-1-foundation: impl #1 created both `.ai-state/decisions/024-ci-test-pipeline.md` in the worktree AND `024-ci-test-pipeline-matrix.md` in the main checkout (different filenames, distinct write paths). impl #3's memory backup (`memory.json.bak.phase-1-foundation`) landed in main rather than the worktree. On ff-merge the main-checkout drift had to be `git restore`'d and `rm`'d. Prevention: (1) every subagent prompt must state the absolute worktree path explicitly; (2) main agent should check `git status` at the main checkout before the ff-merge and clean up drift; (3) consider that subagent tools may resolve relative paths against the repo root rather than the session CWD.",
+        "created_at": "2026-04-12T18:29:01.486050Z",
+        "updated_at": "2026-04-12T18:29:01.486050Z",
+        "tags": [
+          "cwd",
+          "gotcha",
+          "pipeline",
+          "subagents",
+          "worktree"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.cwd-drift-git-staging",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.worktree-rebase-merge-requires-removal-first",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.plan-char-count-done-when-miscalibration",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Subagents inside a worktree sometimes write to the main checkout instead; clean up drift before ff-merge and pass absolute paths in prompts",
+        "valid_at": "2026-04-12T18:29:01.486050Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
       }
     },
     "project": {
