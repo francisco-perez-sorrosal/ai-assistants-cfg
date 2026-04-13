@@ -152,6 +152,10 @@ task-chronograph-mcp/                # Pipeline observability MCP server
 memory-mcp/                          # Persistent memory MCP server
 ├── CLAUDE.md                        # MCP server dev conventions (lazy loaded)
 └── ...
+eval/                                # Out-of-band quality evals (praxion-evals CLI)
+├── pyproject.toml                   # Standalone uv project — not installed with plugin
+├── src/praxion_evals/               # behavioral, regression, judges, tiers
+└── tests/
 .ai-state/                           # Persistent project intelligence (committed to git)
 ├── decisions/                       # Architecture Decision Records (ADR files)
 │   ├── 001-skill-wrapper-over-mcp-server.md
@@ -333,6 +337,50 @@ The plugin manifest lives in `.claude-plugin/plugin.json`. Key constraints:
 - See `.claude-plugin/PLUGIN_SCHEMA_NOTES.md` for validator constraints
 - The plugin is distributed via the [`bit-agora`](https://github.com/francisco-perez-sorrosal/bit-agora) GitHub marketplace
 - When installed, commands are namespaced as `/i-am:<name>`
+
+## Quality Evals
+
+Quality measurement for agent pipelines that runs **separately from pipeline execution**, not as part of it. The developer invokes `/i-am:eval` by hand after a pipeline has finished; no hook triggers it automatically, and no agent ever calls it while a pipeline is in flight (binding constraint: [`dec-040`](.ai-state/decisions/040-eval-framework-out-of-band.md)). The framework lives in `eval/` as a standalone `uv` project and is **not** bundled with the plugin.
+
+### Purpose
+
+Two Tier 1 checks verify distinct quality dimensions after a pipeline completes:
+
+- **Behavioral** — confirms every expected deliverable for the pipeline's tier (lightweight, standard, full) was produced under `.ai-work/<task-slug>/`. Pure filesystem read; no LLM call, no network, no Phoenix.
+- **Regression** — compares a current Phoenix trace summary (span count, tool-call count, agent count, p95 duration) plus on-disk deliverables against a committed baseline JSON at `.ai-state/evals/baselines/<slug>.json`. Flags drift above threshold (15% for counts, 30% for duration) and lists missing deliverables.
+
+A supporting mode, `capture-baseline`, snapshots current Phoenix traces + `.ai-work/<slug>/*.md` deliverables into a fresh baseline JSON. Two Tier 2 tiers (LLM-as-judge for decision quality, cost analysis) are stubs and raise `NotImplementedError`.
+
+### When to run
+
+- After a significant pipeline run to confirm the agent produced the full artifact set
+- Before cutting a release to catch silent pipeline regressions (doubled tool-call counts, missing verifier reports, dropped agents)
+- On demand during development when investigating whether a pipeline misbehaved
+
+### Examples
+
+```sh
+/i-am:eval                                                           # list tier status
+/i-am:eval behavioral --task-slug architecture-doc                   # verify deliverables
+/i-am:eval behavioral --task-slug architecture-doc --tier full       # include ARCHITECTURE.md + docs/architecture.md recency
+/i-am:eval capture-baseline --task-slug my-feature                   # snapshot a baseline from live Phoenix + .ai-work/
+/i-am:eval regression --baseline .ai-state/evals/baselines/my-feature.json
+```
+
+Running `uv run --project eval praxion-evals capture-baseline` from the repo root requires `--repo-root .` because `uv` sets CWD to `eval/`, and the deliverable scanner resolves `.ai-work/<slug>/` relative to CWD.
+
+### Benefits
+
+- **Catches silent pipeline skips.** When a subagent reports "complete" but didn't actually write the deliverable (a recurring Praxion gotcha), behavioral flags the missing file. The verifier alone has false-positive failure modes; behavioral is an independent cross-check.
+- **Structural drift detection.** Regression surfaces when a pipeline starts making 2× the tool calls for the same task, drops an agent, or regresses p95 duration.
+- **Zero pipeline overhead.** Binding constraint in `dec-040`: eval code never runs inside a pipeline, so bugs in the eval framework cannot break agent work. Phoenix imports stay lazy (500 ms–2 s cold-import cost is paid only when regression or `capture-baseline` runs).
+- **Cheap to run.** Behavioral is a filesystem walk (milliseconds). Regression pulls one Phoenix DataFrame.
+
+### Scope
+
+Currently Praxion-internal: `/i-am:eval` resolves `Bash(uv run --project eval praxion-evals:*)` in its `allowed-tools` frontmatter, which requires the `eval/` project on disk. When the plugin is installed in another project, the command is exposed but invocation fails — there is no `eval/` directory and no `praxion-evals` binary on the path.
+
+The underlying concepts (artifact manifest, trace-summary regression) apply to any project that runs Praxion pipelines. Making the tooling portable would require bundling `eval/` inside the plugin via `${CLAUDE_PLUGIN_ROOT}/eval` (matching the MCP server pattern) or publishing `praxion-evals` to PyPI. Not in scope today — open an issue if you need to consume it downstream.
 
 ## Releases
 
