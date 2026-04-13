@@ -251,9 +251,20 @@ Build on the recovered token budget and CI foundation.
 
 Invest in systematic quality measurement and automation gaps.
 
-#### 3.1 Eval Framework Overhaul ✅ DONE (2026-04-12)
+#### 3.1 Eval Framework Overhaul ⚠️ SHIPPED BUT BROKEN (2026-04-12; limitation surfaced 2026-04-13)
 
 **Outcome**: New `eval/` uv workspace package with Tier 1 behavioral (artifact manifest check) and regression (Phoenix trace diff against baseline) evaluations landed. `/eval` slash command (scoped to `Bash(uv run --project eval praxion-evals:*)`); Tier 2 stubs (cost, decision-quality, claude-as-judge) deferred per user's "scope carefully" guidance. 30/30 eval tests pass. OUT-OF-BAND invariant enforced: `grep -rn praxion_evals hooks/` returns empty (dec-040). Existing `trajectory_eval.py` preserved as Tier 1 OpenAI-judge shim.
+
+> ⚠️ **Critical limitation discovered 2026-04-13**: The shipped **regression** implementation is effectively useless for Praxion's actual workflow. It keys baselines by `task_slug` (e.g., `.ai-state/evals/baselines/architecture-doc.json`), which assumes pipelines can be re-run on the same slug for comparison. But Praxion's slug semantics are **one-shot**: each feature generates a unique slug (`architecture-doc`, `deployment-skill`, `spring-cleaning`), runs exactly once, then `.ai-work/<slug>/` is deleted. There is no "next run" on that slug to compare against any captured baseline — so drift detection is meaningless in this model. The only narrow cases it fits are deliberately stable "smoke-test" slugs or retries of the same feature.
+>
+> **Additional bug found the same day**: `eval/pyproject.toml` depends on `arize-phoenix-evals` but not `arize-phoenix`, so `phoenix.Client()` raises `AttributeError`, is swallowed by the broad `except Exception` in `trace_reader.py`, and the CLI surfaces a misleading "Phoenix returned empty traces" instead of the real error. Live Phoenix capture never actually works.
+>
+> **Status of the three Tier 1 modes**:
+> - `behavioral` — **works** (filesystem check against `.ai-work/<slug>/`; independent of slug recurrence)
+> - `regression` — **useless** for general drift detection; see [3.7](#37-eval-framework-redesign-tiershape-keyed-baselines) for the replacement design
+> - `judge --provider openai` — preserved shim, works as documented
+>
+> Treat `/eval regression` as a proof-of-concept only until 3.7 lands. Downstream follow-ups (ADR-040 scope correction, CLI warning on invocation) live under 3.7.
 
 **Problem**: Stub framework with one eval type, no tests, stale patterns.
 
@@ -324,6 +335,58 @@ Invest in systematic quality measurement and automation gaps.
 
 **Dependencies**: None.
 **Risk**: None.
+
+#### 3.7 Eval Framework Redesign: Tier/Shape-Keyed Baselines
+
+**Status**: TODO — replaces the broken slug-keyed regression model shipped in 3.1. Blocks meaningful use of `/eval regression`.
+
+**Problem**: The regression model shipped in 3.1 keys baselines by `task_slug`. This assumes pipelines can be re-run on the same slug for comparison, which is false in Praxion. Each feature produces a unique one-shot slug (`architecture-doc`, `deployment-skill`, `spring-cleaning`), runs once, and is cleaned up. A captured baseline has no corresponding "next run" to diff against. For the actual question users want to ask — "does today's standard-tier pipeline look structurally different from a typical one?" — slug-keyed baselines are the wrong primitive because every slug-keyed baseline has a sample size of exactly one.
+
+**Root cause**: Real-world benchmark-regression systems (CI flakiness dashboards, performance envelopes) use **tier-keyed** or **shape-keyed** baselines — a statistical envelope built from many past pipelines of the same *category*, not a point snapshot of one specific run. Praxion runs dozens of standard-tier pipelines a month; that accumulated population is where the statistical signal lives.
+
+**Proposed design**:
+
+1. **Tier-keyed baselines** — stored as `.ai-state/evals/baselines/tier-<name>.json` (replacing `.ai-state/evals/baselines/<slug>.json`). Represents the envelope across all past pipelines of that tier:
+   ```json
+   {
+     "tier": "standard",
+     "captured_from_n_pipelines": 47,
+     "captured_window": "last-90-days",
+     "span_count":      { "p50": 120, "p95": 220 },
+     "tool_call_count": { "p50": 28,  "p95": 55  },
+     "agent_count":     { "p50": 5,   "p95": 6   },
+     "duration_ms_p95": { "p50": 4500, "p95": 8200 }
+   }
+   ```
+
+2. **Shape-keyed baselines** — finer signature within a tier when tier alone is too coarse. Shape is a tuple of structural characteristics: implementation-step count, use of test-engineer, parallel-pair count, use of refactoring. Files named `tier-standard__steps-small.json`, `tier-full__parallel-true__refactor-true.json`, etc. Regression picks the matching shape at runtime by inspecting the current pipeline's metadata.
+
+3. **Aggregate capture** — `capture-baseline` evolves from "snapshot one Phoenix project" to "sample N most recent pipelines matching tier/shape, compute p50/p95 percentiles". Requires either:
+   - Querying Phoenix across projects filtered by a `praxion.tier` / `praxion.shape` span attribute (preferred — requires chronograph span enrichment), or
+   - Reading `.ai-state/` history to collect past pipeline metadata plus Phoenix trace links
+
+4. **Regression check semantics** — "is this new run inside the envelope for its tier/shape?" Findings become percentile-based: "span_count = 340, outside p95 envelope of 220 (sampled from 47 standard-tier pipelines)". This is the drift detection users actually want.
+
+**Actions**:
+- Write ADR for the shift from slug-keyed to tier/shape-keyed baselines (partial supersession of dec-040 scope — invocation discipline stays; baseline keying changes)
+- Add `praxion.tier` and `praxion.shape.*` span attributes to chronograph OTel relay (requires chronograph change)
+- Refactor `BaselineSummary` → envelope schema (`p50` / `p95` per field instead of point values); update `diff.py` to percentile comparisons; rewrite `capture.py` for aggregate capture across N pipelines
+- Deprecate per-slug baseline files; migration plan for existing baselines (likely delete — the one existing baseline is not meaningful)
+- Fix the `arize-phoenix` dep gap in `eval/pyproject.toml` (precondition — without live Phoenix connectivity, no real capture is possible)
+- Surface Phoenix connectivity errors in the CLI instead of swallowing them in the `notes` tuple
+- Add a CLI banner on `/eval regression` and `/eval capture-baseline` warning that the current implementation is a preview pending 3.7
+
+**Dependencies**:
+- Chronograph span attribute enrichment (new sub-task in whichever phase owns chronograph changes)
+- No blocking dependencies from this phase; 3.1 was self-contained
+
+**Risk**: Medium. Core schema change retires the shipped 3.1 regression design. Behavioral and judge tiers are unaffected.
+
+**What stays from 3.1**:
+- `behavioral` eval (filesystem manifest check) — fully compatible, no redesign needed
+- OUT-OF-BAND invocation discipline (`dec-040`) — unchanged
+- `trajectory_eval.py` OpenAI judge shim — unchanged
+- CLI scaffolding, test harness, tier registry, `praxion-evals` entrypoint — reused
 
 ---
 
