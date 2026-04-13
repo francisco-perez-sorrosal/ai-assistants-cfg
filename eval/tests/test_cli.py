@@ -84,6 +84,74 @@ def test_regression_missing_baseline_returns_2(
     assert "Baseline not found" in captured.err
 
 
+def test_regression_prints_slug_keyed_banner(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    """regression must emit the ROADMAP 3.7 TODO banner before running."""
+    from types import SimpleNamespace
+
+    from praxion_evals.regression.baselines import (
+        BaselineSummary,
+        utc_now,
+        write_baseline,
+    )
+
+    baseline_path = tmp_path / "baseline.json"
+    write_baseline(
+        BaselineSummary(task_slug="demo", captured_at=utc_now(), span_count=10),
+        baseline_path,
+    )
+
+    fake_client = SimpleNamespace(get_spans_dataframe=lambda **_: None)
+    monkeypatch.setitem(
+        sys.modules,
+        "phoenix",
+        SimpleNamespace(Client=lambda *_a, **_k: fake_client),
+    )
+
+    main(["regression", "--baseline", str(baseline_path), "--repo-root", str(tmp_path)])
+    captured = capsys.readouterr()
+    assert "TODO" in captured.err
+    assert "slug-keyed" in captured.err
+    assert "ROADMAP 3.7" in captured.err
+
+
+def test_capture_baseline_prints_slug_keyed_banner(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    """capture-baseline must emit the ROADMAP 3.7 TODO banner before running."""
+    from types import SimpleNamespace
+
+    import pandas as pd
+
+    fake_client = SimpleNamespace(get_spans_dataframe=lambda **_: pd.DataFrame())
+    monkeypatch.setitem(
+        sys.modules,
+        "phoenix",
+        SimpleNamespace(Client=lambda *_a, **_k: fake_client),
+    )
+
+    main(
+        [
+            "capture-baseline",
+            "--task-slug",
+            "demo",
+            "--output",
+            str(tmp_path / "b.json"),
+            "--repo-root",
+            str(tmp_path),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert "TODO" in captured.err
+    assert "slug-keyed" in captured.err
+    assert "ROADMAP 3.7" in captured.err
+
+
 def test_regression_warns_when_baseline_has_no_numeric_fields(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -23,6 +23,17 @@ from praxion_evals.regression import (
     run_regression,
 )
 
+_SLUG_KEYED_BASELINE_WARNING = (
+    "TODO: slug-keyed baselines are effectively useless for Praxion's one-shot "
+    "slug semantics (each task_slug runs exactly once, then `.ai-work/<slug>/` "
+    "is deleted, so no comparison target exists for any captured baseline). "
+    "Treat this output as a proof-of-concept. Replacement design "
+    "(tier/shape-keyed envelope baselines sampled across many past pipelines) "
+    "tracked in ROADMAP 3.7: "
+    "https://github.com/francisco-perez-sorrosal/praxion/blob/main/ROADMAP.md"
+    "#37-eval-framework-redesign-tiershape-keyed-baselines"
+)
+
 
 def _cmd_list(_: argparse.Namespace) -> int:
     print("Praxion evals — available tiers")
@@ -51,6 +62,9 @@ def _cmd_regression(args: argparse.Namespace) -> int:
         print(f"Baseline not found: {baseline_path}", file=sys.stderr)
         return 2
 
+    print(_SLUG_KEYED_BASELINE_WARNING, file=sys.stderr)
+    print("", file=sys.stderr)
+
     repo_root = Path(args.repo_root) if args.repo_root else Path.cwd()
     baseline = load_baseline(baseline_path)
     if not baseline.has_numeric_fields:
@@ -74,6 +88,9 @@ def _cmd_regression(args: argparse.Namespace) -> int:
 
 
 def _cmd_capture_baseline(args: argparse.Namespace) -> int:
+    print(_SLUG_KEYED_BASELINE_WARNING, file=sys.stderr)
+    print("", file=sys.stderr)
+
     task_slug = args.task_slug
     repo_root = Path(args.repo_root) if args.repo_root else Path.cwd()
     output_path = Path(args.output) if args.output else default_output_path(task_slug, repo_root)
