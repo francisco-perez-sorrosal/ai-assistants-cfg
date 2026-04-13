@@ -1478,16 +1478,17 @@
         "created_by": null
       },
       "install-scripts-link-all-files-to-path": {
-        "value": "install_claude.sh relink_all() links ALL files in scripts/ to ~/.local/bin/ including test_reconcile_ai_state.py, CLAUDE.md, and __pycache__. The for loop should filter to only executable files ([ -x script ] check). Currently pollutes PATH with non-executable artifacts.",
+        "value": "install_claude.sh relink_all() links ALL files in scripts/ to ~/.local/bin/ including test files (test_reconcile_ai_state.py), CLAUDE.md, and __pycache__. The fix is to filter with `[ -f \"$script\" ] && [ -x \"$script\" ] || continue`. GOTCHA (added 2026-04-12 during Phase 3 task 3.6 planning): applying this filter silently drops any user-facing tool that is missing the executable bit — install succeeds but tools are invisible in ~/.local/bin/. Before landing the filter, audit scripts/ and classify each file: (a) user-facing tool — must be +x, (b) project-internal helper — non-+x, (c) docs/readme — non-+x, (d) test — non-+x. Run a chmod pass on category-(a) files first.",
         "created_at": "2026-04-12T02:30:04.013449Z",
-        "updated_at": "2026-04-12T02:30:04.013449Z",
+        "updated_at": "2026-04-13T00:57:22.537773Z",
         "tags": [
+          "executable-bits",
           "gotcha",
           "install",
           "scripts"
         ],
         "confidence": null,
-        "importance": 5,
+        "importance": 7,
         "source": {
           "type": "session",
           "detail": null,
@@ -1499,7 +1500,7 @@
         "last_accessed": null,
         "status": "active",
         "links": [],
-        "summary": "install_claude.sh links all scripts/* to PATH including tests and docs -- needs -x filter",
+        "summary": "install_claude.sh links all scripts/ files (incl. tests, CLAUDE.md); fix with [-x] filter but audit+chmod first or tools silently vanish",
         "valid_at": "2026-04-12T02:30:04.013449Z",
         "invalid_at": null,
         "type": "gotcha",
@@ -4743,6 +4744,202 @@
         ],
         "summary": "When ADR body decision drifts from implementation, append an Addendum section with a delta table — don't mutate the body (lighter than full supersession)",
         "valid_at": "2026-04-12T23:35:30.557776Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "runtime-tooling-zero-budget-placement": {
+        "value": "When adding a runtime-invoked diagnostic/eval/CLI tool to the ecosystem, prefer a thin command + reuse of an existing design-oriented skill over creating a new skill, rule, or inlining logic in a hook. Commands are loaded only on `/invocation` (zero always-loaded budget), skills load on activation (small budget if new), rules load unconditionally (always-loaded budget). Runtime tools that users invoke manually (e.g., `/eval`, `/audit`, `/trace`) should never trigger new skill creation unless the tool has reusable domain knowledge that OTHER consumers need. If the tool is single-consumer, the command file itself is the right home. Surfaced during Phase 3 task 3.1 planning — eval framework /eval command avoids creating a new skill since `testing-strategy` and `agent-evals` skills already cover the design knowledge.",
+        "created_at": "2026-04-13T00:57:47.923937Z",
+        "updated_at": "2026-04-13T00:57:47.923937Z",
+        "tags": [
+          "commands",
+          "context-engineering",
+          "pattern",
+          "skills",
+          "token-budget"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.catalog-readme-staleness-on-new-artifacts",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.command-structure-praxion",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.cross-cutting-convention-rule-skill-pair",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Runtime tools: thin command + reuse existing skill (zero always-loaded cost); new skill/rule only if cross-consumer reuse exists",
+        "valid_at": "2026-04-13T00:57:47.923937Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "concurrent-phase-adr-renumbering": {
+        "value": "When two pipelines overlap in time (Phase N's architecture stage runs while Phase N-1's ADRs merge to main), the architect's draft ADR numbers can collide with already-landed ADRs. The planner stage must reconcile: (1) verify draft numbers by listing .ai-state/decisions/ on the actual base branch, (2) renumber in place and update downstream refs, (3) add an 'Inputs Superseded' table at the top of IMPLEMENTATION_PLAN.md mapping draft→final IDs, (4) tell subagents explicitly that SYSTEMS_PLAN.md may cite draft numbers — LEARNINGS.md / ARCHITECTURE.md are source of truth. Canonical example: Phase 3 renumbered 038/039/040 → 040/041/042 after Phase 2 landed 038 (TEST_RESULTS.md) and 039 (memory-gate shared constant) on main.",
+        "created_at": "2026-04-13T01:19:16.000104Z",
+        "updated_at": "2026-04-13T01:19:16.000104Z",
+        "tags": [
+          "adr",
+          "coordination",
+          "pattern",
+          "planning",
+          "renumbering"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.living-doc-adr-mechanism-vs-instance",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.architect-adr-creation-drift-gotcha",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.graceful-degradation-as-first-class-plan-path",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Concurrent pipelines cause ADR number collisions; planner reconciles via 'Inputs Superseded' table + renumber + source-of-truth shift",
+        "valid_at": "2026-04-13T01:19:16.000104Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "latency-constraint-quantified-ec-pattern": {
+        "value": "When a user expresses a latency/non-blocking constraint ('no latency impact', 'save time without impacting quality', 'hot-path safe', 'non-blocking'), the planner must translate the qualitative directive into four artifacts in IMPLEMENTATION_PLAN.md: (1) quantified acceptance criteria with explicit numbers (e.g., <10 ms, <2 ms p95), (2) a dedicated benchmark substep assigned to a specific step (usually the paired test step or integration checkpoint), (3) a 'Latency' section in TEST_RESULTS.md with measured numbers the verifier can diff against EC thresholds, (4) a grep-style negative check as a done-criterion (e.g., 'grep -rn praxion_evals hooks/ returns empty') codifying the no-new-hot-path-caller invariant. Qualitative directives drift silently; quantification forces the bench-measure-record loop to live inside the plan. Canonical example: Phase 3 Quality & Automation EC-3.2.4 (shell gate <10 ms), EC-3.5.2 (rotation <2 ms p95), EC-3.1.5 (grep-level no-hook assertion for evals).",
+        "created_at": "2026-04-13T01:19:27.825322Z",
+        "updated_at": "2026-04-13T01:19:27.825322Z",
+        "tags": [
+          "acceptance-criteria",
+          "benchmarking",
+          "latency",
+          "pattern",
+          "planning"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.exemplar-as-north-star-acceptance-criterion",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.concurrent-phase-adr-renumbering",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "'No latency impact' user directives translate to quantified ECs + bench substeps + grep-level no-caller checks in the plan",
+        "valid_at": "2026-04-13T01:19:27.825322Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "awk-extract-pattern-for-testing-shell-scripts": {
+        "value": "When testing a function inside a shell script that has top-level side effects (like `install_claude.sh` calling `relink_all` at invocation), sourcing the whole script from a test triggers the side effects. Workaround: use `awk` to extract just the target function body into a temp file, then source the extraction. Pattern: `awk '/^function_name\\(\\)/,/^}/' source.sh > /tmp/fn.sh && source /tmp/fn.sh`. Keeps the test hermetic — no side-effect execution, no need to refactor the source to expose the function. Surfaced in pipeline-phase3-quality-automation Step 1 (2026-04-12) when testing install_claude.sh's filter predicate.",
+        "created_at": "2026-04-13T01:28:12.635455Z",
+        "updated_at": "2026-04-13T01:28:12.635455Z",
+        "tags": [
+          "hermeticity",
+          "pattern",
+          "shell",
+          "testing"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Testing shell functions in scripts with top-level side effects: awk-extract the function body to temp file + source",
+        "valid_at": "2026-04-13T01:28:12.635455Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "shell-gate-wrapper-doc-as-perf-optimization": {
+        "value": "When adding shell-gate wrappers (like cleanup_gate.sh wrapping promote_learnings.py, or commit_gate.sh wrapping check_code_quality.py) to hook registration, document them as PERFORMANCE OPTIMIZATIONS of existing hooks — not as additional hooks. Rationale: hook counts in architecture docs typically reflect distinct enforcement/observability roles. A shell gate has no distinct behavior; it's a Python-startup fast-path filter. Listing it as a separate hook inflates apparent complexity and obscures that the underlying Python hook still owns the semantics. Preferred doc location: extend the existing hook's bullet (e.g., \"fronted by shell-gate wrapper that skips Python startup on non-matching payloads\"), or add to the Hook lifecycle interface row in ARCHITECTURE.md. Surfaced during Phase 3 Step 7 (2026-04-12).",
+        "created_at": "2026-04-13T01:33:34.721105Z",
+        "updated_at": "2026-04-13T01:33:34.721105Z",
+        "tags": [
+          "documentation",
+          "hooks",
+          "pattern",
+          "performance"
+        ],
+        "confidence": null,
+        "importance": 5,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.architecture-docs-differentiation-gap",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.dual-audience-architecture-documentation",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.mechanical-moves-miss-semantic-docs",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Shell-gate wrappers (cleanup_gate.sh, commit_gate.sh) are perf optimizations of Python hooks — document as wrapper not as separate hook",
+        "valid_at": "2026-04-13T01:33:34.721105Z",
         "invalid_at": null,
         "type": "pattern",
         "created_by": null
