@@ -9,7 +9,7 @@ description: >
   architecture design, system design, trade-off analysis, technology selection,
   or structural assessment of a codebase before implementation.
 tools: Read, Glob, Grep, Bash, Write, Edit
-skills: [claude-ecosystem, agentic-sdks, communicating-agents, mcp-crafting]
+skills: [claude-ecosystem, agentic-sdks, communicating-agents, mcp-crafting, external-api-docs]
 model: opus
 permissionMode: acceptEdits
 background: true
@@ -69,7 +69,7 @@ Evaluate the codebase for structural readiness to receive the proposed changes:
 
 **API version drift check:**
 
-When the architecture involves external APIs, use the `external-api-docs` skill to check context-hub for current documentation. Compare the documented API version against the project's dependency version (`pyproject.toml`, `package.json`, etc.). If the project uses an older version than what the curated docs cover, flag the drift in the Risk Assessment (Phase 8) using the `[API VERSION DRIFT]` format defined in the skill.
+When the architecture involves external APIs, use the `external-api-docs` skill to check context-hub for current documentation. Compare the documented API version against the project's dependency version (`pyproject.toml`, `package.json`, etc.). If the project uses an older version than what the curated docs cover, flag the drift in the Risk Assessment (Phase 8) using the `[API VERSION DRIFT]` format defined in the skill. **Close the feedback loop**: if the fetched doc has architectural inaccuracies (wrong auth flows, missing rate-limit policies, outdated endpoint contracts), submit `chub_feedback` per the skill's Step 5 before finalizing the architecture phase.
 
 Before acting on drift, **assess the dependency's criticality** to decide how much attention it deserves:
 

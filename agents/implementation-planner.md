@@ -8,7 +8,7 @@ description: >
   into implementation steps, when resuming multi-session work, or when
   supervising execution against a plan.
 tools: Read, Glob, Grep, Bash, Write, Edit
-skills: software-planning
+skills: [software-planning, external-api-docs]
 permissionMode: acceptEdits
 background: true
 memory: user
@@ -47,6 +47,7 @@ Determine what you have to work with. The **task slug** (provided in your prompt
 5. **Check for existing IMPLEMENTATION_PLAN.md / WIP.md / LEARNINGS.md** — you may be resuming, not starting fresh
 6. **Check past decisions** — read `.ai-state/decisions/DECISIONS_INDEX.md` for prior ADRs whose `affected_files` or `tags` overlap with the current task. Prior decisions may constrain decomposition choices (e.g., a past decision to use a specific tool or pattern). Read the full ADR files for relevant matches.
 7. **Verify the architecture is sufficient** — you need enough design detail to decompose into steps
+8. **External API detection** — scan the `SYSTEMS_PLAN.md` Architecture section and `RESEARCH_FINDINGS.md` Dependencies section for external APIs, SDKs, or third-party integrations (Stripe, OpenAI, Anthropic, AWS, Railway, Supabase, etc.). For each one, the plan must include (or reference) a step that calls the `external-api-docs` skill to verify current endpoint signatures and auth flows before writing integration code. This is cheaper than catching drift at verification time. When drift exists (documented version ≠ pinned version), plan the implementation step against the pinned version, not the documented one. **Plan the feedback loop**: if the research surfaced doc issues (drift, missing sections, wrong examples), add an explicit step — or a note on the relevant integration step — to submit `chub_feedback` per the skill's Step 5 so the correction reaches maintainers.
 
 If `SYSTEMS_PLAN.md` does not exist or lacks architecture sections, recommend invoking the systems-architect agent first. If `RESEARCH_FINDINGS.md` is missing and the task is complex, recommend invoking the researcher agent first.
 

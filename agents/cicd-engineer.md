@@ -10,7 +10,7 @@ description: >
   GitHub Actions workflows, debug workflow failures, optimize pipeline
   performance, review CI/CD security, or set up deployment automation.
 tools: Read, Write, Edit, Glob, Grep, Bash
-skills: [cicd]
+skills: [cicd, external-api-docs]
 permissionMode: acceptEdits
 memory: user
 maxTurns: 50
@@ -53,7 +53,8 @@ Before making changes, gather context:
 3. **Read the cicd skill** -- load `skills/cicd/SKILL.md` for core principles and patterns
 4. **Load references on demand** -- load `skills/cicd/references/github-actions.md` for syntax details, `skills/cicd/references/patterns-and-examples.md` for complete workflow templates
 5. **Check for agent projects** -- if the project involves AI agents (agentic SDK dependencies, agent configs), also load `skills/agent-evals/SKILL.md` for eval-specific CI/CD patterns (eval-on-commit, deployment gates, regression tracking)
-6. **Determine mode** -- new pipeline, optimization, debugging, security review, or migration
+6. **External APIs in CI scope** -- if the workflow exercises external APIs (deployment targets like Railway/Fly/Vercel, auth providers, third-party SDKs), use the `external-api-docs` skill to look up current auth flows, required secrets, rate-limit policies, and webhook signature schemes before designing the job. Stale CI scripts against drifted APIs fail intermittently and mask real regressions. **Close the feedback loop**: if the fetched doc has wrong auth flows, missing rate-limit info, or outdated webhook signatures (the kind of issues that only surface when you try to wire them into CI), submit `chub_feedback` per the skill's Step 5.
+7. **Determine mode** -- new pipeline, optimization, debugging, security review, or migration
 
 ### Phase 2 -- Design or Diagnose (2/6)
 

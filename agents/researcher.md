@@ -7,7 +7,7 @@ description: >
   a codebase area, or gather context before architectural or implementation
   decisions.
 tools: Read, Glob, Grep, Bash, WebSearch, WebFetch, Write, Edit
-skills: claude-ecosystem
+skills: [claude-ecosystem, external-api-docs]
 permissionMode: default
 background: true
 memory: user
@@ -69,10 +69,11 @@ Record findings as you go. Be specific: include file paths, line numbers, functi
 
 When the research requires information beyond the codebase:
 
-1. **Search for authoritative sources** — official documentation, well-maintained repositories, RFCs, specs
-2. **Evaluate source reliability** — prefer official docs, established projects, and primary sources over blog posts and opinions
-3. **Extract actionable information** — focus on what is directly relevant to the research questions
-4. **Cross-reference claims** — verify important claims across multiple sources when possible
+1. **Check context-hub FIRST for any external API or SDK** — before any WebSearch or WebFetch for external library/API information, use the `external-api-docs` skill (`chub_search`, `chub_get`) to check for curated docs on every external API mentioned in the research scope. This is non-negotiable: it avoids training-data hallucination and silently-stale signatures. When curated docs exist, fetch them first; only fall back to WebSearch when context-hub has no entry. Record what was fetched in the Sources section of `RESEARCH_FINDINGS.md`. **Close the feedback loop**: if during your research you detect drift, errors, missing sections, or failing examples in a fetched doc, submit `chub_feedback` with a concrete comment (per the skill's Step 5 trigger list) before finishing the phase. Silent consumption of flawed docs leaves every future agent with the same stale information.
+2. **Search for authoritative sources** — official documentation, well-maintained repositories, RFCs, specs
+3. **Evaluate source reliability** — prefer official docs, established projects, and primary sources over blog posts and opinions
+4. **Extract actionable information** — focus on what is directly relevant to the research questions
+5. **Cross-reference claims** — verify important claims across multiple sources when possible
 
 **Source evaluation criteria:**
 

@@ -89,26 +89,55 @@ Do not paste the entire doc response into your work. Summarize or quote the rele
 
 ### Step 4: Annotate Discoveries
 
-When you find a gotcha, correction, or non-obvious pattern, persist it:
+When you find a gotcha, correction, or non-obvious pattern, persist it. Every annotation note must end with the identity suffix derived per [Identity Attribution](#identity-attribution) below:
 
 ```
-chub_annotate({ id: "stripe/api", note: "v2 PaymentIntents require idempotency keys for retries. Omitting causes silent duplicate charges." })
+chub_annotate({ id: "stripe/api", note: "v2 PaymentIntents require idempotency keys for retries. Omitting causes silent duplicate charges. — Francisco Perez-Sorrosal (fperezsorrosal@gmail.com)" })
 ```
 
 Annotations auto-append to future fetches of that entry, improving quality over time.
 
 ### Step 5: Give Feedback
 
-After using a doc, **always** rate it. This is how the ecosystem improves — maintainers use feedback to fix problems and prioritize updates. Every rating must include a label and a concrete comment. Be honest and straight to the point.
+After using a doc, **always** rate it. This is how the ecosystem improves — maintainers use feedback to fix problems and prioritize updates. Every rating must include a label, a concrete comment, and the identity suffix (see [Identity Attribution](#identity-attribution)). Be honest and straight to the point.
 
 **Comment quality matters.** Vague comments ("good docs", "didn't work") waste maintainer time. State exactly what was correct or what was wrong, with specifics: endpoint names, parameter mismatches, version numbers, missing sections.
 
+**Trigger conditions — always submit corrective feedback when you detect:**
+
+- Version drift (documented version ≠ current published version of the library/API)
+- Wrong model names, deprecated endpoints, or missing parameters
+- Auth flow inaccuracies, incorrect header/signature schemes
+- Code examples that fail to run or produce wrong output
+- Missing sections (error codes, rate limits, webhook payloads, pagination)
+- Inaccurate descriptions contradicted by the live API
+
+Silent consumption of flawed docs is prohibited — every future agent will inherit the same stale information unless you report it now.
+
 ```
-chub_feedback({ id: "stripe/api", vote: "up", label: "accurate", comment: "PaymentIntents create/confirm flow matches v2024-12 API. Python examples run without modification." })
-chub_feedback({ id: "openai/chat", vote: "down", label: "outdated", comment: "Documents gpt-4o as latest model but gpt-5.4 is current. Structured outputs section missing the 'strict' parameter added in 2025." })
-chub_feedback({ id: "anthropic/sdk", vote: "down", label: "incomplete", comment: "No coverage of streaming tool_use responses. Only shows non-streaming examples." })
-chub_feedback({ id: "fastapi/docs", vote: "up", label: "good-examples", comment: "Dependency injection examples cover all three scopes (request, session, app). Error handling patterns are production-ready." })
+chub_feedback({ id: "stripe/api", vote: "up", label: "accurate", comment: "PaymentIntents create/confirm flow matches v2024-12 API. Python examples run without modification. — Francisco Perez-Sorrosal (fperezsorrosal@gmail.com)" })
+chub_feedback({ id: "openai/chat", vote: "down", label: "outdated", comment: "Documents gpt-4o as latest model but gpt-5.4 is current. Structured outputs section missing the 'strict' parameter added in 2025. — Francisco Perez-Sorrosal (fperezsorrosal@gmail.com)" })
+chub_feedback({ id: "anthropic/sdk", vote: "down", label: "incomplete", comment: "No coverage of streaming tool_use responses. Only shows non-streaming examples. — Francisco Perez-Sorrosal (fperezsorrosal@gmail.com)" })
+chub_feedback({ id: "fastapi/docs", vote: "up", label: "good-examples", comment: "Dependency injection examples cover all three scopes (request, session, app). Error handling patterns are production-ready. — Francisco Perez-Sorrosal (fperezsorrosal@gmail.com)" })
 ```
+
+### Identity Attribution
+
+Every `chub_feedback` comment and `chub_annotate` note must end with the current user's identity so maintainers can follow up and future readers of annotations know the source. Derive the identity at call time from `git config`:
+
+```bash
+name=$(git config --get user.name)
+email=$(git config --get user.email)
+# Suffix to append: " — ${name} (${email})"
+```
+
+Append exactly this suffix, separated from the body by a ` — ` (em-dash with surrounding spaces):
+
+```
+... <your comment/note body>. — Francisco Perez-Sorrosal (fperezsorrosal@gmail.com)
+```
+
+**If git config is unavailable or either field is empty**, submit the feedback/annotation WITHOUT the suffix rather than with a partial or empty parenthetical. Never fabricate an identity.
 
 Available labels:
 

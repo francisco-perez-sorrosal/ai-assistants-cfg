@@ -102,6 +102,14 @@ Spawn agents without waiting for the user to ask:
 
 **Task slug propagation:** At pipeline start, the main agent generates a kebab-case task slug (2–4 words) derived from the task description; every subagent prompt must include `Task slug: <slug>`, and all `.ai-work/` reads and writes use `.ai-work/<task-slug>/`. See [coordination-details.md#task-slug-propagation](../../skills/software-planning/references/coordination-details.md#task-slug-propagation) for the full propagation contract; see the [task slug convention](agent-intermediate-documents.md#task-slug-convention) for naming guidelines.
 
+### Cross-Agent Skill Conventions
+
+Conventions that apply across multiple pipeline agents independent of their phase.
+
+**External API docs are non-optional.** Any agent whose work touches an external API, SDK, or third-party integration (Stripe, OpenAI, Anthropic, AWS, Railway, Supabase, Nango, etc.) must use the `external-api-docs` skill before writing, designing, testing, planning, or CI-configuring against it. The skill is injected into researcher, systems-architect, implementation-planner, implementer, test-engineer, and cicd-engineer for this reason — it is not aspirational prose, it is a pre-loaded capability these agents are expected to exercise. When context-hub has no entry, fall back to WebSearch/WebFetch; when it does, prefer it over web search to avoid training-data hallucination and stale API signatures. Prose mention without frontmatter injection is insufficient — the agent's skill list is the enforcement surface.
+
+**The protocol is bidirectional — consume AND give feedback.** Agents that detect drift, errors, missing sections, or failing examples in a fetched doc must submit `chub_feedback` (with the identity suffix derived from `git config`) per the skill's Step 5 before finishing the phase. Silent consumption of flawed docs is prohibited — it leaves every future agent with the same stale information. The feedback rule applies at both run-time (submit now) and plan-time (the implementation-planner schedules a feedback step when research surfaced doc issues).
+
 ### Coordination Pipeline
 
 Agents communicate through shared documents, not direct invocation. The pipeline flows promethean → researcher → systems-architect → implementation-planner → (implementer ∥ test-engineer ∥ doc-engineer) → verifier, with context-engineer shadowing research+architecture and sentinel running as an independent audit. See [coordination-details.md#coordination-pipeline-diagram](../../skills/software-planning/references/coordination-details.md#coordination-pipeline-diagram) for the ASCII diagram.
