@@ -447,8 +447,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -490,8 +490,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "New skills/commands need catalog README updates + skill-level README.md — verifier catches staleness as WARN",
@@ -522,8 +522,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "Chronograph hierarchy gap RESOLVED: agents now parent under main-agent with depth tracking, git context, artifact spans",
@@ -587,8 +587,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 1,
-        "last_accessed": "2026-04-06T20:05:19.284001Z",
+        "access_count": 2,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "Chub MCP lives in ~/.claude.json, not plugin.json or settings.json — set by install_claude.sh",
@@ -674,8 +674,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "Praxion command layout: /commands/<name>.md with frontmatter+prose; see skills/command-crafting/SKILL.md",
@@ -747,8 +747,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "CWD drift to subproject dirs causes git staging failures — use relative paths from CWD",
@@ -778,8 +778,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -855,8 +855,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -1145,7 +1145,9 @@
           "task": "spring-cleaning-external-research"
         },
         "summary": "Praxion lacks structured eval framework; industry uses Promptfoo/DeepEval/SWE-bench/LLM-as-judge",
-        "type": "insight"
+        "type": "insight",
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z"
       },
       "gh-issue-create-template-yaml-limitation": {
         "value": "The `gh issue create --template` flag only works with markdown (.md) issue templates, NOT with YAML form-based templates (.yml) that modern GitHub repos use. YAML form templates are GitHub web-only. To file template-compliant issues via CLI, you must parse the YAML template yourself and construct a --body that maps to each field. This is a critical design constraint for any automated issue-filing workflow. Discovered while researching upstream issue stewardship for Praxion — our filed issue anthropics/claude-code#44075 bypassed the template entirely, missing required fields (Claude Code version, model, regression status, platform, terminal).",
@@ -1729,8 +1731,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "MCP subprojects need Python 3.13+ via uv venv — system Python 3.11 causes import failures",
@@ -2041,8 +2043,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -2311,8 +2313,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "The metrics() tool is properly defined in memory MCP server (memory-mcp/src/memory_mcp/server.py,...",
@@ -2437,8 +2439,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -2726,8 +2728,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -2761,8 +2763,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -2876,8 +2878,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -2919,8 +2921,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -2996,8 +2998,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -3161,8 +3163,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -3204,8 +3206,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "Structured checklist for reviewing Skill+Command pair proposals against ecosystem conventions",
@@ -3234,8 +3236,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -3307,8 +3309,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -3346,8 +3348,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "6-agent parallel audit pattern for comprehensive ecosystem evaluation → ROADMAP.md synthesis",
@@ -3671,8 +3673,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 1,
-        "last_accessed": "2026-04-06T20:05:19.284001Z",
+        "access_count": 2,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "Upstream stewardship finalized: Skill+Command+Tracker, 8-phase workflow, two-layer dedup, extended sanitization, user gate",
@@ -4241,8 +4243,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "SPIRIT outcome dimensions map to artifact shapes asymmetrically; user-gate depth alone can flip skill-only to agent+skill — evaluate coverage, not just token cost",
@@ -4271,8 +4273,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -4473,8 +4475,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -4600,8 +4602,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -4768,8 +4770,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -4854,8 +4856,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -4943,6 +4945,128 @@
         "invalid_at": null,
         "type": "pattern",
         "created_by": null
+      },
+      "soft-reset-branch-collapse-for-ff-merge": {
+        "value": "When a worktree branch has accumulated intermediate commits (e.g., wip commit + merge-from-main commit + final feat commit) and you want a clean ff-merge into main with a single commit, use `git reset --soft main` from the branch tip. This moves HEAD back to main while keeping the staged tree intact — then commit fresh with one message. Produces exactly one commit ahead of main, enabling `git merge --ff-only` from main. Avoids interactive rebase complexity when merge commits are involved (rebase can drop or duplicate the merge). Canonical example: Phase 3 pipeline had wip (ADR renumber) + merge (pull Phase 2's ADRs) + feat (implementation) commits; soft-reset collapsed them into one clean feat commit for ff-merge. Note: verify memory.json / observations.jsonl (telemetry that mutates during session) are not accidentally staged — `git restore --staged` before the commit, then chore-commit separately.",
+        "created_at": "2026-04-13T02:05:28.426518Z",
+        "updated_at": "2026-04-13T02:05:28.426518Z",
+        "tags": [
+          "git",
+          "pattern",
+          "soft-reset",
+          "workflow",
+          "worktree"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.stale-branch-fast-forward-pattern",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.worktree-merge-state-file-stash-pattern",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.worktree-observations-merge-pattern",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Collapse branch with wip+merge+feat commits into one via `git reset --soft main` + fresh commit, enables clean ff-merge",
+        "valid_at": "2026-04-13T02:05:28.426518Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
+      },
+      "eval-command-praxion-only-not-portable": {
+        "value": "The /i-am:eval slash command is Praxion-specific infrastructure despite being plugin-installable. It hardcodes `uv run --project eval praxion-evals:*` in its allowed-tools frontmatter (commands/eval.md), which only resolves inside the Praxion repo where the eval/ uv project and the praxion-evals CLI exist. Installing the i-am plugin in another project exposes /i-am:eval but invocation will fail — there's no eval/ package to run. For non-Praxion projects, the intended portable surface is the agent-evals skill (framework-agnostic eval design guidance: Inspect AI, DeepEval, Promptfoo) following the same out-of-band discipline enforced by dec-040. When explaining eval capabilities to users of other projects, point them to the skill, not the command.",
+        "created_at": "2026-04-13T02:16:15.654910Z",
+        "updated_at": "2026-04-13T02:16:15.654910Z",
+        "tags": [
+          "commands",
+          "eval",
+          "gotcha",
+          "portability",
+          "praxion-specific"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.plugin-cache-stale-after-reinstall",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "/i-am:eval is Praxion-only (hardcoded praxion-evals CLI); other projects should use the agent-evals skill instead",
+        "valid_at": "2026-04-13T02:16:15.654910Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "regression-baseline-silent-pass-gap": {
+        "value": "The praxion-evals regression diff engine (eval/src/praxion_evals/regression/diff.py) only compares numeric fields: span_count, tool_call_count, agent_count, duration_ms_p50, duration_ms_p95. If a BaselineSummary lacks all of them (only has expected_phases/expected_deliverables/captured_at), compare_summaries returns an empty findings tuple and the CLI prints \"No drift detected\" — a vacuous pass, not a proof of stability. Fixed in this change: (a) BaselineSummary.has_numeric_fields property + CLI WARNING, (b) new `capture-baseline` subcommand that snapshots Phoenix numeric fields, (c) run_regression(repo_root=...) now also checks expected_deliverables on disk. Remaining semantic gap: expected_phases stores pipeline phase names (\"research\", \"architecture\") while Phoenix stores agent names (\"researcher\", \"systems-architect\"); cross-checking phases requires either renaming the field to expected_agents or building a phase→agent mapping. Deferred in code with a comment in runner.py. Also: `uv run --project eval praxion-evals capture-baseline` sets CWD to eval/, so --repo-root . must be passed explicitly for the .ai-work/ deliverable scan to find anything.",
+        "created_at": "2026-04-13T02:26:11.130430Z",
+        "updated_at": "2026-04-13T02:26:11.130430Z",
+        "tags": [
+          "baseline",
+          "eval",
+          "gotcha",
+          "phoenix",
+          "regression",
+          "schema-consumer-mismatch"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.otel-relay-zero-duration-spans",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.phoenix-custom-dashboards-ax-only",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.phoenix-graph-node-attrs-for-agent-graph",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Eval regression silently passed on numeric-less baselines; fixed with warning + capture-baseline + deliverable check. Phase-vs-agent-name gap still open.",
+        "valid_at": "2026-04-13T02:26:11.130430Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
       }
     },
     "project": {
@@ -4969,8 +5093,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "ARCHITECTURE.md bootstrapped — 8 sections, 3-layer model, 14 ADR refs, verified ecosystem counts",
@@ -5061,8 +5185,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -5186,8 +5310,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "Praxion plugin: skills/agents/rules/commands/hooks + 2 MCP servers; see .claude-plugin/plugin.json and ARCHITECTURE docs",
@@ -5216,8 +5340,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "Project exploration Skill+Command implemented: 5 files, 3 modes, Mermaid in v1, source-code-as-truth",
@@ -5245,8 +5369,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -5278,8 +5402,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "Skill reference files: standard header format, 100-300 line target, artifact-naming.md shared across 5 crafting skills",
@@ -5308,8 +5432,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 1,
-        "last_accessed": "2026-04-06T20:05:19.284001Z",
+        "access_count": 2,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "Roadmap 15/16 Strong; remaining: deployment skill, token compression, sentinel size, co/cop merge, GH templates",
@@ -5338,8 +5462,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "ROADMAP.md created: 5 phases from foundation repair to strategic horizons, driven by 6-agent audit",
@@ -5404,8 +5528,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 1,
-        "last_accessed": "2026-04-06T20:05:19.284001Z",
+        "access_count": 2,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [],
         "summary": "Upstream issue steward: formal artifact for responsible OSS bug reporting, dedup, sensitive info stripping, and fix contribution",
@@ -5494,8 +5618,8 @@
           "agent_id": null,
           "session_id": null
         },
-        "access_count": 0,
-        "last_accessed": null,
+        "access_count": 1,
+        "last_accessed": "2026-04-13T02:16:05.191113Z",
         "status": "active",
         "links": [
           {
@@ -5602,6 +5726,35 @@
         "links": [],
         "summary": "claude/config/CLAUDE.md is an intentional versioned mirror of ~/.claude/CLAUDE.md — do not delete even when audits flag it as a duplicate",
         "valid_at": "2026-04-12T18:49:18.263846Z",
+        "invalid_at": null,
+        "type": "preference",
+        "created_by": null
+      },
+      "avoid-jargon-in-user-facing-docs": {
+        "value": "User prefers plain language over technical jargon in user/developer-facing documentation. Specifically corrected \"out-of-band\" as cryptic and asked for clearer terms — rewrite as \"runs separately from pipeline execution, not as part of it\" (state the meaning directly rather than using the term of art). This applies to README files, docs/, user-facing command descriptions, and anything the developer consumes as a consumer of Praxion (not internal code comments or ADRs where precise jargon is appropriate). When a technical term has a plain-English equivalent, prefer the plain version. When jargon is unavoidable, define it inline in the same sentence. Other candidates to watch for: \"retrofit\", \"idempotent\", \"orthogonal\", \"dispatch\" — check if a plainer phrasing works first.",
+        "created_at": "2026-04-13T02:39:30.182719Z",
+        "updated_at": "2026-04-13T02:39:30.182719Z",
+        "tags": [
+          "documentation",
+          "plain-language",
+          "preference",
+          "writing-style"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "User prefers plain language over jargon in user/developer-facing docs; \"out-of-band\" was flagged as cryptic — state meaning directly",
+        "valid_at": "2026-04-13T02:39:30.182719Z",
         "invalid_at": null,
         "type": "preference",
         "created_by": null
