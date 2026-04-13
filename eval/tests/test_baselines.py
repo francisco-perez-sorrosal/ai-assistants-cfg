@@ -42,3 +42,31 @@ def test_optional_fields_default_to_none(tmp_path: Path):
     assert loaded.span_count is None
     assert loaded.duration_ms_p95 is None
     assert loaded.expected_phases == ()
+
+
+def test_has_numeric_fields_false_without_numeric_data():
+    baseline = BaselineSummary(
+        task_slug="demo",
+        captured_at=utc_now(),
+        expected_phases=("research",),
+        expected_deliverables=(".ai-work/demo/WIP.md",),
+    )
+    assert baseline.has_numeric_fields is False
+
+
+def test_has_numeric_fields_true_when_any_numeric_field_set():
+    baseline = BaselineSummary(
+        task_slug="demo",
+        captured_at=utc_now(),
+        span_count=10,
+    )
+    assert baseline.has_numeric_fields is True
+
+
+def test_has_numeric_fields_true_for_duration_only():
+    baseline = BaselineSummary(
+        task_slug="demo",
+        captured_at=utc_now(),
+        duration_ms_p95=1200.0,
+    )
+    assert baseline.has_numeric_fields is True

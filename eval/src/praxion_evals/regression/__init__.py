@@ -9,6 +9,11 @@ from praxion_evals.regression.baselines import (
     load_baseline,
     write_baseline,
 )
+from praxion_evals.regression.capture import (
+    capture_and_write,
+    capture_baseline,
+    default_output_path,
+)
 from praxion_evals.regression.diff import DiffResult, compare_summaries
 from praxion_evals.regression.runner import run_regression
 from praxion_evals.regression.trace_reader import (
@@ -21,7 +26,10 @@ __all__ = [
     "BaselineSummary",
     "DiffResult",
     "TraceSummary",
+    "capture_and_write",
+    "capture_baseline",
     "compare_summaries",
+    "default_output_path",
     "load_baseline",
     "read_current_summary",
     "run_regression",

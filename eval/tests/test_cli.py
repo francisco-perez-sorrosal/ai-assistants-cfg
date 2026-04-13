@@ -82,3 +82,132 @@ def test_regression_missing_baseline_returns_2(
     assert exit_code == 2
     captured = capsys.readouterr()
     assert "Baseline not found" in captured.err
+
+
+def test_regression_warns_when_baseline_has_no_numeric_fields(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    """Regression against a numeric-less baseline must print a WARNING to stderr."""
+    from praxion_evals.regression.baselines import (
+        BaselineSummary,
+        utc_now,
+        write_baseline,
+    )
+
+    baseline_path = tmp_path / "baseline.json"
+    write_baseline(
+        BaselineSummary(
+            task_slug="demo",
+            captured_at=utc_now(),
+            expected_phases=("research",),
+        ),
+        baseline_path,
+    )
+
+    # Stub Phoenix so read_current_summary returns empty without network.
+    from types import SimpleNamespace
+
+    fake_client = SimpleNamespace(get_spans_dataframe=lambda **_: None)
+    monkeypatch.setitem(
+        sys.modules,
+        "phoenix",
+        SimpleNamespace(Client=lambda *_a, **_k: fake_client),
+    )
+
+    exit_code = main(
+        [
+            "regression",
+            "--baseline",
+            str(baseline_path),
+            "--repo-root",
+            str(tmp_path),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert "WARNING" in captured.err
+    assert "no numeric fields" in captured.err
+    assert exit_code == 0  # no numeric drift is possible
+
+
+def test_capture_baseline_subcommand_writes_json(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    """capture-baseline writes to the conventional path and reports numeric fields."""
+    # Stub Phoenix to return a synthetic DataFrame.
+    from types import SimpleNamespace
+
+    import pandas as pd
+
+    df = pd.DataFrame(
+        [
+            {"span_kind": "CHAIN", "name": "root"},
+            {"span_kind": "TOOL", "name": "Read"},
+            {"span_kind": "AGENT", "name": "researcher"},
+        ]
+    )
+    fake_client = SimpleNamespace(get_spans_dataframe=lambda **_: df)
+    monkeypatch.setitem(
+        sys.modules,
+        "phoenix",
+        SimpleNamespace(Client=lambda *_a, **_k: fake_client),
+    )
+
+    # Seed a deliverable under .ai-work/demo/.
+    task_dir = tmp_path / ".ai-work" / "demo"
+    task_dir.mkdir(parents=True)
+    (task_dir / "SYSTEMS_PLAN.md").write_text("x", encoding="utf-8")
+
+    exit_code = main(
+        [
+            "capture-baseline",
+            "--task-slug",
+            "demo",
+            "--repo-root",
+            str(tmp_path),
+        ]
+    )
+
+    expected_output = tmp_path / ".ai-state" / "evals" / "baselines" / "demo.json"
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert expected_output.exists()
+    assert "span_count=3" in captured.out
+    assert "tool_call_count=1" in captured.out
+    assert "discovered 1 deliverables" in captured.out
+
+
+def test_capture_baseline_respects_output_override(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """--output overrides the default baseline path."""
+    from types import SimpleNamespace
+
+    import pandas as pd
+
+    fake_client = SimpleNamespace(get_spans_dataframe=lambda **_: pd.DataFrame())
+    monkeypatch.setitem(
+        sys.modules,
+        "phoenix",
+        SimpleNamespace(Client=lambda *_a, **_k: fake_client),
+    )
+
+    custom_output = tmp_path / "custom" / "baseline.json"
+    exit_code = main(
+        [
+            "capture-baseline",
+            "--task-slug",
+            "demo",
+            "--output",
+            str(custom_output),
+            "--repo-root",
+            str(tmp_path),
+        ]
+    )
+    assert exit_code == 0
+    assert custom_output.exists()
+    assert not (tmp_path / ".ai-state").exists()

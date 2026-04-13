@@ -1,10 +1,11 @@
 """Praxion evals CLI — thin argparse dispatch to tier entrypoints.
 
 Subcommands:
-    list          Default — print the tier registry status table.
-    behavioral    Run Tier 1 behavioral eval against a task slug.
-    regression    Run Tier 1 regression eval against a baseline JSON.
-    judge         Run a specific LLM judge (openai is Tier 1, anthropic is stub).
+    list              Default — print the tier registry status table.
+    behavioral        Run Tier 1 behavioral eval against a task slug.
+    regression        Run Tier 1 regression eval against a baseline JSON.
+    capture-baseline  Snapshot current Phoenix traces into a baseline JSON.
+    judge             Run a specific LLM judge (openai is Tier 1, anthropic is stub).
 """
 
 from __future__ import annotations
@@ -15,7 +16,12 @@ from pathlib import Path
 
 from praxion_evals import tiers as tier_registry
 from praxion_evals.behavioral import PipelineTier, render_markdown, run_behavioral
-from praxion_evals.regression import run_regression
+from praxion_evals.regression import (
+    capture_and_write,
+    default_output_path,
+    load_baseline,
+    run_regression,
+)
 
 
 def _cmd_list(_: argparse.Namespace) -> int:
@@ -45,7 +51,18 @@ def _cmd_regression(args: argparse.Namespace) -> int:
         print(f"Baseline not found: {baseline_path}", file=sys.stderr)
         return 2
 
-    result = run_regression(baseline_path)
+    repo_root = Path(args.repo_root) if args.repo_root else Path.cwd()
+    baseline = load_baseline(baseline_path)
+    if not baseline.has_numeric_fields:
+        print(
+            "WARNING: baseline has no numeric fields "
+            "(span_count, tool_call_count, agent_count, duration_ms_p50/p95) -- "
+            "numeric drift cannot be detected. Run `praxion-evals capture-baseline "
+            f"--task-slug {baseline.task_slug}` to refresh from Phoenix.",
+            file=sys.stderr,
+        )
+
+    result = run_regression(baseline_path, repo_root=repo_root)
     if not result.has_drift:
         print(f"No drift detected for task_slug={result.task_slug}.")
         return 0
@@ -54,6 +71,36 @@ def _cmd_regression(args: argparse.Namespace) -> int:
     for finding in result.findings:
         print(f"- {finding}")
     return 1
+
+
+def _cmd_capture_baseline(args: argparse.Namespace) -> int:
+    task_slug = args.task_slug
+    repo_root = Path(args.repo_root) if args.repo_root else Path.cwd()
+    output_path = Path(args.output) if args.output else default_output_path(task_slug, repo_root)
+
+    baseline = capture_and_write(
+        task_slug=task_slug,
+        output_path=output_path,
+        repo_root=repo_root,
+    )
+
+    print(f"Captured baseline for task_slug={task_slug} -> {output_path}")
+    if baseline.has_numeric_fields:
+        print(
+            f"  span_count={baseline.span_count} "
+            f"tool_call_count={baseline.tool_call_count} "
+            f"agent_count={baseline.agent_count} "
+            f"duration_ms_p95={baseline.duration_ms_p95}"
+        )
+    else:
+        print(
+            "  NOTE: no numeric fields captured -- Phoenix returned empty traces. "
+            "Run the pipeline first or verify Phoenix is reachable.",
+            file=sys.stderr,
+        )
+    if baseline.expected_deliverables:
+        print(f"  discovered {len(baseline.expected_deliverables)} deliverables under .ai-work/")
+    return 0
 
 
 def _cmd_judge(args: argparse.Namespace) -> int:
@@ -91,6 +138,27 @@ def _build_parser() -> argparse.ArgumentParser:
 
     p_regression = sub.add_parser("regression", help="Run Tier 1 regression eval")
     p_regression.add_argument("--baseline", required=True, help="Path to baseline JSON.")
+    p_regression.add_argument(
+        "--repo-root",
+        default=None,
+        help="Repository root (defaults to CWD); used for deliverable checks.",
+    )
+
+    p_capture = sub.add_parser(
+        "capture-baseline",
+        help="Snapshot current Phoenix traces into a baseline JSON.",
+    )
+    p_capture.add_argument("--task-slug", required=True)
+    p_capture.add_argument(
+        "--output",
+        default=None,
+        help="Output path (defaults to .ai-state/evals/baselines/<slug>.json).",
+    )
+    p_capture.add_argument(
+        "--repo-root",
+        default=None,
+        help="Repository root (defaults to CWD).",
+    )
 
     p_judge = sub.add_parser("judge", help="Invoke an LLM judge over Phoenix traces")
     p_judge.add_argument(
@@ -112,6 +180,7 @@ def main(argv: list[str] | None = None) -> int:
         "list": _cmd_list,
         "behavioral": _cmd_behavioral,
         "regression": _cmd_regression,
+        "capture-baseline": _cmd_capture_baseline,
         "judge": _cmd_judge,
     }
     handler = dispatch.get(args.command)

@@ -44,6 +44,25 @@ class BaselineSummary:
     duration_ms_p95: float | None = None
     agent_count: int | None = None
 
+    @property
+    def has_numeric_fields(self) -> bool:
+        """True iff at least one Phoenix-derived numeric field is populated.
+
+        Regression diffing only compares these numeric fields. A baseline with
+        none of them cannot drift numerically and should be flagged by callers
+        to avoid a misleading "no drift detected" verdict.
+        """
+        return any(
+            v is not None
+            for v in (
+                self.span_count,
+                self.tool_call_count,
+                self.duration_ms_p50,
+                self.duration_ms_p95,
+                self.agent_count,
+            )
+        )
+
 
 def load_baseline(path: Path) -> BaselineSummary:
     """Read a baseline JSON file into a ``BaselineSummary``."""
