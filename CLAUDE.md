@@ -29,6 +29,10 @@ If `memories.assistant.name` is missing, pick a random name and store it immedia
 
 Extends `~/.claude/CLAUDE.md`. Four principles: **token budget first-class**, **measure before optimize**, **standards convergence as opportunity**, **curiosity over dogma**. Rationale: `README.md#guiding-principles` and `ROADMAP.md#guiding-principles-for-execution`.
 
+## Behavioral Contract (applied)
+
+Praxion enforces the four-behavior contract from the global philosophy (`~/.claude/CLAUDE.md`) — Surface Assumptions, Register Objection, Stay Surgical, Simplicity First — via the always-loaded `rules/swe/agent-behavioral-contract.md` rule, per-agent self-tests, and named failure-mode tags in verification reports. See `skills/software-planning/references/behavioral-contract.md`.
+
 ## Known Claude Code Limitations
 
 Tracked here so they can be revisited when Claude Code releases fixes:

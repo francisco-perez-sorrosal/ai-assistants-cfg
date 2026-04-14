@@ -101,7 +101,7 @@ These fixes address structural debts that block everything else. Do them first.
 
 #### 1.1 Reclaim Token Budget — Phase 1A ✅ DONE (2026-04-11)
 
-**Status**: Phase 1A complete. Phase 1B deferred (see notes below).
+**Status**: Phase 1A complete. Phase 1B Point #2 (path-scope `coding-style.md`) shipped 2026-04-13; Point #1 (delegation-checklist extraction) deferred.
 
 **Phase 1A — Safe-first extraction (shipped)**
 
@@ -128,19 +128,19 @@ Completed via full Standard-tier pipeline with context-engineer shadowing both a
 - 10/10 acceptance criteria PASS, verifier PASS WITH FINDINGS (1 WARN remediated in same pipeline)
 - All 11 anchors (4 preserved + 7 new) resolve; zero broken agent-prompt references; both slimmed rules coherent standalone
 
-**Phase 1B — Bold extraction (deferred, possibly later)**
+**Phase 1B — Bold extraction (Point #2 shipped 2026-04-13; Point #1 deferred)**
 
 Rationale: the safe-first Phase 1A delivered clean structural reclamation (~1,500 tokens) and validated that progressive disclosure works for pipeline coordination. Delegation checklists were explicitly kept always-loaded in Phase 1A (D-02 decision) because they drive every delegation prompt and redundancy is cheap at that frequency.
 
-If Phase 1A proves insufficient (sentinel T02 warns in real use, or more growth headroom is needed), Phase 1B candidates:
+Phase 1B candidates:
 
-1. **Extract Delegation Checklists** (~500 tokens savings). Would move the per-agent "always include in prompt" bullets from the coordination protocol rule to `coordination-details.md`, leaving a pointer. Mitigation already in place: `claude/config/CLAUDE.md` now has condensed deliverables for all 4 pipeline agents (implementer added in Phase 1A), so the main agent retains always-loaded access to the essential deliverables list without the per-agent detail. Risk: medium — the detailed checklists carry conditional deliverables (deployment doc, architecture doc) that the condensed list omits.
+1. **Extract Delegation Checklists** (~500 tokens savings) — **deferred**. Would move the per-agent "always include in prompt" bullets from the coordination protocol rule to `coordination-details.md`, leaving a pointer. Mitigation already in place: `claude/config/CLAUDE.md` now has condensed deliverables for all 4 pipeline agents (implementer added in Phase 1A), so the main agent retains always-loaded access to the essential deliverables list without the per-agent detail. Risk: medium — the detailed checklists carry conditional deliverables (deployment doc, architecture doc) that the condensed list omits.
 
-2. **Path-scope `coding-style.md`** (~1,900 tokens savings). Currently always-loaded (~6,730 chars). Adding `paths:` frontmatter scoped to code file globs would exclude it from non-code sessions (planning, review, documentation). Risk: low — coding-style is already discoverable via file triggers and most sessions that need it edit code anyway.
+2. **Path-scope `coding-style.md`** ✅ DONE (2026-04-13). Added `paths:` frontmatter with 24 code-file globs (ADR `dec-044`) so the rule loads only on code sessions. Delivered as commit 1 of the Behavioral Contract Layer rollout to fund commit 2's ~949-byte `agent-behavioral-contract.md` addition. Measured delta: −6,730 bytes / ~−1,923 tokens on always-loaded content; net after commit 2: ~−1,652 tokens. Risk proved low as predicted — safety audit on BC-S02 confirmed all runtime callers are code-session-scoped or documentary-only.
 
-Combined Phase 1B recovery estimate: ~2,400 additional tokens, bringing budget to ~75-78% utilization (comfortable runway for ecosystem growth).
+Phase 1B recovery delivered: ~1,923 tokens from Point #2 alone (of the original ~2,400 combined estimate). Point #1 remains available for future pressure.
 
-**Dependencies for Phase 1B**: Phase 1A validation — observe sentinel T02 trend and main-agent orchestration quality for a few sessions before deciding.
+**Dependencies for Phase 1B Point #1 (if ever pursued)**: Phase 1A validation — observe sentinel T02 trend and main-agent orchestration quality for a few sessions before deciding.
 
 **Follow-up from Phase 1A (low priority, not blocking):**
 - Sentinel T02 command scope mismatch (`agents/sentinel.md:281`) — includes scoped `testing-conventions.md`, excludes `claude/config/CLAUDE.md` and scoped writing rules. Align sentinel T02 measurements with actual always-loaded scope.

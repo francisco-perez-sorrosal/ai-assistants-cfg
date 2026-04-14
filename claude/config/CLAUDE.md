@@ -52,6 +52,17 @@ Use subagents liberally to keep the main context window clean — one focus per 
 
 **Match response weight to task scale.** A typo fix doesn't need a pipeline. A one-line bug doesn't need a researcher. Use the full machinery for multi-step, multi-file, architecturally significant work — and work directly for quick lookups, single changes, and obvious fixes.
 
+## The Behavioral Contract
+
+The Methodology defines the flow; the contract defines the stance. Four named behaviors are non-negotiable for every agent that writes, plans, or reviews code:
+
+- **Surface Assumptions** before acting on them
+- **Register Objection** when a request violates scope, structure, or evidence
+- **Stay Surgical** — minimal scope, minimal blast radius
+- **Simplicity First** — the smallest solution that achieves the behavior
+
+The contract is operationalized by the `agent-behavioral-contract` rule (always loaded) and the behavioral-contract reference in the software-planning skill (progressive disclosure). Verification reports tag contract violations with named failure-mode labels so patterns surface across features. Compliance is not politeness — it is the entry condition for trust.
+
 ## The Learning Loop
 
 **Learn, recall, apply.** Knowledge captured but never consulted is wasted.

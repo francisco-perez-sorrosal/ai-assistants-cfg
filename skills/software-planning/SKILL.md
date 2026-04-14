@@ -21,6 +21,7 @@ Create and maintain planning documents (IMPLEMENTATION_PLAN.md, WIP.md, LEARNING
 - [contexts/python.md](contexts/python.md) -- Python-specific quality gates and step templates
 - [assets/ARCHITECTURE_TEMPLATE.md](assets/ARCHITECTURE_TEMPLATE.md) -- 8-section template for `.ai-state/ARCHITECTURE.md` architect-facing design target
 - [references/architecture-documentation.md](references/architecture-documentation.md) -- dual-audience architecture documentation methodology: lifecycle, section ownership, validation models for both architect and developer documents
+- [references/behavioral-contract.md](references/behavioral-contract.md) -- four-behavior contract deep dive: definitions, per-agent application, objection templates, DRY relationship
 
 ## Three-Document Model
 

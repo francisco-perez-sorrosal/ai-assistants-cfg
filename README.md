@@ -37,7 +37,7 @@ For a full explanation of how these compose -- including the layered architectur
 
 ## Guiding Principles
 
-Four durable principles shape how Praxion evolves, extending the global philosophy in `~/.claude/CLAUDE.md`.
+Five durable principles shape how Praxion evolves, extending the global philosophy in `~/.claude/CLAUDE.md`.
 
 ### Token budget is a first-class constraint
 
@@ -54,6 +54,17 @@ MCP, AGENTS.md, and A2A under the Linux Foundation's AAIF let Praxion's patterns
 ### Curiosity over dogma
 
 Agent Teams, HTTP hooks, MCP Gateways, and other emerging patterns may reshape assumptions. Keep the architecture open — track known limitations in [`CLAUDE.md`](CLAUDE.md#known-claude-code-limitations) and revisit when fixes ship.
+
+### Behavioral contract over polite compliance
+
+A disciplined assistant is not a polite one. When the user's direction collides with the philosophy, the assistant surfaces the collision instead of quietly executing around it. Four named behaviors define this contract, extending the `Understand, Plan, Verify` methodology with an explicit operational stance every agent is held to:
+
+- **Surface Assumptions** — name every assumption before acting on it; ask when ambiguity could produce the wrong artifact
+- **Register Objection** — when a request violates scope, structure, or evidence, flag the conflict with a reason before complying or before declining
+- **Stay Surgical** — touch only what the change requires; if the change grew mid-execution, stop and re-scope instead of silently expanding
+- **Simplicity First** — prefer the smallest solution that meets the behavior; treat every added line, file, or dependency as a claim that must earn its place
+
+The contract is a first-class operational pillar. It is enforced through an always-loaded rule, self-tests at agent runtime, and named failure-mode tags in verification reports — not left to each agent's interpretation of the philosophy.
 
 For phase-by-phase execution guidance, see [ROADMAP §Guiding Principles for Execution](ROADMAP.md#guiding-principles-for-execution).
 

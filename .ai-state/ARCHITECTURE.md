@@ -247,6 +247,7 @@ graph LR
 | No `isolation: "worktree"` on Agent tool | Technical | Creates nested worktrees with opaque names when session is already in a worktree; use `EnterWorktree` instead |
 | Single `hooks.json` authority | Configuration | All hooks registered in `hooks/hooks.json`; duplicating in `settings.json` causes double-firing |
 | Agent depth 3+ requires user confirmation | Quality | Prevents runaway agent chains from compounding hallucination risk |
+| Four-behavior agent behavioral contract applies to all write/plan/review agents | Behavioral | Surface Assumptions, Register Objection, Stay Surgical, Simplicity First — enforced via `rules/swe/agent-behavioral-contract.md` (always loaded) and six named failure-mode tags in verifier reports; sentinel checks BC01–BC04 audit integrity. Cross-cutting layer, not a component |
 
 ## 8. Decisions
 
@@ -296,5 +297,7 @@ graph LR
 | [dec-040](decisions/040-eval-framework-out-of-band.md) | Eval framework out-of-band only (/eval command + CI, never hook-driven) | Eval code never runs inside a pipeline or from a hook; `eval/` package is standalone and side-effect-free; `.ai-state/evals/` holds baseline summary JSON (not raw traces) |
 | [dec-041](decisions/041-pyright-over-mypy.md) | Pyright over mypy for MCP type checking | Both MCP servers gain a `[tool.pyright]` section and a CI step between ruff and pytest; staged rollout (observe → fix → enforce) avoids large PRs |
 | [dec-042](decisions/042-scripts-filter-combined-predicate.md) | Scripts install filter: combined predicate + stale-symlink sweep | `install_claude.sh` filters by `-f && -x` plus `case` exclusion of `merge_driver_*` / `git-*-hook.sh`; `clean_stale_symlinks` extended to `~/.local/bin/` |
+| [dec-043](decisions/043-behavioral-contract-layer.md) | Four-behavior Agent Behavioral Contract as first-class operational pillar | Cross-cutting behavioral layer across all write/plan/review agents; always-loaded rule + on-demand skill reference + README principle + CLAUDE.md anchors + 10 per-agent pointers + 6 verifier tags + sentinel BC01–BC04 checks. No new components |
+| [dec-044](decisions/044-coding-style-path-scoping.md) | Path-scope `rules/swe/coding-style.md` to code-file globs | Reclaims ~1,900 always-loaded tokens on non-code sessions; funds the contract layer's ~498-token cost; executes ROADMAP Phase 1B |
 
 [Add new rows as architecture-related ADRs are created.]
