@@ -15,6 +15,8 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
+from _hook_utils import DISABLE_OBSERVABILITY, is_disabled
+
 # Tools that generate too much noise to capture
 BLOCKLIST = frozenset(
     {
@@ -140,6 +142,9 @@ def _append_observation(obs_path: Path, observation: dict) -> None:
 
 
 def main() -> None:
+    if is_disabled(DISABLE_OBSERVABILITY):
+        return
+
     try:
         payload = json.loads(sys.stdin.read())
     except (json.JSONDecodeError, OSError):

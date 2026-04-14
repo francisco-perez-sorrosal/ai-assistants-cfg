@@ -33,6 +33,8 @@ import json
 import sys
 from pathlib import Path
 
+from _hook_utils import DISABLE_MEMORY_INJECTION, is_disabled
+
 # -- Constants ----------------------------------------------------------------
 
 MAX_INJECT_CHARS = 8000
@@ -402,6 +404,9 @@ def _build_adr_output(rows: list[dict], budget: int) -> str:
 
 
 def main() -> None:
+    if is_disabled(DISABLE_MEMORY_INJECTION):
+        return
+
     try:
         payload = json.loads(sys.stdin.read())
     except (json.JSONDecodeError, OSError):

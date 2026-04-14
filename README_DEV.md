@@ -106,6 +106,7 @@ hooks/                               # Hook scripts (auto-discovered by Claude C
 ├── remind_adr.py
 ├── remind_memory.py
 ├── send_event.py
+├── test_hook_utils.py
 ├── test_send_event.py
 └── validate_memory.py
 .claude-plugin/                      # Claude Code plugin manifest
@@ -169,6 +170,24 @@ install_claude.sh                    # Claude Code / Desktop installer
 install_cursor.sh                    # Cursor installer
 Makefile                             # Development targets
 ```
+
+## Per-Project Hook Opt-Outs
+
+Three env-var flags let a downstream project disable Praxion hooks that cost tokens or block behavior. Absence of the flag preserves default behavior — set to `1`, `true`, or `yes` in the target project's `.claude/settings.json` `env` block to disable.
+
+| Flag | What it disables | When to use |
+|------|------------------|-------------|
+| `PRAXION_DISABLE_MEMORY_INJECTION` | `inject_memory.py` at SessionStart and SubagentStart | The only hook with meaningful prompt-token cost (~2k tokens per agent spawn). Set when the project has no curated memory worth injecting. |
+| `PRAXION_DISABLE_MEMORY_GATE` | `memory_gate.py` (Stop) and `validate_memory.py` (SubagentStop) | Silences the "you must call remember()" blocker. No prompt-token impact — disables enforcement, not injection. |
+| `PRAXION_DISABLE_OBSERVABILITY` | `send_event.py`, `capture_session.py`, `capture_memory.py` | Disables chronograph telemetry and `observations.jsonl` writes. Zero prompt-token impact; saves process-spawn time and local I/O. |
+
+Example `.claude/settings.json` for a project that wants Praxion skills/agents but no memory overhead:
+
+```json
+{ "env": { "PRAXION_DISABLE_MEMORY_INJECTION": "1", "PRAXION_DISABLE_MEMORY_GATE": "1" } }
+```
+
+The flags are read by each hook via `is_disabled()` in `hooks/_hook_utils.py`. To disable every Praxion hook at once, disable the plugin itself in `enabledPlugins`.
 
 ## Working on this Repo
 

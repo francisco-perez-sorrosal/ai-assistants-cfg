@@ -13,8 +13,30 @@ in one place.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
+
+# -- Per-project opt-out flags -------------------------------------------------
+# Read from Claude Code's per-project settings.json `env` block. Set to "1",
+# "true", or "yes" (case-insensitive) to disable the corresponding hooks for
+# the project. Absence of the flag preserves default behavior.
+#
+# Memory injection is the only always-loaded token cost (up to ~8000 chars per
+# SessionStart / SubagentStart). The other two groups trade zero prompt tokens
+# for enforcement (memory gate) or background telemetry (observability).
+
+DISABLE_MEMORY_INJECTION = "PRAXION_DISABLE_MEMORY_INJECTION"
+DISABLE_MEMORY_GATE = "PRAXION_DISABLE_MEMORY_GATE"
+DISABLE_OBSERVABILITY = "PRAXION_DISABLE_OBSERVABILITY"
+
+_TRUTHY = frozenset({"1", "true", "yes"})
+
+
+def is_disabled(flag_name: str) -> bool:
+    """Return True if the named opt-out env var is set to a truthy value."""
+    return os.environ.get(flag_name, "").strip().lower() in _TRUTHY
+
 
 # Tool classification for significance detection
 EDIT_TOOLS = frozenset({"Write", "Edit"})

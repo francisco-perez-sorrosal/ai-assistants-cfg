@@ -5,6 +5,8 @@ Exits 0 unconditionally -- must never block agent execution.
 
 import hashlib, json, os, re, subprocess, sys, urllib.request  # noqa: E401
 
+from _hook_utils import DISABLE_OBSERVABILITY, is_disabled
+
 PROGRESS_MARKER = "PROGRESS.md"
 DEFAULT_PORT = 8765
 PORT_RANGE_SIZE = 1000
@@ -441,6 +443,8 @@ def _build_events(data):
 
 
 def main():
+    if is_disabled(DISABLE_OBSERVABILITY):
+        return
     try:
         data = json.loads(sys.stdin.read())
         events, interactions = _build_events(data)

@@ -16,7 +16,9 @@ import json
 import sys
 
 from _hook_utils import (
+    DISABLE_MEMORY_GATE,
     REMEMBER_PROMPT,
+    is_disabled,
     is_exempt,
     is_memory_system_active,
     scan_transcript,
@@ -24,6 +26,9 @@ from _hook_utils import (
 
 
 def main() -> None:
+    if is_disabled(DISABLE_MEMORY_GATE):
+        return
+
     raw = sys.stdin.read()
     try:
         payload = json.loads(raw)
