@@ -5229,6 +5229,92 @@
         "invalid_at": null,
         "type": "pattern",
         "created_by": null
+      },
+      "session-start-git-status-snapshot-staleness": {
+        "value": "The `gitStatus` block injected at session start is a SNAPSHOT in time, not live state. Between snapshot and first tool call, hooks or background processes can delete, move, or clean files — the snapshot can therefore lie about what's on disk. Observed during /i-am:cop: session-start status listed `?? .ai-state/evals/baselines/architecture-doc.json` as untracked, and `cat` on that path succeeded early in the session. But when I later ran `git add` on it, the file was gone (confirmed with `ls` and `find`). Most likely a Stop-hook or housekeeping process cleaned it between inspection and staging. Practical rule: when the /i-am:cop (or any commit-style) flow acts on files from the initial status snapshot, re-verify presence with `git status --short` or `ls` right before staging — don't trust the snapshot as ground truth for paths that might be volatile (notably `.ai-state/evals/baselines/*`, `.ai-work/**`, and other hook-managed locations). Surfacing gracefully is fine: if the file is gone, skip the commit for it and continue with the remaining groups rather than aborting.",
+        "created_at": "2026-04-13T23:53:52.896380Z",
+        "updated_at": "2026-04-13T23:53:52.896380Z",
+        "tags": [
+          "git",
+          "gotcha",
+          "hooks",
+          "session-start",
+          "snapshot-staleness"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.async-hooks-cannot-deliver-feedback",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.cwd-drift-git-staging",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.git-diff-stat-flag-order",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Session-start gitStatus block is a frozen snapshot; hooks can delete listed files before you act on them — re-verify with git status/ls before staging volatile paths.",
+        "valid_at": "2026-04-13T23:53:52.896380Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "research-prompt-anti-recommendations-section": {
+        "value": "When delegating researcher to do a \"compare external references against Praxion\" gap analysis, explicitly require an Anti-Recommendations section in RESEARCH_FINDINGS.md — items from the references that Praxion should NOT adopt, with the reason (typically conflict with token budget, simplicity, curiosity-over-dogma, or measure-before-optimize). Rationale: without it, a researcher tends to produce a \"here's everything we're missing, adopt it all\" list, which is cargo-cult and blows the token budget. The anti-recs section forces the researcher to defend each recommendation against the project's own principles, making the analysis decision-quality instead of aspirational. Also: reproduce verbatim ground-truth text (tweets, blog posts, conversation artifacts) directly in the researcher prompt when primary sources may be paywalled, ambiguous, or link-rotted — don't assume WebFetch can resolve social-media URLs reliably. Pattern first used on the llm-coding-workflow-research task (Karpathy post + Cherny reply + forrestchang/andrej-karpathy-skills). The same pattern generalizes: any \"audit us against $hot_external_source\" task should include (a) verbatim source in the prompt, (b) mandatory anti-recommendations section, (c) MUST-do vs SHOULD-do split in the gap analysis so the user can triage priority without re-reading the whole doc.",
+        "created_at": "2026-04-14T00:10:11.563025Z",
+        "updated_at": "2026-04-14T00:10:11.563025Z",
+        "tags": [
+          "cargo-cult-prevention",
+          "delegation",
+          "gap-analysis",
+          "pattern",
+          "researcher"
+        ],
+        "confidence": null,
+        "importance": 6,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "learnings.architecture-docs-differentiation-gap",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.delegation-checklist-pattern",
+            "relation": "related-to"
+          },
+          {
+            "target": "learnings.main-agent-deliverable-awareness-gap",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Gap-analysis researcher prompts must require an Anti-Recommendations section + verbatim ground-truth text + MUST/SHOULD split to stay honest and avoid cargo-culting.",
+        "valid_at": "2026-04-14T00:10:11.563025Z",
+        "invalid_at": null,
+        "type": "pattern",
+        "created_by": null
       }
     },
     "project": {
@@ -5862,6 +5948,77 @@
         "links": [],
         "summary": "CHUB_FEEDBACK=1/CHUB_TELEMETRY=0 set in 3 places (installer, SKILL.md CLI examples, mcp-setup.md) — modify together when changing defaults",
         "valid_at": "2026-04-13T18:56:02.641173Z",
+        "invalid_at": null,
+        "type": "convention",
+        "created_by": null
+      },
+      "hook-token-cost-profile-and-opt-out-gap": {
+        "value": "Praxion hooks have a sharply uneven token-cost profile. As of 2026-04-13 a per-project opt-out mechanism now EXISTS via three env-var flags (earlier note said it didn't — that's now wrong). Cost distribution unchanged: (1) `inject_memory.py` is the ONLY hook with meaningful prompt-token cost — MAX_INJECT_CHARS = 8000 (~2k tokens) fired at every SessionStart AND every SubagentStart, so a 3–5 subagent pipeline spends 6k–10k tokens just on memory injection; (2) `memory_gate.py` and `validate_memory.py` cost 0 prompt tokens, they only block Stop/SubagentStop with exit 2; (3) `send_event.py`, `capture_session.py`, `capture_memory.py`, chronograph telemetry all cost 0 prompt tokens because they're `async: true` with `2>/dev/null` — pure process-spawn cost, no context impact; (4) `format_python.py` / `detect_duplication.py` only surface tool output in responses, not prompt-injected. Practical consequence: when users complain about \"memory and observability hooks using tokens\", memory injection is the real culprit — observability is optically expensive but context-free. Opt-out now available via three env flags (set in target project's `.claude/settings.json` `env` block): `PRAXION_DISABLE_MEMORY_INJECTION` (the one that saves tokens), `PRAXION_DISABLE_MEMORY_GATE` (silences Stop blockers), `PRAXION_DISABLE_OBSERVABILITY` (skips telemetry + observation writes). Implementation: shared `is_disabled()` helper + `DISABLE_*` constants in `hooks/_hook_utils.py`; each consumer hook short-circuits at top of main(). Accepts \"1\"/\"true\"/\"yes\" case-insensitive. See `praxion-hook-opt-out-convention` memory for the pattern to follow when adding new hooks. Nuclear option (disable entire plugin) still available via `enabledPlugins: {\"i-am@...\": false}` in settings.local.json. When estimating Praxion's per-session overhead, count subagent spawns × ~2k tokens for injection cost — and remember users can now opt out per-project.",
+        "created_at": "2026-04-14T00:42:03.121011Z",
+        "updated_at": "2026-04-14T00:53:51.159002Z",
+        "tags": [
+          "cost-profile",
+          "hooks",
+          "memory-injection",
+          "observability",
+          "opt-out",
+          "token-budget"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [],
+        "summary": "Hook token-cost profile unchanged (inject_memory is the only prompt-token cost); opt-out mechanism now EXISTS via PRAXION_DISABLE_* env flags. Earlier \"no opt-out\" note is superseded.",
+        "valid_at": "2026-04-14T00:42:03.121011Z",
+        "invalid_at": null,
+        "type": "gotcha",
+        "created_by": null
+      },
+      "praxion-hook-opt-out-convention": {
+        "value": "Praxion hooks now support per-project opt-out via three env-var flags (added 2026-04-13). Flag names live as frozen constants in `hooks/_hook_utils.py`: `DISABLE_MEMORY_INJECTION` (PRAXION_DISABLE_MEMORY_INJECTION), `DISABLE_MEMORY_GATE` (PRAXION_DISABLE_MEMORY_GATE), `DISABLE_OBSERVABILITY` (PRAXION_DISABLE_OBSERVABILITY). A shared `is_disabled(flag_name)` helper accepts \"1\"/\"true\"/\"yes\" case-insensitively with whitespace tolerance. Each consumer hook short-circuits at the top of its main() with a 2-line pattern: `if is_disabled(DISABLE_X): return`. Currently wired into 6 hooks: inject_memory (injection flag), memory_gate + validate_memory (gate flag), send_event + capture_session + capture_memory (observability flag). Users toggle via their target project's `.claude/settings.json` `env` block — precedent is CHUB_FEEDBACK/CHUB_TELEMETRY in install_claude.sh:443-444. When adding a NEW hook to hooks.json, classify it into one of these three categories and wire the early-exit before writing any other logic; if it genuinely doesn't fit (e.g. a new behavior-enforcement gate that's not memory-related), add a new DISABLE_* constant in `_hook_utils.py` rather than reusing an existing one. The three-category split is deliberate: memory-injection is the ONLY category with prompt-token cost, gate is enforcement-only (zero tokens but blocks Stop), observability is zero-token background telemetry — don't collapse these because the user intent differs (save tokens vs silence blockers vs reduce I/O). Test pattern in hooks/test_hook_utils.py uses subprocess + monkeypatched env to verify each hook exits silently when its flag is set; new hooks should extend that parametrize list. Docs in README_DEV.md \"Per-Project Hook Opt-Outs\" section.",
+        "created_at": "2026-04-14T00:54:13.144626Z",
+        "updated_at": "2026-04-14T00:54:13.144626Z",
+        "tags": [
+          "configuration",
+          "convention",
+          "env-vars",
+          "hooks",
+          "opt-out",
+          "pattern"
+        ],
+        "confidence": null,
+        "importance": 7,
+        "source": {
+          "type": "session",
+          "detail": null,
+          "agent_type": null,
+          "agent_id": null,
+          "session_id": null
+        },
+        "access_count": 0,
+        "last_accessed": null,
+        "status": "active",
+        "links": [
+          {
+            "target": "project.chub-feedback-enabled-by-default-three-surfaces",
+            "relation": "related-to"
+          },
+          {
+            "target": "project.hook-token-cost-profile-and-opt-out-gap",
+            "relation": "related-to"
+          }
+        ],
+        "summary": "Hook opt-out convention: three PRAXION_DISABLE_* env flags (injection/gate/observability), constants in _hook_utils.py, is_disabled() helper, 2-line early-exit pattern. Don't collapse the three categories.",
+        "valid_at": "2026-04-14T00:54:13.144626Z",
         "invalid_at": null,
         "type": "convention",
         "created_by": null
