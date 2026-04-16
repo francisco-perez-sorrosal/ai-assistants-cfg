@@ -29,6 +29,7 @@ def _clear_praxion_env(monkeypatch):
         "PRAXION_DISABLE_MEMORY_INJECTION",
         "PRAXION_DISABLE_MEMORY_GATE",
         "PRAXION_DISABLE_OBSERVABILITY",
+        "PRAXION_DISABLE_MEMORY_MCP",
     ):
         monkeypatch.delenv(key, raising=False)
 
@@ -68,8 +69,9 @@ def test_flag_names_are_distinct():
         hu.DISABLE_MEMORY_INJECTION,
         hu.DISABLE_MEMORY_GATE,
         hu.DISABLE_OBSERVABILITY,
+        hu.DISABLE_MEMORY_MCP,
     }
-    assert len(names) == 3
+    assert len(names) == 4
     assert all(n.startswith("PRAXION_DISABLE_") for n in names)
 
 
@@ -106,7 +108,9 @@ _MINIMAL_PAYLOAD = {
     [
         ("inject_memory.py", "PRAXION_DISABLE_MEMORY_INJECTION"),
         ("memory_gate.py", "PRAXION_DISABLE_MEMORY_GATE"),
+        ("memory_gate.py", "PRAXION_DISABLE_MEMORY_MCP"),
         ("validate_memory.py", "PRAXION_DISABLE_MEMORY_GATE"),
+        ("validate_memory.py", "PRAXION_DISABLE_MEMORY_MCP"),
         ("send_event.py", "PRAXION_DISABLE_OBSERVABILITY"),
         ("capture_session.py", "PRAXION_DISABLE_OBSERVABILITY"),
         ("capture_memory.py", "PRAXION_DISABLE_OBSERVABILITY"),
@@ -124,3 +128,63 @@ def test_hook_exits_silently_when_disabled(script, flag):
     assert result.stderr == "", (
         f"{script} emitted stderr when disabled: {result.stderr!r}"
     )
+
+
+# -- inject_memory.py: MCP flag emits the disabled notice (not silent) -------
+
+
+def test_inject_memory_emits_disabled_notice_under_mcp_flag():
+    """Under PRAXION_DISABLE_MEMORY_MCP, inject_memory.py emits ONLY a disabled
+    notice as additionalContext.
+
+    This is the novel behavior that distinguishes DISABLE_MEMORY_MCP from
+    DISABLE_MEMORY_INJECTION: the first still emits a small notice so the
+    assistant's memory-protocol rule sees a skip signal; the second emits
+    nothing.
+    """
+    result = _run_hook(
+        "inject_memory.py", _MINIMAL_PAYLOAD, {"PRAXION_DISABLE_MEMORY_MCP": "1"}
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stderr == ""
+    assert result.stdout != "", "expected disabled notice on stdout"
+
+    payload = json.loads(result.stdout)
+    spec = payload["hookSpecificOutput"]
+    assert spec["hookEventName"] == "SessionStart"
+    context = spec["additionalContext"]
+    assert "PRAXION_DISABLE_MEMORY_MCP" in context
+    assert "Memory MCP disabled" in context
+    # Ensure normal memory content is NOT in the notice output
+    assert "Memory Context (auto-injected)" not in context
+    assert "Decision Context (auto-injected)" not in context
+
+
+def test_inject_memory_mcp_flag_tags_subagent_start_when_payload_has_agent_type():
+    """For SubagentStart payloads (agent_type present), the notice must be
+    keyed to hookEventName=SubagentStart so Claude Code injects it."""
+    payload = {**_MINIMAL_PAYLOAD, "agent_type": "implementer"}
+    result = _run_hook("inject_memory.py", payload, {"PRAXION_DISABLE_MEMORY_MCP": "1"})
+    assert result.returncode == 0, result.stderr
+    spec = json.loads(result.stdout)["hookSpecificOutput"]
+    assert spec["hookEventName"] == "SubagentStart"
+    assert "PRAXION_DISABLE_MEMORY_MCP" in spec["additionalContext"]
+
+
+def test_inject_memory_mcp_flag_takes_priority_over_injection_flag():
+    """Setting both flags simultaneously should still emit the notice -- the
+    MCP flag has priority because it's the unified kill switch and needs
+    the observable signal to reach the assistant."""
+    result = _run_hook(
+        "inject_memory.py",
+        _MINIMAL_PAYLOAD,
+        {
+            "PRAXION_DISABLE_MEMORY_MCP": "1",
+            "PRAXION_DISABLE_MEMORY_INJECTION": "1",
+        },
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout != "", (
+        "MCP flag must win over INJECTION flag so the notice reaches the assistant"
+    )
+    assert "PRAXION_DISABLE_MEMORY_MCP" in result.stdout

@@ -1,6 +1,11 @@
 ## Memory Protocol
 
-This protocol applies only when the memory MCP server is available. If memory tools are not present in your context, skip all memory operations.
+This protocol applies only when the memory MCP server is available AND the project has not disabled it. Skip all memory operations when either of these is true:
+
+- Memory tools are not present in your context (MCP server not loaded), or
+- A SessionStart/SubagentStart notice indicates `PRAXION_DISABLE_MEMORY_MCP=1` is set for the project — the project has opted out of memory persistence.
+
+When skipping applies, do not call `remember()`, `recall()`, `search()`, `browse_index()`, or any other memory tool, even if the tool is callable. Do not synthesize memory advice in your response either — the project has chosen not to maintain persistent memory.
 
 Memory context is injected automatically at agent start via hook. You do NOT need to call `session_start()` or `recall()` -- the data is already visible in your context as "Memory Context (auto-injected)". Injected context replaces `browse_index` for most use cases -- use `browse_index` only when you need the full index or `include_historical`.
 

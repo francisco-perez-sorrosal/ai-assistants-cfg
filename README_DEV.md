@@ -173,18 +173,27 @@ Makefile                             # Development targets
 
 ## Per-Project Hook Opt-Outs
 
-Three env-var flags let a downstream project disable Praxion hooks that cost tokens or block behavior. Absence of the flag preserves default behavior — set to `1`, `true`, or `yes` in the target project's `.claude/settings.json` `env` block to disable.
+Four env-var flags let a downstream project disable Praxion hooks that cost tokens or block behavior. Absence of the flag preserves default behavior — set to `1`, `true`, or `yes` in the target project's `.claude/settings.json` `env` block to disable.
 
 | Flag | What it disables | When to use |
 |------|------------------|-------------|
 | `PRAXION_DISABLE_MEMORY_INJECTION` | `inject_memory.py` at SessionStart and SubagentStart | The only hook with meaningful prompt-token cost (~2k tokens per agent spawn). Set when the project has no curated memory worth injecting. |
 | `PRAXION_DISABLE_MEMORY_GATE` | `memory_gate.py` (Stop) and `validate_memory.py` (SubagentStop) | Silences the "you must call remember()" blocker. No prompt-token impact — disables enforcement, not injection. |
 | `PRAXION_DISABLE_OBSERVABILITY` | `send_event.py`, `capture_session.py`, `capture_memory.py` | Disables chronograph telemetry and `observations.jsonl` writes. Zero prompt-token impact; saves process-spawn time and local I/O. |
+| `PRAXION_DISABLE_MEMORY_MCP` | Unified kill switch: implies `DISABLE_MEMORY_INJECTION` + `DISABLE_MEMORY_GATE`, and additionally injects a small "memory MCP disabled" notice so the assistant stops voluntary `remember()`/`recall()` calls driven by the `memory-protocol` rule. | Set when the project wants the memory MCP server's tools to remain nominally callable but behaviorally inert — e.g., during experiments, when memory.json has drifted schema, or when you simply do not want memory persistence for this project. |
 
-Example `.claude/settings.json` for a project that wants Praxion skills/agents but no memory overhead:
+**Why a fourth flag?** The first three disable hook *side-effects* but cannot stop the assistant from voluntarily calling `remember()` because the always-loaded `rules/swe/memory-protocol.md` rule instructs it to. The MCP flag adds the missing piece: an assistant-observable signal injected at SessionStart/SubagentStart that triggers the rule's skip-all-operations exit clause. Without the notice, the rule's exit clause never fires.
+
+Example `.claude/settings.json` for a project that wants Praxion skills/agents but **no memory** at all:
 
 ```json
-{ "env": { "PRAXION_DISABLE_MEMORY_INJECTION": "1", "PRAXION_DISABLE_MEMORY_GATE": "1" } }
+{ "env": { "PRAXION_DISABLE_MEMORY_MCP": "1" } }
+```
+
+Example for finer-grained control — keep the gate blocker silent but continue injecting memory context:
+
+```json
+{ "env": { "PRAXION_DISABLE_MEMORY_GATE": "1" } }
 ```
 
 The flags are read by each hook via `is_disabled()` in `hooks/_hook_utils.py`. To disable every Praxion hook at once, disable the plugin itself in `enabledPlugins`.

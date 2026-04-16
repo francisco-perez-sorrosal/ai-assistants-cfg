@@ -17,6 +17,7 @@ import sys
 
 from _hook_utils import (
     DISABLE_MEMORY_GATE,
+    DISABLE_MEMORY_MCP,
     REMEMBER_PROMPT,
     is_disabled,
     is_exempt,
@@ -26,7 +27,7 @@ from _hook_utils import (
 
 
 def main() -> None:
-    if is_disabled(DISABLE_MEMORY_GATE):
+    if is_disabled(DISABLE_MEMORY_GATE) or is_disabled(DISABLE_MEMORY_MCP):
         return
 
     raw = sys.stdin.read()

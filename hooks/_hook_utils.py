@@ -25,10 +25,18 @@ from pathlib import Path
 # Memory injection is the only always-loaded token cost (up to ~8000 chars per
 # SessionStart / SubagentStart). The other two groups trade zero prompt tokens
 # for enforcement (memory gate) or background telemetry (observability).
+#
+# DISABLE_MEMORY_MCP is a unified kill switch: when set, it implies both
+# DISABLE_MEMORY_INJECTION and DISABLE_MEMORY_GATE, and additionally causes
+# inject_memory.py to emit a small "memory disabled" notice that the
+# assistant observes at SessionStart/SubagentStart. The notice is the only
+# reliable way to stop voluntary remember() calls -- the memory-protocol.md
+# rule reads it and activates the "skip all memory operations" exit clause.
 
 DISABLE_MEMORY_INJECTION = "PRAXION_DISABLE_MEMORY_INJECTION"
 DISABLE_MEMORY_GATE = "PRAXION_DISABLE_MEMORY_GATE"
 DISABLE_OBSERVABILITY = "PRAXION_DISABLE_OBSERVABILITY"
+DISABLE_MEMORY_MCP = "PRAXION_DISABLE_MEMORY_MCP"
 
 _TRUTHY = frozenset({"1", "true", "yes"})
 

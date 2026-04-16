@@ -33,7 +33,7 @@ import json
 import sys
 from pathlib import Path
 
-from _hook_utils import DISABLE_MEMORY_INJECTION, is_disabled
+from _hook_utils import DISABLE_MEMORY_INJECTION, DISABLE_MEMORY_MCP, is_disabled
 
 # -- Constants ----------------------------------------------------------------
 
@@ -52,6 +52,13 @@ _OBLIGATION = (
     "`remember(category, key, value, tags, importance, summary, type)`. "
     "This is not optional — the memory gate will block session completion "
     "if significant work was done without any remember() calls."
+)
+_MCP_DISABLED_NOTICE = (
+    "## Memory MCP disabled for this project\n\n"
+    "`PRAXION_DISABLE_MEMORY_MCP=1` is set. Do not call memory tools "
+    "(`remember`, `recall`, `search`, `browse_index`, etc.) for this "
+    "session — the project has opted out of memory persistence. "
+    "The memory-protocol rule's skip-all-operations clause applies."
 )
 # Reserved overhead: headers + obligation footer + up to 2 join separators
 _MAX_OVERHEAD = (
@@ -403,7 +410,35 @@ def _build_adr_output(rows: list[dict], budget: int) -> str:
     return result
 
 
+def _emit_additional_context(context: str, payload: dict) -> None:
+    """Emit additionalContext keyed to the correct event name."""
+    is_subagent = bool(payload.get("agent_type"))
+    event_name = "SubagentStart" if is_subagent else "SessionStart"
+    output = {
+        "hookSpecificOutput": {
+            "hookEventName": event_name,
+            "additionalContext": context,
+        }
+    }
+    print(json.dumps(output))
+
+
 def main() -> None:
+    mcp_disabled = is_disabled(DISABLE_MEMORY_MCP)
+
+    # When the unified MCP flag is set, emit ONLY the disabled notice.
+    # This is the observable signal the assistant needs to stop calling
+    # memory tools -- without it, the memory-protocol rule would continue
+    # driving voluntary remember() calls even though hook side-effects
+    # are silenced.
+    if mcp_disabled:
+        try:
+            payload = json.loads(sys.stdin.read())
+        except (json.JSONDecodeError, OSError):
+            return
+        _emit_additional_context(_MCP_DISABLED_NOTICE, payload)
+        return
+
     if is_disabled(DISABLE_MEMORY_INJECTION):
         return
 
@@ -458,19 +493,9 @@ def main() -> None:
     if not context:
         return
 
-    # Detect event type: SubagentStart payloads have agent_type,
-    # SessionStart payloads do not. hookEventName must match the
-    # triggering event or additionalContext is silently ignored.
-    is_subagent = bool(payload.get("agent_type"))
-    event_name = "SubagentStart" if is_subagent else "SessionStart"
-
-    output = {
-        "hookSpecificOutput": {
-            "hookEventName": event_name,
-            "additionalContext": context,
-        }
-    }
-    print(json.dumps(output))
+    # hookEventName must match the triggering event (SessionStart vs
+    # SubagentStart) or additionalContext is silently ignored.
+    _emit_additional_context(context, payload)
 
 
 if __name__ == "__main__":
