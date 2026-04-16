@@ -15,7 +15,7 @@
 | **Type** | AI development meta-framework (plugin + MCP servers + knowledge artifacts) |
 | **Language / Framework** | Python 3.13+ (MCP servers), Markdown (skills/agents/rules/commands), Shell/Python (hooks, scripts) |
 | **Architecture pattern** | Plugin-based knowledge ecosystem with progressive disclosure and agent pipeline orchestration |
-| **Last verified against code** | 2026-04-16 (dec-049 ADR added; `tier-templates.md` Designed, not yet Built — excluded from components table until implemented) |
+| **Last verified against code** | 2026-04-16 (dec-049 ADR added; `tier-templates.md` Built and shipped in commit 29ee132 — now part of the software-planning skill's on-demand references) |
 
 <!-- OWNER: systems-architect (creation), doc-engineer (verification) | LAST UPDATED: 2026-04-12 -->
 
