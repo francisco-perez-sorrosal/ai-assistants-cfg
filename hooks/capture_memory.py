@@ -176,6 +176,18 @@ def main() -> None:
     session_id = payload.get("session_id", "")
     agent_id = payload.get("agent_id", "") or session_id  # main agent uses session_id
 
+    # Correlation: memory-mcp tool handlers surface extracted W3C trace-context
+    # IDs via ``tool_response["additionalContext"]`` (see dec-048 §Phase B).
+    # Missing/malformed additionalContext degrades silently to empty strings.
+    additional_context = (
+        tool_response.get("additionalContext", {}) if isinstance(tool_response, dict) else {}
+    )
+    if not isinstance(additional_context, dict):
+        additional_context = {}
+    trace_id = str(additional_context.get("trace_id") or "")
+    span_id = str(additional_context.get("span_id") or "")
+    parent_span_id = str(additional_context.get("parent_span_id") or "")
+
     observation = {
         "timestamp": datetime.now(UTC).isoformat(),
         "session_id": session_id,
@@ -188,6 +200,9 @@ def main() -> None:
         "file_paths": file_paths,
         "outcome": outcome,
         "classification": classification,
+        "trace_id": trace_id,
+        "span_id": span_id,
+        "parent_span_id": parent_span_id,
     }
 
     _append_observation(obs_path, observation)

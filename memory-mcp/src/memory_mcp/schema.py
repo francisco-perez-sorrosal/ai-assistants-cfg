@@ -179,7 +179,14 @@ VALID_EVENT_TYPES = (
 
 @dataclass
 class Observation:
-    """A single observation event for the JSONL observation layer."""
+    """A single observation event for the JSONL observation layer.
+
+    Trace-correlation fields (``trace_id``, ``span_id``, ``traceparent``,
+    ``parent_span_id``) are optional top-level fields — not nested under
+    ``metadata`` — so they are cheap to grep and to filter on. See dec-048.
+    Historical JSONL rows that predate these fields parse cleanly because
+    ``from_dict`` defaults each missing key to ``None``.
+    """
 
     timestamp: str
     session_id: str
@@ -192,6 +199,12 @@ class Observation:
     outcome: str | None = None  # success, failure
     classification: str | None = None  # decision, test, commit, implementation, etc.
     metadata: dict = field(default_factory=dict)
+    trace_id: str | None = None  # 32-char lowercase hex (W3C trace-context)
+    span_id: str | None = None  # 16-char lowercase hex (W3C trace-context)
+    traceparent: str | None = None  # raw W3C traceparent header value
+    parent_span_id: str | None = (
+        None  # 16-char lowercase hex; present when traceparent came from a parent context
+    )
 
     def to_dict(self) -> dict:
         return {
@@ -206,6 +219,10 @@ class Observation:
             "outcome": self.outcome,
             "classification": self.classification,
             "metadata": dict(self.metadata),
+            "trace_id": self.trace_id,
+            "span_id": self.span_id,
+            "traceparent": self.traceparent,
+            "parent_span_id": self.parent_span_id,
         }
 
     @classmethod
@@ -222,4 +239,8 @@ class Observation:
             outcome=data.get("outcome"),
             classification=data.get("classification"),
             metadata=dict(data.get("metadata", {})),
+            trace_id=data.get("trace_id"),
+            span_id=data.get("span_id"),
+            traceparent=data.get("traceparent"),
+            parent_span_id=data.get("parent_span_id"),
         )

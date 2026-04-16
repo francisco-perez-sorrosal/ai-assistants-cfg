@@ -61,12 +61,17 @@ class ObservationStore:
         tool_filter: str | None = None,
         classification: str | None = None,
         event_type: str | None = None,
+        trace_id: str | None = None,
+        span_id: str | None = None,
         limit: int = DEFAULT_QUERY_LIMIT,
     ) -> list[dict]:
         """Read and filter observations from the JSONL file.
 
         Returns up to *limit* matching observations in chronological order
-        (oldest first). Malformed JSON lines are silently skipped.
+        (oldest first). Malformed JSON lines are silently skipped. When a
+        trace filter is provided, rows whose field is ``None`` or absent
+        never match — matching a literal ``None`` would create noisy joins
+        on pre-correlation historical data.
         """
         observations = self._read_all()
 
@@ -80,6 +85,8 @@ class ObservationStore:
                 tool_filter=tool_filter,
                 classification=classification,
                 event_type=event_type,
+                trace_id=trace_id,
+                span_id=span_id,
             ):
                 continue
             filtered.append(obs)
@@ -203,6 +210,8 @@ def _matches(
     tool_filter: str | None,
     classification: str | None,
     event_type: str | None,
+    trace_id: str | None,
+    span_id: str | None,
 ) -> bool:
     """Return True if the observation matches all non-None filters."""
     if since is not None and obs.get("timestamp", "") < since:
@@ -216,5 +225,9 @@ def _matches(
     if classification is not None and obs.get("classification") != classification:
         return False
     if event_type is not None and obs.get("event_type") != event_type:
+        return False
+    if trace_id is not None and obs.get("trace_id") != trace_id:
+        return False
+    if span_id is not None and obs.get("span_id") != span_id:
         return False
     return True

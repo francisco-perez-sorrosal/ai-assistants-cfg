@@ -6,8 +6,9 @@ import json
 import os
 from pathlib import Path
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import Context, FastMCP
 
+from memory_mcp.correlation import parse_traceparent
 from memory_mcp.metrics import compute_metrics
 from memory_mcp.narrative import build_session_narrative, build_timeline
 from memory_mcp.observations import ObservationStore
@@ -56,6 +57,54 @@ def _get_observation_store() -> ObservationStore:
     return _obs_store
 
 
+# -- Correlation extraction ---------------------------------------------------
+
+
+def _extract_correlation(ctx: Context | None) -> dict[str, str]:
+    """Extract W3C trace-context IDs from the MCP request envelope.
+
+    Reads ``params._meta.traceparent`` (exposed by FastMCP via
+    ``ctx.request_context.meta``; the MCP SDK models ``_meta`` as a pydantic
+    model with ``extra="allow"``, so arbitrary keys like ``traceparent`` pass
+    through). Returns an ``additionalContext``-shaped dict with empty-string
+    values when the header is absent or malformed. Empty strings — not
+    ``None`` — keep the hook's read side symmetric and grep-friendly.
+
+    Per ADR dec-048 §Phase B: degradation is silent and by design. The hook
+    writes the observation row either way.
+
+    ``parent_span_id`` is included in the returned dict for ADR-schema
+    consistency (dec-048 names it as a top-level observation field). The W3C
+    traceparent header alone does not carry a separate parent span — today we
+    surface an empty string; a future envelope key (e.g. ``_meta.parent_span_id``
+    or ``tracestate`` convention) can populate it without changing shape.
+    """
+    empty = {"trace_id": "", "span_id": "", "traceparent": "", "parent_span_id": ""}
+    if ctx is None:
+        return empty
+    try:
+        meta = ctx.request_context.meta
+    except (ValueError, AttributeError):
+        return empty
+    if meta is None:
+        return empty
+    raw_traceparent = getattr(meta, "traceparent", None)
+    if not isinstance(raw_traceparent, str) or not raw_traceparent:
+        return empty
+    parsed = parse_traceparent(raw_traceparent)
+    if parsed is None:
+        return empty
+    trace_id, span_id = parsed
+    raw_parent_span_id = getattr(meta, "parent_span_id", None)
+    parent_span_id = raw_parent_span_id if isinstance(raw_parent_span_id, str) else ""
+    return {
+        "trace_id": trace_id,
+        "span_id": span_id,
+        "traceparent": raw_traceparent,
+        "parent_span_id": parent_span_id,
+    }
+
+
 # -- MCP Tools ----------------------------------------------------------------
 
 
@@ -102,6 +151,7 @@ def remember(
     summary: str | None = None,
     type: str | None = None,  # noqa: A002
     created_by: str | None = None,
+    ctx: Context | None = None,
 ) -> dict:
     """Store a new memory or update an existing one.
 
@@ -128,8 +178,9 @@ def remember(
             preference, correction, insight).
         created_by: Optional identifier for the agent or user that created this entry.
     """
+    correlation = _extract_correlation(ctx)
     try:
-        return _get_store().remember(
+        result = _get_store().remember(
             category,
             key,
             value,
@@ -144,9 +195,11 @@ def remember(
             created_by=created_by,
         )
     except (ValueError, KeyError) as exc:
-        return {"error": str(exc)}
+        return {"error": str(exc), "additionalContext": correlation}
     except Exception as exc:
-        return {"error": f"Unexpected error: {exc}"}
+        return {"error": f"Unexpected error: {exc}", "additionalContext": correlation}
+    result["additionalContext"] = correlation
+    return result
 
 
 @mcp.tool()
@@ -170,7 +223,11 @@ def forget(category: str, key: str) -> dict:
 
 
 @mcp.tool()
-def recall(category: str, key: str | None = None) -> dict:
+def recall(
+    category: str,
+    key: str | None = None,
+    ctx: Context | None = None,
+) -> dict:
     """Retrieve stored memories with access tracking.
 
     Returns entries from a category, optionally filtered by key.
@@ -181,12 +238,15 @@ def recall(category: str, key: str | None = None) -> dict:
         category: The category to recall from.
         key: Optional specific key. If omitted, returns all entries in the category.
     """
+    correlation = _extract_correlation(ctx)
     try:
-        return _get_store().recall(category, key)
+        result = _get_store().recall(category, key)
     except (ValueError, KeyError) as exc:
-        return {"error": str(exc)}
+        return {"error": str(exc), "additionalContext": correlation}
     except Exception as exc:
-        return {"error": f"Unexpected error: {exc}"}
+        return {"error": f"Unexpected error: {exc}", "additionalContext": correlation}
+    result["additionalContext"] = correlation
+    return result
 
 
 @mcp.tool()

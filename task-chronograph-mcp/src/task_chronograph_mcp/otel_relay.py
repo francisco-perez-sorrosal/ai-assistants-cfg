@@ -99,6 +99,7 @@ class AgentContext:
 class SessionStats:
     """Tracks aggregate stats for a session, used in the summary span."""
 
+    session_id: str = ""
     agent_count: int = 0
     tool_count: int = 0
     skill_count: int = 0
@@ -310,6 +311,7 @@ class OTelRelay:
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: (
                         OpenInferenceSpanKindValues.CHAIN.value
                     ),
+                    SpanAttributes.SESSION_ID: agent_ctx.session_id,
                     "praxion.tool_count": agent_ctx.tool_count,
                     "praxion.error_count": agent_ctx.error_count,
                     "praxion.child_count": agent_ctx.child_count,
@@ -392,6 +394,7 @@ class OTelRelay:
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: (
                         OpenInferenceSpanKindValues.CHAIN.value
                     ),
+                    SpanAttributes.SESSION_ID: self._get_session_id_for_agent(agent_id),
                     "praxion.artifact_type": "skill",
                     "praxion.skill_name": skill_name,
                     SpanAttributes.INPUT_VALUE: args,
@@ -428,6 +431,7 @@ class OTelRelay:
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: (
                         OpenInferenceSpanKindValues.CHAIN.value
                     ),
+                    SpanAttributes.SESSION_ID: self._get_session_id_for_agent(agent_id),
                     "praxion.artifact_type": "command",
                     "praxion.command_name": command_name,
                 },
@@ -468,6 +472,7 @@ class OTelRelay:
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: (
                         OpenInferenceSpanKindValues.CHAIN.value
                     ),
+                    SpanAttributes.SESSION_ID: self._get_session_id_for_agent(agent_id),
                     "phase.number": phase,
                     "phase.total": total,
                     "phase.name": name,
@@ -502,6 +507,7 @@ class OTelRelay:
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: (
                         OpenInferenceSpanKindValues.CHAIN.value
                     ),
+                    SpanAttributes.SESSION_ID: self._get_session_id_for_agent(agent_id),
                     "decision.id": decision.get("id", ""),
                     "decision.category": decision.get("category", ""),
                     "decision.text": decision.get("text", ""),
@@ -644,6 +650,7 @@ class OTelRelay:
 
         # Initialize session stats
         self._session_stats = SessionStats(
+            session_id=session_id,
             git_branch=git_branch,
             is_worktree=is_worktree,
             worktree_name=worktree_name,
@@ -664,7 +671,7 @@ class OTelRelay:
                 "praxion.agent_type": MAIN_AGENT_TYPE,
                 "praxion.agent_origin": "claude-code",
                 "praxion.agent_id": MAIN_AGENT_ID,
-                "praxion.session_id": session_id,
+                SpanAttributes.SESSION_ID: session_id,
                 "praxion.depth": 0,
             },
         )
@@ -734,7 +741,7 @@ class OTelRelay:
             "praxion.agent_origin": origin,
             "praxion.trace_type": trace_type,
             "praxion.agent_id": agent_id,
-            "praxion.session_id": session_id,
+            SpanAttributes.SESSION_ID: session_id,
             "praxion.parent_session_id": parent_session_id,
             "praxion.depth": parent_depth + 1,
             "praxion.parent_agent_id": parent_id,
@@ -797,6 +804,7 @@ class OTelRelay:
         attributes: dict[str, Any] = {
             SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.TOOL.value,
             SpanAttributes.TOOL_NAME: tool_name,
+            SpanAttributes.SESSION_ID: self._get_session_id_for_agent(agent_id),
         }
         if input_summary:
             attributes[SpanAttributes.INPUT_VALUE] = input_summary
@@ -808,6 +816,14 @@ class OTelRelay:
             attributes["praxion.artifact_type"] = "mcp_tool"
             attributes["praxion.mcp_server"] = metadata.get("mcp_server", "")
             attributes["praxion.mcp_tool"] = metadata.get("mcp_tool", "")
+
+        # OTel MCP semconv forward-compat: set when provided, omit otherwise
+        mcp_session_id = metadata.get("mcp_session_id", "")
+        if mcp_session_id:
+            attributes["mcp.session.id"] = mcp_session_id
+        jsonrpc_request_id = metadata.get("jsonrpc_request_id", "")
+        if jsonrpc_request_id:
+            attributes["jsonrpc.request.id"] = jsonrpc_request_id
 
         span = self._tracer.start_span(
             name=tool_name,
@@ -874,6 +890,23 @@ class OTelRelay:
                 return main_ctx.otel_context
         return self._session_context
 
+    def _get_session_id_for_agent(self, agent_id: str) -> str:
+        """Look up the session_id associated with an agent's context.
+
+        Resolves in the same order as ``_get_parent_context``: agent-specific,
+        then main-agent fallback. Returns an empty string when no context is
+        available (e.g., pre-session tool spans should not normally reach here).
+        """
+        lookup_id = agent_id if agent_id else MAIN_AGENT_ID
+        with self._span_lock:
+            agent_ctx = self._agent_contexts.get(lookup_id)
+            if agent_ctx:
+                return agent_ctx.session_id
+            main_ctx = self._agent_contexts.get(MAIN_AGENT_ID)
+            if main_ctx:
+                return main_ctx.session_id
+        return ""
+
     def _increment_stat(self, agent_id: str, stat_name: str) -> None:
         """Increment a counter on an agent context. Thread-safe."""
         lookup_id = agent_id if agent_id else MAIN_AGENT_ID
@@ -891,6 +924,7 @@ class OTelRelay:
         duration_s = round(time.monotonic() - stats.start_time, 1)
         attrs: dict[str, Any] = {
             SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.CHAIN.value,
+            SpanAttributes.SESSION_ID: stats.session_id,
             "praxion.agent_count": stats.agent_count,
             "praxion.tool_count": stats.tool_count,
             "praxion.skill_count": stats.skill_count,
