@@ -134,7 +134,7 @@ Rationale: the safe-first Phase 1A delivered clean structural reclamation (~1,50
 
 Phase 1B candidates:
 
-1. **Extract Delegation Checklists** (~500 tokens savings) — **deferred**. Would move the per-agent "always include in prompt" bullets from the coordination protocol rule to `coordination-details.md`, leaving a pointer. Mitigation already in place: `claude/config/CLAUDE.md` now has condensed deliverables for all 4 pipeline agents (implementer added in Phase 1A), so the main agent retains always-loaded access to the essential deliverables list without the per-agent detail. Risk: medium — the detailed checklists carry conditional deliverables (deployment doc, architecture doc) that the condensed list omits.
+1. **Extract Delegation Checklists** (~500 tokens savings) — ❌ **dropped per dec-049 (2026-04-16)**. Re-evaluated as part of ROADMAP 2.3 workstream; researcher + context-engineer independently objected to the extraction on dec-022 grounds (decision-quality risk at depth-0 ad-hoc delegation, extraction-loop blocks observe/iterate learning). User confirmed Refined Path 2: keep checklists always-loaded; ship six orthogonal deliverables (D1–D6) that deliver the spirit of the 2.3 workstream without reversing dec-022. See [2.3](#23-reduce-coordinator-burden) for the shipped cohort. Conditional-deliverable gap (the original mitigation concern) closed by D1: `claude/config/CLAUDE.md` condensed block now covers all three missing conditionals plus an explicit sync-contract pointer. Future revival would require new evidence meeting the three bars in ADR-049's Prior Decision section.
 
 2. **Path-scope `coding-style.md`** ✅ DONE (2026-04-13). Added `paths:` frontmatter with 24 code-file globs (ADR `dec-044`) so the rule loads only on code sessions. Delivered as commit 1 of the Behavioral Contract Layer rollout to fund commit 2's ~949-byte `agent-behavioral-contract.md` addition. Measured delta: −6,730 bytes / ~−1,923 tokens on always-loaded content; net after commit 2: ~−5,360 bytes / ~−1,531 tokens (949 B new rule + 421 B project `CLAUDE.md` anchor − 6,730 B path-scoped). Risk proved low as predicted — safety audit on BC-S02 confirmed all runtime callers are code-session-scoped or documentary-only.
 
@@ -222,17 +222,33 @@ Build on the recovered token budget and CI foundation.
 **Dependencies**: 2.1 (agent prompt improvements).
 **Risk**: Low. Adds one file to the pipeline but provides formal handoff.
 
-#### 2.3 Reduce Coordinator Burden
+#### 2.3 Reduce Coordinator Burden ✅ SHIPPED (2026-04-16)
 
-**Problem**: 30+ decisions per Standard pipeline.
+**Outcome**: Shipped as the D1–D6 cohort via Standard-tier pipeline with context-engineer shadowing. ADR: `dec-049` (re-affirmation of `dec-022`, not supersession). Delegation-checklist extraction was re-evaluated and dropped (see [1.1 Phase 1B Point #1](#11-reclaim-token-budget--phase-1a--done-2026-04-11)); alternative value delivered as six orthogonal deliverables that preserve dec-022's always-loaded policy.
 
-**Actions**:
-- **Move delegation checklists** from always-loaded rules to a `software-planning/references/delegation-checklists.md` reference file (loaded when main agent activates software-planning skill for Standard+ tiers)
-- **Create tier templates**: Pre-built prompt templates for Standard pipeline that auto-include the slug, deliverables, and sequential agent invocations. Reduces cognitive load from "construct each prompt" to "fill in the template"
-- **Better-define Lightweight tier**: Add inline acceptance criteria format, specify which agents are available, where findings go. Close the steep jump between Lightweight and Standard
+**What was done:**
+- **D1** — Condensed-block symmetry fix in `claude/config/CLAUDE.md`: three missing conditional deliverables (SYSTEM_DEPLOYMENT, TEST_RESULTS write, TEST_RESULTS read per ADR-038) + authoritative-source pointer to the coordination rule
+- **D2** — Greenfield `skills/software-planning/references/tier-templates.md` with parametric Standard/Full/Lightweight prompt scaffolds and seven angle-bracket placeholders; DRY-linked to the rule's Delegation Checklists (no duplication)
+- **D3** — Five inline Lightweight-tier clauses in the coordination rule's Process Calibration section (gaps 2, 4, 5, 8 + row tighten for gap 1 per researcher mapping)
+- **D4** — Five-branch tier-selector fast-path decision tree in the same section, with a pointer to the SDD skill's formal calibration-procedure.md
+- **D5** — Regression test `test_coord_protocol_rule_passes_strict_validation` in `skills/skill-crafting/tests/test_validate_references.py`; caught a real cross-file anchor defect (`#lightweight` → `#lightweight-snippet`) on its first run, validating the investment
+- **D6** — ADR-049 + DECISIONS_INDEX row + architecture doc updates + memory entry `dec-022-delegation-checklist-reaffirm-2026-04` (category `learnings`, type `decision`, importance 7) — durable decision trail for future agents
 
-**Dependencies**: 1.1 (token budget), 2.1 (agent improvements).
-**Risk**: Medium. Tier templates must be flexible enough for varied tasks.
+**Results:**
+- 32/32 acceptance criteria verified (28 PASS, 4 WARN, 0 FAIL); `### Delegation Checklists` section byte-identical pre/post (dec-022 compliance proven, not just asserted); 37/37 tests pass
+- Net always-loaded delta: ~+1.7 KB additive (OQ-1 accepted — budget framing was bound to the dropped extraction path)
+- Commits: `aac71d6` (D1), `29ee132` (D2), `8828d00` (D3+D4), `67edc91` (D5), `a0f9c44` (D6)
+
+**Problem (preserved for audit)**: 30+ decisions per Standard pipeline — partially addressed by D2 scaffolds + D3/D4 Lightweight clarity. Full burden reduction requires ongoing calibration observation.
+
+**Follow-ups (migrated from pipeline SYSTEMS_PLAN.md `### Future Work`):**
+- **FW-1** — Sentinel drift check between `claude/config/CLAUDE.md` condensed block and `rules/swe/swe-agent-coordination-protocol.md` Delegation Checklists section. Parses both surfaces; warns if per-agent deliverable sets diverge. Would trigger D1-A Option 4 as a future ADR.
+- **FW-2** — Close the six deferred Lightweight gaps (3, 6, 7, 9, 10, 11) when accumulated pain justifies a "Lightweight tier spec v2" pass. Lower severity; not blocking.
+- **FW-3** — Promote `re-affirmation` to a formal ADR status if the pattern recurs (second or third time an ADR is re-affirmed rather than superseded).
+- **FW-4** — Tier-templates.md additions for emerging delegation patterns (multi-instance fan-out, speculative execution) as they are designed.
+
+**Dependencies**: 1.1 (token budget — retroactively closed together).
+**Risk**: None remaining. Verifier PASS WITH FINDINGS; all four WARNs documented as learnings, zero FAIL.
 
 #### 2.4 Harmonize Memory Gate Exemptions ✅ DONE (2026-04-12)
 
