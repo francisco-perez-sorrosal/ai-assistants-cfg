@@ -8,7 +8,6 @@ Full schema reference for `.ai-state/memory.json`. Loaded on-demand from the mem
 - [Memory Entry Schema](#memory-entry-schema)
 - [Category Definitions](#category-definitions)
 - [Field Constraints](#field-constraints)
-- [Observation Schema](#observation-schema)
 - [Markdown-KV Format](#markdown-kv-format)
 - [Consolidation Actions](#consolidation-actions)
 - [Example Document](#example-document)

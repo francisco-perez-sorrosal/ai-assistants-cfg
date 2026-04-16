@@ -139,8 +139,9 @@ sequenceDiagram
      Never duplicate ADR rationale here -- just link.
      Include ALL architecture-related ADRs -- omissions weaken the design record. -->
 
+<!-- Template placeholder below uses NNN-slug convention (user fills in real ADR path) — suppressed from validator. -->
 | ADR | Decision | Impact on Architecture |
 |-----|----------|----------------------|
-| [dec-NNN](decisions/NNN-slug.md) | [Decision title] | [How it shapes the architecture] |
+| [dec-NNN](decisions/NNN-slug.md) | [Decision title] | [How it shapes the architecture] | <!-- validate-references:ignore -->
 
 [Add new rows as architecture-related ADRs are created.]

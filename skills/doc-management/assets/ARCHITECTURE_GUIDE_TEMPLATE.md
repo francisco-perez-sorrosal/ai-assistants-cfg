@@ -133,8 +133,9 @@ sequenceDiagram
      This section provides quick cross-references to decisions that shaped the architecture.
      Never duplicate ADR rationale here -- just link. -->
 
+<!-- Template placeholder below uses NNN-slug convention (user fills in real ADR path) — suppressed from validator. -->
 | ADR | Decision | Impact on Architecture |
 |-----|----------|----------------------|
-| [dec-NNN](../.ai-state/decisions/NNN-slug.md) | [Decision title] | [How it shapes the architecture] |
+| [dec-NNN](../.ai-state/decisions/NNN-slug.md) | [Decision title] | [How it shapes the architecture] | <!-- validate-references:ignore -->
 
 [Add new rows as architecture-related ADRs are created.]

@@ -119,6 +119,6 @@ When agents run concurrently within a pipeline, each concurrent agent writes to 
 
 `CONTEXT_REVIEW.md` is cumulative and single-writer (context-engineer only) — not subject to fragment patterns.
 
-See [coordination-details.md#parallel-execution-fragments](../../skills/software-planning/references/coordination-details.md#parallel-execution-fragments) for the full fragment naming pattern and reconciliation protocol.
+See [coordination-details.md#parallel-execution-fragment-files](../../skills/software-planning/references/coordination-details.md#parallel-execution-fragment-files) for the full fragment naming pattern and reconciliation protocol.
 
 See the software-planning skill's [agent-pipeline-details.md](../../skills/software-planning/references/agent-pipeline-details.md) for the full semantic reconciliation protocols.

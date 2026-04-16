@@ -55,3 +55,22 @@ jobs:
       - name: Pytest
         working-directory: ${{ matrix.project }}
         run: uv run pytest
+
+  validate-context-artifacts:
+    # Soft-launch (SYSTEMS_PLAN.md §4.4): continue-on-error for the first
+    # 14 days; follow-up PR flips to strict on 2026-04-30.
+    name: Validate Context Artifacts (soft-launch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Set up uv (manages Python 3.13)
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57  # v8.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Cross-reference validation
+        run: python skills/skill-crafting/scripts/validate_references.py --all --format text

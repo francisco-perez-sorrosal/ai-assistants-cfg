@@ -167,9 +167,10 @@ Metric cap: one per phase item.
 ## Guiding Principles for Execution
 <!-- serves: automation + pragmatism lenses from derived set — cross-reference project principles; do not re-author -->
 
+<!-- Template relative paths below resolve correctly when rendered at the project root (next to README.md / ROADMAP.md); suppressed from validator because the template source lives under skills/. -->
 Project-level principles live at their canonical homes.
-- [README.md#guiding-principles](../README.md#guiding-principles) — project core principles
-- [ROADMAP.md#guiding-principles-for-execution](../ROADMAP.md#guiding-principles-for-execution) — prior roadmap's execution rubric (when one exists)
+- [README.md#guiding-principles](../README.md#guiding-principles) — project core principles <!-- validate-references:ignore -->
+- [ROADMAP.md#guiding-principles-for-execution](../ROADMAP.md#guiding-principles-for-execution) — prior roadmap's execution rubric (when one exists) <!-- validate-references:ignore -->
 
 Roadmap-specific execution principles (only the ones unique to this cycle):
 1. **Evidence-grounded decisions** — every quantitative claim cites a source. See `skills/roadmap-synthesis/references/grounding-protocol.md`.
