@@ -700,3 +700,28 @@ def test_no_duplicate_findings_per_link(tmp_path: Path) -> None:
             f"Duplicate finding for {key}:\n  first: {seen[key]}\n  dup: {f}"
         )
         seen[key] = f
+
+
+# ---------------------------------------------------------------------------
+# Regression guard: coordination-protocol rule (D1 + D3 + D4 edits)
+# ---------------------------------------------------------------------------
+
+
+@skip_if_no_validator
+def test_coord_protocol_rule_passes_strict_validation() -> None:
+    """Regression guard for D1+D3+D4 edits to the coordination rule.
+
+    Asserts that ``rules/swe/swe-agent-coordination-protocol.md`` has no broken
+    cross-references (specifically the ``#delegation-checklists`` anchor cited
+    by the ``claude/config/CLAUDE.md`` sync-contract pointer) and passes strict
+    validation under the dec-047 validator.
+
+    Spec source: ``.ai-work/coord-burden-reduction/SYSTEMS_PLAN.md`` §D5;
+    ADR-049; CONTEXT_REVIEW P6.
+    """
+    target = "rules/swe/swe-agent-coordination-protocol.md"
+    result = _run("--file", target, "--strict", repo_root=REPO_ROOT)
+    assert result.returncode == 0, (
+        f"validate_references.py --file {target} --strict failed: "
+        f"stdout={result.stdout!r} stderr={result.stderr!r}"
+    )
