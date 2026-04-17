@@ -236,6 +236,7 @@ When both agents are invoked, the doc-engineer runs AFTER the context-engineer t
 | Update catalog READMEs (structure, completeness) | Assess artifact content accuracy (context-engineer's job) |
 | Add missing catalog entries for new artifacts | Make architectural decisions about documentation structure |
 | Fix naming inconsistencies in documentation | Commit changes to git |
+| Update `docs/architecture.md` (cross-reference repair, freshness, writing quality) | Modify `.ai-state/ARCHITECTURE.md` (design-target — systems-architect and implementer domain) |
 
 ## Output
 

@@ -116,6 +116,10 @@ When a step creates or modifies deployment configuration files (`compose.yaml`, 
 
 When a step creates new modules/packages, changes interfaces, modifies data models, or adds/removes dependencies, annotate it with `[Architecture]`. This signals the implementer to update both `.ai-state/ARCHITECTURE.md` (design-target, step 7.6) and `docs/architecture.md` (developer guide, step 7.7) as part of step completion. When multiple architecture steps exist, the last one in sequence should include a `Done when` clause verifying both architecture documents are consistent -- the architect doc reflects the design intent, the developer guide reflects only Built components with verified file paths, and every component in the developer guide appears in the architect doc.
 
+**Planning-stage architecture updates:**
+
+When step decomposition reveals structural gaps in the current architecture docs (omitted modules, incorrect interfaces, missing components, stale file paths) that should be resolved *before* implementation begins, the implementation-planner updates both `.ai-state/ARCHITECTURE.md` and `docs/architecture.md` directly during Phase 6 -- do not wait for the implementer. This is distinct from **architectural decision changes** (new tech choices, interface redesigns, component reordering) which must be flagged to the systems-architect for re-evaluation. Rule of thumb: if it corrects an omission or factual error in the current docs, update it; if it changes a design choice, escalate it.
+
 **Parallel step annotations:**
 
 When steps can execute concurrently (disjoint file sets, no shared mutable state), annotate them:

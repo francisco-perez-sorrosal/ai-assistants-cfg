@@ -88,6 +88,7 @@ When delegating to an agent, the main agent **must** include these deliverables 
 **implementation-planner** — always include in prompt:
 - "Produce `IMPLEMENTATION_PLAN.md`, `WIP.md`, and `LEARNINGS.md` at `.ai-work/<task-slug>/`"
 - "Read the `SYSTEMS_PLAN.md` at `.ai-work/<task-slug>/` for input"
+- "If step decomposition reveals structural gaps not captured in the systems plan: update `.ai-state/ARCHITECTURE.md` and `docs/architecture.md` before implementation begins"
 
 **implementer** — always include in prompt:
 - "Execute step N from `WIP.md` at `.ai-work/<task-slug>/`"
