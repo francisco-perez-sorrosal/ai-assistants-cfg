@@ -206,7 +206,7 @@ The flags are read by each hook via `is_disabled()` in `hooks/_hook_utils.py`. T
 - When adding or modifying rules, load the `rule-crafting` skill
 - Follow commit conventions in `rules/` (auto-loaded by Claude when relevant)
 - **Never modify `~/.claude/plugins/cache/`** -- it contains installed copies that get overwritten on reinstall; always edit source files in this repo
-- **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 15,000 tokens (~52,500 chars). Before adding a new rule, verify the budget. Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge
+- **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 25,000 tokens (~87,500 chars) as a failure-mode guardrail — the principle is that every always-loaded token must earn its attention share (applied in >30% of sessions, or unconditionally relevant). Before adding a new rule, apply the attention-relevance test first, then verify the budget. Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge. Rationale: `.ai-state/decisions/050-always-loaded-budget-revision.md`
 
 ## Design Intent
 

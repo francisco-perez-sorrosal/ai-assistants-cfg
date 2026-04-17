@@ -595,8 +595,8 @@ How we'll know the roadmap is working:
 
 | Metric | Baseline | After Phase 1.1 | After Phase 1.2–1.7 | Phase 1 Target | Phase 3 Target |
 |--------|----------|-----------------|---------------------|----------------|----------------|
-| Token budget utilization | 95.7% / 109.4%† | 86.9% / 99.3%† | **76.0% / 86.9%†** ✅ (non-doc) / **80.9% / 92.5%†** ✅ (doc) | <80% | <75% |
-| Always-loaded rules token count‡ | 10,715 / 12,247† | 10,019 / 11,450† | **10,019 / 11,450† (doc) · 7,299 / 8,342† (non-doc)** ✅ | <8,500 | <8,000 |
+| Token budget utilization | 95.7% / 109.4%† | 86.9% / 99.3%† | **76.0% / 86.9%†** ✅ (non-doc) / **80.9% / 92.5%†** ✅ (doc) | <80% | <70% of 25k ceiling¶ |
+| Always-loaded rules token count‡ | 10,715 / 12,247† | 10,019 / 11,450† | **10,019 / 11,450† (doc) · 7,299 / 8,342† (non-doc)** ✅ | <8,500 | <12,000¶ |
 | Always-loaded total chars | 57,444 | 52,130 (−5,314) | **45,686 non-doc / 48,572 doc** ✅ | <50,000 | <45,000 |
 | Memory recall/search usage | 3+2=5 | 5 (unchanged) | 5 (unchanged — Phase 1.4 addresses entry quality, not recall UX) | >20 per 50 sessions | >50 per 50 sessions |
 | Memory entries never accessed | 83% | 83% | **18 entries archived** (6 condensed + 12 status=archived); active surface reduced, access rate TBD | <60% | <40% |
@@ -613,6 +613,8 @@ How we'll know the roadmap is working:
 ‡ Always-loaded rules only (excludes CLAUDE.md files). Total always-loaded budget is the "Always-loaded total chars" row.
 
 § Phase 1.1 added dec-022 (accepted). Phase 1.3 added dec-023 through dec-028 (6 new ADRs) and flipped 5 previously-proposed ADRs to accepted; dec-011 was superseded by dec-023 after the audit found its body contradicted the shipping code. Final state: 28 ADRs / 26 accepted / 2 superseded / 0 proposed.
+
+¶ Phase 3 targets rescaled on 2026-04-17 to reflect the new 25,000-token always-loaded ceiling established in `.ai-state/decisions/050-always-loaded-budget-revision.md`. The prior `<75%` / `<8,000` targets were authored under the 15,000-token ceiling and are now historical. Phase 1 Target cells are left at their original values (they were achieved against the old ceiling).
 
 **Phase 1.1 delivered:**
 - Token budget: pulled under the 15,000-token ceiling at both tokenizer ratios (was at or over ceiling pre-refactor depending on ratio)
