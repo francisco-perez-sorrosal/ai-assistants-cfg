@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
+import subprocess
 import threading
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from openinference.semconv.trace import OpenInferenceSpanKindValues, SpanAttributes
@@ -32,6 +35,10 @@ DEFAULT_PROJECT_NAME = "praxion-default"
 OTEL_ENABLED_ENV = "OTEL_ENABLED"
 PHOENIX_ENDPOINT_ENV = "PHOENIX_ENDPOINT"
 PHOENIX_PROJECT_NAME_ENV = "PHOENIX_PROJECT_NAME"
+# Phase 3 (ADR 052): opt-out of LLM-level attributes (tokens, model, system)
+# for users who want structural telemetry without any model metadata.
+# Does not affect Phoenix's local cost computation (that's a Phoenix setting).
+STRIP_LLM_ATTRS_ENV = "CHRONOGRAPH_STRIP_LLM_ATTRS"
 
 TRACER_NAME = "praxion.chronograph"
 
@@ -57,6 +64,108 @@ def _is_otel_enabled() -> bool:
     Can be disabled by setting OTEL_ENABLED=false for debugging.
     """
     return os.environ.get(OTEL_ENABLED_ENV, "false").lower() in ("true", "1", "yes")
+
+
+def _should_strip_llm_attrs() -> bool:
+    """User opt-out: skip LLM-level attributes (tokens, model, system, provider).
+
+    Structural telemetry (agent/tool/phase spans, durations, hierarchy) stays
+    intact; only the model-metadata overlay is suppressed. See ADR 052.
+    """
+    return os.environ.get(STRIP_LLM_ATTRS_ENV, "").lower() in ("1", "true", "yes")
+
+
+def _git_user_id(project_dir: str) -> str:
+    """Best-effort user.id from `git config user.email`. Fail-open to empty."""
+    if not project_dir:
+        return ""
+    try:
+        email = (
+            subprocess.check_output(
+                ["git", "config", "user.email"],
+                cwd=project_dir,
+                timeout=2,
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+        return email
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+        return ""
+
+
+def _parse_transcript_usage(transcript_path: str) -> dict[str, Any]:
+    """Aggregate LLM token usage and model info from a Claude Code agent transcript.
+
+    Transcript format is JSONL, one message per line, shape:
+        {"type": "assistant", "message": {"model": "claude-opus-4-7",
+         "role": "assistant", "usage": {"input_tokens": N, "output_tokens": M,
+         "cache_creation_input_tokens": K, "cache_read_input_tokens": R, ...}}}
+
+    Returns a dict of openinference-standard attributes suitable for merging
+    into an agent-summary span. Returns ``{}`` when the file is absent,
+    unreadable, has no usage, or when LLM attrs are suppressed via
+    ``CHRONOGRAPH_STRIP_LLM_ATTRS=1``.
+
+    Cache tokens are summed into prompt tokens so Phoenix's token aggregation
+    reflects total input cost regardless of whether the bill was for read
+    vs. creation.
+    """
+    if _should_strip_llm_attrs():
+        return {}
+    if not transcript_path:
+        return {}
+    path = Path(transcript_path)
+    if not path.exists():
+        return {}
+
+    prompt_total = 0
+    completion_total = 0
+    model = ""
+    try:
+        with path.open() as fh:
+            for line in fh:
+                try:
+                    entry = json.loads(line)
+                except (ValueError, TypeError):
+                    continue
+                msg = entry.get("message") if isinstance(entry, dict) else None
+                if not isinstance(msg, dict):
+                    continue
+                seen_model = msg.get("model", "") or ""
+                if seen_model:
+                    model = seen_model
+                usage = msg.get("usage")
+                if not isinstance(usage, dict):
+                    continue
+                input_tokens = usage.get("input_tokens") or 0
+                cache_creation = usage.get("cache_creation_input_tokens") or 0
+                cache_read = usage.get("cache_read_input_tokens") or 0
+                output_tokens = usage.get("output_tokens") or 0
+                prompt_total += int(input_tokens) + int(cache_creation) + int(cache_read)
+                completion_total += int(output_tokens)
+    except OSError:
+        return {}
+
+    if prompt_total == 0 and completion_total == 0 and not model:
+        return {}
+
+    attrs: dict[str, Any] = {}
+    if prompt_total or completion_total:
+        attrs[SpanAttributes.LLM_TOKEN_COUNT_PROMPT] = prompt_total
+        attrs[SpanAttributes.LLM_TOKEN_COUNT_COMPLETION] = completion_total
+        attrs[SpanAttributes.LLM_TOKEN_COUNT_TOTAL] = prompt_total + completion_total
+    if model:
+        attrs[SpanAttributes.LLM_MODEL_NAME] = model
+        # Infer system/provider from the model family
+        if model.startswith("claude-"):
+            attrs[SpanAttributes.LLM_SYSTEM] = "anthropic"
+            attrs[SpanAttributes.LLM_PROVIDER] = "anthropic"
+        elif model.startswith("gpt-") or model.startswith("o1-") or model.startswith("o3-"):
+            attrs[SpanAttributes.LLM_SYSTEM] = "openai"
+            attrs[SpanAttributes.LLM_PROVIDER] = "openai"
+    return attrs
 
 
 def _detect_agent_origin(agent_type: str) -> str:
@@ -110,6 +219,7 @@ class SessionStats:
     worktree_name: str = ""
     task_slug: str = ""
     pipeline_tier: str = ""
+    user_id: str = ""
 
 
 class OTelRelay:
@@ -292,12 +402,15 @@ class OTelRelay:
         *,
         agent_type: str = "",
         session_id: str = "",
+        transcript_path: str = "",
     ) -> None:
         """Record agent completion: create summary span and clean up context.
 
-        Creates an ``agent-summary`` child span carrying output value and
-        aggregate stats (tool_count, error_count, child_count) so they
-        appear in the Phoenix trace.
+        Creates an ``agent-summary`` child span carrying output value,
+        aggregate stats (tool_count, error_count, child_count), and -- when
+        ``transcript_path`` is provided and LLM attrs are not stripped --
+        openinference-standard LLM attributes (token counts, model,
+        system/provider) parsed from the subagent's JSONL transcript.
 
         If no agent context exists (SubagentStart hook was skipped for
         background agents), creates a synthetic agent span first so the
@@ -325,6 +438,10 @@ class OTelRelay:
                 }
                 if output:
                     attrs[SpanAttributes.OUTPUT_VALUE] = output
+                if self._session_stats and self._session_stats.user_id:
+                    attrs[SpanAttributes.USER_ID] = self._session_stats.user_id
+                if transcript_path:
+                    attrs.update(_parse_transcript_usage(transcript_path))
                 span = self._tracer.start_span(
                     name="agent-summary",
                     context=agent_ctx.otel_context,
@@ -382,6 +499,7 @@ class OTelRelay:
             attributes: dict[str, Any] = {
                 SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.TOOL.value,
                 SpanAttributes.TOOL_NAME: tool_name,
+                SpanAttributes.TOOL_ID: tool_use_id,
                 SpanAttributes.SESSION_ID: self._get_session_id_for_agent(agent_id),
             }
             meta = metadata or {}
@@ -457,6 +575,7 @@ class OTelRelay:
                 is_error,
                 error_msg,
                 metadata or {},
+                tool_use_id=tool_use_id,
             )
         except Exception:
             logger.warning("Failed to record OTel tool span for %s", tool_name, exc_info=True)
@@ -471,7 +590,11 @@ class OTelRelay:
         metadata: dict[str, Any],
         end_timestamp: datetime | None,
     ) -> None:
-        """Close an open tool span with output attrs and explicit end time."""
+        """Close an open tool span with output attrs and explicit end time.
+
+        ``tool.id`` was set at ``start_tool`` time (as the correlation key),
+        so there's no need to set it again here.
+        """
         if output_summary:
             span.set_attribute(SpanAttributes.OUTPUT_VALUE, output_summary)
 
@@ -785,6 +908,9 @@ class OTelRelay:
         is_worktree = git_context.get("is_worktree", False)
         worktree_name = git_context.get("worktree_name", "")
 
+        # Phase 3 (ADR 052): user.id from git identity, propagated to spans.
+        user_id = _git_user_id(project_dir)
+
         # No parent context -> true root span.
         attrs: dict[str, Any] = {
             SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.CHAIN.value,
@@ -793,6 +919,8 @@ class OTelRelay:
             "praxion.project_dir": project_dir,
             "praxion.session_start": datetime.now(UTC).isoformat(),
         }
+        if user_id:
+            attrs[SpanAttributes.USER_ID] = user_id
         if git_branch:
             attrs["praxion.git.branch"] = git_branch
         if is_worktree:
@@ -816,6 +944,7 @@ class OTelRelay:
             git_branch=git_branch,
             is_worktree=is_worktree,
             worktree_name=worktree_name,
+            user_id=user_id,
         )
 
         # Create synthetic main-agent span for the main Claude agent.
@@ -908,6 +1037,8 @@ class OTelRelay:
             "praxion.depth": parent_depth + 1,
             "praxion.parent_agent_id": parent_id,
         }
+        if self._session_stats and self._session_stats.user_id:
+            attrs[SpanAttributes.USER_ID] = self._session_stats.user_id
         if git.get("git_branch"):
             attrs["praxion.git.branch"] = git["git_branch"]
         if git.get("is_worktree"):
@@ -954,6 +1085,8 @@ class OTelRelay:
         is_error: bool,
         error_msg: str,
         metadata: dict[str, Any],
+        *,
+        tool_use_id: str = "",
     ) -> None:
         """Create a TOOL span as a child of the agent span or main agent."""
         if self._tracer is None:
@@ -968,6 +1101,8 @@ class OTelRelay:
             SpanAttributes.TOOL_NAME: tool_name,
             SpanAttributes.SESSION_ID: self._get_session_id_for_agent(agent_id),
         }
+        if tool_use_id:
+            attributes[SpanAttributes.TOOL_ID] = tool_use_id
         if input_summary:
             attributes[SpanAttributes.INPUT_VALUE] = input_summary
         if output_summary:

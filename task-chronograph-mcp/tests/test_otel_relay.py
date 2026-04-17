@@ -1536,3 +1536,277 @@ class TestToolDurationCorrelation:
         span = harness.spans_named("Bash")[0]
         assert span.status.status_code == StatusCode.ERROR
         assert "toolu_orphan" not in harness.relay._open_tool_spans
+
+
+# ---------------------------------------------------------------------------
+# Openinference-standard attributes (Phase 3 -- ADR 052)
+# ---------------------------------------------------------------------------
+
+
+class TestToolIdAttribute:
+    """tool.id -- Claude Code's tool_use_id -- is the openinference correlation key."""
+
+    def test_paired_tool_span_carries_tool_id_from_pretooluse(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_tool(
+            tool_use_id="toolu_paired", agent_id="", tool_name="Bash", session_id=SESSION_ID
+        )
+        harness.relay.record_tool("", "Bash", session_id=SESSION_ID, tool_use_id="toolu_paired")
+        span = harness.spans_named("Bash")[0]
+        assert span.attributes["tool.id"] == "toolu_paired"
+
+    def test_fallback_tool_span_with_tool_use_id_carries_tool_id(
+        self, harness: OTelRelayTestHarness
+    ):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        # No start_tool -- fallback path, but tool_use_id still present
+        harness.relay.record_tool("", "Read", session_id=SESSION_ID, tool_use_id="toolu_fallback")
+        span = harness.spans_named("Read")[0]
+        assert span.attributes["tool.id"] == "toolu_fallback"
+
+    def test_fallback_tool_span_without_tool_use_id_omits_tool_id(
+        self, harness: OTelRelayTestHarness
+    ):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_tool("", "Grep", session_id=SESSION_ID)
+        span = harness.spans_named("Grep")[0]
+        assert "tool.id" not in (span.attributes or {})
+
+
+class TestUserIdAttribute:
+    """user.id from git identity must flow from session span to agent spans."""
+
+    def test_session_span_includes_user_id_when_git_identity_available(
+        self, harness: OTelRelayTestHarness, monkeypatch
+    ):
+        from task_chronograph_mcp import otel_relay
+
+        monkeypatch.setattr(otel_relay, "_git_user_id", lambda _p: "test@example.com")
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.end_session(SESSION_ID)
+        assert harness.session_span().attributes["user.id"] == "test@example.com"
+
+    def test_session_span_omits_user_id_when_git_identity_missing(
+        self, harness: OTelRelayTestHarness, monkeypatch
+    ):
+        from task_chronograph_mcp import otel_relay
+
+        monkeypatch.setattr(otel_relay, "_git_user_id", lambda _p: "")
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.end_session(SESSION_ID)
+        assert "user.id" not in (harness.session_span().attributes or {})
+
+    def test_agent_span_propagates_user_id_from_session(
+        self, harness: OTelRelayTestHarness, monkeypatch
+    ):
+        from task_chronograph_mcp import otel_relay
+
+        monkeypatch.setattr(otel_relay, "_git_user_id", lambda _p: "dev@example.com")
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-u1", "i-am:researcher", SESSION_ID)
+        harness.relay.end_agent("agent-u1", "", agent_type="i-am:researcher", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        agent_spans = harness.spans_with_attribute("praxion.agent_type", "researcher")
+        assert agent_spans[0].attributes["user.id"] == "dev@example.com"
+
+
+class TestTranscriptUsageParsing:
+    """_parse_transcript_usage must aggregate tokens + infer provider from real transcripts."""
+
+    def _write_transcript(self, path, messages):
+        import json
+
+        with path.open("w") as fh:
+            for msg in messages:
+                fh.write(json.dumps(msg) + "\n")
+
+    def test_aggregates_tokens_across_assistant_messages(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("CHRONOGRAPH_STRIP_LLM_ATTRS", raising=False)
+        from task_chronograph_mcp.otel_relay import _parse_transcript_usage
+
+        transcript = tmp_path / "agent.jsonl"
+        self._write_transcript(
+            transcript,
+            [
+                {
+                    "type": "assistant",
+                    "message": {
+                        "role": "assistant",
+                        "model": "claude-opus-4-7",
+                        "usage": {"input_tokens": 100, "output_tokens": 50},
+                    },
+                },
+                {
+                    "type": "assistant",
+                    "message": {
+                        "role": "assistant",
+                        "model": "claude-opus-4-7",
+                        "usage": {"input_tokens": 200, "output_tokens": 75},
+                    },
+                },
+            ],
+        )
+        attrs = _parse_transcript_usage(str(transcript))
+        assert attrs["llm.token_count.prompt"] == 300
+        assert attrs["llm.token_count.completion"] == 125
+        assert attrs["llm.token_count.total"] == 425
+
+    def test_cache_tokens_added_to_prompt_total(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("CHRONOGRAPH_STRIP_LLM_ATTRS", raising=False)
+        from task_chronograph_mcp.otel_relay import _parse_transcript_usage
+
+        transcript = tmp_path / "agent.jsonl"
+        self._write_transcript(
+            transcript,
+            [
+                {
+                    "type": "assistant",
+                    "message": {
+                        "role": "assistant",
+                        "model": "claude-opus-4-7",
+                        "usage": {
+                            "input_tokens": 10,
+                            "cache_creation_input_tokens": 1000,
+                            "cache_read_input_tokens": 500,
+                            "output_tokens": 20,
+                        },
+                    },
+                },
+            ],
+        )
+        attrs = _parse_transcript_usage(str(transcript))
+        assert attrs["llm.token_count.prompt"] == 1510
+
+    def test_infers_anthropic_system_from_claude_model(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("CHRONOGRAPH_STRIP_LLM_ATTRS", raising=False)
+        from task_chronograph_mcp.otel_relay import _parse_transcript_usage
+
+        transcript = tmp_path / "agent.jsonl"
+        self._write_transcript(
+            transcript,
+            [
+                {
+                    "type": "assistant",
+                    "message": {
+                        "role": "assistant",
+                        "model": "claude-opus-4-7",
+                        "usage": {"input_tokens": 1, "output_tokens": 1},
+                    },
+                },
+            ],
+        )
+        attrs = _parse_transcript_usage(str(transcript))
+        assert attrs["llm.system"] == "anthropic"
+        assert attrs["llm.provider"] == "anthropic"
+        assert attrs["llm.model_name"] == "claude-opus-4-7"
+
+    def test_missing_file_returns_empty_dict(self, monkeypatch):
+        monkeypatch.delenv("CHRONOGRAPH_STRIP_LLM_ATTRS", raising=False)
+        from task_chronograph_mcp.otel_relay import _parse_transcript_usage
+
+        assert _parse_transcript_usage("/nonexistent/path/agent.jsonl") == {}
+
+    def test_empty_path_returns_empty_dict(self, monkeypatch):
+        monkeypatch.delenv("CHRONOGRAPH_STRIP_LLM_ATTRS", raising=False)
+        from task_chronograph_mcp.otel_relay import _parse_transcript_usage
+
+        assert _parse_transcript_usage("") == {}
+
+    def test_malformed_json_line_skipped_not_fatal(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("CHRONOGRAPH_STRIP_LLM_ATTRS", raising=False)
+        from task_chronograph_mcp.otel_relay import _parse_transcript_usage
+
+        transcript = tmp_path / "agent.jsonl"
+        transcript.write_text(
+            "this is not json\n"
+            '{"type": "assistant", "message": {"role": "assistant", "model": "claude-opus-4-7", '
+            '"usage": {"input_tokens": 5, "output_tokens": 3}}}\n'
+        )
+        attrs = _parse_transcript_usage(str(transcript))
+        assert attrs["llm.token_count.total"] == 8
+
+    def test_strip_env_flag_suppresses_all_llm_attrs(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("CHRONOGRAPH_STRIP_LLM_ATTRS", "1")
+        from task_chronograph_mcp.otel_relay import _parse_transcript_usage
+
+        transcript = tmp_path / "agent.jsonl"
+        self._write_transcript(
+            transcript,
+            [
+                {
+                    "type": "assistant",
+                    "message": {
+                        "role": "assistant",
+                        "model": "claude-opus-4-7",
+                        "usage": {"input_tokens": 100, "output_tokens": 50},
+                    },
+                },
+            ],
+        )
+        assert _parse_transcript_usage(str(transcript)) == {}
+
+    def test_transcript_without_usage_returns_empty(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("CHRONOGRAPH_STRIP_LLM_ATTRS", raising=False)
+        from task_chronograph_mcp.otel_relay import _parse_transcript_usage
+
+        transcript = tmp_path / "agent.jsonl"
+        self._write_transcript(
+            transcript,
+            [{"type": "user", "message": {"role": "user", "content": "hi"}}],
+        )
+        assert _parse_transcript_usage(str(transcript)) == {}
+
+
+class TestEndAgentLlmAttrs:
+    """end_agent must fold transcript-derived LLM attributes into agent-summary spans."""
+
+    def test_end_agent_sets_llm_attrs_when_transcript_provided(
+        self, harness: OTelRelayTestHarness, tmp_path, monkeypatch
+    ):
+        import json
+
+        monkeypatch.delenv("CHRONOGRAPH_STRIP_LLM_ATTRS", raising=False)
+        transcript = tmp_path / "agent.jsonl"
+        with transcript.open("w") as fh:
+            fh.write(
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "message": {
+                            "role": "assistant",
+                            "model": "claude-opus-4-7",
+                            "usage": {"input_tokens": 42, "output_tokens": 17},
+                        },
+                    }
+                )
+                + "\n"
+            )
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-t1", "i-am:researcher", SESSION_ID)
+        harness.relay.end_agent(
+            "agent-t1",
+            "done",
+            agent_type="i-am:researcher",
+            session_id=SESSION_ID,
+            transcript_path=str(transcript),
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        summaries = harness.spans_named("agent-summary")
+        summary = summaries[-1]
+        assert summary.attributes["llm.token_count.prompt"] == 42
+        assert summary.attributes["llm.token_count.completion"] == 17
+        assert summary.attributes["llm.model_name"] == "claude-opus-4-7"
+
+    def test_end_agent_without_transcript_omits_llm_attrs(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-t2", "i-am:researcher", SESSION_ID)
+        harness.relay.end_agent(
+            "agent-t2", "done", agent_type="i-am:researcher", session_id=SESSION_ID
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        summaries = harness.spans_named("agent-summary")
+        summary = summaries[-1]
+        assert "llm.token_count.total" not in (summary.attributes or {})

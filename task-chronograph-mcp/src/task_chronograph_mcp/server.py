@@ -142,6 +142,7 @@ def _relay_event(relay: OTelRelay, event: Event) -> None:
                     event.message,
                     agent_type=event.agent_type,
                     session_id=event.session_id,
+                    transcript_path=event.metadata.get("agent_transcript_path", ""),
                 )
             case EventType.TOOL_START:
                 relay.start_tool(
