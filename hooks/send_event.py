@@ -339,8 +339,35 @@ def _build_events(data):
             }
         )
 
+    elif hook == "PreToolUse":
+        tool_name = data.get("tool_name", "")
+        tool_use_id = data.get("tool_use_id", "")
+        # Without a correlation id we can't pair Pre/Post; let PostToolUse
+        # emit an instant span (fallback path) instead of opening a dangling span.
+        if not tool_name or not tool_use_id:
+            return events, interactions
+        meta = {"input_summary": _summarize_tool_input(data)}
+        mcp_info = _classify_mcp_tool(tool_name)
+        if mcp_info:
+            meta["artifact_type"] = "mcp_tool"
+            meta["mcp_server"] = mcp_info[0]
+            meta["mcp_tool"] = mcp_info[1]
+        events.append(
+            {
+                "event_type": "tool_start",
+                "agent_type": data.get("agent_type", ""),
+                "agent_id": aid,
+                "session_id": sid,
+                "tool_name": tool_name,
+                "tool_use_id": tool_use_id,
+                "project_dir": proj,
+                "metadata": meta,
+            }
+        )
+
     elif hook == "PostToolUse":
         tool_name = data.get("tool_name", "")
+        tool_use_id = data.get("tool_use_id", "")
         tool_input = data.get("tool_input", {})
         fp = tool_input.get("file_path", "") if isinstance(tool_input, dict) else ""
 
@@ -387,6 +414,7 @@ def _build_events(data):
                 "agent_id": aid,
                 "session_id": sid,
                 "tool_name": tool_name,
+                "tool_use_id": tool_use_id,
                 "project_dir": proj,
                 "metadata": meta,
             }
@@ -421,6 +449,7 @@ def _build_events(data):
 
     elif hook == "PostToolUseFailure":
         tool_name = data.get("tool_name", "")
+        tool_use_id = data.get("tool_use_id", "")
         error_msg = data.get("error", data.get("message", "Tool call failed"))
         if isinstance(error_msg, dict):
             error_msg = json.dumps(error_msg)
@@ -431,6 +460,7 @@ def _build_events(data):
                 "agent_id": aid,
                 "session_id": sid,
                 "tool_name": tool_name,
+                "tool_use_id": tool_use_id,
                 "message": str(error_msg),
                 "project_dir": proj,
                 "metadata": {

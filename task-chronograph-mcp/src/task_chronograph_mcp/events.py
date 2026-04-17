@@ -15,6 +15,7 @@ class EventType(StrEnum):
     AGENT_START = "agent_start"
     AGENT_STOP = "agent_stop"
     PHASE_TRANSITION = "phase_transition"
+    TOOL_START = "tool_start"
     TOOL_USE = "tool_use"
     ERROR = "error"
     SESSION_START = "session_start"
@@ -67,6 +68,9 @@ class Event:
     artifact_name: str = ""
     # Pipeline context
     task_slug: str = ""
+    # Tool correlation (Claude Code's tool_use_id, e.g. "toolu_xxx").
+    # Present on TOOL_START and TOOL_USE events; pairs them for duration spans.
+    tool_use_id: str = ""
 
     def to_dict(self) -> dict:
         d = {
@@ -99,6 +103,8 @@ class Event:
             d["artifact_name"] = self.artifact_name
         if self.task_slug:
             d["task_slug"] = self.task_slug
+        if self.tool_use_id:
+            d["tool_use_id"] = self.tool_use_id
         return d
 
 

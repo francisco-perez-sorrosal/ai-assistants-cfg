@@ -842,3 +842,130 @@ class TestResolveProjectRoot:
     def test_none_returns_none(self, hook_module):
         """None cwd returns None without calling git."""
         assert hook_module._resolve_project_root(None) is None
+
+
+# ---------------------------------------------------------------------------
+# _build_events: PreToolUse (Phase 2 duration correlation -- ADR 052)
+# ---------------------------------------------------------------------------
+
+
+class TestBuildEventsPreToolUse:
+    """PreToolUse hook must emit a tool_start event when tool_use_id is present."""
+
+    def test_pre_tool_use_with_correlation_id_emits_tool_start(self, build_events):
+        payload = {
+            "hook_event_name": "PreToolUse",
+            "session_id": "sess-200",
+            "agent_id": "agent-200",
+            "tool_name": "Bash",
+            "tool_use_id": "toolu_abc123",
+            "tool_input": {"command": "ls"},
+        }
+        events, interactions = build_events(payload)
+        assert len(events) == 1
+        event = events[0]
+        assert event["event_type"] == "tool_start"
+        assert event["tool_use_id"] == "toolu_abc123"
+        assert event["tool_name"] == "Bash"
+        assert interactions == []
+
+    def test_pre_tool_use_without_tool_use_id_emits_nothing(self, build_events):
+        """No correlation id means PostToolUse falls back to instant span."""
+        payload = {
+            "hook_event_name": "PreToolUse",
+            "session_id": "sess-200",
+            "tool_name": "Bash",
+            "tool_input": {"command": "ls"},
+        }
+        events, interactions = build_events(payload)
+        assert events == []
+        assert interactions == []
+
+    def test_pre_tool_use_without_tool_name_emits_nothing(self, build_events):
+        payload = {
+            "hook_event_name": "PreToolUse",
+            "session_id": "sess-200",
+            "tool_use_id": "toolu_xyz",
+        }
+        events, _ = build_events(payload)
+        assert events == []
+
+    def test_pre_tool_use_populates_input_summary_in_metadata(self, build_events):
+        payload = {
+            "hook_event_name": "PreToolUse",
+            "session_id": "sess-200",
+            "tool_name": "Bash",
+            "tool_use_id": "toolu_abc",
+            "tool_input": {"command": "echo hello"},
+        }
+        events, _ = build_events(payload)
+        assert "command=echo hello" in events[0]["metadata"]["input_summary"]
+
+    def test_pre_tool_use_redacts_secrets_in_input(self, build_events):
+        payload = {
+            "hook_event_name": "PreToolUse",
+            "session_id": "sess-200",
+            "tool_name": "Bash",
+            "tool_use_id": "toolu_abc",
+            "tool_input": {
+                "command": "curl -H 'Authorization: Bearer sk-secretxxxxxxxxxxxxxxxxxx'"
+            },
+        }
+        events, _ = build_events(payload)
+        assert "sk-secret" not in events[0]["metadata"]["input_summary"]
+        assert "[REDACTED]" in events[0]["metadata"]["input_summary"]
+
+    def test_pre_tool_use_classifies_praxion_mcp_tool(self, build_events):
+        payload = {
+            "hook_event_name": "PreToolUse",
+            "session_id": "sess-200",
+            "tool_name": "mcp__plugin_i-am_memory__remember",
+            "tool_use_id": "toolu_mcp",
+            "tool_input": {"category": "learnings"},
+        }
+        events, _ = build_events(payload)
+        meta = events[0]["metadata"]
+        assert meta["artifact_type"] == "mcp_tool"
+        assert meta["mcp_server"] == "memory"
+        assert meta["mcp_tool"] == "remember"
+
+
+class TestBuildEventsPostToolUseCorrelation:
+    """PostToolUse must now thread tool_use_id so the relay can close paired spans."""
+
+    def test_post_tool_use_includes_tool_use_id(self, build_events):
+        payload = {
+            "hook_event_name": "PostToolUse",
+            "session_id": "sess-200",
+            "agent_id": "agent-200",
+            "tool_name": "Bash",
+            "tool_use_id": "toolu_def456",
+            "tool_input": {"command": "ls"},
+            "tool_response": "file1\nfile2",
+        }
+        events, _ = build_events(payload)
+        assert any(e["tool_use_id"] == "toolu_def456" for e in events)
+
+    def test_post_tool_use_without_tool_use_id_passes_empty_string(self, build_events):
+        """Empty tool_use_id is valid -- relay falls back to instant span."""
+        payload = {
+            "hook_event_name": "PostToolUse",
+            "session_id": "sess-200",
+            "tool_name": "Read",
+            "tool_input": {"file_path": "/tmp/x"},
+        }
+        events, _ = build_events(payload)
+        tool_events = [e for e in events if e["event_type"] == "tool_use"]
+        assert tool_events[0]["tool_use_id"] == ""
+
+    def test_post_tool_use_failure_includes_tool_use_id(self, build_events):
+        payload = {
+            "hook_event_name": "PostToolUseFailure",
+            "session_id": "sess-200",
+            "tool_name": "Bash",
+            "tool_use_id": "toolu_fail",
+            "error": "command not found",
+        }
+        events, _ = build_events(payload)
+        assert events[0]["tool_use_id"] == "toolu_fail"
+        assert events[0]["event_type"] == "error"

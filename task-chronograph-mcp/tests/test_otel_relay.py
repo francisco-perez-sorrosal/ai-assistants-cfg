@@ -1371,3 +1371,168 @@ class TestLazyAgentContextCreation:
 
         agent_spans = harness.spans_with_attribute("praxion.agent_type", "researcher")
         assert len(agent_spans) == 1, "Explicit agent span not duplicated by lazy check"
+
+
+# ---------------------------------------------------------------------------
+# Tool duration correlation (Phase 2 -- ADR 052)
+# ---------------------------------------------------------------------------
+
+
+class TestToolDurationCorrelation:
+    """Paired PreToolUse/PostToolUse events produce a single span with real duration."""
+
+    def _start_session(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+
+    def test_start_tool_opens_span_but_does_not_finish_it(self, harness: OTelRelayTestHarness):
+        self._start_session(harness)
+        harness.relay.start_tool(
+            tool_use_id="toolu_pending",
+            agent_id="",
+            tool_name="Bash",
+            session_id=SESSION_ID,
+        )
+        # Span is held open -- must not appear in finished exports yet
+        pending_spans = [s for s in harness.finished_spans if s.name == "Bash"]
+        assert pending_spans == []
+
+    def test_record_tool_after_start_produces_one_span_with_real_duration(
+        self, harness: OTelRelayTestHarness
+    ):
+        self._start_session(harness)
+        from datetime import UTC, datetime, timedelta
+
+        start_ts = datetime.now(UTC)
+        end_ts = start_ts + timedelta(milliseconds=250)
+
+        harness.relay.start_tool(
+            tool_use_id="toolu_timed",
+            agent_id="",
+            tool_name="Bash",
+            session_id=SESSION_ID,
+            timestamp=start_ts,
+        )
+        harness.relay.record_tool(
+            "",
+            "Bash",
+            output_summary="ok",
+            session_id=SESSION_ID,
+            tool_use_id="toolu_timed",
+            end_timestamp=end_ts,
+        )
+
+        bash_spans = harness.spans_named("Bash")
+        assert len(bash_spans) == 1
+        span = bash_spans[0]
+        duration_ns = span.end_time - span.start_time
+        # Expected ~250 ms; assert comfortably above 200 ms to tolerate clock skew
+        assert duration_ns > 200_000_000
+
+    def test_record_tool_without_prior_start_uses_fallback_instant_span(
+        self, harness: OTelRelayTestHarness
+    ):
+        self._start_session(harness)
+        # No start_tool call; record_tool should fall through to instant-span path
+        harness.relay.record_tool(
+            "",
+            "Read",
+            input_summary="file=/tmp/x",
+            output_summary="contents",
+            session_id=SESSION_ID,
+            tool_use_id="toolu_unpaired",
+        )
+        read_spans = harness.spans_named("Read")
+        assert len(read_spans) == 1
+
+    def test_record_tool_without_tool_use_id_uses_fallback(self, harness: OTelRelayTestHarness):
+        self._start_session(harness)
+        harness.relay.record_tool(
+            "",
+            "Grep",
+            input_summary="pattern=foo",
+            output_summary="found",
+            session_id=SESSION_ID,
+            # tool_use_id omitted -- must still produce an instant span
+        )
+        assert len(harness.spans_named("Grep")) == 1
+
+    def test_start_tool_with_empty_tool_use_id_is_noop(self, harness: OTelRelayTestHarness):
+        self._start_session(harness)
+        harness.relay.start_tool(
+            tool_use_id="",
+            agent_id="",
+            tool_name="Bash",
+            session_id=SESSION_ID,
+        )
+        # Nothing open, nothing tracked -- verify via the private dict
+        assert harness.relay._open_tool_spans == {}
+
+    def test_duplicate_start_tool_keeps_first_span(self, harness: OTelRelayTestHarness):
+        self._start_session(harness)
+        harness.relay.start_tool(
+            tool_use_id="toolu_dup", agent_id="", tool_name="Bash", session_id=SESSION_ID
+        )
+        first_span = harness.relay._open_tool_spans["toolu_dup"]
+        harness.relay.start_tool(
+            tool_use_id="toolu_dup", agent_id="", tool_name="Bash", session_id=SESSION_ID
+        )
+        assert harness.relay._open_tool_spans["toolu_dup"] is first_span
+
+    def test_paired_tool_span_with_error_sets_error_status(self, harness: OTelRelayTestHarness):
+        self._start_session(harness)
+        harness.relay.start_tool(
+            tool_use_id="toolu_err", agent_id="", tool_name="Bash", session_id=SESSION_ID
+        )
+        harness.relay.record_tool(
+            "",
+            "Bash",
+            is_error=True,
+            error_msg="exit 1",
+            session_id=SESSION_ID,
+            tool_use_id="toolu_err",
+        )
+        span = harness.spans_named("Bash")[0]
+        assert span.status.status_code == StatusCode.ERROR
+
+    def test_paired_mcp_tool_preserves_mcp_attributes(self, harness: OTelRelayTestHarness):
+        self._start_session(harness)
+        harness.relay.start_tool(
+            tool_use_id="toolu_mcp",
+            agent_id="",
+            tool_name="mcp__plugin_i-am_memory__remember",
+            session_id=SESSION_ID,
+            metadata={
+                "artifact_type": "mcp_tool",
+                "mcp_server": "memory",
+                "mcp_tool": "remember",
+            },
+        )
+        harness.relay.record_tool(
+            "",
+            "mcp__plugin_i-am_memory__remember",
+            session_id=SESSION_ID,
+            tool_use_id="toolu_mcp",
+            metadata={"artifact_type": "mcp_tool", "mcp_server": "memory", "mcp_tool": "remember"},
+        )
+        span = harness.spans_named("mcp__plugin_i-am_memory__remember")[0]
+        assert span.attributes["praxion.mcp_server"] == "memory"
+
+    def test_orphaned_tool_start_reaped_as_error(self, harness: OTelRelayTestHarness):
+        self._start_session(harness)
+        harness.relay.start_tool(
+            tool_use_id="toolu_orphan", agent_id="", tool_name="Bash", session_id=SESSION_ID
+        )
+        # Age the pending start past the timeout, then trigger the reaper directly.
+        import time as _time
+
+        from task_chronograph_mcp.otel_relay import AGENT_SPAN_TIMEOUT_S
+
+        with harness.relay._span_lock:
+            harness.relay._open_tool_start_times["toolu_orphan"] = (
+                _time.monotonic() - AGENT_SPAN_TIMEOUT_S - 10
+            )
+        harness.relay._reap_stale_contexts()
+
+        span = harness.spans_named("Bash")[0]
+        assert span.status.status_code == StatusCode.ERROR
+        assert "toolu_orphan" not in harness.relay._open_tool_spans

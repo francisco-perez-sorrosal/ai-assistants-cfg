@@ -143,6 +143,18 @@ def _relay_event(relay: OTelRelay, event: Event) -> None:
                     agent_type=event.agent_type,
                     session_id=event.session_id,
                 )
+            case EventType.TOOL_START:
+                relay.start_tool(
+                    tool_use_id=event.tool_use_id,
+                    agent_id=event.agent_id,
+                    tool_name=event.tool_name,
+                    timestamp=event.timestamp,
+                    input_summary=str(event.metadata.get("input_summary", "")),
+                    session_id=event.session_id,
+                    project_dir=event.project_dir,
+                    metadata=event.metadata,
+                    agent_type=event.agent_type,
+                )
             case EventType.TOOL_USE:
                 relay.record_tool(
                     event.agent_id,
@@ -155,6 +167,8 @@ def _relay_event(relay: OTelRelay, event: Event) -> None:
                     project_dir=event.project_dir,
                     metadata=event.metadata,
                     agent_type=event.agent_type,
+                    tool_use_id=event.tool_use_id,
+                    end_timestamp=event.timestamp,
                 )
             case EventType.ERROR:
                 relay.record_tool(
@@ -168,6 +182,8 @@ def _relay_event(relay: OTelRelay, event: Event) -> None:
                     project_dir=event.project_dir,
                     metadata=event.metadata,
                     agent_type=event.agent_type,
+                    tool_use_id=event.tool_use_id,
+                    end_timestamp=event.timestamp,
                 )
             case EventType.SKILL_USE:
                 relay.record_skill(
@@ -237,6 +253,7 @@ async def receive_event(request: Request) -> JSONResponse:
         artifact_type=body.get("artifact_type", "") or meta.get("artifact_type", ""),
         artifact_name=body.get("artifact_name", "") or meta.get("artifact_name", ""),
         task_slug=body.get("task_slug", "") or meta.get("task_slug", ""),
+        tool_use_id=body.get("tool_use_id", ""),
     )
 
     store: EventStore = request.app.state.store

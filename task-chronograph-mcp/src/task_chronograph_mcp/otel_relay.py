@@ -154,6 +154,12 @@ class OTelRelay:
         self._span_lock = threading.Lock()
         self._agent_contexts: dict[str, AgentContext] = {}
 
+        # Tool duration correlation (Phase 2: ADR 052).
+        # Keyed by Claude Code tool_use_id; populated at PreToolUse and
+        # drained at PostToolUse so Phoenix sees one span with real start/end.
+        self._open_tool_spans: dict[str, trace.Span] = {}
+        self._open_tool_start_times: dict[str, float] = {}
+
         self._session_span: trace.Span | None = None
         self._session_context: context_api.Context | None = None
         self._session_stats: SessionStats | None = None
@@ -333,6 +339,72 @@ class OTelRelay:
     # Tool recording
     # ------------------------------------------------------------------
 
+    def start_tool(
+        self,
+        tool_use_id: str,
+        agent_id: str,
+        tool_name: str,
+        *,
+        timestamp: datetime | None = None,
+        input_summary: str = "",
+        session_id: str = "",
+        project_dir: str = "",
+        metadata: dict[str, Any] | None = None,
+        agent_type: str = "",
+    ) -> None:
+        """Open a TOOL span at PreToolUse; held open until record_tool() fires.
+
+        The span is kept in ``_open_tool_spans`` keyed by ``tool_use_id`` so
+        PostToolUse can close it with a real end_time, producing a single
+        duration-accurate span in Phoenix. A missing or duplicate
+        ``tool_use_id`` is a no-op -- the PostToolUse path falls back to an
+        instant span.
+        """
+        if not _is_otel_enabled():
+            return
+        if not tool_use_id:
+            return
+        try:
+            self._ensure_initialized(session_id, project_dir=project_dir)
+            self._ensure_agent_context(agent_id, agent_type, session_id)
+            parent_context = self._get_parent_context(agent_id)
+            if parent_context is None or self._tracer is None:
+                return
+
+            with self._span_lock:
+                if tool_use_id in self._open_tool_spans:
+                    return  # duplicate PreToolUse -- keep the earlier span
+
+            start_time_ns: int | None = None
+            if timestamp is not None:
+                start_time_ns = int(timestamp.timestamp() * 1_000_000_000)
+
+            attributes: dict[str, Any] = {
+                SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.TOOL.value,
+                SpanAttributes.TOOL_NAME: tool_name,
+                SpanAttributes.SESSION_ID: self._get_session_id_for_agent(agent_id),
+            }
+            meta = metadata or {}
+            if input_summary:
+                attributes[SpanAttributes.INPUT_VALUE] = input_summary
+            if meta.get("artifact_type") == "mcp_tool":
+                attributes["praxion.artifact_type"] = "mcp_tool"
+                attributes["praxion.mcp_server"] = meta.get("mcp_server", "")
+                attributes["praxion.mcp_tool"] = meta.get("mcp_tool", "")
+
+            span = self._tracer.start_span(
+                name=tool_name,
+                context=parent_context,
+                kind=SpanKind.INTERNAL,
+                attributes=attributes,
+                start_time=start_time_ns,
+            )
+            with self._span_lock:
+                self._open_tool_spans[tool_use_id] = span
+                self._open_tool_start_times[tool_use_id] = time.monotonic()
+        except Exception:
+            logger.warning("Failed to start OTel tool span for %s", tool_name, exc_info=True)
+
     def record_tool(
         self,
         agent_id: str,
@@ -346,11 +418,35 @@ class OTelRelay:
         project_dir: str = "",
         metadata: dict[str, Any] | None = None,
         agent_type: str = "",
+        tool_use_id: str = "",
+        end_timestamp: datetime | None = None,
     ) -> None:
-        """Create a TOOL child span under the given agent (or main agent)."""
+        """Close a paired tool span (when ``tool_use_id`` resolves) or emit instant.
+
+        Pair-correlation path: look up the open span from ``start_tool`` and
+        close it with explicit ``end_time`` so Phoenix shows real duration.
+        Fallback path: no prior PreToolUse received (or no ``tool_use_id``) --
+        emit the legacy instant span to preserve backward compatibility.
+        """
         if not _is_otel_enabled():
             return
         try:
+            if tool_use_id:
+                with self._span_lock:
+                    open_span = self._open_tool_spans.pop(tool_use_id, None)
+                    self._open_tool_start_times.pop(tool_use_id, None)
+                if open_span is not None:
+                    self._finalize_tool_span(
+                        open_span,
+                        agent_id,
+                        output_summary,
+                        is_error,
+                        error_msg,
+                        metadata or {},
+                        end_timestamp,
+                    )
+                    return
+            # Fallback: no paired start -- instant span as before.
             self._ensure_initialized(session_id, project_dir=project_dir)
             self._ensure_agent_context(agent_id, agent_type, session_id)
             self._record_tool_span(
@@ -364,6 +460,50 @@ class OTelRelay:
             )
         except Exception:
             logger.warning("Failed to record OTel tool span for %s", tool_name, exc_info=True)
+
+    def _finalize_tool_span(
+        self,
+        span: trace.Span,
+        agent_id: str,
+        output_summary: str,
+        is_error: bool,
+        error_msg: str,
+        metadata: dict[str, Any],
+        end_timestamp: datetime | None,
+    ) -> None:
+        """Close an open tool span with output attrs and explicit end time."""
+        if output_summary:
+            span.set_attribute(SpanAttributes.OUTPUT_VALUE, output_summary)
+
+        mcp_session_id = metadata.get("mcp_session_id", "")
+        if mcp_session_id:
+            span.set_attribute("mcp.session.id", mcp_session_id)
+        jsonrpc_request_id = metadata.get("jsonrpc_request_id", "")
+        if jsonrpc_request_id:
+            span.set_attribute("jsonrpc.request.id", jsonrpc_request_id)
+
+        if is_error:
+            span.set_status(StatusCode.ERROR, error_msg)
+            span.add_event(
+                "error",
+                attributes={
+                    "exception.type": "ToolError",
+                    "exception.message": error_msg,
+                },
+            )
+
+        end_time_ns: int | None = None
+        if end_timestamp is not None:
+            end_time_ns = int(end_timestamp.timestamp() * 1_000_000_000)
+        span.end(end_time=end_time_ns)
+
+        self._increment_stat(agent_id, "tool_count")
+        if is_error:
+            self._increment_stat(agent_id, "error_count")
+        if self._session_stats:
+            self._session_stats.tool_count += 1
+            if is_error:
+                self._session_stats.error_count += 1
 
     # ------------------------------------------------------------------
     # Artifact recording (skills, commands)
@@ -540,22 +680,44 @@ class OTelRelay:
             self._reap_stale_contexts()
 
     def _reap_stale_contexts(self) -> None:
-        """Remove context entries for agents that have had no activity recently.
+        """Remove stale agent contexts and orphaned open tool spans.
 
-        Agent spans are already ended (immediately at creation), so there
-        are no open spans to close. The reaper's job is to prevent memory
-        leaks from SubagentStop hooks that never fire.
+        Agent spans are already ended at creation; this just clears tracking
+        dicts to prevent memory leaks from hooks that never fire. Orphaned
+        tool spans (PreToolUse without a matching PostToolUse) must be
+        explicitly ended with an ERROR status so Phoenix doesn't drop them.
         """
         now = time.monotonic()
         with self._span_lock:
-            stale = [
+            stale_agents = [
                 aid
                 for aid, ctx in self._agent_contexts.items()
                 if now - ctx.last_activity > AGENT_SPAN_TIMEOUT_S
             ]
-            for agent_id in stale:
+            for agent_id in stale_agents:
                 self._agent_contexts.pop(agent_id, None)
                 logger.info("Reaped stale agent context: %s", agent_id)
+
+            stale_tools = [
+                tid
+                for tid, start in self._open_tool_start_times.items()
+                if now - start > AGENT_SPAN_TIMEOUT_S
+            ]
+            orphaned_spans = []
+            for tool_use_id in stale_tools:
+                span = self._open_tool_spans.pop(tool_use_id, None)
+                self._open_tool_start_times.pop(tool_use_id, None)
+                if span is not None:
+                    orphaned_spans.append((tool_use_id, span))
+
+        # End orphaned spans outside the lock to keep the critical section short.
+        for tool_use_id, span in orphaned_spans:
+            try:
+                span.set_status(StatusCode.ERROR, "orphaned-tool-start")
+                span.end()
+                logger.info("Reaped orphaned tool span: %s", tool_use_id)
+            except Exception:
+                logger.warning("Failed to end orphaned tool span %s", tool_use_id, exc_info=True)
 
     # ------------------------------------------------------------------
     # Internal helpers
