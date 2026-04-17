@@ -74,3 +74,17 @@ jobs:
 
       - name: Cross-reference validation
         run: python skills/skill-crafting/scripts/validate_references.py --all --format text
+
+  shipped-artifact-isolation:
+    # Hard gate: blocks PRs that leak specific .ai-state/ or .ai-work/
+    # entries into shipped surfaces (rules/, skills/, agents/, commands/,
+    # claude/config/). See rules/swe/shipped-artifact-isolation.md.
+    name: Shipped artifact isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Shipped-artifact isolation check
+        run: python3 scripts/check_shipped_artifact_isolation.py

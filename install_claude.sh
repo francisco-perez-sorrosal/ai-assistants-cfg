@@ -251,6 +251,26 @@ install_git_merge_infra() {
         chmod +x "$hook_dst"
         info "Post-merge hook: ADR renumbering + index regeneration"
     fi
+
+    # Install pre-commit hook for shipped-artifact isolation check.
+    # Blocks commits that leak specific .ai-state/ or .ai-work/ entries
+    # into shipped surfaces (rules/, skills/, agents/, commands/,
+    # claude/config/). Rationale: rules/swe/shipped-artifact-isolation.md.
+    local precommit_src="${SCRIPT_DIR}/scripts/git-pre-commit-hook.sh"
+    local precommit_dst="${repo_root}/.git/hooks/pre-commit"
+
+    if [ -f "$precommit_src" ]; then
+        # Preserve existing pre-commit hook if present
+        if [ -f "$precommit_dst" ] && ! grep -q "check_shipped_artifact_isolation" "$precommit_dst" 2>/dev/null; then
+            warn "Existing pre-commit hook found — appending isolation check"
+            printf '\n# Praxion shipped-artifact isolation check\n' >> "$precommit_dst"
+            cat "$precommit_src" >> "$precommit_dst"
+        else
+            cp "$precommit_src" "$precommit_dst"
+        fi
+        chmod +x "$precommit_dst"
+        info "Pre-commit hook: shipped-artifact isolation check"
+    fi
 }
 
 # =============================================================================
