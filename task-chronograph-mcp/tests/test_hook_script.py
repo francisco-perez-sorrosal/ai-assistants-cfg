@@ -20,7 +20,14 @@ HOOK_SCRIPT_PATH = Path(__file__).resolve().parents[2] / "hooks" / "send_event.p
 
 @pytest.fixture
 def hook_module():
-    """Load the hook script module for access to all functions."""
+    """Load the hook script module for access to all functions.
+
+    send_event.py imports _hook_utils from its own directory; prepend that
+    directory to sys.path so the bare import resolves at load time.
+    """
+    hooks_dir = str(HOOK_SCRIPT_PATH.parent)
+    if hooks_dir not in sys.path:
+        sys.path.insert(0, hooks_dir)
     spec = importlib.util.spec_from_file_location("send_event", HOOK_SCRIPT_PATH)
     assert spec is not None
     assert spec.loader is not None

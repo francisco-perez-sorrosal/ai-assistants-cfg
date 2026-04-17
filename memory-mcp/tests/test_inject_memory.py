@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
@@ -15,7 +16,15 @@ _HOOK_PATH = Path(__file__).resolve().parents[2] / "hooks" / "inject_memory.py"
 
 
 def _load_hook_module():
-    """Import inject_memory.py as a module from its file path."""
+    """Import inject_memory.py as a module from its file path.
+
+    inject_memory.py imports _hook_utils from its own directory; prepend that
+    directory to sys.path so the bare import resolves at load time (same
+    pattern as test_correlation_roundtrip.py).
+    """
+    hooks_dir = str(_HOOK_PATH.parent)
+    if hooks_dir not in sys.path:
+        sys.path.insert(0, hooks_dir)
     spec = importlib.util.spec_from_file_location("inject_memory", _HOOK_PATH)
     assert spec is not None
     assert spec.loader is not None
