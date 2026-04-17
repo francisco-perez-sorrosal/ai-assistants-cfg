@@ -199,7 +199,9 @@ class TestBuildEventsSubagentStop:
         events, interactions = build_events(payload)
         assert len(events) == 1
         assert events[0]["event_type"] == "agent_stop"
-        assert "metadata" not in events[0]
+        # Phase 4 adds hook_event to every event's metadata, but no transcript
+        # means no agent_transcript_path key is present.
+        assert "agent_transcript_path" not in events[0].get("metadata", {})
         assert len(interactions) == 1
 
 
@@ -969,3 +971,74 @@ class TestBuildEventsPostToolUseCorrelation:
         events, _ = build_events(payload)
         assert events[0]["tool_use_id"] == "toolu_fail"
         assert events[0]["event_type"] == "error"
+
+
+class TestBuildEventsPhase4Metadata:
+    """Every event carries hook_event; tool events carry pre-truncation byte counts."""
+
+    def test_hook_event_populated_on_session_start(self, build_events):
+        events, _ = build_events({"hook_event_name": "SessionStart", "session_id": "s1"})
+        assert events[0]["metadata"]["hook_event"] == "SessionStart"
+
+    def test_hook_event_populated_on_subagent_start(self, build_events):
+        events, _ = build_events(
+            {"hook_event_name": "SubagentStart", "session_id": "s1", "agent_type": "researcher"}
+        )
+        assert events[0]["metadata"]["hook_event"] == "SubagentStart"
+
+    def test_hook_event_populated_on_post_tool_use(self, build_events):
+        events, _ = build_events(
+            {
+                "hook_event_name": "PostToolUse",
+                "session_id": "s1",
+                "tool_name": "Bash",
+                "tool_input": {"command": "ls"},
+            }
+        )
+        tool_events = [e for e in events if e["event_type"] == "tool_use"]
+        assert tool_events[0]["metadata"]["hook_event"] == "PostToolUse"
+
+    def test_pre_tool_use_captures_input_size_bytes(self, build_events):
+        events, _ = build_events(
+            {
+                "hook_event_name": "PreToolUse",
+                "session_id": "s1",
+                "tool_name": "Bash",
+                "tool_use_id": "toolu_xyz",
+                "tool_input": {"command": "echo hello world"},
+            }
+        )
+        # "command=echo hello world" is 24 bytes in utf-8
+        assert events[0]["metadata"]["input_size_bytes"] == 24
+
+    def test_post_tool_use_captures_input_and_output_size_bytes(self, build_events):
+        events, _ = build_events(
+            {
+                "hook_event_name": "PostToolUse",
+                "session_id": "s1",
+                "tool_name": "Read",
+                "tool_input": {"file_path": "/etc/hosts"},
+                "tool_response": "localhost",
+            }
+        )
+        tool_event = next(e for e in events if e["event_type"] == "tool_use")
+        # file_path=/etc/hosts is 20 bytes
+        assert tool_event["metadata"]["input_size_bytes"] == 20
+        assert tool_event["metadata"]["output_size_bytes"] == len("localhost")
+
+    def test_size_bytes_survive_large_untruncated_input(self, build_events):
+        """Sizes are captured BEFORE the 4096-byte summary truncation."""
+        huge_command = "echo " + ("x" * 10_000)
+        events, _ = build_events(
+            {
+                "hook_event_name": "PostToolUse",
+                "session_id": "s1",
+                "tool_name": "Bash",
+                "tool_input": {"command": huge_command},
+            }
+        )
+        tool_event = next(e for e in events if e["event_type"] == "tool_use")
+        # input_size_bytes reflects the raw size, not the truncated summary length
+        assert tool_event["metadata"]["input_size_bytes"] > 10_000
+        # But the summary itself is truncated
+        assert len(tool_event["metadata"]["input_summary"]) <= 4096 + len("...")

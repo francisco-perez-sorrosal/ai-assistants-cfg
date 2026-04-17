@@ -201,27 +201,34 @@ def _truncate(text, max_bytes=4096):
     return text[:max_bytes] + "..."
 
 
-def _summarize_tool_input(data):
-    """Build a short summary of tool input from the hook payload."""
+def _raw_tool_input_text(data):
+    """Return the untruncated tool input as a single string for size accounting."""
     tool_input = data.get("tool_input", {})
     if isinstance(tool_input, str):
-        return _redact_secrets(_truncate(tool_input))
-    # Common patterns: file_path, command, pattern, content
+        return tool_input
     parts = []
     for key in ("file_path", "command", "pattern", "query", "prompt", "url"):
         if key in tool_input:
             parts.append(f"{key}={tool_input[key]}")
-    return _redact_secrets(
-        _truncate(", ".join(parts)) if parts else _truncate(json.dumps(tool_input))
-    )
+    return ", ".join(parts) if parts else json.dumps(tool_input)
+
+
+def _raw_tool_output_text(data):
+    """Return the untruncated tool output as a single string for size accounting."""
+    output = data.get("tool_response", data.get("tool_output", ""))
+    if isinstance(output, dict):
+        output = json.dumps(output)
+    return str(output) if output else ""
+
+
+def _summarize_tool_input(data):
+    """Build a short summary of tool input from the hook payload."""
+    return _redact_secrets(_truncate(_raw_tool_input_text(data)))
 
 
 def _summarize_tool_output(data):
     """Build a short summary of tool output from the hook payload."""
-    output = data.get("tool_response", data.get("tool_output", ""))
-    if isinstance(output, dict):
-        output = json.dumps(output)
-    return _redact_secrets(_truncate(str(output) if output else ""))
+    return _redact_secrets(_truncate(_raw_tool_output_text(data)))
 
 
 def _project_dir(data):
@@ -346,7 +353,12 @@ def _build_events(data):
         # emit an instant span (fallback path) instead of opening a dangling span.
         if not tool_name or not tool_use_id:
             return events, interactions
-        meta = {"input_summary": _summarize_tool_input(data)}
+        meta = {
+            "input_summary": _summarize_tool_input(data),
+            "input_size_bytes": len(
+                _raw_tool_input_text(data).encode("utf-8", errors="replace")
+            ),
+        }
         mcp_info = _classify_mcp_tool(tool_name)
         if mcp_info:
             meta["artifact_type"] = "mcp_tool"
@@ -395,10 +407,17 @@ def _build_events(data):
                     }
                 )
 
-        # Build metadata for tool_use event with MCP enrichment
+        # Build metadata for tool_use event with MCP enrichment.
+        # Sizes are captured before truncation so span analytics keep the real size signal.
         meta = {
             "input_summary": _summarize_tool_input(data),
             "output_summary": _summarize_tool_output(data),
+            "input_size_bytes": len(
+                _raw_tool_input_text(data).encode("utf-8", errors="replace")
+            ),
+            "output_size_bytes": len(
+                _raw_tool_output_text(data).encode("utf-8", errors="replace")
+            ),
         }
         mcp_info = _classify_mcp_tool(tool_name)
         if mcp_info:
@@ -465,9 +484,17 @@ def _build_events(data):
                 "project_dir": proj,
                 "metadata": {
                     "input_summary": _summarize_tool_input(data),
+                    "input_size_bytes": len(
+                        _raw_tool_input_text(data).encode("utf-8", errors="replace")
+                    ),
                 },
             }
         )
+
+    # Phase 4 (ADR 052): every event carries the Claude Code hook name in metadata
+    # so Phoenix can answer "which hook produced this span?" without guessing.
+    for event in events:
+        event.setdefault("metadata", {})["hook_event"] = hook
 
     return events, interactions
 

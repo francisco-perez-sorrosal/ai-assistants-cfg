@@ -1810,3 +1810,229 @@ class TestEndAgentLlmAttrs:
         summaries = harness.spans_named("agent-summary")
         summary = summaries[-1]
         assert "llm.token_count.total" not in (summary.attributes or {})
+
+
+# ---------------------------------------------------------------------------
+# Fork-group clustering and agent rollups (Phase 4 -- ADR 052)
+# ---------------------------------------------------------------------------
+
+
+class TestForkGroupClustering:
+    """Subagents spawned within the clustering window share a fork_group UUID."""
+
+    def test_single_agent_gets_fork_group_with_sibling_index_zero(
+        self, harness: OTelRelayTestHarness
+    ):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-solo", "i-am:researcher", SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        agent = harness.spans_with_attribute("praxion.agent_type", "researcher")[0]
+        assert agent.attributes["praxion.fork_group"]  # non-empty UUID
+        assert agent.attributes["praxion.sibling_index"] == 0
+
+    def test_concurrent_agents_share_fork_group(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        # Two starts with no wait -- well within FORK_CLUSTER_WINDOW_S
+        harness.relay.start_agent("agent-a", "i-am:researcher", SESSION_ID)
+        harness.relay.start_agent("agent-b", "i-am:implementer", SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        a = harness.spans_with_attribute("praxion.agent_id", "agent-a")[0]
+        b = harness.spans_with_attribute("praxion.agent_id", "agent-b")[0]
+        assert a.attributes["praxion.fork_group"] == b.attributes["praxion.fork_group"]
+
+    def test_siblings_have_distinct_sibling_index(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-a", "i-am:researcher", SESSION_ID)
+        harness.relay.start_agent("agent-b", "i-am:implementer", SESSION_ID)
+        harness.relay.start_agent("agent-c", "i-am:verifier", SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        indices = sorted(
+            harness.spans_with_attribute("praxion.agent_id", aid)[0].attributes[
+                "praxion.sibling_index"
+            ]
+            for aid in ("agent-a", "agent-b", "agent-c")
+        )
+        assert indices == [0, 1, 2]
+
+    def test_agents_outside_window_get_new_fork_group(
+        self, harness: OTelRelayTestHarness, monkeypatch
+    ):
+        from task_chronograph_mcp import otel_relay
+
+        # Shrink the window to 0 so two consecutive starts are always "outside"
+        monkeypatch.setattr(otel_relay, "FORK_CLUSTER_WINDOW_S", 0.0)
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-a", "i-am:researcher", SESSION_ID)
+        import time as _time
+
+        _time.sleep(0.001)
+        harness.relay.start_agent("agent-b", "i-am:implementer", SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        a = harness.spans_with_attribute("praxion.agent_id", "agent-a")[0]
+        b = harness.spans_with_attribute("praxion.agent_id", "agent-b")[0]
+        assert a.attributes["praxion.fork_group"] != b.attributes["praxion.fork_group"]
+        assert b.attributes["praxion.sibling_index"] == 0
+
+
+class TestSessionLevelPhase4Attrs:
+    """git.sha and pipeline_tier surface on session + agent spans."""
+
+    def test_session_span_includes_git_sha_when_available(
+        self, harness: OTelRelayTestHarness, monkeypatch
+    ):
+        from task_chronograph_mcp import otel_relay
+
+        monkeypatch.setattr(otel_relay, "_git_head_sha", lambda _p: "abc1234")
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.end_session(SESSION_ID)
+        assert harness.session_span().attributes["praxion.git.sha"] == "abc1234"
+
+    def test_session_span_includes_pipeline_tier_when_available(
+        self, harness: OTelRelayTestHarness, monkeypatch
+    ):
+        from task_chronograph_mcp import otel_relay
+
+        monkeypatch.setattr(otel_relay, "_read_pipeline_tier", lambda _p: "Standard")
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.end_session(SESSION_ID)
+        assert harness.session_span().attributes["praxion.pipeline_tier"] == "Standard"
+
+    def test_agent_span_inherits_git_sha_and_tier(self, harness: OTelRelayTestHarness, monkeypatch):
+        from task_chronograph_mcp import otel_relay
+
+        monkeypatch.setattr(otel_relay, "_git_head_sha", lambda _p: "deadbee")
+        monkeypatch.setattr(otel_relay, "_read_pipeline_tier", lambda _p: "Full")
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-gsh", "i-am:researcher", SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        agent = harness.spans_with_attribute("praxion.agent_id", "agent-gsh")[0]
+        assert agent.attributes["praxion.git.sha"] == "deadbee"
+        assert agent.attributes["praxion.pipeline_tier"] == "Full"
+
+
+class TestToolSpanPhase4Attrs:
+    """I/O byte counts and hook_event flow onto tool spans (paired + fallback)."""
+
+    def test_paired_tool_span_carries_io_bytes_and_hook_event(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_tool(
+            tool_use_id="toolu_io",
+            agent_id="",
+            tool_name="Bash",
+            session_id=SESSION_ID,
+            metadata={
+                "input_size_bytes": 1234,
+                "hook_event": "PreToolUse",
+            },
+        )
+        harness.relay.record_tool(
+            "",
+            "Bash",
+            session_id=SESSION_ID,
+            tool_use_id="toolu_io",
+            metadata={
+                "output_size_bytes": 5678,
+                "hook_event": "PostToolUse",
+            },
+        )
+        span = harness.spans_named("Bash")[0]
+        # Input bytes come from the start metadata; output bytes from the finalize metadata
+        assert span.attributes["praxion.io.output_size_bytes"] == 5678
+        # hook_event from the finalize path wins (PostToolUse fires last)
+        assert span.attributes["praxion.hook_event"] == "PostToolUse"
+
+    def test_fallback_tool_span_carries_io_bytes(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.record_tool(
+            "",
+            "Read",
+            session_id=SESSION_ID,
+            metadata={
+                "input_size_bytes": 100,
+                "output_size_bytes": 200,
+                "hook_event": "PostToolUse",
+            },
+        )
+        span = harness.spans_named("Read")[0]
+        assert span.attributes["praxion.io.input_size_bytes"] == 100
+        assert span.attributes["praxion.io.output_size_bytes"] == 200
+        assert span.attributes["praxion.hook_event"] == "PostToolUse"
+
+
+class TestAgentSummaryRollups:
+    """end_agent rolls up duration_ms, tools_used, skills_used, delegated_to."""
+
+    def test_agent_summary_includes_duration_ms(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-dur", "i-am:researcher", SESSION_ID)
+        harness.relay.end_agent(
+            "agent-dur", "", agent_type="i-am:researcher", session_id=SESSION_ID
+        )
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("agent-summary")[-1]
+        assert isinstance(summary.attributes["praxion.agent.duration_ms"], int)
+        assert summary.attributes["praxion.agent.duration_ms"] >= 0
+
+    def test_agent_summary_includes_tools_used_set(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-tu", "i-am:researcher", SESSION_ID)
+        harness.relay.record_tool(
+            "agent-tu", "Bash", agent_type="i-am:researcher", session_id=SESSION_ID
+        )
+        harness.relay.record_tool(
+            "agent-tu", "Read", agent_type="i-am:researcher", session_id=SESSION_ID
+        )
+        harness.relay.record_tool(
+            "agent-tu", "Bash", agent_type="i-am:researcher", session_id=SESSION_ID
+        )  # duplicate
+        harness.relay.end_agent("agent-tu", "", agent_type="i-am:researcher", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("agent-summary")[-1]
+        tools = list(summary.attributes["praxion.agent.tools_used"])
+        assert tools == ["Bash", "Read"]  # sorted, deduped
+
+    def test_agent_summary_includes_skills_used(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        harness.relay.start_agent("agent-sk", "i-am:researcher", SESSION_ID)
+        harness.relay.record_skill("agent-sk", "python-development", session_id=SESSION_ID)
+        harness.relay.record_skill("agent-sk", "testing-strategy", session_id=SESSION_ID)
+        harness.relay.end_agent("agent-sk", "", agent_type="i-am:researcher", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        summary = harness.spans_named("agent-summary")[-1]
+        skills = list(summary.attributes["praxion.agent.skills_used"])
+        assert skills == ["python-development", "testing-strategy"]
+
+    def test_agent_summary_includes_delegated_to_children(self, harness: OTelRelayTestHarness):
+        harness.relay.start_session(SESSION_ID, harness.project_dir)
+        # main-agent spawns two children
+        harness.relay.start_agent("agent-child-a", "i-am:researcher", SESSION_ID)
+        harness.relay.start_agent("agent-child-b", "i-am:implementer", SESSION_ID)
+        harness.relay.end_agent(
+            "agent-child-a", "", agent_type="i-am:researcher", session_id=SESSION_ID
+        )
+        harness.relay.end_agent(
+            "agent-child-b", "", agent_type="i-am:implementer", session_id=SESSION_ID
+        )
+        # Force main-agent to end so we get its summary (end_session alone won't)
+        harness.relay.end_agent("__main_agent__", "", session_id=SESSION_ID)
+        harness.relay.end_session(SESSION_ID)
+
+        # Find the main-agent's summary span (not the children's)
+        main_summary = None
+        for s in harness.spans_named("agent-summary"):
+            delegated = s.attributes.get("praxion.agent.delegated_to")
+            if delegated:
+                main_summary = s
+                break
+        assert main_summary is not None
+        delegated = list(main_summary.attributes["praxion.agent.delegated_to"])
+        assert "researcher" in delegated
+        assert "implementer" in delegated

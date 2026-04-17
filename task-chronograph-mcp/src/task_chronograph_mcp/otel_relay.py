@@ -57,6 +57,11 @@ TRACE_TYPE_NATIVE = "native"
 AGENT_SPAN_TIMEOUT_S = 60  # seconds of inactivity before reaping
 REAPER_INTERVAL_S = 10  # seconds between reaper sweeps
 
+# Phase 4 (ADR 052): time-clustering window for parallel-subagent fork detection.
+# Agents that start within this window under the same parent get the same
+# fork_group UUID so Phoenix can query sibling cohorts.
+FORK_CLUSTER_WINDOW_S = 0.2  # 200 ms
+
 
 def _is_otel_enabled() -> bool:
     """OTel export is enabled by default via plugin.json.
@@ -93,6 +98,56 @@ def _git_user_id(project_dir: str) -> str:
         return email
     except (subprocess.CalledProcessError, FileNotFoundError, OSError):
         return ""
+
+
+def _git_head_sha(project_dir: str) -> str:
+    """Best-effort short git SHA of HEAD. Fail-open to empty."""
+    if not project_dir:
+        return ""
+    try:
+        sha = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"],
+                cwd=project_dir,
+                timeout=2,
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+        return sha
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+        return ""
+
+
+def _read_pipeline_tier(project_dir: str) -> str:
+    """Best-effort pipeline tier from .ai-state/calibration_log.md (last row).
+
+    Per the agent-intermediate-documents rule, calibration_log is an
+    append-only Markdown table with columns:
+        timestamp | task | signals | recommended | actual | source | retro
+    We take the last data row's "actual" column. Fail-open to empty string.
+    """
+    if not project_dir:
+        return ""
+    log_path = Path(project_dir) / ".ai-state" / "calibration_log.md"
+    if not log_path.exists():
+        return ""
+    try:
+        rows = [
+            ln.strip()
+            for ln in log_path.read_text().splitlines()
+            if ln.strip().startswith("|") and not ln.strip().startswith("|-")
+        ]
+    except OSError:
+        return ""
+    data_rows = [r for r in rows if "timestamp" not in r.lower()]
+    if not data_rows:
+        return ""
+    cols = [c.strip() for c in data_rows[-1].strip("|").split("|")]
+    if len(cols) >= 5:
+        return cols[4]
+    return ""
 
 
 def _parse_transcript_usage(transcript_path: str) -> dict[str, Any]:
@@ -202,6 +257,26 @@ class AgentContext:
     tool_count: int = 0
     error_count: int = 0
     skill_count: int = 0
+    # Phase 4 (ADR 052): agent-scoped rollups for the agent-summary span.
+    started_at: float = field(default_factory=time.monotonic)
+    tools_used: set[str] = field(default_factory=set)
+    skills_used: set[str] = field(default_factory=set)
+    delegated_to: list[str] = field(default_factory=list)
+
+
+@dataclass
+class ForkCluster:
+    """Groups subagents that were spawned within ``FORK_CLUSTER_WINDOW_S``.
+
+    Phoenix queries on ``praxion.fork_group`` reveal parallel fan-outs.
+    Time clustering is heuristic -- concurrent subagent dispatch typically
+    arrives within a few ms, so a 200 ms window catches siblings while
+    almost never false-joining unrelated starts.
+    """
+
+    fork_group: str
+    opened_at: float
+    member_count: int = 0
 
 
 @dataclass
@@ -220,6 +295,7 @@ class SessionStats:
     task_slug: str = ""
     pipeline_tier: str = ""
     user_id: str = ""
+    git_sha: str = ""
 
 
 class OTelRelay:
@@ -269,6 +345,11 @@ class OTelRelay:
         # drained at PostToolUse so Phoenix sees one span with real start/end.
         self._open_tool_spans: dict[str, trace.Span] = {}
         self._open_tool_start_times: dict[str, float] = {}
+
+        # Phase 4 fork clustering: one active cluster per parent_agent_id.
+        # A new AGENT_START within FORK_CLUSTER_WINDOW_S of the cluster's
+        # opened_at joins the cohort; otherwise a new UUID is minted.
+        self._fork_clusters: dict[str, ForkCluster] = {}
 
         self._session_span: trace.Span | None = None
         self._session_context: context_api.Context | None = None
@@ -426,6 +507,7 @@ class OTelRelay:
                 logger.debug("No context found for agent_id=%s", agent_id)
                 return
             if self._tracer is not None:
+                duration_ms = int((time.monotonic() - agent_ctx.started_at) * 1000)
                 attrs: dict[str, Any] = {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: (
                         OpenInferenceSpanKindValues.CHAIN.value
@@ -435,7 +517,14 @@ class OTelRelay:
                     "praxion.error_count": agent_ctx.error_count,
                     "praxion.child_count": agent_ctx.child_count,
                     "praxion.skill_count": agent_ctx.skill_count,
+                    "praxion.agent.duration_ms": duration_ms,
                 }
+                if agent_ctx.tools_used:
+                    attrs["praxion.agent.tools_used"] = sorted(agent_ctx.tools_used)
+                if agent_ctx.skills_used:
+                    attrs["praxion.agent.skills_used"] = sorted(agent_ctx.skills_used)
+                if agent_ctx.delegated_to:
+                    attrs["praxion.agent.delegated_to"] = list(agent_ctx.delegated_to)
                 if output:
                     attrs[SpanAttributes.OUTPUT_VALUE] = output
                 if self._session_stats and self._session_stats.user_id:
@@ -598,6 +687,17 @@ class OTelRelay:
         if output_summary:
             span.set_attribute(SpanAttributes.OUTPUT_VALUE, output_summary)
 
+        # Phase 4: size-before-truncation and hook provenance
+        input_bytes = metadata.get("input_size_bytes")
+        if isinstance(input_bytes, int):
+            span.set_attribute("praxion.io.input_size_bytes", input_bytes)
+        output_bytes = metadata.get("output_size_bytes")
+        if isinstance(output_bytes, int):
+            span.set_attribute("praxion.io.output_size_bytes", output_bytes)
+        hook_event = metadata.get("hook_event", "")
+        if hook_event:
+            span.set_attribute("praxion.hook_event", hook_event)
+
         mcp_session_id = metadata.get("mcp_session_id", "")
         if mcp_session_id:
             span.set_attribute("mcp.session.id", mcp_session_id)
@@ -619,6 +719,13 @@ class OTelRelay:
         if end_timestamp is not None:
             end_time_ns = int(end_timestamp.timestamp() * 1_000_000_000)
         span.end(end_time=end_time_ns)
+
+        # Record the tool name on the agent's rollup set for end_agent.
+        tool_name_attr = (
+            span.attributes.get(SpanAttributes.TOOL_NAME, "") if span.attributes else ""
+        )
+        if tool_name_attr:
+            self._track_tool_used(agent_id, str(tool_name_attr))
 
         self._increment_stat(agent_id, "tool_count")
         if is_error:
@@ -665,6 +772,7 @@ class OTelRelay:
             )
             span.end()
             self._increment_stat(agent_id, "skill_count")
+            self._track_skill_used(agent_id, skill_name)
             if self._session_stats:
                 self._session_stats.skill_count += 1
         except Exception:
@@ -780,6 +888,29 @@ class OTelRelay:
             span.end()
         except Exception:
             logger.warning("Failed to add decision event for %s", agent_id, exc_info=True)
+
+    # ------------------------------------------------------------------
+    # Fork-group clustering (Phase 4: ADR 052)
+    # ------------------------------------------------------------------
+
+    def _assign_fork_group(self, parent_agent_id: str) -> tuple[str, int]:
+        """Return (fork_group, sibling_index) for an agent starting now.
+
+        A fork cluster is shared by subagents that start within
+        ``FORK_CLUSTER_WINDOW_S`` of each other under the same parent.
+        Outside that window, a new cluster (new UUID) is minted.
+        """
+        from uuid import uuid4
+
+        now = time.monotonic()
+        with self._span_lock:
+            cluster = self._fork_clusters.get(parent_agent_id)
+            if cluster is None or (now - cluster.opened_at) > FORK_CLUSTER_WINDOW_S:
+                cluster = ForkCluster(fork_group=str(uuid4()), opened_at=now, member_count=0)
+                self._fork_clusters[parent_agent_id] = cluster
+            sibling_index = cluster.member_count
+            cluster.member_count += 1
+            return cluster.fork_group, sibling_index
 
     # ------------------------------------------------------------------
     # Context reaper
@@ -910,6 +1041,9 @@ class OTelRelay:
 
         # Phase 3 (ADR 052): user.id from git identity, propagated to spans.
         user_id = _git_user_id(project_dir)
+        # Phase 4 (ADR 052): cheap session-level context.
+        git_sha = _git_head_sha(project_dir)
+        pipeline_tier = _read_pipeline_tier(project_dir)
 
         # No parent context -> true root span.
         attrs: dict[str, Any] = {
@@ -926,6 +1060,10 @@ class OTelRelay:
         if is_worktree:
             attrs["praxion.git.is_worktree"] = True
             attrs["praxion.git.worktree_name"] = worktree_name
+        if git_sha:
+            attrs["praxion.git.sha"] = git_sha
+        if pipeline_tier:
+            attrs["praxion.pipeline_tier"] = pipeline_tier
 
         self._session_span = self._tracer.start_span(
             name="session",
@@ -945,6 +1083,8 @@ class OTelRelay:
             is_worktree=is_worktree,
             worktree_name=worktree_name,
             user_id=user_id,
+            git_sha=git_sha,
+            pipeline_tier=pipeline_tier,
         )
 
         # Create synthetic main-agent span for the main Claude agent.
@@ -1021,6 +1161,11 @@ class OTelRelay:
         # Ensure a meaningful span name for Phoenix display
         span_name = clean_type or agent_id or "unknown-agent"
 
+        # Phase 4: fork-group time clustering.
+        # Subagents spawned within FORK_CLUSTER_WINDOW_S under the same parent
+        # share a fork_group UUID so Phoenix queries can reveal parallel cohorts.
+        fork_group, sibling_index = self._assign_fork_group(parent_id)
+
         git = git_context or {}
         attrs: dict[str, Any] = {
             SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.AGENT.value,
@@ -1036,9 +1181,15 @@ class OTelRelay:
             "praxion.parent_session_id": parent_session_id,
             "praxion.depth": parent_depth + 1,
             "praxion.parent_agent_id": parent_id,
+            "praxion.fork_group": fork_group,
+            "praxion.sibling_index": sibling_index,
         }
         if self._session_stats and self._session_stats.user_id:
             attrs[SpanAttributes.USER_ID] = self._session_stats.user_id
+        if self._session_stats and self._session_stats.git_sha:
+            attrs["praxion.git.sha"] = self._session_stats.git_sha
+        if self._session_stats and self._session_stats.pipeline_tier:
+            attrs["praxion.pipeline_tier"] = self._session_stats.pipeline_tier
         if git.get("git_branch"):
             attrs["praxion.git.branch"] = git["git_branch"]
         if git.get("is_worktree"):
@@ -1056,6 +1207,7 @@ class OTelRelay:
         agent_context = trace.set_span_in_context(span)
         span.end()  # End immediately for Phoenix visibility
 
+        now = time.monotonic()
         with self._span_lock:
             self._agent_contexts[agent_id] = AgentContext(
                 otel_context=agent_context,
@@ -1064,11 +1216,14 @@ class OTelRelay:
                 session_id=session_id,
                 parent_agent_id=parent_id,
                 depth=parent_depth + 1,
-                last_activity=time.monotonic(),
+                last_activity=now,
+                started_at=now,
             )
-            # Increment parent's child count
+            # Increment parent's child count and record delegation target
             if parent_ctx:
                 parent_ctx.child_count += 1
+                if clean_type and clean_type not in parent_ctx.delegated_to:
+                    parent_ctx.delegated_to.append(clean_type)
 
         # Update session stats
         if self._session_stats:
@@ -1108,6 +1263,17 @@ class OTelRelay:
         if output_summary:
             attributes[SpanAttributes.OUTPUT_VALUE] = output_summary
 
+        # Phase 4: size-before-truncation and hook provenance
+        input_bytes = metadata.get("input_size_bytes")
+        if isinstance(input_bytes, int):
+            attributes["praxion.io.input_size_bytes"] = input_bytes
+        output_bytes = metadata.get("output_size_bytes")
+        if isinstance(output_bytes, int):
+            attributes["praxion.io.output_size_bytes"] = output_bytes
+        hook_event = metadata.get("hook_event", "")
+        if hook_event:
+            attributes["praxion.hook_event"] = hook_event
+
         # MCP tool enrichment
         if metadata.get("artifact_type") == "mcp_tool":
             attributes["praxion.artifact_type"] = "mcp_tool"
@@ -1145,10 +1311,27 @@ class OTelRelay:
         self._increment_stat(agent_id, "tool_count")
         if is_error:
             self._increment_stat(agent_id, "error_count")
+        self._track_tool_used(agent_id, tool_name)
         if self._session_stats:
             self._session_stats.tool_count += 1
             if is_error:
                 self._session_stats.error_count += 1
+
+    def _track_tool_used(self, agent_id: str, tool_name: str) -> None:
+        """Record that ``tool_name`` was used by ``agent_id`` for the agent-summary rollup."""
+        lookup_id = agent_id if agent_id else MAIN_AGENT_ID
+        with self._span_lock:
+            ctx = self._agent_contexts.get(lookup_id)
+            if ctx is not None:
+                ctx.tools_used.add(tool_name)
+
+    def _track_skill_used(self, agent_id: str, skill_name: str) -> None:
+        """Record that ``skill_name`` was used by ``agent_id`` for the agent-summary rollup."""
+        lookup_id = agent_id if agent_id else MAIN_AGENT_ID
+        with self._span_lock:
+            ctx = self._agent_contexts.get(lookup_id)
+            if ctx is not None:
+                ctx.skills_used.add(skill_name)
 
     def _ensure_agent_context(self, agent_id: str, agent_type: str, session_id: str) -> None:
         """Lazily create an agent span if agent_id is unknown but agent_type is available.
