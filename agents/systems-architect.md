@@ -175,6 +175,8 @@ Skip this phase entirely when no prior spec was identified in Phase 1 (greenfiel
 
 For every significant design decision, make the trade-offs explicit:
 
+> When the activation gate fires (see [design-synthesis.md — When to Activate](../skills/software-planning/references/design-synthesis.md#when-to-activate)), run the lens sweep and the convergence check in that reference before writing the Decision block below. Record an **Activation:** line in the ADR body (either the fired outcome or `no — <reason>`) per REQ-DDL-15.
+
 ```markdown
 ### Decision: [What was decided]
 
@@ -233,6 +235,8 @@ Apply each lens in sequence. Annotate the architecture with findings.
 - **Developer lens**: Is this implementable in small increments? Are the boundaries clear? Will developers understand where new code goes?
 - **Test lens**: Is this testable? Are there seams for mocking? Are critical paths observable?
 - **Operations lens**: Is this deployable? Can it be rolled back? Are there monitoring or observability needs?
+
+When activation criteria from [design-synthesis.md — When to Activate](../skills/software-planning/references/design-synthesis.md#when-to-activate) fire, extend the lens set with Security, Performance, Simplicity, and Testability per the [lens catalog](../skills/software-planning/references/design-synthesis.md#lens-catalog).
 
 If findings are minor, fold them into the architecture directly.
 

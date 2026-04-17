@@ -94,7 +94,7 @@ When evaluating alternatives (libraries, approaches, architectures):
 
 1. **Define evaluation criteria** — what matters for this specific decision (performance, maintainability, ecosystem, learning curve, etc.)
 2. **Research each option** against the criteria
-3. **Build a comparison matrix** — structured, not narrative
+3. **Build a comparison matrix** — structured, not narrative. If the option set has fewer than three distinct options or the architect later flags incomplete axis coverage, consult [design-synthesis.md — Stage-Specific Invocation, S2](../skills/software-planning/references/design-synthesis.md#s2-research) and re-run a coverage-critic pass before finalizing `RESEARCH_FINDINGS.md`.
 4. **Identify trade-offs** — every option has them; make them explicit
 5. **Note the constraints** that favor or eliminate options
 

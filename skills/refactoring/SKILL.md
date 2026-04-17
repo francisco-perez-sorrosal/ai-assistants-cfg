@@ -147,6 +147,8 @@ After restructuring, systematically verify that **every consumer** of the change
 
 **No, if**: Everything changes together, high cohesion across all parts, splitting would increase coupling.
 
+For contested decompositions (2+ valid module layouts), see [design-synthesis.md — Stage-Specific Invocation, S5](../software-planning/references/design-synthesis.md#s5-refactoring) — score each against the four pillars before choosing.
+
 ## Patterns & Scenarios Reference
 
 See [references/patterns.md](references/patterns.md) for detailed refactoring patterns and common scenarios with full code examples:

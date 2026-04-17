@@ -122,6 +122,8 @@ Rank ideas by impact-to-effort ratio. Seeded sessions prioritize the seed domain
 
 > **Non-interactive mode**: Skip user interaction. Auto-select the highest-ranked idea from Phase 4. Proceed directly to Phase 6 (which is also skipped) and then Phase 7.
 
+If the impact-to-effort spread across candidates is narrow (no clear winner), apply the three-lens pre-shortlist pass (Security / Simplicity / Testability) from [design-synthesis.md — Stage-Specific Invocation, S1](../skills/software-planning/references/design-synthesis.md#s1-ideation) before presenting candidates.
+
 Present the **top 3-5 candidate ideas** as a numbered summary list using `AskUserQuestion`. For each candidate, include:
 
 1. **Title** — concise, descriptive name

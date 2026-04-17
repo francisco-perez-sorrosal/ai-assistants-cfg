@@ -117,6 +117,22 @@ REQ IDs flow through the pipeline in five stages:
 
 Each stage consumes the output of the previous one. The verifier's matrix is the conformance checkpoint -- it shows whether every requirement has tests and implementation. The archived spec preserves the full traceability chain for cross-session reference.
 
+## Convergence via REQ-ID Stability
+
+When multiple pre-implementation design sweeps produce the same REQ set, the design has converged on the *what* (behavior); Phase 7 then decides only the *how* (implementation trade-off). REQ churn across sweeps signals that REQs have leaked implementation details — re-draft the unstable REQs at the behavioral level before proceeding.
+
+**3-step stability check** (architect runs when activation fires):
+
+1. **Draft REQs** against the proposed behavior.
+2. **Sketch design A**; record any Added / Modified / Removed REQ IDs.
+3. **Sketch design B**; record the same deltas.
+
+Stable = zero Added / Modified / Removed REQs between sweeps. Churn = at least one REQ changed; re-draft the churning REQs.
+
+**Verifier check**: stability is mechanically verifiable by comparing REQ IDs across ADR revisions — the verifier reports stable/churned without needing to re-read prose.
+
+See [design-synthesis.md — Convergence Signals](../software-planning/references/design-synthesis.md#convergence-signals) for the full four-signal convergence stack (stability + risk-budget + blast-radius + user-acceptance).
+
 ## Decision Documentation Format
 
 For medium and large features, record decisions in the `Decisions Made` section of `LEARNINGS.md` using structured format:
