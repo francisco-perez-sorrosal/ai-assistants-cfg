@@ -24,6 +24,9 @@ Assess the task before starting work. Each tier prescribes what to do — higher
 - Lightweight delegations (researcher) use the minimal scaffold in [tier-templates.md](../../skills/software-planning/references/tier-templates.md#lightweight-snippet).
 - Lightweight test runs use whatever test command the project defines; no `TEST_RESULTS.md` is created unless the work escalates to Standard.
 - Lightweight respects the same architecture-doc update expectation as Standard when structural changes occur (see `.ai-state/ARCHITECTURE.md` / `docs/architecture.md`).
+- Lightweight scope that grows mid-task beyond 3 files or requires architect/planner input must stop and re-scope to Standard rather than silently expanding; escalation is a controlled transition, not creep.
+- Lightweight may still create ADRs in `.ai-state/decisions/` when a decision is worth preserving (`made_by: user`); see [adr-conventions.md](adr-conventions.md).
+- Lightweight appends a row to `.ai-state/calibration_log.md` on task completion like every other tier, so tier-selection accuracy analysis remains unbiased.
 
 **Tier Selector (fast path).** When the main agent receives a new task, walk top-to-bottom and stop at the first match:
 
