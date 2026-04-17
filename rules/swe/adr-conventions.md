@@ -12,7 +12,7 @@ Architecture Decision Records live in `.ai-state/decisions/` as Markdown files w
 |-------|------|----------|-------------|
 | `id` | string | Yes | `dec-NNN` matching the filename number |
 | `title` | string | Yes | Short decision title |
-| `status` | string | Yes | `proposed` / `accepted` / `superseded` / `rejected` |
+| `status` | string | Yes | `proposed` / `accepted` / `superseded` / `rejected` / `re-affirmation` |
 | `category` | string | Yes | `architectural` / `behavioral` / `implementation` / `configuration` |
 | `date` | string | Yes | ISO 8601 date (`YYYY-MM-DD`) |
 | `summary` | string | Yes | One-line description for index and scanning |
@@ -24,6 +24,8 @@ Architecture Decision Records live in `.ai-state/decisions/` as Markdown files w
 | `affected_reqs` | list | No | REQ IDs linked to the decision |
 | `supersedes` | string | No | `dec-NNN` of prior decision |
 | `superseded_by` | string | No | `dec-NNN` of replacing decision |
+| `re_affirms` | string | No | `dec-NNN` of prior decision this ADR re-affirms without superseding |
+| `re_affirmed_by` | list | No | `dec-NNN` values of later ADRs that re-affirmed this decision |
 
 **Body sections** (after frontmatter):
 
@@ -42,6 +44,19 @@ When a new ADR supersedes an existing one:
 3. Change the old ADR status to `superseded`
 4. Add a `## Prior Decision` section in the new ADR body
 5. Regenerate `DECISIONS_INDEX.md`
+
+### Re-affirmation Protocol
+
+When a new ADR re-affirms an existing one without superseding it (a re-opening was considered and rejected for lack of new evidence):
+
+1. Set `status: re-affirmation` on the **new** ADR (signals meta-decision — a decision *about* another decision)
+2. Set `re_affirms: dec-NNN` in the **new** ADR frontmatter
+3. Append `dec-MMM` to the **old** ADR's `re_affirmed_by` list (create the list if absent)
+4. **Do not** change the old ADR's status — it stays `accepted`; no `superseded_by` is set
+5. Add a `## Prior Decision` section in the new ADR body explaining what was considered and why the prior decision still holds; name the evidence that would be required to justify a future supersession
+6. Regenerate `DECISIONS_INDEX.md`
+
+Re-affirmation is intentionally stronger than silent concurrence (it forces a public record of the re-opening) and gentler than supersession (the prior decision is untouched). Use it when a prior decision is challenged, re-examined, and found still correct — not as a routine acknowledgment.
 
 ### Who Writes ADRs
 

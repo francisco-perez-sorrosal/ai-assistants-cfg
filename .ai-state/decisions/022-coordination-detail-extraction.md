@@ -15,6 +15,8 @@ affected_files:
   - skills/software-planning/references/coordination-details.md
   - skills/software-planning/SKILL.md
   - claude/config/CLAUDE.md
+re_affirmed_by:
+  - dec-049
 ---
 
 ## Context

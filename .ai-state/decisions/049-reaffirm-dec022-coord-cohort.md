@@ -1,7 +1,7 @@
 ---
 id: dec-049
 title: Re-affirm dec-022 and ship symmetry + lightweight-tier + tier-template cohort
-status: accepted
+status: re-affirmation
 category: architectural
 date: 2026-04-16
 summary: Drop the proposed delegation-checklist extraction (dec-022 Option 4 rejection still binds); ship six orthogonal deliverables (D1 condensed-block symmetry, D2 tier-templates.md, D3 Lightweight gap closure, D4 tier-selector tree, D5 validator regression test, D6 persistence); re-affirm, do not supersede, dec-022.
@@ -19,6 +19,7 @@ affected_files:
 affected_reqs: []
 supersedes:
 superseded_by:
+re_affirms: dec-022
 ---
 
 ## Context
