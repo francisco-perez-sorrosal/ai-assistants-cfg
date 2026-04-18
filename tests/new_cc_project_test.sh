@@ -197,10 +197,15 @@ EOF
     if ! grep -q "cwd=$project_dir" "$stub_log"; then
         fail "T7: claude stub not invoked from inside $project_dir; log=$(cat "$stub_log")"; return
     fi
+    # The bash layer embeds the slash command body as the seed prompt (CLI does
+    # not dispatch /-prefixed positional args as slash commands). Verify both the
+    # permission flags and that the seed prompt mentions the command — whether
+    # as the literal `/new-cc-project` fallback or as a substring inside the
+    # embedded markdown body.
     if ! grep -q 'arg=--permission-mode' "$stub_log" || \
        ! grep -q 'arg=acceptEdits' "$stub_log" || \
-       ! grep -q 'arg=/new-cc-project' "$stub_log"; then
-        fail "T7: claude stub args missing expected flags; log=$(cat "$stub_log")"; return
+       ! grep -qF 'new-cc-project' "$stub_log"; then
+        fail "T7: claude stub args missing expected flags or seed prompt; log=$(cat "$stub_log")"; return
     fi
     pass "T7: happy path scaffolds .git/.claude/.gitignore and execs claude correctly"
 }

@@ -2,7 +2,7 @@
 
 Reference for `new_cc_project.sh` and the `/new-cc-project` slash command — the entry point that turns an empty directory into a Claude-ready Python project with a per-run `onboarding_for_mushi_busy_ppl.md` trail map.
 
-The script lays a minimal pre-Claude scaffold (`.git/`, `.gitignore`, empty `.claude/`), validates host prereqs, then `exec`s an interactive Claude Code session pre-seeded with `/new-cc-project`. Claude generates the source files (default: a mini coding agent + FastAPI web layer + smoke test), fetches current SDK signatures via `external-api-docs` instead of using stale training data, runs the test gate, and stages the scaffold for your first commit via `/co`.
+The script lays a minimal pre-Claude scaffold (`.git/`, `.gitignore`, empty `.claude/`), validates host prereqs, then `exec`s an interactive Claude Code session seeded with the `/new-cc-project` command body embedded inline (Claude Code's CLI does not dispatch slash commands from positional arguments, so the body is passed directly). Claude asks one question, shows you the orchestrator model, then drives the build through Praxion's pipeline — researcher fetches current SDK signatures via `external-api-docs`, systems-architect sketches module shape, planner decomposes, implementer + test-engineer produce code + tests in parallel, verifier checks acceptance criteria. Only *after* the codebase exists does Claude run `/init` (so CLAUDE.md reflects what you chose), append the Agent Pipeline block, generate the per-run trail map, and stage the scaffold for `/co`.
 
 For the design rationale, see [Design decision](#design-decision). For the slash command's full contract, read `commands/new-cc-project.md`.
 
@@ -50,25 +50,53 @@ The transcript below is illustrative — actual output depends on the installed 
 ```text
 # illustrative; actual output will differ
 $ new-cc-project my-app
-→ Scaffolded my-app at /Users/you/code/my-app. Launching Claude Code with /new-cc-project ...
+→ Scaffolded my-app at /Users/you/code/my-app. Launching Claude Code...
 
 [Claude Code session starts]
-
-Claude: I will set up your CLAUDE.md, then ask one question.
-        (running /init ...)
-        (appending Praxion ## Agent Pipeline block to CLAUDE.md)
 
 Claude: What would you like to build? Press enter for the default
         (mini coding agent with web UI), or describe your own project.
 > [enter]
 
-Claude: Fetching current Claude Agent SDK + uv docs from context-hub
-        (external-api-docs skill) so generated code matches the installed versions ...
-        Generating src/agent/core.py, src/agent/tools.py, src/web/app.py,
-        tests/test_agent.py, pyproject.toml, .env.example ...
+Claude: Before I build, here's how this works:
+
+        You don't call Praxion subagents by name. You write tasks in plain
+        English, and Claude (the orchestrator) routes the work to specialists:
+          • researcher — explores docs, libraries, external APIs
+          • systems-architect — module shape, dependency direction
+          • implementation-planner — decomposes into small steps
+          • implementer + test-engineer — code + tests in parallel
+          • verifier — checks acceptance criteria
+        You speak English, Claude delegates. No /command memorization required.
+
+Claude: Here's the task I'm about to run through the pipeline — watch how
+        Claude orchestrates researcher → architect → planner → implementer
+        + test-engineer → verifier:
+
+        ┌─────────────────────────────────────────────────────────────────┐
+        │ Build a minimal conversational coding agent for Python 3.11+   │
+        │ using the Claude Agent SDK.                                     │
+        │                                                                 │
+        │ Behaviors:  [agent loop, two safe-listed tools, FastAPI /chat] │
+        │ Tech:       Python 3.11+, uv, Claude Agent SDK, FastAPI, pytest│
+        │ Acceptance: [layer isolation, safe-list invariant, smoke test] │
+        │ Use Praxion's Standard-tier pipeline, compact variant.          │
+        └─────────────────────────────────────────────────────────────────┘
+
+Claude: [researcher] Fetching Claude Agent SDK + uv + FastAPI docs via context-hub ...
+        [systems-architect] Module shape: src/agent/{core,tools,prompts}, src/web/{app},
+          tests/. One-way dependency src/agent → src/web.
+        [implementation-planner] 4 steps: (1) pyproject+env, (2) agent core+tools,
+          (3) web app+static, (4) smoke test.
+        [implementer ∥ test-engineer] Step 2: src/agent/*.py + tests/test_agent.py.
+          [implementer ∥ test-engineer] Step 3: src/web/app.py + streaming assertions.
+        [verifier] Layer isolation ✓ safe-list frozenset at module scope ✓ smoke green ✓.
 
 Claude: Running test gate: uv sync && uv run pytest -q
         1 passed in 0.34s
+
+Claude: Now running /init so CLAUDE.md reflects the actual codebase, then
+        appending the Praxion ## Agent Pipeline block ...
 
 Claude: Generated onboarding_for_mushi_busy_ppl.md (trail map for busy people).
         Scaffold staged. Run /co to make the first commit (or /cop for commit+push);
@@ -85,7 +113,7 @@ The bash layer creates the first three rows; Claude generates the rest. The mush
 | `.git/` | Git repo metadata | Never directly — use `git` commands |
 | `.gitignore` | Five-line AI-assistants block (`.ai-work/`, `.env*`, `.claude/settings.local.json`) | Append project-specific patterns; do not remove the AI-assistants block |
 | `.claude/` | Empty directory marking this as a Claude Code project | Drop project-scoped Claude config here later (e.g., custom `settings.json`) |
-| `CLAUDE.md` | Project-level Claude instructions; `/init` generates it, then `/new-cc-project` appends the Praxion `## Agent Pipeline` block | When project conventions, top-level layout, or pipeline expectations change |
+| `CLAUDE.md` | Project-level Claude instructions; generated by `/init` **after** the pipeline has produced the codebase (so it describes the real code, not the empty scaffold); `/new-cc-project` then appends the Praxion `## Agent Pipeline` block | When project conventions, top-level layout, or pipeline expectations change |
 | `pyproject.toml` | uv-managed project metadata + deps (`claude-agent-sdk`, `fastapi`, `sse-starlette`, `httpx`, `pytest`) | Whenever you add a dependency — let `uv add` write it |
 | `src/agent/*` | Agent core (`core.py`), starter tools (`tools.py` — `read_file` + safe-listed `run_command`), prompts (`prompts.py`) | Add tools, change the system prompt, swap the agent loop |
 | `src/web/*` | FastAPI POST `/chat` endpoint streaming SSE (`app.py`) + minimal chat UI (`static/index.html`) | Change the API surface or the UI |

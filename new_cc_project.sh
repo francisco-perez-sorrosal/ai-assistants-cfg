@@ -94,8 +94,31 @@ cat > .gitignore <<'EOF'
 EOF
 
 # Pre-flight announcement (REQ-ONBOARD-07).
-printf '→ Scaffolded %s at %s. Launching Claude Code with /new-cc-project ...\n' \
+printf '→ Scaffolded %s at %s. Launching Claude Code...\n' \
     "$project_name" "$project_path"
 
+# Locate the /new-cc-project command body so we can embed it as the seed prompt.
+# Claude Code's CLI does NOT dispatch slash commands from positional args — they
+# are treated as literal user messages. Embedding the command body keeps the
+# handoff deterministic regardless of slash-command plumbing.
+cmd_body_file="$(find "$HOME/.claude/plugins" -maxdepth 6 -name new-cc-project.md -type f -print 2>/dev/null | head -n 1 || true)"
+if [ -z "$cmd_body_file" ]; then
+    # Dev fallback: invoked directly from a Praxion checkout.
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if [ -f "$script_dir/commands/new-cc-project.md" ]; then
+        cmd_body_file="$script_dir/commands/new-cc-project.md"
+    fi
+fi
+
+if [ -n "$cmd_body_file" ] && [ -f "$cmd_body_file" ]; then
+    seed_prompt="$(cat "$cmd_body_file")
+
+---
+
+The text above is the body of the /new-cc-project slash command. The bash bootstrap embeds it here because Claude Code's CLI does not dispatch slash commands from positional arguments. You are now inside a freshly scaffolded Praxion greenfield project. Execute those instructions in order, starting from the §Guard check. Do not ask me to invoke anything — begin now."
+else
+    seed_prompt="You are inside a freshly scaffolded Praxion greenfield project. Invoke the /new-cc-project slash command now to onboard it. If the slash command is not registered, locate its body under ~/.claude/plugins/ (Markdown file named new-cc-project.md) and follow its instructions."
+fi
+
 # Hand off (REQ-ONBOARD-08).
-exec claude --permission-mode acceptEdits "/new-cc-project"
+exec claude --permission-mode acceptEdits "$seed_prompt"

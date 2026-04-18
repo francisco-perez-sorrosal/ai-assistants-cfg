@@ -1,22 +1,25 @@
 ---
 description: Scaffold a greenfield Claude-ready Python project and onboard it to Praxion.
-allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__chub__*]
+allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion, Task, mcp__chub__*]
 ---
 
-Onboard the current (freshly scaffolded) directory into a Claude-ready Python project: run `/init`, append the Praxion Agent Pipeline block, ask one question, generate either a default mini coding agent or a custom app, generate a per-run `onboarding_for_mushi_busy_ppl.md` trail map, stage the scaffold for the user, and hand off to `/co`.
+Onboard the current (freshly scaffolded) directory. Ask one question first, show the user *how* Praxion is driven (orchestrator + subagents), frame the build as a pipeline task so they watch the orchestrator in action, then — once the codebase exists — run `/init`, append the Agent Pipeline block, generate a per-run trail map, and hand off to `/co`.
 
 ## Sections
 
 1. §Guard — shape check before doing anything
-2. §What is Praxion — canonical paragraph (sentinel-fenced, copied verbatim by the mushi doc)
-3. §Default App Spec — the six-file seed app + invariants
-4. §SDK smoke check — the import probe and doc-staleness recovery
-5. §Init idempotency — predicate for appending the Agent Pipeline block
-6. §Mushi Doc Spec — the seven ordered sections
-7. §Five-to-Seven Lessons — L1–L7 canonical ladder (L6 mandatory, L7 optional)
-8. §Custom-App Branch — how to tailor the ladder when the user describes their own app
-9. §Prereq Behaviors — `uv` missing, `ANTHROPIC_API_KEY` unset
-10. §Agent Pipeline Block — verbatim source
+2. §Flow — the sequential recipe this command executes
+3. §What is Praxion — canonical paragraph (sentinel-fenced, copied verbatim by the mushi doc)
+4. §How Claude drives Praxion — orchestrator preamble (sentinel-fenced; also mirrored into the mushi doc)
+5. §Default App — Pipeline Framing — literal task issued for the default build, shown to the user before execution
+6. §Custom App — Pipeline Framing — how the same shape adapts when the user describes their own app
+7. §Default App Spec — file inventory + invariants the pipeline must satisfy
+8. §SDK smoke check — the import probe and doc-staleness recovery
+9. §Init idempotency — predicate for appending the Agent Pipeline block
+10. §Mushi Doc Spec — the eight ordered sections
+11. §Five-to-Seven Lessons — L1–L7 "Put this in Claude" canonical ladder
+12. §Prereq Behaviors — `uv` missing, `ANTHROPIC_API_KEY` unset
+13. §Agent Pipeline Block — verbatim source
 
 ## §Guard
 
@@ -25,7 +28,7 @@ Before anything else, verify the filesystem shape. The bash layer is supposed to
 Run these four checks from the project root:
 
 1. `test -d .git` — the directory is a git repo.
-2. `grep -q '^# AI assistants$' .gitignore && grep -q '^\.ai-work/$' .gitignore` — the AI-assistants block is present. (The bash layer wrote a 5-line `.gitignore` beginning with `# AI assistants`.)
+2. `grep -q '^# AI assistants$' .gitignore && grep -q '^\.ai-work/$' .gitignore` — the AI-assistants block is present.
 3. `test -d .claude && [ -z "$(ls -A .claude 2>/dev/null)" ]` — `.claude/` exists and is empty.
 4. `! test -e src || [ -z "$(ls -A src 2>/dev/null)" ]` — `src/` is absent, or is an empty directory.
 
@@ -35,79 +38,171 @@ If any check fails, abort with:
 
 Exit without writing anything.
 
-## Flow
+## §Flow
 
-When the guard passes, follow these steps in order. Each step is a contract — Claude chooses tactics, but the shape is fixed.
+When the guard passes, follow these steps in order. Each step is a contract — tactics are your call, but the shape is fixed.
 
-1. **Invoke `/init`.** Let Claude Code analyze the (nearly empty) directory and generate `CLAUDE.md`. Do not author `CLAUDE.md` by hand.
-2. **Append the Agent Pipeline block idempotently.** Per §Init idempotency, check whether `CLAUDE.md` already has a `## Agent Pipeline` heading. If not, append the block verbatim from §Agent Pipeline Block.
-3. **Ask the single content question.** Use `AskUserQuestion` with the exact prompt: `What would you like to build? Press enter for the default (mini coding agent with web UI), or describe your own project.`
-4. **Branch on the answer.**
-   - Empty answer, or any of `default` / `yes` / `y` / `ok` (case-insensitive) → go to §Default App Spec.
-   - Any other non-trivial description → go to §Custom-App Branch (which still reuses §Default App Spec's structural invariants; only L1 and L2 of the lesson ladder become tailored).
-5. **Fetch current external API signatures FIRST.** Before generating any Python file, run `mcp__chub__chub_search` with queries `claude-agent-sdk python` and `uv python project init` (or equivalents surfaced by the search), then `mcp__chub__chub_get` to pull the current signatures and `pyproject.toml` conventions. Hold the fetched content in working memory; do NOT invent method names or parameter shapes from training data.
-6. **Generate the source files** per §Default App Spec (or the tailored variant). Maintain the dependency-direction invariant: `src/agent/` imports nothing from `src/web/`.
-7. **Run the SDK smoke check** per §SDK smoke check before writing `src/agent/core.py` if the fetched doc leaves any ambiguity about the import surface. If the probe fails, follow the recovery path in that section.
+1. **Ask the single content question FIRST.** Use `AskUserQuestion` with the exact prompt: `What would you like to build? Press enter for the default (mini coding agent with web UI), or describe your own project.` The question precedes `/init` so CLAUDE.md ends up reflecting the user's actual choice once the codebase exists.
+
+2. **Print the orchestrator preamble to chat.** Copy the content between the `PRAXION-ORCHESTRATOR-START` and `PRAXION-ORCHESTRATOR-END` sentinel markers in §How Claude drives Praxion and print it verbatim — *before* the pipeline runs. The user should learn the model *before* watching it execute.
+
+3. **Branch on the answer.**
+   - Empty, `default`, `yes`, `y`, `ok` (case-insensitive) → §Default App — Pipeline Framing.
+   - Any non-trivial description → §Custom App — Pipeline Framing.
+
+4. **Show the pipeline-framed prompt you're about to execute.** Print the wrapped task (from §Default App — Pipeline Framing or the custom variant) in a fenced block, preceded by: `Here's the task I'm about to run through the pipeline — watch how Claude orchestrates researcher → architect → planner → implementer + test-engineer → verifier.` The shape of this prompt is the teaching.
+
+5. **Execute the pipeline.** You are the orchestrator — delegate to Praxion subagents via the `Task` tool per `rules/swe/swe-agent-coordination-protocol.md`. For the seed phase, use the **compact Standard-tier** variant:
+   - `researcher` — fetch current Claude Agent SDK + `uv` + FastAPI signatures via `external-api-docs` (chub)
+   - `systems-architect` — inline module-shape + dependency-direction summary (do NOT create persistent ADRs for the seed)
+   - `implementation-planner` — 3–5 step decomposition into `.ai-work/<task-slug>/IMPLEMENTATION_PLAN.md`
+   - `implementer` + `test-engineer` — concurrent on disjoint file sets
+   - `verifier` — one-paragraph acceptance check against §Default App Spec invariants (skip the formal report for the seed)
+   Ephemeral plan docs live in `.ai-work/<task-slug>/`. Do not write to `.ai-state/` for the seed build.
+
+6. **Run the SDK smoke check** per §SDK smoke check. If the probe fails, follow the recovery path (re-fetch chub, introspect installed package, regenerate the affected file, submit `chub_feedback`).
+
+7. **Run the test gate.** `uv sync && uv run pytest -q`. If `uv` is absent, see §Prereq Behaviors.
+
 8. **Regenerate the `.gitignore` Python block.** Append (without duplicating) `__pycache__/`, `.venv/`, `*.egg-info/`, `.pytest_cache/`. Do NOT exclude `uv.lock` — it stays tracked.
-9. **Run the test gate.** `uv sync && uv run pytest -q`. If `uv` is absent, see §Prereq Behaviors.
-10. **Generate the mushi doc LAST.** File anchors (§Mushi Doc Spec L25) must be computed against the final on-disk state, so this step follows everything that writes source code.
-11. **Stage the scaffold.** `git add -A` (the `.gitignore` keeps `.env` and `.ai-work/` out). Do NOT run `git commit` — that is the user's next move via `/co`.
-12. **Print the exit handoff.** Verbatim wording in the Exit handoff section below.
+
+9. **Invoke `/init` NOW.** The codebase exists and reflects the user's choice, so `/init`'s CLAUDE.md describes reality. Do not author CLAUDE.md by hand.
+
+10. **Append the Agent Pipeline block idempotently.** Per §Init idempotency, check whether `CLAUDE.md` already has a `## Agent Pipeline` heading. If not, append the block verbatim from §Agent Pipeline Block.
+
+11. **Generate the mushi doc LAST.** File anchors (§Mushi Doc Spec) must be computed against the final on-disk state, so this step follows everything that writes source code.
+
+12. **Stage the scaffold.** `git add -A` (the `.gitignore` keeps `.env` and `.ai-work/` out). Do NOT run `git commit`.
+
+13. **Print the exit handoff** (verbatim wording at the end of this file).
 
 ## §What is Praxion
 
-This is the canonical paragraph. It is enclosed between sentinel markers so the mushi-doc generation step can copy it verbatim by matching the markers. Do not paraphrase it into the mushi doc; copy the bytes between (but not including) the markers.
+Canonical paragraph. Enclosed between sentinel markers so the mushi-doc generation step can copy it verbatim by matching the markers. Do not paraphrase — copy the bytes between (but not including) the markers.
 
 <!-- PRAXION-PARAGRAPH-START -->
 Praxion is a toolbox that turns Claude Code into a disciplined engineering partner. It ships a curated set of skills, agents, rules, commands, and memory that wire Claude into a clean Understand → Plan → Verify workflow. As you work, the system researches external APIs, plans in small known-good increments, writes and runs tests, verifies its own output against acceptance criteria, and remembers what you've agreed on across sessions — so you spend your attention on deciding what to build next, not on hand-holding the tools.
 <!-- PRAXION-PARAGRAPH-END -->
 
+## §How Claude drives Praxion
+
+Orchestrator preamble. Same copy-verbatim rule as §What is Praxion — printed to chat in Flow step 2, and copied into the mushi doc as section 2.
+
+<!-- PRAXION-ORCHESTRATOR-START -->
+**You don't call Praxion subagents by name.** You write tasks in plain English, and Claude (the orchestrator) routes the work to the right specialists:
+
+- **researcher** — explores docs, libraries, prior art, external APIs
+- **systems-architect** — designs module shape, dependency direction, trade-offs
+- **implementation-planner** — breaks a design into small, testable steps
+- **implementer** — writes code for one step at a time
+- **test-engineer** — writes tests; runs in parallel with the implementer when possible
+- **verifier** — checks the result against explicit acceptance criteria
+
+The pattern that triggers routing is a task written with **concrete behaviors + acceptance criteria + (when you want the full pipeline) an explicit "use Praxion's Standard-tier pipeline" invocation**. You speak English, Claude delegates. No `/command` memorization required.
+<!-- PRAXION-ORCHESTRATOR-END -->
+
+## §Default App — Pipeline Framing
+
+When the user accepts the default, emit the following pipeline-framed task in chat (in a fenced block, preceded by the Flow-step-4 one-liner). Then execute it — you read this as the orchestrator and delegate to subagents via `Task`.
+
+```
+Build a minimal conversational coding agent for Python 3.11+ using the Claude Agent SDK.
+
+Behaviors:
+- An agent loop over user turns via the Claude Agent SDK (use symbols fetched from external-api-docs; do NOT guess SDK surface).
+- Two starter tools: `read_file(path: str) -> str` (filesystem read) and `run_command(cmd: str) -> str` (safe-listed via a module-scope `SAFE_COMMANDS = frozenset({"ls", "pwd", "cat", "python"})` — first token not in the frozenset returns a refusal string, does not raise).
+- A FastAPI POST `/chat` that streams the agent's response as Server-Sent Events, plus a minimal HTML page at `static/index.html` that POSTs and renders the stream.
+- Strict one-way dependency: `src/agent/` imports nothing from `src/web/`; `src/web/` may import from `src/agent/`.
+- One smoke test at `tests/test_agent.py` that constructs the agent without hitting the network.
+
+Tech: Python 3.11+, uv for project management, Claude Agent SDK, FastAPI + sse-starlette (or current-doc equivalent), pytest.
+
+Acceptance:
+- `grep -r 'from src.web\|import src.web' src/agent/` returns no matches.
+- `SAFE_COMMANDS` is a module-scope `frozenset` in `src/agent/tools.py`.
+- `uv run pytest -q` passes on a fresh `uv sync` with only `ANTHROPIC_API_KEY` optionally set.
+
+Use Praxion's Standard-tier pipeline, compact variant (this is a seed app; skip formal ADRs and SPEC archival):
+- researcher fetches current Claude Agent SDK + uv + FastAPI signatures via external-api-docs
+- systems-architect produces an inline module-shape + dependency summary (no persistent ADR)
+- implementation-planner decomposes into 3–5 steps
+- implementer + test-engineer run concurrently on disjoint file sets
+- verifier checks the three acceptance criteria above and reports pass/fail in one paragraph
+```
+
+The shape of this prompt — specific behaviors, explicit acceptance, explicit pipeline invocation — is the pattern the user will reuse in the mushi-doc lessons.
+
+## §Custom App — Pipeline Framing
+
+When the user describes a non-trivial app (not empty, not a default-synonym), emit the SAME shape — **behaviors + tech + acceptance + explicit pipeline invocation** — with fields derived from their description. Ask at most one clarifying question if the description is missing any of: target language/framework, a concrete behavior, or an observable acceptance criterion. If all three are present, do not ask — build.
+
+Example (user said: "I want a Discord bot that greets new members"):
+
+```
+Build a Discord bot in Python 3.11+ that greets new members.
+
+Behaviors:
+- Connects to a Discord guild via a bot token read from the `DISCORD_TOKEN` env var.
+- On `member_join` event, posts a configurable greeting string in a configurable channel.
+- Greeting string and channel id come from `config.toml` at project root; defaults do not leak any guild id.
+
+Tech: Python 3.11+, uv, `discord.py` (or `hikari` if the user expresses a preference).
+
+Acceptance:
+- `uv run pytest -q` passes; tests cover (a) config parse, (b) greeting-string formatting, (c) dispatcher selects the right channel by id.
+- No hardcoded tokens, channel ids, or guild ids in source.
+
+Use Praxion's Standard-tier pipeline, compact variant.
+```
+
+The custom branch still runs every step of §Flow (orchestrator preamble, pipeline framing shown and executed, `/init` after code exists, mushi doc last). The only lesson-ladder difference is that **L1 and L2 are tailored to the user's app** (new tool analog, refactor analog) while **L3–L7 remain generic** — see §Five-to-Seven Lessons. Tailored count is fixed at 2 regardless of final ladder size (5–7 total).
+
+If Claude cannot produce a concrete `src/<path>:<line>` anchor for a tailored lesson (e.g., user described a Haskell library with no `src/` tree), fall back to the generic L1/L2 and note the fallback in the mushi doc's troubleshooting line.
+
 ## §Default App Spec
 
-Generate a six-file seed app: a minimal agent core, two starter tools, prompts, a thin FastAPI web layer, a smoke test, and the `pyproject.toml` / `.env.example` pair. Signature details come from the fetched chub docs — DO NOT hardcode SDK or `uv` surface from memory.
+Structural reference — the pipeline (§Flow step 5) must produce these paths and honor these invariants.
 
 **File inventory (paths are mandatory):**
 
 - `src/agent/__init__.py` — package marker.
-- `src/agent/core.py` — agent entry point; uses symbols from `claude_agent_sdk` (or the current equivalent module path obtained from chub). Exports one constructor/factory that downstream code (tests, web) imports.
-- `src/agent/tools.py` — registers exactly two tools: `read_file(path: str) -> str` and `run_command(cmd: str) -> str`. See the safe-list invariant below.
-- `src/agent/prompts.py` — system prompt(s) for the agent; plain-text constants.
+- `src/agent/core.py` — agent entry point using symbols from `claude_agent_sdk` (or the current equivalent module path from chub). Exports one constructor/factory.
+- `src/agent/tools.py` — two tools: `read_file`, `run_command`. See safe-list invariant.
+- `src/agent/prompts.py` — system prompt(s) as plain constants.
 - `src/web/__init__.py` — package marker.
-- `src/web/app.py` — FastAPI app exposing POST `/chat` that streams agent output as SSE. Imports the agent entry from `src.agent.core`.
-- `src/web/static/index.html` — minimal chat UI that POSTs to `/chat` and renders the SSE stream.
+- `src/web/app.py` — FastAPI POST `/chat` streaming SSE. Imports agent entry from `src.agent.core`.
+- `src/web/static/index.html` — minimal chat UI.
 - `tests/__init__.py` — package marker.
-- `tests/test_agent.py` — one smoke test; constructs the agent and asserts it initializes without hitting the network (use the SDK's mock/stub hooks per the fetched doc).
-- `pyproject.toml` — `[project]` with name/version/python-requires, deps: `claude-agent-sdk`, `fastapi`, `sse-starlette` (or equivalent from fetched docs), `httpx`, `pytest`; `[tool.uv]` per current uv conventions.
-- `.env.example` — lists `ANTHROPIC_API_KEY=` (empty value placeholder).
+- `tests/test_agent.py` — smoke test (no network).
+- `pyproject.toml` — uv-managed, deps per fetched docs.
+- `.env.example` — `ANTHROPIC_API_KEY=` placeholder.
 
-**Dependency-direction invariant:** `src/agent/` imports nothing from `src/web/`. `src/web/` may import from `src/agent/`. Verify with `grep -r 'from src.web\|import src.web' src/agent/` returning zero matches before finishing (AC6).
+**Dependency-direction invariant:** `src/agent/` imports nothing from `src/web/`; `src/web/` may import from `src/agent/`. Verify with `grep -r 'from src.web\|import src.web' src/agent/` → zero matches.
 
-**Safe-list invariant for `run_command`:** `src/agent/tools.py` defines a module-scope constant `SAFE_COMMANDS = frozenset({"ls", "pwd", "cat", "python"})`. `run_command` splits the input string on whitespace, takes the first token, and compares it against `SAFE_COMMANDS`. Any other first token returns a clear refusal string (a plain `str` return; do not raise). The frozenset must be at module scope (not inside the function) so the invariant reads at a glance.
+**Safe-list invariant for `run_command`:** module-scope `SAFE_COMMANDS = frozenset({"ls", "pwd", "cat", "python"})`; first-token comparison; refusal returns a plain `str` and does not raise.
 
-**FastAPI `/chat` shape:** POST accepting a JSON body with at minimum `{"message": str}`. Response is `text/event-stream` streaming tokens from the agent. Use whatever streaming primitive the fetched FastAPI/sse-starlette doc recommends.
+**FastAPI `/chat` shape:** POST with `{"message": str}` body, `text/event-stream` response.
 
-**Smoke test:** `tests/test_agent.py` imports the agent factory from `src.agent.core`, constructs it, and asserts it is not `None` — using the SDK's in-process mock hook if the fetched doc describes one, otherwise asserting construction-without-network via a stubbed/patched transport. The test must pass under `uv run pytest -q` with only `ANTHROPIC_API_KEY` (optionally) set.
+**Smoke test:** constructs the agent without hitting the network (mock/stub per fetched doc).
 
-**No `.ai-state/` writes:** this command does NOT create `.ai-state/decisions/`, `.ai-state/ARCHITECTURE.md`, or `.ai-state/specs/` inside the new project. Those directories are owned by pipeline agents (systems-architect, etc.) and are created lazily when the user runs a real pipeline later.
+**No `.ai-state/` writes** during the seed build. Those directories are owned by pipeline agents and are created lazily when the user later runs a real pipeline.
 
 ## §SDK smoke check
 
-After `uv add claude-agent-sdk` succeeds, before or immediately after writing `src/agent/core.py`, probe the import surface with a one-liner:
+After `uv add claude-agent-sdk` succeeds, before or immediately after writing `src/agent/core.py`, probe the import surface:
 
 ```
 uv run python -c "from claude_agent_sdk import ClaudeSDKClient, query, tool; print('ok')"
 ```
 
-If it prints `ok`, proceed.
+If it prints `ok`, proceed. If the import fails with `ImportError` / `ModuleNotFoundError` / `AttributeError`, the fetched chub doc has drifted from the installed SDK. Recovery:
 
-If the import fails with `ImportError` / `ModuleNotFoundError` / `AttributeError` on one of those symbols, it means the fetched chub doc is referencing symbol names that drifted in the installed SDK. Recovery path:
-
-1. Re-read the fetched chub doc entry — the search in step 5 of §Flow may have returned an older version; request the entry id again and prefer entries marked `official` or `maintainer`.
+1. Re-read the fetched chub entry; request it again and prefer entries marked `official` or `maintainer`.
 2. Inspect the installed package: `uv run python -c "import claude_agent_sdk; print(dir(claude_agent_sdk))"` and pick the actually-present public symbols.
 3. Regenerate `src/agent/core.py` against those symbols.
-4. Submit `chub_feedback` with `vote: "down"`, `label: "outdated"`, and a comment naming the missing symbol and the installed SDK version so the next user inherits a corrected doc. Append the identity suffix per the `external-api-docs` skill (derive from `git config --get user.name` / `user.email`).
+4. Submit `chub_feedback` with `vote: "down"`, `label: "outdated"`, naming the missing symbol and the installed SDK version. Append the identity suffix per the `external-api-docs` skill.
 
-Never copy symbol names from this file into generated code — this file deliberately does not pin them. The smoke-check line is a probe, not a signature reference.
+Never copy symbol names from this file into generated code — this file deliberately does not pin them.
 
 ## §Init idempotency
 
@@ -117,106 +212,105 @@ Before appending the §Agent Pipeline Block to `CLAUDE.md`, run:
 grep -q '^## Agent Pipeline' CLAUDE.md
 ```
 
-- Exit `0` (match found) → the block already exists from a prior `/new-cc-project` or `/onboard-project` run. Skip the append.
-- Exit non-zero (no match) → append the block verbatim from §Agent Pipeline Block.
+- Exit `0` (match found) → block already exists; skip the append.
+- Exit non-zero → append the block verbatim from §Agent Pipeline Block.
 
-This predicate mirrors the idempotency check in `/onboard-project`, so re-running either command does not duplicate the section.
+This predicate mirrors `/onboard-project`, so re-running either command does not duplicate the section.
 
 ## §Mushi Doc Spec
 
-Generate `<project-root>/onboarding_for_mushi_busy_ppl.md` with these seven sections in this exact order:
+Generate `<project-root>/onboarding_for_mushi_busy_ppl.md` with these eight sections in this exact order:
 
-1. **Canonical Praxion paragraph** — copied verbatim (byte-for-byte) from between the `PRAXION-PARAGRAPH-START` and `PRAXION-PARAGRAPH-END` sentinel HTML-comment markers in §What is Praxion. Do not paraphrase. Do not re-wrap.
-2. **TL;DR card** — exactly three lines; one each for "what you have", "what you can do right now", "what to do next".
-3. **Mermaid happy-path diagram** — ≤10 nodes, conforming to `rules/writing/diagram-conventions.md`. One concept only (e.g., user → web → agent → SDK).
-4. **What got created table** — columns `Artifact | Purpose | Edit when…`. One row per generated file. **Just-in-time verification:** before finalising the table, `ls -la <path>` every row's artifact; if any path does not resolve, remove the row or fix the path — do not ship a row that does not exist on disk. The mushi doc and the scaffold must agree on the same run.
-5. **Five-to-seven lesson ladder** — `<details>` collapsibles, one per lesson. Use the canonical L1–L7 from §Five-to-Seven Lessons. L6 is mandatory. L1, L2, and L7 may be omitted only if anchor generation fails for them (final ladder is never below 5).
-6. **Glossary collapsible** — one `<details>` block with short definitions for terms the mushi doc uses: Praxion, skill, agent, rule, command, the Understand/Plan/Verify methodology, Claude Agent SDK, uv, the `/co` and `/cop` commands.
-7. **What to read next** — a one-line pointer to `docs/project-onboarding.md` in the Praxion repo, plus the AC16 explainer: "Run `/co` to make your first commit (or `/cop` for commit+push); both apply `rules/swe/vcs/git-conventions.md` automatically, so you don't hand-craft commit messages."
+1. **Canonical Praxion paragraph** — copied verbatim (byte-for-byte) from between the `PRAXION-PARAGRAPH-START` and `PRAXION-PARAGRAPH-END` sentinel markers in §What is Praxion. Do not paraphrase.
+2. **How Claude drives Praxion** — copied verbatim from between the `PRAXION-ORCHESTRATOR-START` and `PRAXION-ORCHESTRATOR-END` sentinel markers in §How Claude drives Praxion. Placed immediately after the canonical paragraph — the first thing the user reads after "what is Praxion" is "how I talk to it."
+3. **TL;DR card** — exactly three lines: "what you have", "what you can do right now", "what to do next".
+4. **Mermaid happy-path diagram** — ≤10 nodes per `rules/writing/diagram-conventions.md`. One concept only.
+5. **What got created table** — columns `Artifact | Purpose | Edit when…`. One row per generated file. **Just-in-time verification:** `ls -la <path>` every row; do not ship a row whose path does not resolve.
+6. **Five-to-seven lesson ladder** — `<details>` collapsibles, one per lesson, in the "Put this in Claude" four-bullet format defined in §Five-to-Seven Lessons. L6 is mandatory.
+7. **Glossary collapsible** — short definitions for: Praxion, skill, agent, rule, command, **orchestrator**, **subagent**, pipeline, Understand/Plan/Verify, Claude Agent SDK, uv, `.ai-state/`, `.ai-work/`, `/co`, `/cop`.
+8. **What to read next** — one-line pointer to `docs/project-onboarding.md` in the Praxion repo, plus: "Run `/co` to make your first commit (or `/cop` for commit+push); both apply `rules/swe/vcs/git-conventions.md` automatically, so you don't hand-craft commit messages."
 
-**File anchors:** every lesson references at least one concrete anchor of the form `src/<path>:<line>` that resolves to a real line in the final scaffold. Generate the mushi doc after all source files are written so anchors are stable. If a line reference shifts during a late edit, regenerate it before finalising.
+**File anchors:** every lesson references at least one concrete anchor of the form `src/<path>:<line>` that resolves to a real line. Generate the mushi doc after all source files are written so anchors are stable.
 
 ## §Five-to-Seven Lessons
 
-Canonical ladder. Ship all seven by default; if anchor generation fails for L2 or L7, they may be omitted (final ladder is never below 5). L6 is mandatory.
+Each lesson in the mushi doc uses this exact four-bullet shape:
 
-Each lesson has four bullets:
-- **What you'll learn** — the competency the lesson unlocks.
-- **Command to run** — the Praxion slash command or skill the lesson exercises.
-- **Expected outcome** — what success looks like.
-- **Try it on** — a concrete anchor in the scaffold (e.g., `src/agent/tools.py:<line>`).
+- **What you'll learn** — the Praxion concept or competency the lesson unlocks.
+- **Put this in Claude** — a block-quoted, plain-English task the user copy-pastes into their next Claude session. Big enough to trigger orchestrator routing.
+- **What will happen** — which subagents Claude will delegate to, and what they'll produce.
+- **Expected touches** — concrete file anchors that will change.
+
+Ship all seven by default; L1 / L2 / L7 may be omitted only if anchor generation fails (final ladder ≥ 5). **L6 is mandatory.**
 
 ### L1 — Add a new tool to the agent
 
-- **What you'll learn:** the three-document planning model for any change bigger than a one-liner.
-- **Command to run:** `/software-planning` (creates `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` under `.ai-work/<task-slug>/`).
-- **Expected outcome:** a plan with 2–4 known-good steps; tests first; then code; then verification.
-- **Try it on:** add `list_dir(path: str) -> str` next to `read_file` in `src/agent/tools.py:<line-of-SAFE_COMMANDS>`.
+- **What you'll learn:** how the orchestrator routes a multi-file feature through research → design → plan → paired implement+test → verify.
+- **Put this in Claude:**
+  > Add a tool called `list_dir(path: str) -> str` to the agent that returns the entries of a given directory, enforcing the same safe-list pattern as `run_command`. Apply Praxion's Standard-tier pipeline: research any relevant SDK conventions for tool registration, design the tool contract, decompose into steps, implement with paired tests, and verify the safe-list invariant still holds.
+- **What will happen:** Claude spawns `researcher` (SDK conventions), `systems-architect` (tool contract + invariant reuse), `implementation-planner` (3-step decomposition), `implementer` + `test-engineer` in parallel (new tool + test), `verifier` (acceptance check).
+- **Expected touches:** `src/agent/tools.py:<line-near-SAFE_COMMANDS>`, `tests/test_agent.py`, maybe `src/agent/prompts.py` (tool intro).
 
 ### L2 — Refactor the web layer safely
 
-- **What you'll learn:** how to change code structure without changing behavior, inside an isolated worktree.
-- **Command to run:** `/create-worktree` to branch off; then the `refactoring` skill to plan the split.
-- **Expected outcome:** `src/web/app.py` split into a route module and an SSE-streaming helper, with the test still green.
-- **Try it on:** `src/web/app.py:<line-of-POST-chat-route>`.
+- **What you'll learn:** restructure code without changing behavior, using an isolated worktree so `main` never sees half-done state.
+- **Put this in Claude:**
+  > Refactor `src/web/app.py` into two modules: one for routes, one for the SSE streaming helper. Create a worktree for the refactor, preserve behavior (the existing smoke test must pass unchanged), and merge back only when tests are green.
+- **What will happen:** Claude creates a worktree, then routes the refactor through the `refactoring` skill; `implementer` splits the module, `test-engineer` verifies no behavior change; merged back on green.
+- **Expected touches:** `src/web/app.py:<line-of-POST-/chat>` → split into `src/web/routes.py` and `src/web/streaming.py`; `tests/test_agent.py` unchanged.
 
-### L3 — Look up Claude Agent SDK docs
+### L3 — Fetch current SDK docs before writing code
 
-- **What you'll learn:** never guess an SDK signature; fetch the current doc first.
-- **Command to run:** spawn the `researcher` agent, or directly invoke the `external-api-docs` skill via `mcp__chub__chub_search` + `mcp__chub__chub_get`.
-- **Expected outcome:** a documented diff between what the installed SDK exposes and what any prose in this project references.
-- **Try it on:** `src/agent/core.py:<line-of-import>`.
+- **What you'll learn:** never guess an SDK signature — fetch the current doc first, even when Claude seems confident.
+- **Put this in Claude:**
+  > Before I extend the agent, I want a current summary of Claude Agent SDK's public API. Use context-hub (the external-api-docs skill) to fetch the latest Claude Agent SDK Python signatures, then produce a one-page cheat-sheet in this chat covering tool registration, hooks, and multi-turn sessions. No code changes — this is a read.
+- **What will happen:** Claude spawns `researcher`, which invokes the `external-api-docs` skill (`mcp__chub__chub_search` + `mcp__chub__chub_get`), then summarizes in-chat.
+- **Expected touches:** none (read-only). Your transcript now has a fresh cheat-sheet you can anchor `src/agent/core.py:<line-of-import>` against.
 
-### L4 — Add a feature with quality gates
+### L4 — Add a feature end-to-end with full quality gates
 
-- **What you'll learn:** the full Standard-tier pipeline (researcher → systems-architect → implementation-planner → implementer + test-engineer → verifier).
-- **Command to run:** describe the feature to Claude; Claude spawns the agents in order.
-- **Expected outcome:** `SYSTEMS_PLAN.md`, `IMPLEMENTATION_PLAN.md`, code, tests, `VERIFICATION_REPORT.md` — all in `.ai-work/<task-slug>/`.
-- **Try it on:** add an auth gate in front of POST `/chat` in `src/web/app.py:<line-of-POST-chat-route>`.
+- **What you'll learn:** the full Standard-tier pipeline producing persistent artifacts — SYSTEMS_PLAN, IMPLEMENTATION_PLAN, VERIFICATION_REPORT — under `.ai-work/<task-slug>/`.
+- **Put this in Claude:**
+  > Add a request-size gate to POST `/chat`: reject bodies larger than 4 KB with HTTP 413, and emit the accepted size as the first SSE event. Apply Praxion's Standard-tier pipeline in full — I want to see the SYSTEMS_PLAN, the IMPLEMENTATION_PLAN, paired implementer/test work, and the VERIFICATION_REPORT against explicit acceptance criteria. Leave the `.ai-work/` artifacts in place so I can read them.
+- **What will happen:** full pipeline fires with persistent docs — `researcher` → `systems-architect` (SYSTEMS_PLAN.md) → `implementation-planner` (IMPLEMENTATION_PLAN.md) → `implementer` + `test-engineer` → `verifier` (VERIFICATION_REPORT.md).
+- **Expected touches:** `src/web/app.py:<line-of-POST-/chat>`, `tests/test_agent.py`, and a new `.ai-work/<slug>/` directory.
 
-### L5 — Persist a project decision
+### L5 — Persist a decision as an ADR
 
-- **What you'll learn:** how to turn a meaningful decision into a durable ADR.
-- **Command to run:** `/cajalogic` (and follow `rules/swe/adr-conventions.md`).
-- **Expected outcome:** a new numbered ADR under `.ai-state/decisions/` with YAML frontmatter and MADR body sections; `DECISIONS_INDEX.md` regenerated.
-- **Try it on:** record "chose SSE over WebSockets for POST /chat streaming" as an ADR; anchor in `src/web/app.py:<line-of-streaming-return>`.
+- **What you'll learn:** meaningful decisions become durable ADRs that survive `.ai-work/` cleanup.
+- **Put this in Claude:**
+  > Record a decision: we chose Server-Sent Events for POST `/chat` streaming over WebSockets and long-polling because SSE gives simpler server code and automatic reconnect. Write this as a new ADR under `.ai-state/decisions/` following `rules/swe/adr-conventions.md` (MADR frontmatter + Context / Decision / Considered Options / Consequences), and regenerate the index.
+- **What will happen:** Claude writes `.ai-state/decisions/<NNN>-<slug>.md` with full frontmatter + body, then regenerates `.ai-state/decisions/DECISIONS_INDEX.md`.
+- **Expected touches:** `.ai-state/decisions/<NNN>-sse-over-websockets.md` (new), `.ai-state/decisions/DECISIONS_INDEX.md` (updated row). Anchored to `src/web/app.py:<line-of-streaming-return>`.
 
 ### L6 — Testing workflow (MANDATORY)
 
-- **What you'll learn:** Praxion's testing rhythm — behavioral tests designed first, implementation follows, the full suite runs green before commit.
-- **Command to run:** `/test` (applies the `testing-strategy` skill; writes tests from acceptance criteria and runs the suite).
-- **Expected outcome:** new behavioral tests in `tests/`, all passing under `uv run pytest -q`.
-- **Try it on:** extend the smoke test at `tests/test_agent.py:<line-of-test-fn>` — add a case that asserts `run_command("rm -rf /")` returns the refusal string (safe-list invariant).
+- **What you'll learn:** Praxion's testing rhythm — behavioral tests first, tight feedback loop via `pytest -q`, full suite green before a commit lands.
+- **Put this in Claude:**
+  > Extend `tests/test_agent.py` with a behavioral test that asserts `run_command("rm -rf /")` (or any first token outside the safe-list) returns the refusal string without raising. Then run the full pytest suite and report pass/fail. If the invariant is looser than I described, flag it — don't silently tighten it.
+- **What will happen:** Claude spawns `test-engineer`, adds the behavioral test, runs `uv run pytest -q`, reports results. If the invariant is loose, Claude surfaces the gap without auto-fixing.
+- **Expected touches:** `tests/test_agent.py:<line-of-smoke-test>`, possibly `src/agent/tools.py:<line-of-SAFE_COMMANDS>` if the check needed tightening.
 
 ### L7 — Project exploration as code grows (OPTIONAL)
 
-- **What you'll learn:** how to orient yourself in the project once the seed shape has grown; produce an up-to-date architecture view without reading every file.
-- **Command to run:** `/explore-project` (applies the `project-exploration` skill).
-- **Expected outcome:** a current map of modules, entry points, and external dependencies — useful once you have a dozen files or more.
-- **Try it on:** run it once the default app has grown past the seed files; anchor on any module that did not exist at scaffold time.
-
-## §Custom-App Branch
-
-When the user's answer is a non-trivial description of a different app (not empty, not "default"), still run every step of §Flow — only the two tailored lesson slots change.
-
-**Rule:** the ladder stays at 5–7 lessons. **L1 and L2 are the tailored slots** — adapt them to the user's actual app (e.g., if the user described a Discord bot, L1 becomes "add a new slash command", L2 becomes "refactor the event dispatcher"). **L3, L4, L5, L6, and (optional) L7 remain generic** — they are Praxion-ecosystem lessons and apply regardless of the app.
-
-Count contract: **2 tailored + (3–5) generic = 5–7 total.** Tailored count is fixed at 2; generic count follows the overall ladder size (L7 is optional). If Claude cannot produce a concrete `src/<path>:<line>` anchor for a tailored lesson (e.g., the user described a Haskell library — no `src/` tree), fall back to the generic L1/L2 from §Five-to-Seven Lessons and note the fallback in the mushi doc's troubleshooting line.
-
-The canonical Praxion paragraph, the default mushi-doc structure, and the exit handoff are all unchanged in the custom branch.
+- **What you'll learn:** orient yourself once the seed shape has grown past a handful of files.
+- **Put this in Claude:**
+  > The codebase has grown past the seed shape. Produce a current architecture view: map modules, entry points, external dependencies, and any surprising coupling. Output a one-page summary with a Mermaid component diagram (≤10 nodes). Skip anything CLAUDE.md already says.
+- **What will happen:** Claude runs the `project-exploration` skill, generates a compact summary with a diagram.
+- **Expected touches:** none (read-only). Useful once the project has ≥10 files.
 
 ## §Prereq Behaviors
 
 **`uv` missing.** Before running the test gate, check `command -v uv`. If absent:
 
-- Print a one-line install hint: `uv is not installed. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh (then re-run 'uv sync && uv run pytest -q' from this project root).`
+- Print: `uv is not installed. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh (then re-run 'uv sync && uv run pytest -q' from this project root).`
 - Skip `uv sync` and `uv run pytest -q`. Do not fail the session.
 - Note the skipped step in the mushi doc's "What to do next": add a bullet `Install uv, then run: uv sync && uv run pytest -q` above the `/co` line.
 
-**`ANTHROPIC_API_KEY` unset.** Do NOT block the flow. The smoke test is written to pass without the key (constructs the agent against a mock transport). Handle it this way:
+**`ANTHROPIC_API_KEY` unset.** Do NOT block the flow. The smoke test is designed to pass without the key (constructs the agent against a mock transport). Handle it this way:
 
 - `.env.example` lists `ANTHROPIC_API_KEY=` as a placeholder.
-- The mushi doc's "What to do next" mentions that live agent calls require `export ANTHROPIC_API_KEY=sk-ant-...` in a `.env` file (which is gitignored) before running `uv run python -m src.web.app`.
+- The mushi doc's "What to do next" mentions that live agent calls require `export ANTHROPIC_API_KEY=sk-ant-...` (in a `.env` file, which is gitignored) before running `uv run python -m src.web.app`.
 
 ## §Agent Pipeline Block
 
@@ -244,14 +338,14 @@ After all files are generated and before the mushi doc is finalised, run:
 uv sync && uv run pytest -q
 ```
 
-If `uv` is absent, see §Prereq Behaviors and skip gracefully. If tests fail, surface the output to the user — do not silently hide a red test. The mushi doc notes the failure in "What to do next".
+If `uv` is absent, see §Prereq Behaviors and skip gracefully. If tests fail, surface the output — do not hide a red test. The mushi doc notes the failure in "What to do next".
 
 ## Exit handoff
 
-Stage everything (`git add -A`, honoring the `.gitignore` that keeps `.env` and `.ai-work/` out). Do NOT commit. Print exactly:
+Stage everything (`git add -A`). Do NOT commit. Print exactly:
 
 ```
 Scaffold staged. Run /co to make the first commit (or /cop for commit+push); both apply rules/swe/vcs/git-conventions.md automatically, so you don't hand-craft commit messages.
 ```
 
-The mushi doc's "What to do next" one-liner carries the same language (AC16) — point at `/co` as default, mention `/cop` as the commit-and-push alternative, and state explicitly that the user is outsourcing commit-message authoring to the git-conventions rule.
+The mushi doc's "What to do next" carries the same language — `/co` as default, `/cop` as commit-and-push, and the explicit note that the user is outsourcing commit-message authoring to the git-conventions rule.
