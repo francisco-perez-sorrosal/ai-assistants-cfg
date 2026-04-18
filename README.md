@@ -17,9 +17,9 @@ Compatible with **Claude Code** (mainly), **Claude Desktop**, and **Cursor**.
 
 ## What You Get
 
-- **34 skills** covering Python, API design, CI/CD, deployment, observability, refactoring, spec-driven development, external API docs, security review, testing strategy, roadmap synthesis, and more -- loaded automatically when the task matches
+- **35 skills** covering Python, API design, CI/CD, deployment, observability, refactoring, spec-driven development, external API docs, security review, testing strategy, roadmap synthesis, and more -- loaded automatically when the task matches
 - **13 specialized agents** that collaborate on complex features (research, architecture, planning, implementation, testing, verification, roadmap cartography)
-- **20 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding, testing, releases, code review, roadmap generation
+- **22 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding, testing, releases, code review, roadmap generation
 - **Coding rules** auto-loaded by context -- coding style, git conventions, documentation standards, agent coordination
 - **MCP servers** for persistent memory and agent lifecycle observability
 
@@ -41,7 +41,7 @@ Five durable principles shape how Praxion evolves, extending the global philosop
 
 ### Token budget is a first-class constraint
 
-Every artifact added must justify its token cost; every artifact removed is a gift to every project that consumes Praxion. Always-loaded content (CLAUDE.md files + unscoped rules) ships into the first 15,000 tokens of every session — `paths:` scoping and progressive-disclosure skills keep that ceiling inviolate.
+Every artifact added must justify its token cost; every artifact removed is a gift to every project that consumes Praxion. Always-loaded content (CLAUDE.md files + unscoped rules) ships into the first 25,000 tokens of every session — a failure-mode guardrail, not a target. `paths:` scoping and progressive-disclosure skills keep that ceiling inviolate.
 
 ### Measure before optimizing
 
@@ -91,7 +91,7 @@ Reusable knowledge modules loaded automatically based on context. See [`skills/R
 |----------|--------|
 | AI Assistant Crafting | skill-crafting, agent-crafting, command-crafting, mcp-crafting, rule-crafting, hook-crafting |
 | External Knowledge | external-api-docs |
-| Platform Knowledge | claude-ecosystem, agentic-sdks, communicating-agents |
+| Platform Knowledge | claude-ecosystem, agentic-sdks, communicating-agents, llm-prompt-engineering |
 | Planning & Communication | roadmap-planning, roadmap-synthesis, stakeholder-communications |
 | Design & Architecture | api-design, data-modeling, deployment, observability, performance-architecture |
 | Documentation | doc-management |

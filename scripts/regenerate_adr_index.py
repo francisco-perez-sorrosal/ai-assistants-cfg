@@ -35,8 +35,10 @@ Regenerate: `python scripts/regenerate_adr_index.py`
 def parse_frontmatter(content: str) -> dict[str, str]:
     """Extract YAML frontmatter as key-value pairs using simple line parsing.
 
-    Handles scalar values (strings, unquoted values) and simple lists.
-    Does not depend on PyYAML -- uses stdlib only.
+    Handles scalar values (strings, unquoted values), inline lists [a, b, c],
+    and block-style lists (key: followed by indented "- item" lines).
+    Block lists are normalized to the inline-bracket form so downstream
+    formatters can treat both shapes uniformly. Does not depend on PyYAML.
     """
     lines = content.split("\n")
     if not lines or lines[0].strip() != FRONTMATTER_DELIMITER:
@@ -51,18 +53,44 @@ def parse_frontmatter(content: str) -> dict[str, str]:
         return {}
 
     result: dict[str, str] = {}
+    block_key: str | None = None
+    block_items: list[str] = []
+
+    def flush_block() -> None:
+        nonlocal block_key, block_items
+        if block_key is not None and block_items:
+            result[block_key] = (
+                "[" + ", ".join(f'"{item}"' for item in block_items) + "]"
+            )
+        block_key = None
+        block_items = []
+
     for line in frontmatter_lines:
-        match = re.match(r"^(\w[\w_]*)\s*:\s*(.+)$", line)
+        block_item = re.match(r"^\s+-\s*(.+)$", line)
+        if block_item and block_key is not None:
+            item = block_item.group(1).strip()
+            if (item.startswith('"') and item.endswith('"')) or (
+                item.startswith("'") and item.endswith("'")
+            ):
+                item = item[1:-1]
+            block_items.append(item)
+            continue
+
+        match = re.match(r"^(\w[\w_]*)\s*:\s*(.*)$", line)
         if match:
+            flush_block()
             key = match.group(1)
             value = match.group(2).strip()
-            # Strip surrounding quotes
+            if value == "":
+                block_key = key
+                continue
             if (value.startswith('"') and value.endswith('"')) or (
                 value.startswith("'") and value.endswith("'")
             ):
                 value = value[1:-1]
             result[key] = value
 
+    flush_block()
     return result
 
 

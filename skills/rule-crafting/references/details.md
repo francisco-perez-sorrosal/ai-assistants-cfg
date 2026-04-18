@@ -29,7 +29,7 @@ Rules are loaded based on **relevance matching** -- Claude determines which rule
 
 ### Token Budget
 
-All always-loaded content (CLAUDE.md files + rules without `paths:`) shares a 15,000-token budget. Each new unconditional rule adds to every session's baseline cost.
+All always-loaded content (CLAUDE.md files + rules without `paths:`) shares a 25,000-token budget (failure-mode guardrail). Each new unconditional rule adds to every session's baseline cost.
 
 | Content Type | Token Impact |
 |-------------|-------------|

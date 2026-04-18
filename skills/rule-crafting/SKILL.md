@@ -170,7 +170,7 @@ State what should be true, not steps to follow. Procedural content belongs in a 
 - **Group by domain** — one file per coherent domain area
 - **Include examples** — show correct and incorrect patterns when clarity demands it
 - **Explain the _why_** — when a constraint isn't self-evident, briefly state the rationale
-- **Token budget awareness** — rules are eagerly loaded within scope (personal = all projects, project = that project), adding to the baseline token cost of every conversation and agent spawn. The ecosystem target is 15,000 tokens for all always-loaded content (CLAUDE.md files + rules). Keep rules concise; if one grows too large, compress it (tables over prose, remove redundancy) or move procedural content to a skill — but never split into main + reference files (see Self-Containment Constraint below)
+- **Token budget awareness** — rules are eagerly loaded within scope (personal = all projects, project = that project), adding to the baseline token cost of every conversation and agent spawn. The ecosystem budget is 25,000 tokens for all always-loaded content (CLAUDE.md files + rules) as a failure-mode guardrail — every always-loaded token must earn its attention share. Keep rules concise; if one grows too large, compress it (tables over prose, remove redundancy) or move procedural content to a skill — but never split into main + reference files (see Self-Containment Constraint below)
 
 ### Customization Sections
 

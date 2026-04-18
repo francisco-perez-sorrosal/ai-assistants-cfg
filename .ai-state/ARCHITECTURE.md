@@ -239,7 +239,7 @@ graph LR
 
 | Constraint | Type | Rationale |
 |-----------|------|-----------|
-| Always-loaded content under 15,000 tokens | Performance | Root CLAUDE.md + rules share a finite context window budget; exceeding it degrades all sessions |
+| Always-loaded content under 25,000 tokens | Performance | Root CLAUDE.md + rules share a finite context window budget; exceeding it degrades all sessions |
 | Skills target under 500 lines per SKILL.md | Performance | Progressive disclosure keeps activation cost manageable; overflow goes to `references/` |
 | 10-12 nodes max per Mermaid diagram | Quality | Readability ceiling for architecture and flow diagrams |
 | Hooks must have finite timeouts | Performance | Runaway hooks block the agent lifecycle; all hooks in hooks.json specify timeout |

@@ -24,6 +24,7 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── external-api-docs/
 ├── github-star/
 ├── hook-crafting/
+├── llm-prompt-engineering/
 ├── mcp-crafting/
 ├── memory/
 ├── observability/
@@ -33,6 +34,7 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── python-prj-mgmt/
 ├── refactoring/
 ├── roadmap-planning/
+├── roadmap-synthesis/
 ├── rule-crafting/
 ├── skill-crafting/
 ├── software-planning/
@@ -49,15 +51,18 @@ commands/                            # Shared slash commands
 ├── cop.md
 ├── create-simple-python-prj.md
 ├── create-worktree.md
+├── eval.md
 ├── explore-project.md
 ├── full-security-scan.md
 ├── manage-readme.md
 ├── cajalogic.md
 ├── merge-worktree.md
 ├── onboard-project.md
+├── refresh-skill.md
 ├── release.md
 ├── report-upstream.md
 ├── review-pr.md
+├── roadmap.md
 ├── save-changes.md
 ├── sdd-coverage.md
 ├── star-repo.md
@@ -75,7 +80,8 @@ agents/                              # Shared agent definitions
 ├── doc-engineer.md
 ├── sentinel.md
 ├── skill-genesis.md
-└── cicd-engineer.md
+├── cicd-engineer.md
+└── roadmap-cartographer.md
 rules/                               # Rules (installed to ~/.claude/rules/ or .cursor/rules/)
 ├── CLAUDE.md                        # Rule conventions (lazy loaded)
 ├── swe/

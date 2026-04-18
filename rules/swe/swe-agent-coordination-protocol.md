@@ -71,6 +71,7 @@ Outputs use path prefixes to signal lifecycle: `.ai-work/<slug>/` = ephemeral (d
 | `sentinel` | Read-only ecosystem auditor (independent, not a pipeline stage) | `.ai-state/SENTINEL_REPORT_*.md`, `.ai-state/SENTINEL_LOG.md` | Yes |
 | `skill-genesis` | Learning triage, artifact proposal from experience | `.ai-work/<slug>/SKILL_GENESIS_REPORT.md` | No |
 | `cicd-engineer` | CI/CD pipeline design, GitHub Actions, deployment automation | Workflow files + pipeline config | Yes |
+| `roadmap-cartographer` | Project-level audit-to-roadmap through a project-derived lens set (SPIRIT, DORA, SPACE, FAIR, CNCF, or Custom); invoked via `/roadmap` | `ROADMAP.md` at project root, `.ai-work/<slug>/ROADMAP_DRAFT.md`, `.ai-work/<slug>/AUDIT_<lens>.md` fragments | No |
 
 **Conditional output footnotes:** ^1 For Standard/Full tier pipelines — always create both architecture docs unless the project is trivially simple (single module, no external dependencies).
 
