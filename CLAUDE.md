@@ -31,7 +31,14 @@ Extends `~/.claude/CLAUDE.md`. Four principles: **token budget first-class**, **
 
 ## Behavioral Contract (applied)
 
-Praxion enforces the four-behavior contract from the global philosophy (`~/.claude/CLAUDE.md`) — Surface Assumptions, Register Objection, Stay Surgical, Simplicity First — via the always-loaded `rules/swe/agent-behavioral-contract.md` rule, per-agent self-tests, and named failure-mode tags in verification reports. See `skills/software-planning/references/behavioral-contract.md`.
+Praxion enforces the four-behavior contract from the global philosophy (`~/.claude/CLAUDE.md`):
+
+- **Surface Assumptions** before acting on them
+- **Register Objection** when a request violates scope, structure, or evidence
+- **Stay Surgical** — minimal scope, minimal blast radius
+- **Simplicity First** — the smallest solution that achieves the behavior
+
+Operationalized via the always-loaded `rules/swe/agent-behavioral-contract.md` rule, per-agent self-tests, and named failure-mode tags in verification reports. See `skills/software-planning/references/behavioral-contract.md`.
 
 ## Compaction Guidance
 

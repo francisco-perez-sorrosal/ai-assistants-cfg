@@ -225,6 +225,17 @@ OpenInference spans are standard OTel spans with additional attributes -- they a
 
 **Practical example:** Praxion's `task-chronograph` MCP server uses OpenInference span kinds (CHAIN for session root, AGENT for pipeline agents) to create hierarchical traces of AI agent sessions.
 
+### Reference implementation: chronograph relay
+
+The chronograph MCP server in this repo is a worked example of OpenInference tracing for AI agent pipelines and illustrates several patterns that extend the baseline span model:
+
+- **Duration-paired tool spans** — `PreToolUse` opens a span and `PostToolUse` closes it, producing duration-correlated tool spans instead of zero-duration point events.
+- **Fork-group clustering** — parallel subagent fan-out is grouped under a shared `fork_group` UUID so concurrent branches cluster visually in the trace backend.
+- **Agent rollup spans** — per-agent aggregate spans summarize nested tool activity for high-level trace views.
+- **Openinference-standard attribution** — `tool.id`, `user.id`, and `llm.*` attributes follow OpenInference conventions rather than project-local names, keeping Phoenix (and any other OpenInference-aware backend) able to render the spans natively.
+
+For the full worked implementation and event flow, see `docs/observability.md` and `task-chronograph-mcp/README.md` in the Praxion repository.
+
 ## Context Propagation
 
 Context propagation carries trace identity across service boundaries, enabling spans from different services to join the same trace.
