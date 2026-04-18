@@ -24,6 +24,17 @@ MARKETPLACE_NAME="bit-agora"
 MARKETPLACE_SOURCE="francisco-perez-sorrosal/bit-agora"
 PLUGIN_CACHE_DIR="${HOME}/.claude/plugins/cache/${MARKETPLACE_NAME}/${PLUGIN_NAME}"
 
+# Personal identifiers rendered into claude/config/CLAUDE.md (the Personal Info
+# section). Defaults are the original author's — users can accept them as-is
+# or customize during the install prompt; saved values persist across re-runs
+# in .personal_info.env (gitignored).
+DEFAULT_USERNAME="@fperezsorrosal"
+DEFAULT_EMAIL="fperezsorrosal@gmail.com"
+DEFAULT_GITHUB_URL="https://github.com/francisco-perez-sorrosal"
+PERSONAL_INFO_ENV="${CLAUDE_CONFIG_DIR}/.personal_info.env"
+CLAUDE_MD_TEMPLATE="${CLAUDE_CONFIG_DIR}/CLAUDE.md.tmpl"
+CLAUDE_MD_RENDERED="${CLAUDE_CONFIG_DIR}/CLAUDE.md"
+
 # =============================================================================
 # Terminal formatting (disabled when not a TTY)
 # =============================================================================
@@ -149,6 +160,94 @@ clean_stale_symlinks() {
         fi
     done
     sweep_stale_script_symlinks
+}
+
+# =============================================================================
+# Personal identifiers — render CLAUDE.md from template
+# =============================================================================
+#
+# ${CLAUDE_CONFIG_DIR}/CLAUDE.md.tmpl contains {{USERNAME}}, {{EMAIL}},
+# {{GITHUB_URL}} placeholders that get substituted into the rendered
+# CLAUDE.md (gitignored) at install time. The rendered file is what the
+# symlink points at, so the user's global Claude prompt always reflects
+# their own identifiers, not the original author's.
+
+prompt_personal_info() {
+    # If saved values exist and --reconfigure was not requested, reuse silently.
+    if [ -f "$PERSONAL_INFO_ENV" ] && ! $RECONFIGURE; then
+        # shellcheck source=/dev/null
+        source "$PERSONAL_INFO_ENV"
+        info "Personal info loaded from $(basename "$PERSONAL_INFO_ENV")"
+        return
+    fi
+
+    header "Step 0 — Personal identifiers"
+    cat <<EOF
+
+  These values fill the 'Personal Info' section of your global Claude
+  prompt (~/.claude/CLAUDE.md). Press Enter to accept the defaults and
+  continue, or type [n] to customize each value.
+
+  username:  ${B}${DEFAULT_USERNAME}${R}
+  email:     ${B}${DEFAULT_EMAIL}${R}
+  github:    ${B}${DEFAULT_GITHUB_URL}${R}
+
+EOF
+    printf "  Use defaults? [Y/n]: "
+    read -r answer
+
+    if [[ "$answer" =~ ^[Nn]$ ]]; then
+        read -rp "  Username (e.g. @alice) [${DEFAULT_USERNAME}]: " input
+        PRAXION_USERNAME="${input:-$DEFAULT_USERNAME}"
+        read -rp "  Email [${DEFAULT_EMAIL}]: " input
+        PRAXION_EMAIL="${input:-$DEFAULT_EMAIL}"
+        read -rp "  GitHub URL [${DEFAULT_GITHUB_URL}]: " input
+        PRAXION_GITHUB_URL="${input:-$DEFAULT_GITHUB_URL}"
+    else
+        PRAXION_USERNAME="$DEFAULT_USERNAME"
+        PRAXION_EMAIL="$DEFAULT_EMAIL"
+        PRAXION_GITHUB_URL="$DEFAULT_GITHUB_URL"
+    fi
+
+    # Persist so re-runs (plugin updates, --relink) don't re-prompt.
+    # Use printf %q to quote values safely for shell sourcing.
+    {
+        printf 'PRAXION_USERNAME=%q\n' "$PRAXION_USERNAME"
+        printf 'PRAXION_EMAIL=%q\n' "$PRAXION_EMAIL"
+        printf 'PRAXION_GITHUB_URL=%q\n' "$PRAXION_GITHUB_URL"
+    } > "$PERSONAL_INFO_ENV"
+    info "Saved to $(basename "$PERSONAL_INFO_ENV") (gitignored)"
+}
+
+render_claude_md() {
+    if [ ! -f "$CLAUDE_MD_TEMPLATE" ]; then
+        fail "Template not found: $CLAUDE_MD_TEMPLATE"
+    fi
+
+    # Python handles the substitution: sed would need escape gymnastics for
+    # URLs and @ characters. str.replace is safe regardless of content.
+    python3 - "$CLAUDE_MD_TEMPLATE" "$CLAUDE_MD_RENDERED" \
+        "$PRAXION_USERNAME" "$PRAXION_EMAIL" "$PRAXION_GITHUB_URL" <<'PYEOF'
+import sys
+src, dst, username, email, github_url = sys.argv[1:6]
+with open(src) as f:
+    content = f.read()
+content = (content
+    .replace("{{USERNAME}}", username)
+    .replace("{{EMAIL}}", email)
+    .replace("{{GITHUB_URL}}", github_url))
+with open(dst, "w") as f:
+    f.write(content)
+PYEOF
+
+    # Guard against forgotten placeholders (e.g., a new {{FOO}} added to the
+    # template but not to render_claude_md) — surface it loudly.
+    if grep -q '{{[A-Z_]\+}}' "$CLAUDE_MD_RENDERED" 2>/dev/null; then
+        warn "Rendered CLAUDE.md still contains unsubstituted placeholders"
+        grep -n '{{[A-Z_]\+}}' "$CLAUDE_MD_RENDERED" | sed 's/^/    /'
+    else
+        info "Rendered CLAUDE.md (${PRAXION_USERNAME})"
+    fi
 }
 
 relink_all() {
@@ -598,6 +697,25 @@ check_claude_code() {
         fi
     done
 
+    # Rendered template + saved personal info — unsubstituted {{PLACEHOLDERS}}
+    # leaking into the global prompt would be a loud, confusing bug.
+    if [ -f "$CLAUDE_MD_RENDERED" ]; then
+        if grep -q '{{[A-Z_]\+}}' "$CLAUDE_MD_RENDERED" 2>/dev/null; then
+            warn "CLAUDE.md contains unsubstituted placeholders — re-run installer"
+            healthy=false
+        else
+            info "CLAUDE.md rendered from template"
+        fi
+    else
+        warn "CLAUDE.md not rendered (run: ./install.sh code)"
+        healthy=false
+    fi
+    if [ -f "$PERSONAL_INFO_ENV" ]; then
+        info "Personal info saved ($(basename "$PERSONAL_INFO_ENV"))"
+    else
+        warn "No saved personal info — defaults will be re-prompted"
+    fi
+
     printf "\n  ${B}Rules:${R}\n"
     local rules_dir="${dest_dir}/rules"
     if [ -d "$rules_dir" ]; then
@@ -774,6 +892,17 @@ uninstall_claude_code() {
         done < "$list_file"
     fi
 
+    # Remove rendered CLAUDE.md + saved personal info (both gitignored —
+    # regenerated cleanly on next install).
+    if [ -f "$CLAUDE_MD_RENDERED" ]; then
+        rm "$CLAUDE_MD_RENDERED"
+        info "Removed rendered CLAUDE.md"
+    fi
+    if [ -f "$PERSONAL_INFO_ENV" ]; then
+        rm "$PERSONAL_INFO_ENV"
+        info "Removed $(basename "$PERSONAL_INFO_ENV")"
+    fi
+
     # Remove rule symlinks
     local rules_dir="${dest_dir}/rules"
     if [ -d "$rules_dir" ]; then
@@ -888,6 +1017,9 @@ uninstall_claude_desktop() {
 # =============================================================================
 
 install_claude_code() {
+    prompt_personal_info
+    render_claude_md
+
     header "Step 1 — Symlinks (config, rules, scripts)"
     clean_stale_symlinks
     relink_all
@@ -925,6 +1057,14 @@ dry_run_claude_code() {
     if [ -f "$plugin_json" ]; then
         printf "\n  ${B}Plugin:${R} i-am v%s\n\n" "$(jq -r .version "$plugin_json" 2>/dev/null || echo "?")"
     fi
+    printf "  ${B}Personal identifiers:${R}\n"
+    if [ -f "$PERSONAL_INFO_ENV" ]; then
+        printf "    (reuse saved values from %s)\n" "$(basename "$PERSONAL_INFO_ENV")"
+    else
+        printf "    Defaults: %s / %s / %s\n" "$DEFAULT_USERNAME" "$DEFAULT_EMAIL" "$DEFAULT_GITHUB_URL"
+        printf "    (installer will prompt to accept or customize)\n"
+    fi
+    printf "\n"
     printf "  ${B}Skills:${R}\n"
     find "${SCRIPT_DIR}/skills" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sed 's/^/    /' || step "(none)"
     printf "\n  ${B}Commands:${R}\n"
@@ -956,15 +1096,17 @@ dry_run_claude_desktop() {
 
 show_usage() {
     cat <<EOF
-Usage: $(basename "$0") code|desktop [--check] [--dry-run] [--uninstall] [--help]
+Usage: $(basename "$0") code|desktop [--check] [--dry-run] [--uninstall] [--relink] [--reconfigure] [--help]
 
-  code         Install for Claude Code
-  desktop      Install for Claude Desktop
-  --check      Verify installation health
-  --dry-run    Show what would be installed (no writes)
-  --uninstall  Remove installation
-  --relink     Re-symlink config, rules, and scripts (no prompts)
-  --help       Show this help
+  code           Install for Claude Code
+  desktop        Install for Claude Desktop
+  --check        Verify installation health
+  --dry-run      Show what would be installed (no writes)
+  --uninstall    Remove installation
+  --relink       Re-symlink config, rules, and scripts (no prompts)
+  --reconfigure  Re-prompt for personal identifiers (username/email/github)
+                 even if saved values exist in .personal_info.env
+  --help         Show this help
 EOF
     exit 0
 }
@@ -978,16 +1120,18 @@ CHECK=false
 DRY_RUN=false
 UNINSTALL=false
 RELINK=false
+RECONFIGURE=false
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        code|desktop) MODE="$1" ;;
-        --check)      CHECK=true ;;
-        --dry-run)    DRY_RUN=true ;;
-        --uninstall)  UNINSTALL=true ;;
-        --relink)     RELINK=true ;;
-        -h|--help)    show_usage ;;
-        *)            fail "Unknown argument: $1. Use --help for usage." ;;
+        code|desktop)  MODE="$1" ;;
+        --check)       CHECK=true ;;
+        --dry-run)     DRY_RUN=true ;;
+        --uninstall)   UNINSTALL=true ;;
+        --relink)      RELINK=true ;;
+        --reconfigure) RECONFIGURE=true ;;
+        -h|--help)     show_usage ;;
+        *)             fail "Unknown argument: $1. Use --help for usage." ;;
     esac
     shift
 done
@@ -1000,6 +1144,10 @@ if $RELINK; then
     case "$MODE" in
         code)
             header "Relinking symlink-based artifacts"
+            # Re-render too, in case the template changed upstream (git pull).
+            # Reuses saved .personal_info.env silently unless --reconfigure set.
+            prompt_personal_info
+            render_claude_md
             relink_all
             printf "\n"
             info "Relink complete"
