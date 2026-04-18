@@ -17,7 +17,7 @@
 | **Language / Framework** | Python 3.13+ (MCP servers), Markdown (skills/agents/rules/commands), Shell/Python (hooks, scripts) |
 | **Architecture pattern** | Plugin-based knowledge ecosystem with progressive disclosure and agent pipeline orchestration |
 | **Source stage** | Phase 5 creation, 2026-04-10 by systems-architect |
-| **Last verified** | 2026-04-16 by systems-architect (dec-049 re-affirmation cohort designed: D1–D6 deliverables; delegation-checklist extraction dropped) |
+| **Last verified** | 2026-04-18 by implementer (greenfield onboarding feature built: `new_cc_project.sh` 101 L, `commands/new-cc-project.md` 259 L, `docs/project-onboarding.md` 123 L, `tests/new_cc_project_test.sh` 230 L — all on disk; flipped Designed → Built; dec-053/054/055 accepted) |
 
 Praxion is a meta-project that provides the operational infrastructure for AI-assisted software development. Rather than being an application itself, it is an ecosystem of reusable skills, specialized agents, declarative rules, slash commands, lifecycle hooks, and MCP servers that compose into a coherent development workflow. It ships as the `i-am` Claude Code plugin, with secondary targets for Claude Desktop and Cursor.
 
@@ -124,6 +124,7 @@ graph TD
 | Scripts | Developer tooling: worktree management, merge drivers, daemon control, ADR index generation | Built | `scripts/` |
 | Roadmap-cartographer | Project-level roadmap generator orchestrating **project-derived lens-set** parallel audit, synthesis, and user-gated ROADMAP.md emission for any project (deterministic / agentic / hybrid); SPIRIT is one exemplar lens set among DORA / SPACE / FAIR / CNCF Platform Maturity / Custom | Designed | `agents/roadmap-cartographer.md`, `skills/roadmap-synthesis/` (dec-029, dec-030, dec-035, dec-036) |
 | Eval framework | Out-of-band quality measurement via `/eval` command and CI; tiered (behavioral + regression first, cost + decision-quality + LLM-judge as Tier 2 stubs); reads completed artifacts and Phoenix traces without mutating live pipeline state | Built | `eval/pyproject.toml`, `eval/src/praxion_evals/`, `commands/eval.md`, `.ai-state/evals/` (dec-040, dec-041) |
+| Greenfield project onboarding | Top-level entry point that scaffolds a Claude-ready project then hands off to an interactive Claude session pre-loaded with `/new-cc-project`. Hybrid bash + slash-command orchestration (dec-055) with prompt-over-template discipline (dec-053): Praxion ships prose specifications and a discovery hook (`external-api-docs`), no code templates, no pinned SDK signatures. Default app is Python + `uv` + Claude Agent SDK + FastAPI; per-run `onboarding_for_mushi_busy_ppl.md` is generated against real on-disk paths | Built | `new_cc_project.sh` (repo root, 101 L, +x), `commands/new-cc-project.md` (259 L), `docs/project-onboarding.md` (123 L), `tests/new_cc_project_test.sh` (230 L, +x) (dec-053, dec-054, dec-055) |
 
 ## 4. Interfaces
 
@@ -144,6 +145,9 @@ graph TD
 | `/roadmap` command | Slash command | `commands/roadmap.md` | User | Modes: fresh (default), diff (incremental re-run), `<focus-area>` (scoped audit); delegates to `roadmap-cartographer` (dec-029, dec-032) |
 | `/eval` command | Slash command | `commands/eval.md` | User | Tiers: `behavioral --task-slug <slug>`, `regression --baseline <path>`, `judge`, `list` (default); shells to `uv run --project eval praxion-evals <tier>` (dec-040) |
 | Scripts install filter | Shell predicate | `install_claude.sh::relink_all` | User running install | Links only files matching `[ -f && -x ]` AND not matching `merge_driver_*` or `git-*-hook.sh`; `clean_stale_symlinks` sweeps `~/.local/bin/` for orphaned symlinks on upgrade (dec-042) |
+| `new_cc_project.sh` CLI | Bash positional args | Repo-root script | User | `<project-name>` required; `[target-dir]` defaults `$PWD`; exit codes `0`/`2`/`3`/`4`/`5`/`6` for success/usage/no-claude/no-plugin/no-git/target-collision; `exec`s `claude --permission-mode acceptEdits "/new-cc-project"` (dec-054, dec-055) |
+| `/new-cc-project` slash command | Slash command | `commands/new-cc-project.md` | User (post-handoff) | Single user question ("what to build?"); branches default-app vs custom-app; prose specs only — no code or pinned SDK signatures; mandates `external-api-docs` lookup before generating SDK or `uv` code (dec-053) |
+| Canonical Praxion paragraph | Markdown sentinel-fenced block | `commands/new-cc-project.md` | Slash command flow + generated `onboarding_for_mushi_busy_ppl.md` | Copied verbatim by sentinel marker — never paraphrased — into each generated mushi doc (dec-053) |
 
 ## 5. Data Flow
 
@@ -311,5 +315,8 @@ graph LR
 | [dec-050](decisions/050-always-loaded-budget-revision.md) | Raise always-loaded budget to 25,000 tokens and reframe as attention-relevance guardrail | Token ceiling raised from 15,000 to 25,000; reframed as failure-mode guardrail — every always-loaded token must earn its attention share (applied in >30% of sessions or unconditionally relevant); propagated across `CLAUDE.md`, `rules/CLAUDE.md`, `ROADMAP.md`, `README_DEV.md`, and `agents/sentinel.md` T02 check |
 | [dec-051](decisions/051-pre-impl-design-synthesis.md) | Pre-implementation design-synthesis capability (H1-wide) | New activation-gated reference file `skills/software-planning/references/design-synthesis.md` composed from existing skills; REQ-ID stability formalized as the mechanical convergence signal; pointers wired from promethean, researcher, systems-architect, and refactoring — zero always-loaded delta |
 | [dec-052](decisions/052-telemetry-span-model-v2.md) | Duration-aware OTel spans with openinference-standard attribution and parallel-execution markers | Chronograph tool spans switch from instant create-and-end to open-then-close pairs (PreToolUse/PostToolUse duration correlation); `tool.id`, `user.id`, `llm.*` follow OpenInference conventions; `fork_group` UUIDs cluster parallel subagent fan-outs; agent rollup spans summarize per-agent activity |
+| [dec-053](decisions/053-prompt-over-template-greenfield-scaffold.md) | Prompt-over-template discipline for greenfield project scaffolding | Praxion ships prose specifications + `external-api-docs` discovery hook for greenfield onboarding rather than code templates or pinned SDK signatures; current SDK + `uv` signatures fetched from chub at run time so the product cannot bake in stale APIs |
+| [dec-054](decisions/054-separate-new-cc-project-from-install.md) | Separate `new_cc_project.sh` from `install.sh` (sibling, not subcommand) | New top-level entry at repo root (sibling to `install*.sh`), one-time symlink published as `new-cc-project` on PATH via `install_claude.sh::relink_all`; preserves verb separation (configure host vs create project) |
+| [dec-055](decisions/055-hybrid-bash-slash-command-orchestration.md) | Hybrid bash + slash-command orchestration for greenfield onboarding (Option C) | Bash handles deterministic prereqs and minimal scaffold; `/new-cc-project` slash command handles conversational flow, app generation, mushi doc generation; slash command reusable from any existing Claude session |
 
 [Add new rows as architecture-related ADRs are created.]

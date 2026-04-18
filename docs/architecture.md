@@ -15,7 +15,7 @@
 | **Type** | AI development meta-framework (plugin + MCP servers + knowledge artifacts) |
 | **Language / Framework** | Python 3.13+ (MCP servers), Markdown (skills/agents/rules/commands), Shell/Python (hooks, scripts) |
 | **Architecture pattern** | Plugin-based knowledge ecosystem with progressive disclosure and agent pipeline orchestration |
-| **Last verified against code** | 2026-04-16 (dec-049 ADR added; `tier-templates.md` Built and shipped in commit 29ee132 — now part of the software-planning skill's on-demand references) |
+| **Last verified against code** | 2026-04-18 (greenfield onboarding shipped: `new_cc_project.sh`, `commands/new-cc-project.md`, `docs/project-onboarding.md`, `tests/new_cc_project_test.sh` all verified on disk; dec-053/054/055 accepted) |
 
 <!-- OWNER: systems-architect (creation), doc-engineer (verification) | LAST UPDATED: 2026-04-12 -->
 
@@ -120,6 +120,7 @@ graph TD
 | `.ai-work/` | Contains ephemeral pipeline documents scoped by task slug | `.ai-work/<task-slug>/` |
 | Installers | Deploys target-specific configurations (Claude Code, Claude Desktop, Cursor) | `install.sh`, `install_claude.sh`, `install_cursor.sh` |
 | Scripts | Provides developer tooling: worktree management, merge drivers, daemon control | `scripts/` |
+| Greenfield project onboarding | Scaffolds a Claude-ready project into an empty directory and hands off to an interactive Claude session pre-loaded with `/new-cc-project`. Bash handles deterministic prereqs + minimal scaffold; the slash command runs the conversational flow, generates the default Python + `uv` + Claude Agent SDK + FastAPI app, and writes a per-run `onboarding_for_mushi_busy_ppl.md`. Integration-tested via bash. See [docs/project-onboarding.md](project-onboarding.md) for the user-facing guide | `new_cc_project.sh` (repo root), `commands/new-cc-project.md`, `docs/project-onboarding.md`, `tests/new_cc_project_test.sh` |
 
 ## 4. Interfaces
 

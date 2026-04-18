@@ -8,6 +8,8 @@ A walkthrough of developing a small application using the Praxion agent pipeline
 2. Verify: `./install.sh --check`
 3. Start a Claude Code session in your project directory
 
+Starting a new project from scratch? See [Greenfield Project Onboarding](project-onboarding.md) for the `new_cc_project.sh` + `/new-cc-project` flow that scaffolds a Claude-ready Python starter app.
+
 ## Parallel Reading: Claude Ecosystem Foundations
 
 To maximize collaboration with Claude, read the [Claude Ecosystem Learning Resources](claude-ecosystem-learning-resources.md) in parallel with this walkthrough:

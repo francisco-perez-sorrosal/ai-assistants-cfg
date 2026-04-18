@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# new_cc_project.sh — Greenfield Claude-ready project bootstrap.
+#
+# Validates host prereqs, lays down a minimal scaffold (.git, .gitignore, .claude),
+# then exec's an interactive Claude Code session seeded with /new-cc-project.
+#
+# Usage: new_cc_project.sh <project-name> [target-dir]
+# Exit codes: 0 ok, 2 usage/invalid name, 3 no claude, 4 no plugin, 5 no git,
+#             6 target exists & non-empty.
+# See docs/project-onboarding.md for the full flow and troubleshooting matrix.
+
+set -eo pipefail
+
+# Exit codes — named for readability per coding-style "no magic values".
+readonly EXIT_USAGE=2
+readonly EXIT_NO_CLAUDE=3
+readonly EXIT_NO_PLUGIN=4
+readonly EXIT_NO_GIT=5
+readonly EXIT_TARGET_EXISTS=6
+
+readonly NAME_REGEX='^[A-Za-z0-9][A-Za-z0-9._-]*$'
+readonly PLUGIN_FILE="${HOME}/.claude/plugins/installed_plugins.json"
+readonly PLUGIN_KEY='i-am@bit-agora'
+
+usage() {
+    printf 'Usage: new_cc_project.sh <project-name> [target-dir]\n' >&2
+}
+
+# Parse args (REQ-ONBOARD-01).
+if [ $# -lt 1 ] || [ -z "${1:-}" ]; then
+    usage
+    exit "$EXIT_USAGE"
+fi
+project_name="$1"
+target_dir="${2:-$PWD}"
+
+# Validate project name (security lens; SYSTEMS_PLAN §Stakeholder Review).
+if ! [[ "$project_name" =~ $NAME_REGEX ]]; then
+    printf "Error: invalid project name '%s'.\n" "$project_name" >&2
+    printf 'Project name must match %s — letters/digits first, then letters, digits, dot, underscore, or hyphen.\n' "$NAME_REGEX" >&2
+    exit "$EXIT_USAGE"
+fi
+
+# Prereq: claude binary (REQ-ONBOARD-02).
+if ! command -v claude >/dev/null 2>&1; then
+    cat >&2 <<EOF
+Error: 'claude' binary not found in PATH.
+This tool requires Claude Code. Install it from https://claude.com/product/claude-code
+and re-run this script.
+EOF
+    exit "$EXIT_NO_CLAUDE"
+fi
+
+# Prereq: i-am plugin recorded in user-scope plugin registry (REQ-ONBOARD-03).
+if [ ! -f "$PLUGIN_FILE" ] || ! grep -q "$PLUGIN_KEY" "$PLUGIN_FILE"; then
+    cat >&2 <<EOF
+Error: the 'i-am' plugin is not installed in your Claude Code user scope.
+Run './install.sh code' from the Praxion repo, then re-run this script.
+(Checked: ${PLUGIN_FILE} for '${PLUGIN_KEY}'.)
+EOF
+    exit "$EXIT_NO_PLUGIN"
+fi
+
+# Prereq: git binary (REQ-ONBOARD-04).
+if ! command -v git >/dev/null 2>&1; then
+    cat >&2 <<EOF
+Error: 'git' not found in PATH.
+Install git (e.g., 'brew install git' on macOS) and re-run.
+EOF
+    exit "$EXIT_NO_GIT"
+fi
+
+# Collision check (REQ-ONBOARD-05) — must precede any mkdir.
+project_path="${target_dir%/}/${project_name}"
+if [ -e "$project_path" ] && [ -n "$(ls -A "$project_path" 2>/dev/null)" ]; then
+    cat >&2 <<EOF
+Error: '${project_path}' already exists and is not empty.
+Pick a different name or target directory, or remove the existing path.
+EOF
+    exit "$EXIT_TARGET_EXISTS"
+fi
+
+# Scaffold (REQ-ONBOARD-06).
+mkdir -p "$project_path"
+cd "$project_path"
+git init -q
+mkdir -p .claude
+cat > .gitignore <<'EOF'
+# AI assistants
+.ai-work/
+.env
+.env.*
+.claude/settings.local.json
+EOF
+
+# Pre-flight announcement (REQ-ONBOARD-07).
+printf '→ Scaffolded %s at %s. Launching Claude Code with /new-cc-project ...\n' \
+    "$project_name" "$project_path"
+
+# Hand off (REQ-ONBOARD-08).
+exec claude --permission-mode acceptEdits "/new-cc-project"

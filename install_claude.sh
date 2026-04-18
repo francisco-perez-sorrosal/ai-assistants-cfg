@@ -199,6 +199,12 @@ relink_all() {
         info "Scripts: ${scripts_count} files linked"
     fi
 
+    # 4. new-cc-project entry (parked at repo root, not scripts/)
+    if [ -f "${SCRIPT_DIR}/new_cc_project.sh" ] && [ -x "${SCRIPT_DIR}/new_cc_project.sh" ]; then
+        mkdir -p "$bin_dir"
+        link_item "${SCRIPT_DIR}/new_cc_project.sh" "${bin_dir}/new-cc-project" "new-cc-project (greenfield project entry)"
+    fi
+
     # PATH check for scripts
     if [[ ":$PATH:" != *":${HOME}/.local/bin:"* ]]; then
         warn "~/.local/bin is not in PATH"
@@ -654,6 +660,16 @@ check_claude_code() {
         fi
     done
 
+    # new-cc-project entry (lives at repo root, not scripts/)
+    if [ -f "${SCRIPT_DIR}/new_cc_project.sh" ] && [ -x "${SCRIPT_DIR}/new_cc_project.sh" ]; then
+        if [ -L "${bin_dir}/new-cc-project" ] && [ "$(readlink "${bin_dir}/new-cc-project")" = "${SCRIPT_DIR}/new_cc_project.sh" ]; then
+            info "new-cc-project linked"
+        else
+            warn "new-cc-project not linked to ~/.local/bin/"
+            healthy=false
+        fi
+    fi
+
     printf "\n  ${B}Hooks:${R}\n"
     local hooks_json="${SCRIPT_DIR}/hooks/hooks.json"
     if [ -f "$hooks_json" ]; then
@@ -789,6 +805,12 @@ uninstall_claude_code() {
         fi
     done
 
+    # Remove new-cc-project entry (lives at repo root, not scripts/)
+    if [ -L "${bin_dir}/new-cc-project" ] && [ "$(readlink "${bin_dir}/new-cc-project")" = "${SCRIPT_DIR}/new_cc_project.sh" ]; then
+        rm "${bin_dir}/new-cc-project"
+        info "Removed new-cc-project from ~/.local/bin/"
+    fi
+
     # Remove hooks from settings.json
     local settings_file="${HOME}/.claude/settings.json"
     if [ -f "$settings_file" ]; then
@@ -915,6 +937,9 @@ dry_run_claude_code() {
     for script in "${SCRIPT_DIR}/scripts"/*; do
         [ -f "$script" ] && printf "    %s\n" "$(basename "$script")"
     done
+    if [ -f "${SCRIPT_DIR}/new_cc_project.sh" ]; then
+        printf "    new_cc_project.sh -> ~/.local/bin/new-cc-project (greenfield project entry)\n"
+    fi
     printf "\n"
 }
 
