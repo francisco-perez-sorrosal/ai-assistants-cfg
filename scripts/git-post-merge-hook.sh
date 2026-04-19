@@ -15,12 +15,37 @@ if [ -z "$REPO_ROOT" ]; then
 fi
 
 RECONCILE_SCRIPT="$REPO_ROOT/scripts/reconcile_ai_state.py"
+FINALIZE_SCRIPT="$REPO_ROOT/scripts/finalize_adrs.py"
+SQUASH_CHECK_SCRIPT="$REPO_ROOT/scripts/check_squash_safety.py"
 if [ ! -f "$RECONCILE_SCRIPT" ]; then
     exit 0
 fi
+
+# Post-merge ordering (load-bearing):
+#   1. reconcile_ai_state.py --post-merge  — settles memory.json / observations.jsonl / legacy ADR NNN collisions
+#   2. finalize_adrs.py --merged            — promotes draft ADRs to stable NNN, rewrites cross-references
+#   3. check_squash_safety.py               — diagnostic: warns if squash erased .ai-state/ (non-blocking)
+# Rationale: reconcile settles orthogonal file conflicts; finalize then mutates ADR files in a consistent state;
+# diagnostic checks run last on a fully-reconciled tree.
 
 # Only run if .ai-state/decisions/ was involved in the merge
 MERGED_FILES="$(git diff-tree --no-commit-id --name-only -r HEAD 2>/dev/null || true)"
 if echo "$MERGED_FILES" | grep -q "^\.ai-state/"; then
     python3 "$RECONCILE_SCRIPT" --post-merge 2>/dev/null || true
+fi
+
+# 2. finalize_adrs.py --merged — promote drafts to stable NNN after reconcile has settled.
+# Non-blocking: the hook cannot abort an already-completed merge, so we log warnings
+# loudly rather than swallowing silently.
+if [ -f "$FINALIZE_SCRIPT" ] && command -v python3 >/dev/null 2>&1; then
+    python3 "$FINALIZE_SCRIPT" --merged 2>&1 || \
+        echo "post-merge: finalize_adrs warned (non-blocking) — inspect output above"
+fi
+
+# 3. check_squash_safety.py — diagnostic: warn loudly if squash-merge erased .ai-state/.
+# Non-blocking: the hook cannot abort a completed merge; the script always exits 0.
+# Multi-parent merges are skipped internally.
+if [ -x "$SQUASH_CHECK_SCRIPT" ] && command -v python3 >/dev/null 2>&1; then
+    python3 "$SQUASH_CHECK_SCRIPT" 2>&1 || \
+        echo "post-merge: check_squash_safety warning emitted (non-blocking)"
 fi

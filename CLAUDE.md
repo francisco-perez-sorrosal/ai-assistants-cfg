@@ -11,6 +11,7 @@ See the mapping table in `~/.claude/CLAUDE.md` under "The Ecosystem as Philosoph
 - Load the matching crafting skill before modifying any component: `skill-crafting` for skills, `agent-crafting` for agents, `command-crafting` for commands, `rule-crafting` for rules
 - **Never modify `~/.claude/plugins/cache/`** — edit source files in this repo; installed copies get overwritten on reinstall
 - **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 25,000 tokens (~87,500 chars) as a failure-mode guardrail — the principle is that every always-loaded token must earn its attention share (applied in >30% of sessions, or unconditionally relevant). Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge.
+- **Worktrees** use `.claude/worktrees/<name>/`. Pipeline worktrees via `EnterWorktree`; scratch worktrees via `/create-worktree`. Both share the same home. ADRs created in a pipeline land as fragments under `.ai-state/decisions/drafts/` and are promoted to stable `dec-NNN` at merge-to-main by `scripts/finalize_adrs.py`. PR-adjacent workflow conventions live in `rules/swe/vcs/pr-conventions.md` (path-scoped)
 - See `README.md` for user-facing docs, `README_DEV.md` for contributor conventions, `skills/README.md` for the skill catalog
 
 ## Session Protocol

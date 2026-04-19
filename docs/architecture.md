@@ -15,7 +15,7 @@
 | **Type** | AI development meta-framework (plugin + MCP servers + knowledge artifacts) |
 | **Language / Framework** | Python 3.13+ (MCP servers), Markdown (skills/agents/rules/commands), Shell/Python (hooks, scripts) |
 | **Architecture pattern** | Plugin-based knowledge ecosystem with progressive disclosure and agent pipeline orchestration |
-| **Last verified against code** | 2026-04-18 (greenfield onboarding shipped: `new_cc_project.sh`, `commands/new-cc-project.md`, `docs/project-onboarding.md`, `tests/new_cc_project_test.sh` all verified on disk; dec-053/054/055 accepted) |
+| **Last verified against code** | 2026-04-19 (concurrency-collaboration model shipped: `scripts/finalize_adrs.py`, `scripts/check_squash_safety.py`, `scripts/migrate_worktree_home.sh`, `commands/clean-auto-memory.md`, `rules/swe/vcs/pr-conventions.md`, updated `commands/create-worktree.md` + `commands/merge-worktree.md` + `scripts/git-post-merge-hook.sh` all verified on disk; `.claude/worktrees/` added to `.gitignore`; six draft ADRs under `.ai-state/decisions/drafts/` awaiting finalize at merge-to-main) |
 
 <!-- OWNER: systems-architect (creation), doc-engineer (verification) | LAST UPDATED: 2026-04-12 -->
 
@@ -43,8 +43,8 @@ graph LR
         Agents[Agents<br/>12 types]
         Hooks[Hooks<br/>14 scripts]
         MCP[MCP Servers<br/>Memory + Chronograph]
-        Rules[Rules<br/>9 files]
-        Cmds[Commands<br/>21 slash commands]
+        Rules[Rules<br/>13 files]
+        Cmds[Commands<br/>24 slash commands]
     end
     Dev --> CC
     Dev --> CD
@@ -121,6 +121,7 @@ graph TD
 | Installers | Deploys target-specific configurations (Claude Code, Claude Desktop, Cursor) | `install.sh`, `install_claude.sh`, `install_cursor.sh` |
 | Scripts | Provides developer tooling: worktree management, merge drivers, daemon control | `scripts/` |
 | Greenfield project onboarding | Scaffolds a Claude-ready project into an empty directory and hands off to an interactive Claude session pre-loaded with `/new-cc-project`. Bash handles deterministic prereqs + minimal scaffold; the slash command runs the conversational flow, generates the default Python + `uv` + Claude Agent SDK + FastAPI app, and writes a per-run `onboarding_for_mushi_busy_ppl.md`. Integration-tested via bash. See [docs/project-onboarding.md](project-onboarding.md) for the user-facing guide | `new_cc_project.sh` (repo root), `commands/new-cc-project.md`, `docs/project-onboarding.md`, `tests/new_cc_project_test.sh` |
+| Concurrency & collaboration model | Unifies multi-worktree and multi-user coordination around shared primitives: fragment-named draft ADRs under `.ai-state/decisions/drafts/<YYYYMMDD-HHMM>-<user>-<branch>-<slug>.md` promoted to `<NNN>-<slug>.md` at merge-to-main, unified worktree home at `.claude/worktrees/`, two-layer squash-merge safety (command refuse + post-merge warn), opt-in auto-memory orphan cleanup. Post-merge hook runs reconcile → finalize → squash-safety in that order | `scripts/finalize_adrs.py`, `scripts/check_squash_safety.py`, `scripts/migrate_worktree_home.sh`, `scripts/git-post-merge-hook.sh`, `commands/clean-auto-memory.md`, `commands/create-worktree.md`, `commands/merge-worktree.md`, `rules/swe/vcs/pr-conventions.md`, `rules/swe/adr-conventions.md`, `.ai-state/decisions/drafts/` |
 
 ## 4. Interfaces
 
@@ -139,6 +140,8 @@ graph TD
 | Pipeline documents | Markdown files | Upstream agents | Downstream agents | Shared `.ai-work/<task-slug>/` directory; fragment files for parallel writes |
 | Skill progressive disclosure | YAML frontmatter + Markdown | `SKILL.md` files | Claude Code skill loader | 3 tiers: metadata (startup), body (activation), references (on-demand) |
 | Hook registration | JSON | `hooks/hooks.json` | Claude Code plugin system | Event type, command, timeout, sync/async per hook |
+| Git post-merge hook chain | Shell | `scripts/git-post-merge-hook.sh` | Git (post-merge event) | Runs `reconcile_ai_state.py --post-merge`, then `finalize_adrs.py --merged`, then `check_squash_safety.py`. Load-bearing order — reconcile handles memory/observations, finalize promotes drafts, squash-safety is diagnostic-only |
+| Draft ADR lifecycle | Markdown + YAML | Pipeline agents (architect, planner) | `scripts/finalize_adrs.py` | Drafts at `.ai-state/decisions/drafts/<YYYYMMDD-HHMM>-<user>-<branch>-<slug>.md` with `id: dec-draft-<8-char-hash>` and `status: proposed`; finalize renames to `<NNN>-<slug>.md`, rewrites cross-references across sibling ADRs, `.ai-work/*/LEARNINGS.md`, `SYSTEMS_PLAN.md`, `IMPLEMENTATION_PLAN.md`; idempotent |
 
 ## 5. Data Flow
 

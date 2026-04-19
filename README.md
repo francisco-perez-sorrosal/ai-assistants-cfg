@@ -19,7 +19,7 @@ Compatible with **Claude Code** (mainly), **Claude Desktop**, and **Cursor**.
 
 - **35 skills** covering Python, API design, CI/CD, deployment, observability, refactoring, spec-driven development, external API docs, security review, testing strategy, roadmap synthesis, and more -- loaded automatically when the task matches
 - **13 specialized agents** that collaborate on complex features (research, architecture, planning, implementation, testing, verification, roadmap cartography)
-- **22 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding, testing, releases, code review, roadmap generation
+- **24 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding, testing, releases, code review, roadmap generation
 - **Coding rules** auto-loaded by context -- coding style, git conventions, documentation standards, agent coordination
 - **MCP servers** for persistent memory and agent lifecycle observability
 
@@ -108,8 +108,9 @@ Slash commands invoked with `/<name>`. In Claude Code plugin mode, use `/i-am:<n
 |---------|-------------|
 | `/co` | Create a commit for staged (or all) changes |
 | `/cop` | Create a commit and push to remote |
-| `/create-worktree` | Create a new git worktree in `.trees/` |
-| `/merge-worktree` | Merge a worktree branch back into current branch |
+| `/create-worktree` | Create a new git worktree under `.claude/worktrees/` (legacy `.trees/` accepted by `/merge-worktree` during deprecation — run `scripts/migrate_worktree_home.sh` for migration commands) |
+| `/merge-worktree` | Merge a worktree branch back into current branch; runs `.ai-state/` reconciliation and finalizes any draft ADRs |
+| `/clean-auto-memory` | Opt-in cleanup of orphan Claude Code auto-memory directories for removed worktrees |
 | `/create-simple-python-prj` | Scaffold a Python project (defaults: pixi, `~/dev`) |
 | `/add-rules` | Copy rules into the current project for customization |
 | `/manage-readme` | Create or refine README.md files |

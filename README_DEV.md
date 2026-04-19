@@ -46,6 +46,7 @@ skills/                              # Shared skill modules (assistant-agnostic)
 commands/                            # Shared slash commands
 ├── CLAUDE.md                        # Command conventions (lazy loaded)
 ├── add-rules.md
+├── clean-auto-memory.md
 ├── clean-work.md
 ├── co.md
 ├── cop.md
@@ -92,7 +93,8 @@ rules/                               # Rules (installed to ~/.claude/rules/ or .
 │   ├── swe-agent-coordination-protocol.md
 │   ├── testing-conventions.md
 │   └── vcs/
-│       └── git-conventions.md
+│       ├── git-conventions.md
+│       └── pr-conventions.md       # Path-scoped: loads for PR-adjacent surfaces
 └── writing/
     ├── diagram-conventions.md       # Path-scoped: loads only for diagram work
     └── readme-style.md              # Path-scoped: loads only for README files
@@ -136,13 +138,18 @@ cursor/config/                       # Cursor installer config
 scripts/                             # Utility scripts
 ├── CLAUDE.md                        # Script conventions (lazy loaded)
 ├── ccwt                             # Multi-worktree Claude session launcher
+├── check_squash_safety.py           # Post-merge diagnostic: warn on .ai-state/ erasure from squash
 ├── chronograph-ctl                  # Task Chronograph dev helper (start/stop/status)
-├── git-post-merge-hook.sh           # Post-merge hook for .ai-state reconciliation
+├── finalize_adrs.py                 # Promote draft ADRs to NNN at merge-to-main
+├── git-post-merge-hook.sh           # Post-merge hook: reconcile -> finalize -> squash-safety
 ├── merge_driver_memory.py           # Custom merge driver for memory.json
 ├── merge_driver_observations.py     # Custom merge driver for observations.jsonl
+├── migrate_worktree_home.sh         # Print migration commands for legacy .trees/ worktrees
 ├── phoenix-ctl                      # Phoenix observability daemon manager
 ├── reconcile_ai_state.py            # Reconcile .ai-state/ after worktree merges
 ├── regenerate_adr_index.py          # Regenerate DECISIONS_INDEX.md from ADR files
+├── test_check_squash_safety.py      # Tests for squash-safety script
+├── test_finalize_adrs.py            # Tests for finalize script
 └── test_reconcile_ai_state.py       # Tests for reconcile script
 docs/                                # Cross-cutting documentation
 ├── concepts.md
@@ -210,7 +217,8 @@ The flags are read by each hook via `is_disabled()` in `hooks/_hook_utils.py`. T
 - When adding or modifying commands, load the `command-crafting` skill
 - When adding or modifying agents, load the `agent-crafting` skill
 - When adding or modifying rules, load the `rule-crafting` skill
-- Follow commit conventions in `rules/` (auto-loaded by Claude when relevant)
+- Follow commit conventions in `rules/` (auto-loaded by Claude when relevant); for PR workflow (branch naming, `.ai-state/` safety, merge policy), see [`rules/swe/vcs/pr-conventions.md`](rules/swe/vcs/pr-conventions.md) — path-scoped, loads only on PR-adjacent surfaces
+- Worktrees live under `.claude/worktrees/<name>/`. Pipeline worktrees use Claude Code's `EnterWorktree`; scratch worktrees use `/create-worktree` (both share the same home). Legacy `.trees/<name>/` remains readable during the deprecation window — run `scripts/migrate_worktree_home.sh` for per-worktree `git worktree move` commands
 - **Never modify `~/.claude/plugins/cache/`** -- it contains installed copies that get overwritten on reinstall; always edit source files in this repo
 - **Token budget**: Always-loaded content (CLAUDE.md files + rules) must stay under 25,000 tokens (~87,500 chars) as a failure-mode guardrail — the principle is that every always-loaded token must earn its attention share (applied in >30% of sessions, or unconditionally relevant). Before adding a new rule, apply the attention-relevance test first, then verify the budget. Prefer skills with reference files for procedural content; reserve rules for declarative domain knowledge. Rationale: `.ai-state/decisions/050-always-loaded-budget-revision.md`
 

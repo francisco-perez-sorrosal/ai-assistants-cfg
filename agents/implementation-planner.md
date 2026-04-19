@@ -278,13 +278,15 @@ Parallel Mode (when parallel groups exist): Use the WIP.md parallel format from 
 
 **LEARNINGS.md** — initialize using the structure from the software-planning skill (sections: Gotchas, Patterns That Worked, Decisions Made, Edge Cases, Technical Debt). Every entry must be prefixed with the source agent in brackets (e.g., `**[implementation-planner]**`). Tag your own entries with `[implementation-planner]`. For medium/large features, initialize the `Decisions Made` section with structured format guidance: `**[agent-name] [Decision title]**: [What]. **Why**: [rationale]. **Alternatives**: [rejected options].` This enables the verifier to check for substantive decision documentation and the persistent spec to archive decisions with full context.
 
-**ADR write protocol:** When you document a significant decision in `LEARNINGS.md ### Decisions Made`, also create an ADR file:
+**ADR write protocol:** When you document a significant decision in `LEARNINGS.md ### Decisions Made` (using the draft id: `**[implementation-planner] [Decision title] (dec-draft-<hash>)**: ...`), also create a draft ADR fragment. Finalize rewrites draft ids to `dec-NNN` at merge-to-main.
 
-1. Scan `.ai-state/decisions/` for the highest existing NNN to determine the next sequential number
-2. Create `.ai-state/decisions/<NNN+1>-<slug>.md` using the Write tool, following the format in the [ADR conventions rule](../rules/swe/adr-conventions.md) — YAML frontmatter with required fields and MADR body sections (Context, Decision, Considered Options, Consequences)
-3. Run `python scripts/regenerate_adr_index.py` to update `DECISIONS_INDEX.md`
+1. Derive a fragment filename `<YYYYMMDD-HHMM>-<user>-<branch>-<slug>.md`. `<user>` is the username prefix of `git config user.email` (the part before `@`), falling back to `git config user.name`, then `anon`; sanitize to `[a-z0-9-]` and cap at 40 chars. `<branch>` is `git rev-parse --abbrev-ref HEAD`, same sanitization. `<slug>` is a short kebab-case label derived from the decision title.
+2. Compute `id: dec-draft-<sha1(filename)[:8]>`.
+3. Create `.ai-state/decisions/drafts/<fragment-filename>.md` using the Write tool with frontmatter `id: dec-draft-<hash>` and `status: proposed`, plus the remaining fields and MADR body sections (Context, Decision, Considered Options, Consequences) defined in the [ADR conventions rule](../rules/swe/adr-conventions.md).
+4. Cross-reference sibling drafts authored during this pipeline via `supersedes: dec-draft-<hash>` or `re_affirms: dec-draft-<hash>`. The finalize step at merge-to-main rewrites these to stable `dec-NNN`.
+5. Do **not** invoke `scripts/regenerate_adr_index.py` — `DECISIONS_INDEX.md` regenerates automatically at finalize.
 
-This ensures decisions have both human-readable (LEARNINGS.md, ephemeral) and persistent (ADR files, committed to git) representations.
+See the [ADR conventions rule](../rules/swe/adr-conventions.md) for the full schema and finalize protocol. Do not duplicate the schema here. This ensures decisions have both human-readable (LEARNINGS.md, ephemeral) and persistent (ADR fragment files, committed to git) representations.
 
 ### Phase 7 — Execution Supervision
 

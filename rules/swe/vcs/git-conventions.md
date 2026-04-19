@@ -1,5 +1,7 @@
 ## Git Conventions
 
+See also: [`pr-conventions.md`](pr-conventions.md) for PR workflow, merge policy, and the `.ai-state/` safety contract at PR time (path-scoped; loads when editing PR-adjacent surfaces).
+
 ### Commit Scope
 
 - One logical change per commit — avoid mixing unrelated changes

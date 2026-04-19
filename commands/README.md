@@ -7,11 +7,12 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | Command | Description |
 |---------|-------------|
 | `/add-rules` | Copy rules into the current project for customization |
+| `/clean-auto-memory` | Enumerate orphan Claude Code auto-memory directories for removed worktrees and help the user delete them |
 | `/clean-work` | Clean the `.ai-work/` directory after pipeline completion |
 | `/co` | Create a commit for staged (or all) changes |
 | `/cop` | Create a commit and push to remote |
 | `/create-simple-python-prj` | Create a basic Python project with pixi or uv |
-| `/create-worktree` | Create a new git worktree in `.trees/` |
+| `/create-worktree` | Create a new git worktree in `.claude/worktrees/` |
 | `/eval` | Run out-of-band quality evals (Tier 1 behavioral + regression). Opt-in, never hook-driven |
 | `/explore-project` | Explore and understand an unfamiliar project's architecture, patterns, and workflow |
 | `/full-security-scan` | Run a full-project security audit against all security-critical paths |

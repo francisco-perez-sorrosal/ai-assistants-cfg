@@ -198,6 +198,23 @@ def reconcile_observations(ours_text: str, theirs_text: str) -> str:
 # -- ADR number reconciliation ------------------------------------------------
 
 
+def has_drafts_directory_changed_in_merge() -> bool:
+    """Return True if the most recent commit touched `.ai-state/decisions/drafts/`.
+
+    Used by `reconcile_adr_numbers()` to decide whether to defer to
+    `scripts/finalize_adrs.py`. On git errors we fail safe to False so the
+    legacy path still runs and does something useful rather than skipping
+    based on unreliable signal.
+    """
+    result = git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD")
+    if result.returncode != 0:
+        return False
+    for line in result.stdout.splitlines():
+        if line.startswith(".ai-state/decisions/drafts/"):
+            return True
+    return False
+
+
 def reconcile_adr_numbers() -> bool:
     """Detect and fix duplicate ADR sequence numbers after merge.
 
@@ -206,6 +223,17 @@ def reconcile_adr_numbers() -> bool:
 
     Returns True if any renumbering was done.
     """
+    # DEPRECATED: retained for one release as a defensive safety net per
+    # AC-20 of the concurrency-collab pipeline. The primary ADR-finalize
+    # path is scripts/finalize_adrs.py, invoked by the post-merge hook
+    # after this reconcile pass. When drafts are present, that path owns
+    # ADR lifecycle management and this legacy renumber code path is
+    # skipped via has_drafts_directory_changed_in_merge() below. Remove
+    # this function in the next release once finalize has proven stable.
+    if has_drafts_directory_changed_in_merge():
+        info("reconcile_adr_numbers: drafts present; deferring to finalize_adrs.py")
+        return False
+
     if not DECISIONS_DIR.is_dir():
         return False
 

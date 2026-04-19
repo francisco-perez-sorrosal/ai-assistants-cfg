@@ -203,14 +203,16 @@ Small decisions don't need this format. Reserve it for choices that affect:
 
 **Persist decisions:** After documenting trade-off decisions in `### Decisions` of `SYSTEMS_PLAN.md`, persist each significant trade-off in two places:
 
-1. **LEARNINGS.md** — record in `### Decisions Made` using the structured format: `**[systems-architect] [Decision title]**: [What was decided]. **Why**: [rationale]. **Alternatives**: [what was considered and rejected].` This ensures architect decisions flow through the existing archival pipeline and are not lost when ephemeral documents are deleted.
+1. **LEARNINGS.md** — record in `### Decisions Made` using the structured format: `**[systems-architect] [Decision title] (dec-draft-<hash>)**: [What was decided]. **Why**: [rationale]. **Alternatives**: [what was considered and rejected].` Use the draft id from step 2 below — finalize rewrites it to `dec-NNN` at merge-to-main. This ensures architect decisions flow through the existing archival pipeline and are not lost when ephemeral documents are deleted.
 
-2. **ADR file** — for each significant decision, create an ADR file in `.ai-state/decisions/` following the format in the `adr-conventions` rule:
-   - Scan `.ai-state/decisions/` for the highest existing NNN to determine the next sequential number
-   - Create `.ai-state/decisions/<NNN+1>-<slug>.md` using the Write tool with YAML frontmatter and MADR body sections (Context, Decision, Considered Options, Consequences)
-   - Run `python scripts/regenerate_adr_index.py` after creating ADR files to update `DECISIONS_INDEX.md`
+2. **ADR fragment file** — for each significant decision, create a draft ADR fragment under `.ai-state/decisions/drafts/`:
+   - Derive a fragment filename `<YYYYMMDD-HHMM>-<user>-<branch>-<slug>.md`. `<user>` is the username prefix of `git config user.email` (the part before `@`), falling back to `git config user.name`, then `anon`; sanitize to `[a-z0-9-]` and cap at 40 chars. `<branch>` is `git rev-parse --abbrev-ref HEAD`, same sanitization. `<slug>` is a short kebab-case label derived from the decision title.
+   - Compute `id: dec-draft-<sha1(filename)[:8]>`.
+   - Create `.ai-state/decisions/drafts/<fragment-filename>.md` using the Write tool with frontmatter `id: dec-draft-<hash>` and `status: proposed`, plus the remaining fields and MADR body sections (Context, Decision, Considered Options, Consequences) defined in the ADR conventions rule.
+   - Cross-reference sibling drafts authored during this pipeline via `supersedes: dec-draft-<hash>` or `re_affirms: dec-draft-<hash>`. The finalize step at merge-to-main rewrites these to stable `dec-NNN`.
+   - Do **not** invoke `scripts/regenerate_adr_index.py` — `DECISIONS_INDEX.md` regenerates automatically at finalize.
 
-See the [ADR conventions rule](../rules/swe/adr-conventions.md) for the full file format, frontmatter schema, and supersession protocol.
+See the [ADR conventions rule](../rules/swe/adr-conventions.md) for the full file format, frontmatter schema, identity-derivation pseudocode, supersession protocol, and finalize protocol. Do not duplicate the schema here.
 
 ### Phase 8 — Risk Assessment
 

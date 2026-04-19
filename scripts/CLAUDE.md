@@ -9,6 +9,9 @@ Utility and operational scripts for the Praxion ecosystem.
 - `phoenix-ctl` — Manage the Phoenix observability daemon (install/start/stop/restart/status/uninstall via launchd)
 - `reconcile_ai_state.py` — Post-merge reconciliation for `.ai-state/` artifacts: semantic memory.json merge, observations.jsonl dedup, ADR renumbering, index regeneration. Called by `/merge-worktree`
 - `regenerate_adr_index.py` — Regenerate `.ai-state/decisions/DECISIONS_INDEX.md` from ADR file frontmatter
+- `finalize_adrs.py` — Promote fragment ADRs under `.ai-state/decisions/drafts/` to stable `<NNN>-<slug>.md`, rewrite `dec-draft-<hash>` cross-references across sibling ADRs / `.ai-work/*/LEARNINGS.md` / `SYSTEMS_PLAN.md` / `IMPLEMENTATION_PLAN.md`, regenerate the index. Idempotent; advisory file lock. Invoked by post-merge hook and `/merge-worktree`
+- `check_squash_safety.py` — Post-merge diagnostic: detect `.ai-state/` entry erasure from squash-merges and emit a recovery warning. Non-blocking (exit 0). Invoked by post-merge hook after finalize
+- `migrate_worktree_home.sh` — Print copy-paste-ready `git worktree move` commands to migrate legacy `.trees/<name>/` worktrees to `.claude/worktrees/<name>/`. Performs no automatic move
 
 ## Conventions
 

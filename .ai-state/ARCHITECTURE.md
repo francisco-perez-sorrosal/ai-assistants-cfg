@@ -17,7 +17,7 @@
 | **Language / Framework** | Python 3.13+ (MCP servers), Markdown (skills/agents/rules/commands), Shell/Python (hooks, scripts) |
 | **Architecture pattern** | Plugin-based knowledge ecosystem with progressive disclosure and agent pipeline orchestration |
 | **Source stage** | Phase 5 creation, 2026-04-10 by systems-architect |
-| **Last verified** | 2026-04-18 by implementer (greenfield onboarding feature built: `new_cc_project.sh` 101 L, `commands/new-cc-project.md` 259 L, `docs/project-onboarding.md` 123 L, `tests/new_cc_project_test.sh` 230 L — all on disk; flipped Designed → Built; dec-053/054/055 accepted) |
+| **Last verified** | 2026-04-19 by doc-engineer (concurrency-collaboration model shipped as Built: `scripts/finalize_adrs.py`, `scripts/check_squash_safety.py`, `scripts/migrate_worktree_home.sh`, `commands/clean-auto-memory.md`, `rules/swe/vcs/pr-conventions.md`, unified `.claude/worktrees/` home; six fragment ADRs still under `.ai-state/decisions/drafts/` awaiting finalize at merge-to-main) |
 
 Praxion is a meta-project that provides the operational infrastructure for AI-assisted software development. Rather than being an application itself, it is an ecosystem of reusable skills, specialized agents, declarative rules, slash commands, lifecycle hooks, and MCP servers that compose into a coherent development workflow. It ships as the `i-am` Claude Code plugin, with secondary targets for Claude Desktop and Cursor.
 
@@ -43,8 +43,8 @@ graph LR
         Agents[Agents<br/>12 types]
         Hooks[Hooks<br/>14 scripts]
         MCP[MCP Servers<br/>Memory + Chronograph]
-        Rules[Rules<br/>9 files]
-        Cmds[Commands<br/>21 slash commands]
+        Rules[Rules<br/>13 files]
+        Cmds[Commands<br/>24 slash commands]
     end
     Dev --> CC
     Dev --> CD
@@ -125,6 +125,7 @@ graph TD
 | Roadmap-cartographer | Project-level roadmap generator orchestrating **project-derived lens-set** parallel audit, synthesis, and user-gated ROADMAP.md emission for any project (deterministic / agentic / hybrid); SPIRIT is one exemplar lens set among DORA / SPACE / FAIR / CNCF Platform Maturity / Custom | Designed | `agents/roadmap-cartographer.md`, `skills/roadmap-synthesis/` (dec-029, dec-030, dec-035, dec-036) |
 | Eval framework | Out-of-band quality measurement via `/eval` command and CI; tiered (behavioral + regression first, cost + decision-quality + LLM-judge as Tier 2 stubs); reads completed artifacts and Phoenix traces without mutating live pipeline state | Built | `eval/pyproject.toml`, `eval/src/praxion_evals/`, `commands/eval.md`, `.ai-state/evals/` (dec-040, dec-041) |
 | Greenfield project onboarding | Top-level entry point that scaffolds a Claude-ready project then hands off to an interactive Claude session pre-loaded with `/new-cc-project`. Hybrid bash + slash-command orchestration (dec-055) with prompt-over-template discipline (dec-053): Praxion ships prose specifications and a discovery hook (`external-api-docs`), no code templates, no pinned SDK signatures. Default app is Python + `uv` + Claude Agent SDK + FastAPI; per-run `onboarding_for_mushi_busy_ppl.md` is generated against real on-disk paths | Built | `new_cc_project.sh` (repo root, 101 L, +x), `commands/new-cc-project.md` (259 L), `docs/project-onboarding.md` (123 L), `tests/new_cc_project_test.sh` (230 L, +x) (dec-053, dec-054, dec-055) |
+| Concurrency & collaboration model | Unified three-mode story (solo-on-main / multi-session-solo / multi-user-team) around shared primitives: fragment ADR naming at `.ai-state/decisions/drafts/<YYYYMMDD-HHMM>-<user>-<branch>-<slug>.md`, unified worktree home at `.claude/worktrees/`, finalize-at-merge protocol (`scripts/finalize_adrs.py` invoked by post-merge hook + `/merge-worktree`), two-layer squash-merge safety (command refuse + post-merge warn), opt-in auto-memory orphan cleanup. Git remains the only shared synchronization substrate; no CRDTs, no shared daemons, no real-time broadcast. Author identity encoded from day one via `git config` for multi-user forward compatibility | Built | `.ai-state/decisions/drafts/`, `scripts/finalize_adrs.py`, `scripts/check_squash_safety.py`, `scripts/migrate_worktree_home.sh`, `commands/clean-auto-memory.md`, `rules/swe/vcs/pr-conventions.md`; six ADRs pending finalize — see `.ai-state/decisions/drafts/` (promoted to stable `dec-NNN` at merge-to-main) |
 
 ## 4. Interfaces
 
@@ -218,6 +219,29 @@ graph LR
 
 **Cross-layer correlation (dec-048).** Observations (`observations.jsonl`) and chronograph spans both carry the canonical OpenInference `session.id` attribute — the chronograph relay emits it on every span type including tool spans (formerly `praxion.session_id`). Observations additionally carry top-level `trace_id`, `span_id`, `traceparent`, and `parent_span_id` fields populated from W3C trace-context. Flow: the MCP tool request envelope surfaces `params._meta.traceparent`; the memory-mcp `remember()` / `recall()` handlers parse it via `correlation.parse_traceparent()` and forward the parsed IDs through the response `additionalContext`; the `capture_memory.py` hook reads `additionalContext` and writes those IDs into the observation row. `ObservationStore.query(trace_id=...)` supports exact-match filtering. Historical JSONL rows lacking these fields deserialize as `None` via `dict.get`, preserving backward compatibility.
 
+### ADR Finalize Flow
+
+```mermaid
+sequenceDiagram
+    participant A as Architect/Planner
+    participant FS as Worktree Filesystem
+    participant G as Git
+    participant FIN as finalize_adrs.py
+    participant IDX as regenerate_adr_index.py
+
+    A->>FS: Create .ai-state/decisions/drafts/<ts>-<user>-<branch>-<slug>.md
+    A->>FS: id: dec-draft-<hash>, cross-ref by hash
+    FS->>G: Commit draft on pipeline branch
+    G->>G: User merges branch into main
+    G->>FIN: post-merge hook invokes --merged
+    FIN->>FS: Detect drafts added in this merge
+    FIN->>FS: Rename drafts -> <NNN>-<slug>.md
+    FIN->>FS: Rewrite id + bounded cross-ref walk
+    FIN->>IDX: Regenerate DECISIONS_INDEX.md
+```
+
+The finalize flow activates only when `.ai-state/decisions/drafts/` has entries; the concurrency-model component (Section 3) describes the full primitive set. `scripts/finalize_adrs.py` is idempotent and guarded by an advisory `fcntl` lock.
+
 ## 6. Dependencies
 
 <!-- OWNER: systems-architect (initial), implementer (as-built) | LAST UPDATED: 2026-04-12 by systems-architect -->
@@ -254,6 +278,8 @@ graph LR
 | Single `hooks.json` authority | Configuration | All hooks registered in `hooks/hooks.json`; duplicating in `settings.json` causes double-firing |
 | Agent depth 3+ requires user confirmation | Quality | Prevents runaway agent chains from compounding hallucination risk |
 | Four-behavior agent behavioral contract applies to all write/plan/review agents | Behavioral | Surface Assumptions, Register Objection, Stay Surgical, Simplicity First — enforced via `rules/swe/agent-behavioral-contract.md` (always loaded) and six named failure-mode tags in verifier reports; sentinel checks BC01–BC04 audit integrity. Cross-cutting layer, not a component |
+| Git is the only shared synchronization substrate for inter-session and inter-user coordination | Architectural | CRDTs, real-time broadcast, and shared MCP daemons explicitly rejected for artifact reconciliation; git's offline eventual-consistency is fit-for-purpose at file-granularity, minute-to-day convergence scale — see draft ADRs under `.ai-state/decisions/drafts/` (promoted to `dec-NNN` at merge-to-main) |
+| ADRs created in a pipeline use fragment naming; stable NNN assigned at merge-to-main | Architectural | Prevents sequential-NNN cross-branch collisions and broken cross-references; author identity encoded from day one for multi-user forward-compatibility — draft filename schema `<YYYYMMDD-HHMM>-<user>-<branch>-<slug>.md`, finalized via `scripts/finalize_adrs.py` |
 
 ## 8. Decisions
 
@@ -318,5 +344,11 @@ graph LR
 | [dec-053](decisions/053-prompt-over-template-greenfield-scaffold.md) | Prompt-over-template discipline for greenfield project scaffolding | Praxion ships prose specifications + `external-api-docs` discovery hook for greenfield onboarding rather than code templates or pinned SDK signatures; current SDK + `uv` signatures fetched from chub at run time so the product cannot bake in stale APIs |
 | [dec-054](decisions/054-separate-new-cc-project-from-install.md) | Separate `new_cc_project.sh` from `install.sh` (sibling, not subcommand) | New top-level entry at repo root (sibling to `install*.sh`), one-time symlink published as `new-cc-project` on PATH via `install_claude.sh::relink_all`; preserves verb separation (configure host vs create project) |
 | [dec-055](decisions/055-hybrid-bash-slash-command-orchestration.md) | Hybrid bash + slash-command orchestration for greenfield onboarding (Option C) | Bash handles deterministic prereqs and minimal scaffold; `/new-cc-project` slash command handles conversational flow, app generation, mushi doc generation; slash command reusable from any existing Claude session |
+| dec-draft-5e4af711 (drafts/) | Fragment-ADR naming (timestamp+user+branch+slug) | ADRs created in a pipeline land as fragment files under `.ai-state/decisions/drafts/` with collision-safe filenames and `dec-draft-<hash>` ids; prevents cross-branch NNN collisions — finalized at merge to stable `dec-NNN` |
+| dec-draft-b6a212f0 (drafts/) | ADR finalize protocol at merge-to-main | New `scripts/finalize_adrs.py` promotes drafts to stable NNN via post-merge hook and `/merge-worktree`; idempotent; advisory file lock; retires `reconcile_ai_state.py::reconcile_adr_numbers()` over one release |
+| dec-draft-349abb5e (drafts/) | Unified worktree home on `.claude/worktrees/` | `/create-worktree` + `/merge-worktree` migrate from `.trees/` to `.claude/worktrees/`; fixes `/merge-worktree` split-home bug; adds `.claude/worktrees/` to `.gitignore`; two-release deprecation window for `.trees/` |
+| dec-draft-c449529f (drafts/) | PR-conventions rule path-scoped to PR surfaces | New `rules/swe/vcs/pr-conventions.md` covers branch naming, `.ai-state/` safety, merge policy, review expectations, multi-user forward path; `paths:` frontmatter keeps always-loaded budget at zero |
+| dec-draft-960eacfc (drafts/) | Squash-merge safety — two-layer (command refuse + post-merge warn) | `/merge-worktree` refuses `git merge --squash` on `.ai-state/`-touching branches; new `scripts/check_squash_safety.py` at post-merge hook detects GitHub-UI squashes and warns with recovery steps |
+| dec-draft-3c38eeb3 (drafts/) | Auto-memory orphan cleanup via opt-in `/clean-auto-memory` | New command enumerates `~/.claude/projects/-<hash>-worktrees-*` orphans, compares vs `git worktree list`, batches deletion on user confirmation; never hook-driven; pattern-scoped to `-worktrees-*` |
 
 [Add new rows as architecture-related ADRs are created.]

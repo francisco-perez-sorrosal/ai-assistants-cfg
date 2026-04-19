@@ -199,15 +199,17 @@ Requires `.ai-state/calibration_log.md`. Skip with a note when no calibration lo
 
 ### Decision Log (DL)
 
-Conditional activation: skip DL checks when no `.ai-state/decisions/` directory exists or it contains no ADR files (same pattern as SH checks with specs).
+Conditional activation: skip DL checks when no `.ai-state/decisions/` directory exists or it contains neither finalized ADR files (`[0-9]*.md`) nor draft fragments (`drafts/*.md`). Both formats count as ADR files for activation purposes (same pattern as SH checks with specs).
+
+ADRs exist in two lifecycle stages — drafts (pipeline-authored, pre-merge) and finalized (post-merge). The canonical schema, filename shapes, id formats, and finalize protocol live in [rules/swe/adr-conventions.md](../rules/swe/adr-conventions.md); DL checks validate conformance, not schema. Both stages are valid on-disk states and must not be mistaken for orphans or dangling references.
 
 | ID | Tp | Rule | Pass |
 |----|----|------|------|
-| DL01 | A | `.ai-state/decisions/` has ADR files when archived specs exist | `Glob .ai-state/decisions/[0-9]*.md` returns files, or no archived specs |
-| DL02 | A | ADR files have valid YAML frontmatter with required fields | Each ADR has `id`, `title`, `status`, `category`, `date`, `summary`, `tags`, `made_by` in frontmatter |
-| DL03 | A | `DECISIONS_INDEX.md` is consistent with ADR files | Row count in index table matches `Glob .ai-state/decisions/[0-9]*.md` file count; IDs match |
-| DL04 | L | No orphaned supersession pointers | If an ADR has `supersedes: dec-NNN`, the referenced ADR file exists; if `superseded_by: dec-MMM`, that file exists and points back |
-| DL05 | L | Recent features have associated ADR files | Features with archived specs have corresponding ADR files (frequency check) |
+| DL01 | A | `.ai-state/decisions/` has ADR files in either lifecycle stage when archived specs exist | Either `Glob .ai-state/decisions/[0-9]*.md` matches finalized filenames (`^\d{3}-.+\.md$`) OR `Glob .ai-state/decisions/drafts/*.md` matches fragment filenames (`^\d{8}-\d{4}-[a-z0-9-]+-[a-z0-9-]+-[a-z0-9-]+\.md$`); or no archived specs |
+| DL02 | A | ADR files have valid YAML frontmatter with required fields | Each ADR has `id`, `title`, `status`, `category`, `date`, `summary`, `tags`, `made_by` in frontmatter. Finalized ADRs: `id` matches `dec-\d{3}`. Draft ADRs: `id` matches `dec-draft-[0-9a-f]{8}` and `status` is `proposed` |
+| DL03 | A | `DECISIONS_INDEX.md` is consistent with finalized ADRs only | Row count in index table matches `Glob .ai-state/decisions/[0-9]*.md` file count; IDs match. Drafts under `drafts/` are **intentionally excluded** from the index by design — the finalize protocol regenerates the index post-merge, so draft-stage fragments never appear and MUST NOT be flagged as missing index rows |
+| DL04 | L | No orphaned supersession or re-affirmation pointers | Finalized ADR with `supersedes: dec-NNN` / `superseded_by: dec-MMM` / `re_affirms: dec-NNN` / `re_affirmed_by: [dec-MMM]`: referenced file must exist under `.ai-state/decisions/`. Draft ADR with `supersedes: dec-draft-<hash>` / `re_affirms: dec-draft-<hash>`: referenced draft file must exist under `.ai-state/decisions/drafts/`. Mixed pointers — a finalized ADR pointing at `dec-draft-<hash>`, or a draft pointing at a `dec-NNN` it could not have legitimately known at authoring time — are a WARN (finalize should have rewritten them) |
+| DL05 | L | Recent features have associated ADR files | Features with archived specs have corresponding ADR files (frequency check). Draft fragments under `drafts/` count toward the check — a feature whose ADRs are still pre-finalize satisfies DL05 without waiting for stable `dec-NNN` assignment |
 
 ### Behavioral Contract (BC)
 
@@ -276,7 +278,8 @@ echo "=== AGENTS ===" && ls agents/*.md 2>/dev/null | grep -cv -E "(CLAUDE|READM
 echo "=== RULES ===" && find rules -name "*.md" -not -name "CLAUDE.md" | wc -l
 echo "=== COMMANDS ===" && ls commands/*.md 2>/dev/null | grep -cv -E "(CLAUDE|README)"
 echo "=== HOOKS ===" && ls hooks/*.py hooks/*.sh 2>/dev/null | wc -l
-echo "=== ADRs ===" && ls .ai-state/decisions/[0-9]*.md 2>/dev/null | wc -l
+echo "=== ADRs (finalized) ===" && ls .ai-state/decisions/[0-9]*.md 2>/dev/null | wc -l
+echo "=== ADRs (drafts) ===" && ls .ai-state/decisions/drafts/*.md 2>/dev/null | grep -v '/CLAUDE\.md$' | wc -l
 echo "=== MCP ===" && ls -d *-mcp/ 2>/dev/null | wc -l
 ```
 
@@ -300,7 +303,8 @@ print(f'Registered: {len(agents)}, Missing: {missing or \"none\"}')"
 echo "=== X05: coordination protocol agents ===" && grep -c "^\| " rules/swe/swe-agent-coordination-protocol.md
 echo "=== X06: agents/README.md ===" && grep -c "^\| " agents/README.md
 echo "=== T02: token budget ===" && cat CLAUDE.md rules/swe/*.md rules/swe/vcs/*.md rules/CLAUDE.md 2>/dev/null | wc -c
-echo "=== DL03: ADR index ===" && ls .ai-state/decisions/[0-9]*.md 2>/dev/null | wc -l && grep -c "^| dec-" .ai-state/decisions/DECISIONS_INDEX.md 2>/dev/null
+echo "=== DL03: ADR index (finalized only) ===" && ls .ai-state/decisions/[0-9]*.md 2>/dev/null | wc -l && grep -c "^| dec-" .ai-state/decisions/DECISIONS_INDEX.md 2>/dev/null
+echo "=== DL01/DL05: draft fragments (informational — excluded from DL03 by design) ===" && ls .ai-state/decisions/drafts/*.md 2>/dev/null | grep -v '/CLAUDE\.md$' | wc -l
 ```
 
 Guidelines:
