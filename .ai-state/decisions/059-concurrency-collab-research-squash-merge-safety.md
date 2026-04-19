@@ -1,5 +1,5 @@
 ---
-id: dec-draft-960eacfc
+id: dec-059
 title: Squash-Merge Safety -- post-merge warning + `/merge-worktree` refuse-or-rebase
 status: proposed
 category: implementation

@@ -1,5 +1,5 @@
 ---
-id: dec-draft-349abb5e
+id: dec-057
 title: Unified Worktree Home on `.claude/worktrees/`
 status: proposed
 category: architectural

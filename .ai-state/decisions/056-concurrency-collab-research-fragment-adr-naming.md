@@ -1,5 +1,5 @@
 ---
-id: dec-draft-5e4af711
+id: dec-056
 title: Fragment-ADR Naming Scheme (Timestamp + User + Branch + Slug)
 status: proposed
 category: architectural

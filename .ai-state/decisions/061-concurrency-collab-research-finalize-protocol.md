@@ -1,5 +1,5 @@
 ---
-id: dec-draft-b6a212f0
+id: dec-061
 title: ADR Finalize Protocol -- draft to NNN at merge-to-main
 status: proposed
 category: architectural
@@ -25,7 +25,7 @@ supersedes: null
 
 ## Context
 
-Fragment-naming (dec-draft-5e4af711) solves unstable identifiers at creation. The complementary question is when and how drafts become stable `<NNN>-<slug>.md` files. External research converged on "assign sequence at merge-to-main" -- the branchnews rename-at-PR pattern. Praxion already has a post-merge hook (`scripts/git-post-merge-hook.sh`) and a reconciler (`scripts/reconcile_ai_state.py`) -- the finalize step extends these existing primitives rather than introducing a new pipeline stage.
+Fragment-naming (dec-056) solves unstable identifiers at creation. The complementary question is when and how drafts become stable `<NNN>-<slug>.md` files. External research converged on "assign sequence at merge-to-main" -- the branchnews rename-at-PR pattern. Praxion already has a post-merge hook (`scripts/git-post-merge-hook.sh`) and a reconciler (`scripts/reconcile_ai_state.py`) -- the finalize step extends these existing primitives rather than introducing a new pipeline stage.
 
 Cross-reference integrity is the sharp edge. When `dec-draft-abc123 supersedes dec-draft-def456` and both are finalized in the same merge, the finalize step must rewrite both directions across every file that could hold a `dec-draft-*` reference.
 

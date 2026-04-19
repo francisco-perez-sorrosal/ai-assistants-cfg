@@ -1,5 +1,5 @@
 ---
-id: dec-draft-3c38eeb3
+id: dec-060
 title: Auto-Memory Orphan Cleanup -- `/clean-auto-memory` opt-in command
 status: proposed
 category: implementation

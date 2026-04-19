@@ -1,5 +1,5 @@
 ---
-id: dec-draft-c449529f
+id: dec-058
 title: PR-Conventions Rule -- path-scoped, no always-loaded budget impact
 status: proposed
 category: behavioral
@@ -54,12 +54,12 @@ Content sections (the planner/implementer fleshes out text during implementation
    - PR description must explicitly mention when `.ai-state/` is touched so reviewers know semantic merge applies.
 3. **Merge policy.**
    - Default: "Create a merge commit" -- preserves merge drivers and post-merge hook execution.
-   - Reject squash merges on PRs touching `.ai-state/`. Enforced as post-hoc warning (see dec-draft-960eacfc); the rule calls it out explicitly.
+   - Reject squash merges on PRs touching `.ai-state/`. Enforced as post-hoc warning (see dec-059); the rule calls it out explicitly.
    - Rebase-and-merge is acceptable if reconciliation runs locally first.
 4. **Review expectations for `.ai-state/`-touching PRs.**
-   - Reviewers verify ADR drafts have required frontmatter per dec-draft-5e4af711.
+   - Reviewers verify ADR drafts have required frontmatter per dec-056.
    - Reviewers do NOT review `DECISIONS_INDEX.md` changes -- regenerated post-merge, not authored.
-5. **Forward path for multi-user mode.** Author identity already encoded in fragment filenames (dec-draft-5e4af711); `finalize_adrs.py --author <email>` per-author filtering is a 10-line extension.
+5. **Forward path for multi-user mode.** Author identity already encoded in fragment filenames (dec-056); `finalize_adrs.py --author <email>` per-author filtering is a 10-line extension.
 
 `rules/swe/vcs/git-conventions.md` -- add one line: "See also: [`pr-conventions.md`](pr-conventions.md) for PR-specific workflow." No duplication.
 
