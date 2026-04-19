@@ -75,7 +75,18 @@ project/
 | **Add conda package** | `pixi add numpy scipy pytorch` | N/A — PyPI only |
 | **Add dev dependency** | `pixi add --pypi --feature dev pytest ruff mypy` | `uv add --dev pytest ruff mypy` |
 | **Install / sync** | `pixi install` | `uv sync` |
+| **Check latest version** | `pixi search <pkg>` (conda-forge) or `pixi search --channel pypi <pkg>` | `uv pip index versions <pkg>` |
 | **Gotcha** | Mixing conda and PyPI incorrectly — use `--pypi` flag explicitly; set `system-requirements.cuda` for GPU; avoid mixing conda-forge with legacy pytorch channel | Forgetting to sync after adding dependencies |
+
+### Freshness before pinning
+
+Do not hardcode version constraints from memory — training-data cutoffs make remembered numbers stale, and a silently-old pin can propagate through lockfiles for months. Before adding a dependency:
+
+- **Prefer resolver-picks-latest.** `pixi add <pkg>` and `uv add <pkg>` resolve to the latest compatible version at the moment of the call. Let them.
+- **When an explicit constraint is required**, check first: `pixi search <pkg>` (conda-forge) or `uv pip index versions <pkg>` (PyPI) lists available versions; quote the current latest. Prefer ranges (`>=X.Y`) over exact pins unless reproducibility demands otherwise.
+- **On inherited projects**, a quick `pixi update --dry-run` or `uv lock --upgrade --dry-run` surfaces how stale the lockfile is before you touch it.
+
+This complements the `external-api-docs` skill (which handles *documentation* staleness) — together they cover both "is my API signature current?" and "is my pinned version current?".
 
 ## Running Commands
 
