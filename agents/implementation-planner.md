@@ -163,6 +163,16 @@ For each implementation step that needs testing, create two steps in the same pa
 
 The test step's `Testing` field references the acceptance criteria it validates. The test-engineer designs tests from the behavioral spec, not from the production code — because the production code does not exist yet when both start concurrently.
 
+**Paired BDD/TDD ordering — test-engineer spawns first:**
+
+Within a paired parallel group, always spawn the test-engineer *one Agent tool call ahead* of the implementer — not in the same tool-use block. Even though the steps share a `[parallel-group: X]` tag, the invocation order is test-engineer → then implementer. Rationale: when both spawn simultaneously, the implementer routinely commits production code before the test-engineer's first `pytest` run, so tests validate existing code rather than shaping the interface. The shaping property of TDD is lost.
+
+Include in the test-engineer's prompt:
+
+> "Write a failing-test skeleton first: imports of the yet-unimplemented module plus one assertion per behavioral requirement. Expect `ImportError` / `ModuleNotFoundError` / `NameError` on first run — that is the correct RED state. Do NOT read the production code. Write `TEST_RESULTS.md` with the RED confirmation before fleshing out further assertions. A GREEN result on first run in concurrent mode is a Register Objection — flag it and stop."
+
+Only after the test-engineer reports the RED handshake (skeleton committed, `TEST_RESULTS.md` shows failure mode consistent with missing production code) do you spawn the implementer. The implementer and test-engineer then continue concurrently — implementer writes production code, test-engineer fleshes out coverage — with both converging at the integration checkpoint.
+
 **Triple step structure (with doc step):**
 
 When a parallel group has documentation impact, add a third step:
