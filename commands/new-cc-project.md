@@ -219,7 +219,7 @@ This predicate mirrors `/onboard-project`, so re-running either command does not
 
 ## §Mushi Doc Spec
 
-Generate `<project-root>/onboarding_for_mushi_busy_ppl.md` with these eight sections in this exact order:
+Generate `<project-root>/onboarding_for_mushi_busy_ppl.md` with these nine sections in this exact order:
 
 1. **Canonical Praxion paragraph** — copied verbatim (byte-for-byte) from between the `PRAXION-PARAGRAPH-START` and `PRAXION-PARAGRAPH-END` sentinel markers in §What is Praxion. Do not paraphrase.
 2. **How Claude drives Praxion** — copied verbatim from between the `PRAXION-ORCHESTRATOR-START` and `PRAXION-ORCHESTRATOR-END` sentinel markers in §How Claude drives Praxion. Placed immediately after the canonical paragraph — the first thing the user reads after "what is Praxion" is "how I talk to it."
@@ -227,10 +227,13 @@ Generate `<project-root>/onboarding_for_mushi_busy_ppl.md` with these eight sect
 4. **Mermaid happy-path diagram** — ≤10 nodes per `rules/writing/diagram-conventions.md`. One concept only.
 5. **What got created table** — columns `Artifact | Purpose | Edit when…`. One row per generated file. **Just-in-time verification:** `ls -la <path>` every row; do not ship a row whose path does not resolve.
 6. **Five-to-seven lesson ladder** — `<details>` collapsibles, one per lesson, in the "Put this in Claude" four-bullet format defined in §Five-to-Seven Lessons. L6 is mandatory.
-7. **Glossary collapsible** — short definitions for: Praxion, skill, agent, rule, command, **orchestrator**, **subagent**, pipeline, Understand/Plan/Verify, Claude Agent SDK, uv, `.ai-state/`, `.ai-work/`, `/co`, `/cop`.
-8. **What to read next** — one-line pointer to `docs/project-onboarding.md` in the Praxion repo, plus: "Run `/co` to make your first commit (or `/cop` for commit+push); both apply `rules/swe/vcs/git-conventions.md` automatically, so you don't hand-craft commit messages."
+7. **Glossary collapsible** — short definitions for: Praxion, skill, agent, rule, command, **orchestrator**, **subagent**, pipeline, Understand/Plan/Verify, Claude Agent SDK, uv, `.ai-state/`, `.ai-work/`, `/co`, `/cop`, **ADR** (`dec-NNN`), **sentinel report**.
+8. **Journey to Production** — heading `## From PoC to Production`. Open content (NOT a `<details>` — this is core, not optional depth). Eight rows in a milestone table (`Milestone | Trigger | Produces`) covering: (1) Working PoC = the seed already lands here, (2) Health audit via `sentinel` agent producing `.ai-state/SENTINEL_REPORT_*.md`, (3) Architecture record via `systems-architect` producing `.ai-state/ARCHITECTURE.md` + `docs/architecture.md`, (4) Persistent decisions as ADRs in `.ai-state/decisions/<NNN>-<slug>.md`, (5) CI/CD via `cicd-engineer` producing `.github/workflows/*.yml`, (6) Deployment via `deployment` skill producing `compose.yaml` + `.ai-state/SYSTEM_DEPLOYMENT.md`, (7) First release via `/release` producing version bump + `CHANGELOG.md` + git tag, (8) Cross-session memory via `remember()` writing `.ai-state/memory.json`. Each `Trigger` cell shows the exact prompt or command. Each `Produces` cell names a real path the user will see. Close the section with a 6-step "Suggested order for this project" numbered list anchored to the just-generated app: iterate via L1–L7 → sentinel audit at ~10 files → CI/CD before first user → deployment when ready to host → first release at stable behavior → record ADRs continuously, never batched. The table mirrors `docs/getting-started.md#journey-poc-to-production` in shape; the language stack column reflects what was actually scaffolded (e.g., row 5 names `pyproject.toml` if uv was detected).
+9. **What to read next** — one-line pointer to `docs/project-onboarding.md` in the Praxion repo, plus: "Run `/co` to make your first commit (or `/cop` for commit+push); both apply `rules/swe/vcs/git-conventions.md` automatically, so you don't hand-craft commit messages."
 
 **File anchors:** every lesson references at least one concrete anchor of the form `src/<path>:<line>` that resolves to a real line. Generate the mushi doc after all source files are written so anchors are stable.
+
+**Journey verification:** the eight milestones in section 8 must each name a concrete path the user can `ls` after triggering it (paths are aspirational at generation time — they will not exist in the freshly-scaffolded project, which is the point). Do not invent paths; cite the same paths used in `docs/getting-started.md` and the `## Agent Pipeline` block in `CLAUDE.md`.
 
 ## §Five-to-Seven Lessons
 
@@ -322,10 +325,14 @@ Append this block to `CLAUDE.md` when the idempotency predicate (§Init idempote
 Follow the Understand, Plan, Verify methodology. For multi-step work (Standard/Full tier), delegate to specialized agents in pipeline order. Each pipeline operates in an ephemeral `.ai-work/<task-slug>/` directory (deleted after use); permanent artifacts go to `.ai-state/` (committed to git).
 
 1. **researcher** → `.ai-work/<slug>/RESEARCH_FINDINGS.md` — codebase exploration, external docs
-2. **systems-architect** → `.ai-work/<slug>/SYSTEMS_PLAN.md` (ephemeral feature plan) + `.ai-state/decisions/` (permanent ADRs) + `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` (permanent architecture docs)
+2. **systems-architect** → `.ai-work/<slug>/SYSTEMS_PLAN.md` + ADR drafts under `.ai-state/decisions/drafts/` (promoted to stable `<NNN>-<slug>.md` at merge-to-main by `scripts/finalize_adrs.py`) + `.ai-state/ARCHITECTURE.md` (architect-facing) + `docs/architecture.md` (developer-facing)
 3. **implementation-planner** → `.ai-work/<slug>/IMPLEMENTATION_PLAN.md` + `WIP.md` — step decomposition
 4. **implementer** + **test-engineer** (concurrent) → code + tests — execute steps from the plan
 5. **verifier** → `.ai-work/<slug>/VERIFICATION_REPORT.md` — post-implementation review
+
+**Independent audits**: the `sentinel` agent runs outside the pipeline and writes timestamped `.ai-state/SENTINEL_REPORT_*.md` plus an append-only `.ai-state/SENTINEL_LOG.md`. Trigger it for ecosystem health baselines (before first ideation, after major refactors).
+
+**From PoC to production**: the feature pipeline is one milestone of many. The full journey runs through sentinel audit → CI/CD (`cicd-engineer`) → deployment (`deployment` skill) → first release (`/release`) → persistent decisions as ADRs → cross-session memory (`memory.json` + `observations.jsonl`). See the milestone table at `docs/getting-started.md#journey-poc-to-production`.
 
 Always include expected deliverables when delegating to an agent. The agent coordination protocol rule has full delegation checklists.
 ```

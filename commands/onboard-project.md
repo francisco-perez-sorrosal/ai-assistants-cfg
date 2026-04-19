@@ -46,10 +46,14 @@ Check whether a `CLAUDE.md` file exists at the project root.
 Follow the Understand, Plan, Verify methodology. For multi-step work (Standard/Full tier), delegate to specialized agents in pipeline order. Each pipeline operates in an ephemeral `.ai-work/<task-slug>/` directory (deleted after use); permanent artifacts go to `.ai-state/` (committed to git).
 
 1. **researcher** → `.ai-work/<slug>/RESEARCH_FINDINGS.md` — codebase exploration, external docs
-2. **systems-architect** → `.ai-work/<slug>/SYSTEMS_PLAN.md` (ephemeral feature plan) + `.ai-state/decisions/` (permanent ADRs) + `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` (permanent architecture docs)
+2. **systems-architect** → `.ai-work/<slug>/SYSTEMS_PLAN.md` + ADR drafts under `.ai-state/decisions/drafts/` (promoted to stable `<NNN>-<slug>.md` at merge-to-main by `scripts/finalize_adrs.py`) + `.ai-state/ARCHITECTURE.md` (architect-facing) + `docs/architecture.md` (developer-facing)
 3. **implementation-planner** → `.ai-work/<slug>/IMPLEMENTATION_PLAN.md` + `WIP.md` — step decomposition
 4. **implementer** + **test-engineer** (concurrent) → code + tests — execute steps from the plan
 5. **verifier** → `.ai-work/<slug>/VERIFICATION_REPORT.md` — post-implementation review
+
+**Independent audits**: the `sentinel` agent runs outside the pipeline and writes timestamped `.ai-state/SENTINEL_REPORT_*.md` plus an append-only `.ai-state/SENTINEL_LOG.md`. Trigger it for ecosystem health baselines (before first ideation, after major refactors).
+
+**From PoC to production**: the feature pipeline is one milestone of many. The full journey runs through sentinel audit → CI/CD (`cicd-engineer`) → deployment (`deployment` skill) → first release (`/release`) → persistent decisions as ADRs → cross-session memory (`memory.json` + `observations.jsonl`). See the milestone table at `docs/getting-started.md#journey-poc-to-production`.
 
 Always include expected deliverables when delegating to an agent. The agent coordination protocol rule has full delegation checklists.
 ```
