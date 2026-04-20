@@ -233,7 +233,7 @@ fi
 # for every chub fetch / Bash probe during the headline pipeline run.
 # Onboarding is a teaching moment — broader-than-strict by design. The
 # `mcp__chub__*` glob covers chub MCP additions without future churn here.
-ALLOWED_TOOLS="mcp__chub__*,WebFetch,WebSearch,Bash(uv:*),Bash(git:*),Bash(grep:*),Bash(pytest:*),Bash(test:*)"
+ALLOWED_TOOLS="mcp__chub__*,WebFetch,WebSearch,Bash(chub:*),Bash(uv:*),Bash(git:*),Bash(grep:*),Bash(pytest:*),Bash(test:*)"
 
 # Hand off (REQ-ONBOARD-08). `--` stops `claude` from interpreting any leading
 # dash in the seed prompt as a flag.
