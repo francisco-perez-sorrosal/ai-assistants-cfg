@@ -93,7 +93,25 @@ cat > .gitignore <<'EOF'
 .claude/settings.local.json
 EOF
 
+# Open the project in the user's editor (Cursor first, then VS Code) so the
+# user can watch .ai-work/ and .ai-state/ appear as the pipeline runs. Both
+# editors accept (dir, file) positional args and open the file in a tab next
+# to the file tree. Backgrounded with output silenced; absent editors are not
+# an error — onboarding still works in pure-terminal environments.
+editor_launched=""
+if command -v cursor >/dev/null 2>&1; then
+    cursor "$project_path" "$project_path/.gitignore" >/dev/null 2>&1 &
+    editor_launched="cursor"
+elif command -v code >/dev/null 2>&1; then
+    code "$project_path" "$project_path/.gitignore" >/dev/null 2>&1 &
+    editor_launched="code"
+fi
+
 # Pre-flight announcement (REQ-ONBOARD-07).
+if [ -n "$editor_launched" ]; then
+    printf '→ Opened project in %s (file tree will refresh as Praxion writes files).\n' \
+        "$editor_launched"
+fi
 printf '→ Scaffolded %s at %s. Launching Claude Code...\n' \
     "$project_name" "$project_path"
 
@@ -132,6 +150,12 @@ else
     seed_prompt="You are inside a freshly scaffolded Praxion greenfield project. Invoke the /new-cc-project slash command now to onboard it. If the slash command is not registered, locate its body under ~/.claude/plugins/ (Markdown file named new-cc-project.md) and follow its instructions."
 fi
 
+# Pre-allow the tools the seed pipeline relies on so the user is not paged
+# for every chub fetch / Bash probe during the headline pipeline run.
+# Onboarding is a teaching moment — broader-than-strict by design. The
+# `mcp__chub__*` glob covers chub MCP additions without future churn here.
+ALLOWED_TOOLS="mcp__chub__*,WebFetch,WebSearch,Bash(uv:*),Bash(git:*),Bash(grep:*),Bash(pytest:*),Bash(test:*)"
+
 # Hand off (REQ-ONBOARD-08). `--` stops `claude` from interpreting any leading
 # dash in the seed prompt as a flag.
-exec claude --permission-mode acceptEdits -- "$seed_prompt"
+exec claude --permission-mode acceptEdits --allowedTools "$ALLOWED_TOOLS" -- "$seed_prompt"

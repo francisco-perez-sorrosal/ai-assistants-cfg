@@ -65,7 +65,7 @@ for a in "\$@"; do
     if [ "\$a" = "--" ]; then positional=1; continue; fi
     if [ "\$positional" -eq 1 ]; then continue; fi
     case "\$a" in
-        --permission-mode|acceptEdits) ;;
+        --permission-mode|acceptEdits|--allowedTools) ;;
         --*) printf "stub-claude: unknown option '%s'\n" "\$a" >&2; exit 7 ;;
     esac
 done
