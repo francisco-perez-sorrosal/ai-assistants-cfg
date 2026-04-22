@@ -1,7 +1,8 @@
 """Tests for secret redaction in hooks/send_event.py.
 
-Validates REQ-SW-031: When the send_event.py hook processes tool input/output
-for logging, common secret patterns are redacted before transmission.
+Verifies that the hook redacts common secret patterns (API keys, tokens,
+bearer credentials, AWS/GitHub/Slack identifiers) from tool input and output
+before transmission to the observability relay.
 """
 
 from __future__ import annotations
@@ -33,13 +34,13 @@ def _load_hook_module():
 
 _module = _load_hook_module()
 
-# Guard: if send_event.py does not yet expose _redact_secrets (Step 2 may be
-# in progress), skip all tests gracefully so the test file remains importable.
+# Guard: if send_event.py does not yet expose _redact_secrets, skip all tests
+# gracefully so the test file remains importable during incremental development.
 _has_redaction = _module is not None and hasattr(_module, "_redact_secrets")
 
 requires_redaction = pytest.mark.skipif(
     not _has_redaction,
-    reason="_redact_secrets not yet available (Step 2 in progress)",
+    reason="_redact_secrets not available in send_event.py",
 )
 
 
@@ -67,12 +68,12 @@ def summarize_tool_output():
 
 
 # ---------------------------------------------------------------------------
-# req31: Pattern coverage -- each secret type is redacted
+# Pattern coverage -- each secret type is redacted
 # ---------------------------------------------------------------------------
 
 
 @requires_redaction
-class TestReq31PatternCoverage:
+class TestPatternCoverage:
     """Each secret pattern type defined in SECRET_PATTERNS must be redacted."""
 
     @pytest.mark.parametrize(
@@ -116,9 +117,7 @@ class TestReq31PatternCoverage:
             "aws_key",
         ],
     )
-    def test_req31_secret_pattern_redacted(
-        self, redact_secrets, secret_input, description
-    ):
+    def test_secret_pattern_redacted(self, redact_secrets, secret_input, description):
         """Each known secret pattern is replaced with [REDACTED]."""
         result = redact_secrets(secret_input)
         assert "[REDACTED]" in result, (
@@ -130,41 +129,41 @@ class TestReq31PatternCoverage:
         # For key=value patterns, the value after the separator should be gone.
         # For prefix patterns, the full match should be replaced.
 
-    def test_req31_openai_key_fully_replaced(self, redact_secrets):
+    def test_openai_key_fully_replaced(self, redact_secrets):
         """An OpenAI-style key is fully replaced, not partially masked."""
         key = "sk-TAbCdEfGhIjKlMnOpQrStUvWxYz1234567890ab"
         result = redact_secrets(f"key is {key} here")
         assert key not in result
         assert "[REDACTED]" in result
 
-    def test_req31_anthropic_key_fully_replaced(self, redact_secrets):
+    def test_anthropic_key_fully_replaced(self, redact_secrets):
         """An Anthropic-style key is fully replaced, not partially masked."""
         key = "sk-ant-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh"
         result = redact_secrets(f"using {key} for auth")
         assert key not in result
         assert "[REDACTED]" in result
 
-    def test_req31_github_pat_fully_replaced(self, redact_secrets):
+    def test_github_pat_fully_replaced(self, redact_secrets):
         """A GitHub PAT is fully replaced."""
         pat = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij"
         result = redact_secrets(f"token: {pat}")
         assert pat not in result
         assert "[REDACTED]" in result
 
-    def test_req31_github_fine_grained_pat_fully_replaced(self, redact_secrets):
+    def test_github_fine_grained_pat_fully_replaced(self, redact_secrets):
         """A GitHub fine-grained PAT (github_pat_ prefix) is fully replaced."""
         pat = "github_pat_11ABCDEFGH0123456789_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY"
         result = redact_secrets(f"token: {pat}")
         assert pat not in result
         assert "[REDACTED]" in result
 
-    def test_req31_aws_key_fully_replaced(self, redact_secrets):
+    def test_aws_key_fully_replaced(self, redact_secrets):
         """An AWS access key ID is fully replaced."""
         result = redact_secrets("AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE")
         assert "AKIAIOSFODNN7EXAMPLE" not in result
         assert "[REDACTED]" in result
 
-    def test_req31_slack_token_fully_replaced(self, redact_secrets):
+    def test_slack_token_fully_replaced(self, redact_secrets):
         """A Slack token is fully replaced."""
         result = redact_secrets("SLACK_TOKEN=xoxb-1234-5678-abcdef")
         assert "xoxb-1234-5678-abcdef" not in result
@@ -172,51 +171,51 @@ class TestReq31PatternCoverage:
 
 
 # ---------------------------------------------------------------------------
-# req31: Passthrough -- text without secrets is unchanged
+# Passthrough -- text without secrets is unchanged
 # ---------------------------------------------------------------------------
 
 
 @requires_redaction
-class TestReq31Passthrough:
+class TestPassthrough:
     """Text without any secret patterns passes through unchanged."""
 
-    def test_req31_plain_text_unchanged(self, redact_secrets):
+    def test_plain_text_unchanged(self, redact_secrets):
         text = "This is a normal log message with no secrets."
         assert redact_secrets(text) == text
 
-    def test_req31_empty_string_unchanged(self, redact_secrets):
+    def test_empty_string_unchanged(self, redact_secrets):
         assert redact_secrets("") == ""
 
-    def test_req31_code_snippet_unchanged(self, redact_secrets):
+    def test_code_snippet_unchanged(self, redact_secrets):
         code = "def calculate_total(items): return sum(i.price for i in items)"
         assert redact_secrets(code) == code
 
-    def test_req31_url_without_credentials_unchanged(self, redact_secrets):
+    def test_url_without_credentials_unchanged(self, redact_secrets):
         url = "https://example.com/api/v1/users?page=1&limit=10"
         assert redact_secrets(url) == url
 
-    def test_req31_json_without_secrets_unchanged(self, redact_secrets):
+    def test_json_without_secrets_unchanged(self, redact_secrets):
         data = json.dumps({"name": "test", "count": 42, "active": True})
         assert redact_secrets(data) == data
 
 
 # ---------------------------------------------------------------------------
-# req31: Multiple secrets -- all are redacted in a single string
+# Multiple secrets -- all are redacted in a single string
 # ---------------------------------------------------------------------------
 
 
 @requires_redaction
-class TestReq31MultipleSecrets:
+class TestMultipleSecrets:
     """When a string contains multiple secrets, all must be redacted."""
 
-    def test_req31_two_different_secret_types_both_redacted(self, redact_secrets):
+    def test_two_different_secret_types_both_redacted(self, redact_secrets):
         text = "api_key=sk-abc123xyz and password: hunter2"
         result = redact_secrets(text)
         assert "sk-abc123xyz" not in result
         assert "hunter2" not in result
         assert result.count("[REDACTED]") >= 2
 
-    def test_req31_three_secrets_all_redacted(self, redact_secrets):
+    def test_three_secrets_all_redacted(self, redact_secrets):
         text = (
             "Config: token=secret123, "
             "Bearer eyJhbGciOiJIUz.payload, "
@@ -227,7 +226,7 @@ class TestReq31MultipleSecrets:
         assert "eyJhbGciOiJIUz" not in result
         assert "AKIAIOSFODNN7EXAMPLE" not in result
 
-    def test_req31_same_pattern_repeated(self, redact_secrets):
+    def test_same_pattern_repeated(self, redact_secrets):
         text = "password: first and password: second"
         result = redact_secrets(text)
         assert "first" not in result
@@ -235,12 +234,12 @@ class TestReq31MultipleSecrets:
 
 
 # ---------------------------------------------------------------------------
-# req31: Case insensitivity -- key-value patterns match any casing
+# Case insensitivity -- key-value patterns match any casing
 # ---------------------------------------------------------------------------
 
 
 @requires_redaction
-class TestReq31CaseInsensitivity:
+class TestCaseInsensitivity:
     """Key-value patterns (api_key, token, password) must match case-insensitively."""
 
     @pytest.mark.parametrize(
@@ -253,7 +252,7 @@ class TestReq31CaseInsensitivity:
         ],
         ids=["UPPER", "lower", "Title", "Mixed"],
     )
-    def test_req31_api_key_case_variants_redacted(self, redact_secrets, text):
+    def test_api_key_case_variants_redacted(self, redact_secrets, text):
         result = redact_secrets(text)
         assert "[REDACTED]" in result
         assert "secret123" not in result
@@ -267,7 +266,7 @@ class TestReq31CaseInsensitivity:
         ],
         ids=["UPPER", "lower", "Title"],
     )
-    def test_req31_token_case_variants_redacted(self, redact_secrets, text):
+    def test_token_case_variants_redacted(self, redact_secrets, text):
         result = redact_secrets(text)
         assert "[REDACTED]" in result
         assert "mytoken" not in result
@@ -281,39 +280,35 @@ class TestReq31CaseInsensitivity:
         ],
         ids=["UPPER", "lower", "Title"],
     )
-    def test_req31_password_case_variants_redacted(self, redact_secrets, text):
+    def test_password_case_variants_redacted(self, redact_secrets, text):
         result = redact_secrets(text)
         assert "[REDACTED]" in result
         assert "hunter2" not in result
 
-    def test_req31_bearer_case_insensitive(self, redact_secrets):
+    def test_bearer_case_insensitive(self, redact_secrets):
         result = redact_secrets("BEARER eyJhbGciOiJIUz.payload")
         assert "[REDACTED]" in result
         assert "eyJhbGciOiJIUz" not in result
 
 
 # ---------------------------------------------------------------------------
-# req31: Integration -- _summarize_tool_input and _summarize_tool_output
+# Integration -- _summarize_tool_input and _summarize_tool_output
 #        redact secrets in their output
 # ---------------------------------------------------------------------------
 
 
 @requires_redaction
-class TestReq31SummarizeIntegration:
+class TestSummarizeIntegration:
     """Summarize functions must produce output with secrets redacted."""
 
-    def test_req31_summarize_tool_input_redacts_string_input(
-        self, summarize_tool_input
-    ):
+    def test_summarize_tool_input_redacts_string_input(self, summarize_tool_input):
         """When tool_input is a raw string containing a secret, it is redacted."""
         data = {"tool_input": "api_key=sk-abc123xyz in the command"}
         result = summarize_tool_input(data)
         assert "[REDACTED]" in result
         assert "sk-abc123xyz" not in result
 
-    def test_req31_summarize_tool_input_redacts_command_field(
-        self, summarize_tool_input
-    ):
+    def test_summarize_tool_input_redacts_command_field(self, summarize_tool_input):
         """When tool_input has a command field with a secret, it is redacted."""
         data = {
             "tool_input": {
@@ -324,32 +319,26 @@ class TestReq31SummarizeIntegration:
         assert "[REDACTED]" in result
         assert "eyJhbGciOiJIUz" not in result
 
-    def test_req31_summarize_tool_input_redacts_json_fallback(
-        self, summarize_tool_input
-    ):
+    def test_summarize_tool_input_redacts_json_fallback(self, summarize_tool_input):
         """When tool_input dict has no known keys, the JSON dump is redacted."""
         data = {"tool_input": {"credentials": "password: hunter2"}}
         result = summarize_tool_input(data)
         assert "hunter2" not in result
 
-    def test_req31_summarize_tool_output_redacts_secrets(self, summarize_tool_output):
+    def test_summarize_tool_output_redacts_secrets(self, summarize_tool_output):
         """When tool output contains a secret, it is redacted."""
         data = {"tool_response": "Response includes token=abc123secret"}
         result = summarize_tool_output(data)
         assert "[REDACTED]" in result
         assert "abc123secret" not in result
 
-    def test_req31_summarize_tool_output_no_secrets_unchanged(
-        self, summarize_tool_output
-    ):
+    def test_summarize_tool_output_no_secrets_unchanged(self, summarize_tool_output):
         """When tool output has no secrets, it passes through."""
         data = {"tool_response": "File written successfully"}
         result = summarize_tool_output(data)
         assert result == "File written successfully"
 
-    def test_req31_summarize_tool_input_no_secrets_unchanged(
-        self, summarize_tool_input
-    ):
+    def test_summarize_tool_input_no_secrets_unchanged(self, summarize_tool_input):
         """When tool_input has no secrets, it passes through."""
         data = {"tool_input": {"file_path": "/project/src/main.py"}}
         result = summarize_tool_input(data)
