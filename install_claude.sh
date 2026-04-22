@@ -5,7 +5,8 @@
 # configures MCP servers for Claude Desktop. Invoked by install.sh for code|desktop.
 #
 # Usage:
-#   ./install_claude.sh code|desktop [--check] [--dry-run] [--uninstall] [--relink] [--from-local] [--help]
+#   ./install_claude.sh code|desktop [--check] [--dry-run] [--uninstall] [--relink] [--from-local]
+#                                    [--complete-install] [--complete-uninstall] [--help]
 
 set -eo pipefail
 
@@ -463,6 +464,173 @@ EOF
     install_plugin_permissions
 
     return 0
+}
+
+complete_install_from_plugin() {
+    header "Praxion Complete Install"
+
+    printf "\n  This finishes the Praxion setup for marketplace-only installs.\n"
+    printf "  You already ran 'claude plugin install i-am@bit-agora'. That installed\n"
+    printf "  the plugin body (skills, commands, agents, hooks, MCP servers). This\n"
+    printf "  command adds the surfaces the plugin mechanism does not cover natively:\n"
+    printf "    • Rules (auto-loaded by Claude Code — shape agent behavior globally)\n"
+    printf "    • CLI scripts on \$PATH (detector, ccwt, chronograph-ctl, etc.)\n"
+    printf "    • context-hub MCP (curated docs for 600+ libraries)\n\n"
+    printf "  You will be prompted before each system-level change. Re-run anytime;\n"
+    printf "  the operations are idempotent.\n\n"
+
+    # ---- Rules ----
+    printf "  ${B}[1] Symlink rules to ~/.claude/rules/?${R}\n"
+    printf "      ${D}Auto-loaded by Claude Code. Shapes agent behavior globally\n"
+    printf "      across every project — coding style, coordination protocols,\n"
+    printf "      id-citation-discipline, ADR conventions, etc.${R}\n"
+    printf "  ${B}[2] Skip rules${R}\n"
+    ask 1 2
+    if [ "$REPLY" -eq 1 ]; then
+        link_rules "${SCRIPT_DIR}/rules" "${HOME}/.claude/rules"
+        info "Rules: ${LINK_RULES_COUNT} files linked"
+    else
+        step "Rules skipped"
+    fi
+
+    # ---- CLI scripts ----
+    printf "\n  ${B}[1] Symlink CLI scripts to ~/.local/bin/?${R}\n"
+    printf "      ${D}check_id_citation_discipline.py, ccwt (multi-worktree sessions),\n"
+    printf "      chronograph-ctl, phoenix-ctl, new-cc-project — runnable from any\n"
+    printf "      shell. Filters internal helpers (merge drivers, git hooks).${R}\n"
+    printf "  ${B}[2] Skip scripts${R}\n"
+    ask 1 2
+    if [ "$REPLY" -eq 1 ]; then
+        local scripts_src="${SCRIPT_DIR}/scripts"
+        local bin_dir="${HOME}/.local/bin"
+        mkdir -p "$bin_dir"
+        local scripts_count=0
+        for script in "$scripts_src"/*; do
+            [ -f "$script" ] && [ -x "$script" ] || continue
+            local name
+            name="$(basename "$script")"
+            case "$name" in
+                merge_driver_*|git-*-hook.sh) continue ;;
+            esac
+            ln -sf "$script" "${bin_dir}/${name}"
+            scripts_count=$((scripts_count + 1))
+        done
+        info "Scripts: ${scripts_count} files linked"
+
+        # new-cc-project (parked at repo root)
+        if [ -f "${SCRIPT_DIR}/new_cc_project.sh" ] && [ -x "${SCRIPT_DIR}/new_cc_project.sh" ]; then
+            ln -sf "${SCRIPT_DIR}/new_cc_project.sh" "${bin_dir}/new-cc-project"
+            info "new-cc-project: linked"
+        fi
+
+        if [[ ":$PATH:" != *":${HOME}/.local/bin:"* ]]; then
+            warn "~/.local/bin is not in PATH"
+            step "Add to ~/.zshrc:  export PATH=\"\$HOME/.local/bin:\$PATH\""
+        fi
+    else
+        step "Scripts skipped"
+    fi
+
+    # ---- context-hub MCP ----
+    # prompt_chub_mcp has its own internal [1]/[2] prompt for install/skip,
+    # so we just delegate to it.
+    printf "\n"
+    prompt_chub_mcp
+
+    printf "\n"
+    info "Praxion complete install done"
+    step "Start a new Claude Code session to pick up the rules"
+}
+
+complete_uninstall_from_plugin() {
+    header "Praxion Complete Uninstall (symlinks only)"
+
+    printf "\n  This removes the rules and script symlinks installed by\n"
+    printf "  '--complete-install'. The plugin body stays installed — use\n"
+    printf "  'claude plugin uninstall i-am' to remove it separately.\n\n"
+    printf "  You will be prompted before each removal.\n\n"
+
+    # ---- Rules symlinks ----
+    local rules_dir="${HOME}/.claude/rules"
+    if [ -d "$rules_dir" ]; then
+        printf "  ${B}[1] Remove Praxion rule symlinks from ~/.claude/rules/?${R}\n"
+        printf "      ${D}Only removes links that target the plugin cache —\n"
+        printf "      rules from other sources are left alone.${R}\n"
+        printf "  ${B}[2] Skip${R}\n"
+        ask 1 2
+        if [ "$REPLY" -eq 1 ]; then
+            local removed=0
+            while IFS= read -r link; do
+                local target
+                target="$(readlink "$link" 2>/dev/null)" || continue
+                if [[ "$target" == "${SCRIPT_DIR}"* ]]; then
+                    rm "$link"
+                    removed=$((removed + 1))
+                fi
+            done < <(find "$rules_dir" -type l 2>/dev/null)
+            info "Rules: ${removed} symlink(s) removed"
+            find "$rules_dir" -type d -empty -delete 2>/dev/null || true
+        else
+            step "Rules skipped"
+        fi
+    fi
+
+    # ---- Script symlinks ----
+    local bin_dir="${HOME}/.local/bin"
+    if [ -d "$bin_dir" ]; then
+        printf "\n  ${B}[1] Remove Praxion CLI script symlinks from ~/.local/bin/?${R}\n"
+        printf "      ${D}Only removes links that target the plugin cache.${R}\n"
+        printf "  ${B}[2] Skip${R}\n"
+        ask 1 2
+        if [ "$REPLY" -eq 1 ]; then
+            local removed=0
+            while IFS= read -r link; do
+                local target
+                target="$(readlink "$link" 2>/dev/null)" || continue
+                if [[ "$target" == "${SCRIPT_DIR}"* ]]; then
+                    rm "$link"
+                    removed=$((removed + 1))
+                fi
+            done < <(find "$bin_dir" -maxdepth 1 -type l 2>/dev/null)
+            info "Scripts: ${removed} symlink(s) removed"
+        else
+            step "Scripts skipped"
+        fi
+    fi
+
+    # ---- context-hub MCP ----
+    local claude_json="${HOME}/.claude.json"
+    if [ -f "$claude_json" ] && grep -q "chub-mcp\|@aisuite/chub" "$claude_json" 2>/dev/null; then
+        printf "\n  ${B}[1] Remove context-hub MCP from ~/.claude.json?${R}\n"
+        printf "      ${D}Reverses what '/praxion-complete-install' added.${R}\n"
+        printf "  ${B}[2] Skip${R}\n"
+        ask 1 2
+        if [ "$REPLY" -eq 1 ]; then
+            python3 - "$claude_json" << 'PYEOF'
+import json, sys
+p = sys.argv[1]
+with open(p) as f:
+    data = json.load(f)
+servers = data.get("mcpServers", {})
+removed = 0
+for name in ["context-hub", "chub"]:
+    if name in servers:
+        del servers[name]
+        removed += 1
+with open(p, "w") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+print(f"removed {removed} MCP entr{'y' if removed == 1 else 'ies'}")
+PYEOF
+            info "context-hub MCP removed from ~/.claude.json"
+        else
+            step "MCP skipped"
+        fi
+    fi
+
+    printf "\n"
+    info "Praxion complete uninstall done"
+    step "Plugin body still installed — run 'claude plugin uninstall i-am' to remove it"
 }
 
 install_plugin_from_local() {
@@ -1168,7 +1336,7 @@ dry_run_claude_desktop() {
 
 show_usage() {
     cat <<EOF
-Usage: $(basename "$0") code|desktop [--check] [--dry-run] [--uninstall] [--relink] [--reconfigure] [--from-local] [--help]
+Usage: $(basename "$0") code|desktop [--check] [--dry-run] [--uninstall] [--relink] [--reconfigure] [--from-local] [--complete-install] [--complete-uninstall] [--help]
 
   code           Install for Claude Code
   desktop        Install for Claude Desktop
@@ -1194,18 +1362,22 @@ UNINSTALL=false
 RELINK=false
 RECONFIGURE=false
 FROM_LOCAL=false
+COMPLETE_INSTALL=false
+COMPLETE_UNINSTALL=false
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        code|desktop)  MODE="$1" ;;
-        --check)       CHECK=true ;;
-        --dry-run)     DRY_RUN=true ;;
-        --uninstall)   UNINSTALL=true ;;
-        --relink)      RELINK=true ;;
-        --reconfigure) RECONFIGURE=true ;;
-        --from-local)  FROM_LOCAL=true ;;
-        -h|--help)     show_usage ;;
-        *)             fail "Unknown argument: $1. Use --help for usage." ;;
+        code|desktop)         MODE="$1" ;;
+        --check)              CHECK=true ;;
+        --dry-run)            DRY_RUN=true ;;
+        --uninstall)          UNINSTALL=true ;;
+        --relink)             RELINK=true ;;
+        --reconfigure)        RECONFIGURE=true ;;
+        --from-local)         FROM_LOCAL=true ;;
+        --complete-install)   COMPLETE_INSTALL=true ;;
+        --complete-uninstall) COMPLETE_UNINSTALL=true ;;
+        -h|--help)            show_usage ;;
+        *)                    fail "Unknown argument: $1. Use --help for usage." ;;
     esac
     shift
 done
@@ -1213,6 +1385,22 @@ done
 # --from-local is only meaningful with 'code' mode (plugin install path).
 if $FROM_LOCAL && [ "$MODE" != "code" ]; then
     fail "--from-local is only supported with 'code' mode."
+fi
+
+# --complete-install / --complete-uninstall are 'code' mode only.
+if ( $COMPLETE_INSTALL || $COMPLETE_UNINSTALL ) && [ "$MODE" != "code" ]; then
+    fail "--complete-install / --complete-uninstall are only supported with 'code' mode."
+fi
+
+# Dispatch the complete-install/uninstall actions before the generic flow
+# so they exit cleanly without triggering the full interactive install.
+if $COMPLETE_INSTALL; then
+    complete_install_from_plugin
+    exit 0
+fi
+if $COMPLETE_UNINSTALL; then
+    complete_uninstall_from_plugin
+    exit 0
 fi
 
 if [ -z "$MODE" ]; then

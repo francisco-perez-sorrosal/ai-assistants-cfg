@@ -227,12 +227,22 @@ The main entry point is `install.sh`, which routes to `install_claude.sh` (Claud
 
 When installed as a plugin, commands are namespaced: `/co` becomes `/i-am:co`. Plugin permissions for skill reference files are auto-configured at Step 3. See [`README_DEV.md`](README_DEV.md#progressive-disclosure-and-satellite-files) for how progressive disclosure works with plugin-installed skills.
 
-**Manual plugin install** (without the interactive installer):
+**Manual plugin install** (marketplace-only, without cloning):
 
 ```bash
 claude plugin marketplace add francisco-perez-sorrosal/bit-agora
 claude plugin install i-am@bit-agora --scope user
 ```
+
+This installs the plugin body only (skills, commands, agents, hooks, MCP servers). The Claude Code plugin mechanism does not natively cover rules (auto-loaded globally) or CLI scripts on `$PATH`. To finish the setup, start a Claude Code session and run:
+
+```
+/praxion-complete-install
+```
+
+The command finds the plugin in its cache and prompts for consent before each system-level change (rules in `~/.claude/rules/`, scripts in `~/.local/bin/`, context-hub MCP in `~/.claude.json`). Idempotent — safe to re-run.
+
+To reverse, run `/praxion-complete-uninstall`. The plugin body is preserved; remove it separately with `claude plugin uninstall i-am`.
 
 ### Claude Desktop (`./install.sh desktop`)
 

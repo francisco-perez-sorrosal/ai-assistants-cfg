@@ -179,6 +179,19 @@ Usage: $(basename "$0") [code|desktop|cursor [path]] [--check] [--dry-run] [--un
                symlink live; this extends uniform local state to the
                plugin body so edits to skills/commands/agents are
                immediate. Only valid with 'code'.
+  --complete-install
+               Marketplace-only users: finish a 'claude plugin install
+               i-am@bit-agora' by symlinking rules, CLI scripts, and
+               (optionally) context-hub MCP — the surfaces the plugin
+               mechanism does not cover natively. Prompts before each
+               system-level change. Reachable via /praxion-complete-install
+               inside a Claude Code session. Only valid with 'code'.
+  --complete-uninstall
+               Reverse of --complete-install: remove the rule/script
+               symlinks that point at the plugin cache, and optionally
+               remove context-hub MCP. Plugin body is preserved — run
+               'claude plugin uninstall i-am' separately to remove it.
+               Only valid with 'code'.
   --help       Show this help
 EOF
     exit 0
@@ -194,6 +207,8 @@ DRY_RUN=false
 UNINSTALL=false
 RELINK=false
 FROM_LOCAL=false
+COMPLETE_INSTALL=false
+COMPLETE_UNINSTALL=false
 CURSOR_TARGET=""
 
 while [ $# -gt 0 ]; do
@@ -206,6 +221,8 @@ while [ $# -gt 0 ]; do
         --uninstall)  UNINSTALL=true ;;
         --relink)     RELINK=true ;;
         --from-local) FROM_LOCAL=true ;;
+        --complete-install)   COMPLETE_INSTALL=true ;;
+        --complete-uninstall) COMPLETE_UNINSTALL=true ;;
         -h|--help)    show_usage ;;
         *)            fail "Unknown argument: $1. Use --help for usage." ;;
     esac
@@ -235,11 +252,13 @@ delegate_args=()
 case "$MODE" in
     code|desktop)
         delegate_args+=("$MODE")
-        $CHECK      && delegate_args+=(--check)
-        $DRY_RUN    && delegate_args+=(--dry-run)
-        $UNINSTALL  && delegate_args+=(--uninstall)
-        $RELINK     && delegate_args+=(--relink)
-        $FROM_LOCAL && delegate_args+=(--from-local)
+        $CHECK              && delegate_args+=(--check)
+        $DRY_RUN            && delegate_args+=(--dry-run)
+        $UNINSTALL          && delegate_args+=(--uninstall)
+        $RELINK             && delegate_args+=(--relink)
+        $FROM_LOCAL         && delegate_args+=(--from-local)
+        $COMPLETE_INSTALL   && delegate_args+=(--complete-install)
+        $COMPLETE_UNINSTALL && delegate_args+=(--complete-uninstall)
         ;;
     cursor)
         [ -n "$CURSOR_TARGET" ] && delegate_args+=("$CURSOR_TARGET")
