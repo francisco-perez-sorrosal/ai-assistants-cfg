@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Tests for install_claude.sh scripts filter (dec-042).
 #
-# Validates REQ-SL-01, REQ-SL-02, REQ-SL-04, REQ-SL-05:
+# Validates the predicate contract:
 #   - Only executable regular files in scripts/ get linked.
 #   - Internal helpers (merge_driver_*, git-*-hook.sh) are excluded even
 #     when executable.
@@ -59,7 +59,7 @@ fi
 eval "$PREDICATE_BODY"
 
 # -----------------------------------------------------------------------------
-# Test 1: regenerate_adr_index.py is executable in source (REQ-SL-02)
+# Test 1: regenerate_adr_index.py is executable in source
 # -----------------------------------------------------------------------------
 start_test "test_regenerate_adr_index_is_executable"
 TARGET="${REPO_ROOT}/scripts/regenerate_adr_index.py"
@@ -70,7 +70,7 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Test 2: predicate rejects non-executable, accepts executable (REQ-SL-01)
+# Test 2: predicate rejects non-executable, accepts executable
 # -----------------------------------------------------------------------------
 start_test "test_predicate_filters_by_executable_bit"
 TMPDIR="$(mktemp -d)"
@@ -96,7 +96,7 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Test 3: predicate excludes internal helpers by name (REQ-SL-04)
+# Test 3: predicate excludes internal helpers by name
 # -----------------------------------------------------------------------------
 start_test "test_predicate_excludes_internal_helpers"
 MERGE_DRIVER="${TMPDIR}/merge_driver_foo.py"
@@ -126,7 +126,7 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Test 4: predicate rejects CLAUDE.md, test files (EC-3.6.2)
+# Test 4: predicate rejects CLAUDE.md, test files
 # -----------------------------------------------------------------------------
 start_test "test_predicate_rejects_docs_and_tests"
 DOC_FILE="${TMPDIR}/CLAUDE.md"
@@ -149,7 +149,6 @@ fi
 
 # -----------------------------------------------------------------------------
 # Test 5: full scripts/ directory yields the expected 6-file inventory
-#         (EC-3.6.1, EC-3.6.2)
 # -----------------------------------------------------------------------------
 start_test "test_repo_scripts_yield_expected_inventory"
 EXPECTED_LINKED="ccwt chronograph-ctl phoenix-ctl reconcile_ai_state.py regenerate_adr_index.py validate_adr_references.py"
@@ -171,7 +170,7 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Test 6: stale-symlink sweep removes orphaned links (REQ-SL-05)
+# Test 6: stale-symlink sweep removes orphaned links
 # -----------------------------------------------------------------------------
 start_test "test_stale_symlink_sweep_removes_orphans"
 

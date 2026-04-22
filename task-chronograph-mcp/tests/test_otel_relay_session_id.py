@@ -13,8 +13,9 @@ These tests encode the post-rename contract:
 - The attribute survives serialisation to the in-memory OTel export format verbatim
   (OpenInference exporters do not transform the key).
 
-These tests are written concurrently with the Step 3 implementer. They are expected to
-fail until ``otel_relay.py`` applies the rename. They do not modify production code.
+These tests are written concurrently with the rename implementation. They are
+expected to fail until ``otel_relay.py`` applies the rename. They do not modify
+production code.
 """
 
 from __future__ import annotations

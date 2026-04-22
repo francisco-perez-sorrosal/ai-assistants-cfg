@@ -494,7 +494,7 @@ class TestCountSessions:
 # amortize timer noise while staying under 1 s total test wall time.
 _ROTATE_BENCH_ITERATIONS = 200
 
-# EC-3.5.2 upper bound (2 ms p95) for the no-rotation-needed hot path.
+# Upper bound (2 ms p95) for the no-rotation-needed hot path.
 _ROTATE_HOTPATH_P95_MS = 2.0
 
 
@@ -517,7 +517,7 @@ def reset_server_singletons(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
 
 
 class TestSessionStartRotationWiring:
-    """EC-3.5.1 / EC-3.5.2 / EC-3.5.3 / EC-3.5.4 / EC-3.5.5.
+    """Rotation wiring on the session_start hot path.
 
     The MCP ``session_start`` tool wires ``rotate_if_needed`` on the hot path.
     These tests verify the three contract points: no-op latency, rotation
@@ -529,7 +529,7 @@ class TestSessionStartRotationWiring:
     ) -> None:
         """Direct benchmark: the no-rotation path stays under 2 ms p95.
 
-        Per EC-3.5.2 the added wall-clock cost is <2 ms p95 when the file is
+        The added wall-clock cost is <2 ms p95 when the file is
         below threshold. We measure ``rotate_if_needed()`` in isolation — that
         is the only added cost on top of ``store.session_start()``.
         """
@@ -559,8 +559,7 @@ class TestSessionStartRotationWiring:
         p95_ms = samples_ms[p95_index]
 
         assert p95_ms <= _ROTATE_HOTPATH_P95_MS, (
-            f"rotate_if_needed p95 {p95_ms:.3f} ms exceeds "
-            f"{_ROTATE_HOTPATH_P95_MS} ms budget (EC-3.5.2)"
+            f"rotate_if_needed p95 {p95_ms:.3f} ms exceeds {_ROTATE_HOTPATH_P95_MS} ms budget"
         )
 
         # Expose the measurement for the TEST_RESULTS.md capture.
@@ -573,8 +572,9 @@ class TestSessionStartRotationWiring:
     ) -> None:
         """Over-threshold rotation succeeds and summary reports the rotated file.
 
-        Covers EC-3.5.1 (rotate called from session_start), EC-3.5.3
-        (rotation occurs + summary still returned), and EC-3.5.5 (new path).
+        Covers rotate being called from session_start, rotation occurring
+        while summary is still returned, and discovery of the new rotated-to
+        path name.
         """
         _, obs_path = reset_server_singletons
 
@@ -618,7 +618,7 @@ class TestSessionStartRotationWiring:
     ) -> None:
         """Rotation failure is swallowed into the summary; session_start succeeds.
 
-        Covers EC-3.5.4 — a disk-full / permission error must never surface
+        A disk-full / permission error must never surface
         as an exception from ``session_start``. The error is captured under
         ``observations_rotation_error``.
         """

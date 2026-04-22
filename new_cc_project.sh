@@ -34,7 +34,7 @@ usage() {
     printf 'Usage: new_cc_project.sh <project-name> [target-dir]\n' >&2
 }
 
-# Parse args (REQ-ONBOARD-01).
+# Parse args.
 if [ $# -lt 1 ] || [ -z "${1:-}" ]; then
     usage
     exit "$EXIT_USAGE"
@@ -49,7 +49,7 @@ if ! [[ "$project_name" =~ $NAME_REGEX ]]; then
     exit "$EXIT_USAGE"
 fi
 
-# Prereq: claude binary (REQ-ONBOARD-02).
+# Prereq: claude binary.
 if ! command -v claude >/dev/null 2>&1; then
     cat >&2 <<EOF
 Error: 'claude' binary not found in PATH.
@@ -59,7 +59,7 @@ EOF
     exit "$EXIT_NO_CLAUDE"
 fi
 
-# Prereq: i-am plugin recorded in user-scope plugin registry (REQ-ONBOARD-03).
+# Prereq: i-am plugin recorded in user-scope plugin registry.
 if [ ! -f "$PLUGIN_FILE" ] || ! grep -q "$PLUGIN_KEY" "$PLUGIN_FILE"; then
     cat >&2 <<EOF
 Error: the 'i-am' plugin is not installed in your Claude Code user scope.
@@ -69,7 +69,7 @@ EOF
     exit "$EXIT_NO_PLUGIN"
 fi
 
-# Prereq: git binary (REQ-ONBOARD-04).
+# Prereq: git binary.
 if ! command -v git >/dev/null 2>&1; then
     cat >&2 <<EOF
 Error: 'git' not found in PATH.
@@ -78,7 +78,7 @@ EOF
     exit "$EXIT_NO_GIT"
 fi
 
-# Collision check (REQ-ONBOARD-05) — must precede any mkdir.
+# Collision check — must precede any mkdir.
 project_path="${target_dir%/}/${project_name}"
 if [ -e "$project_path" ] && [ -n "$(ls -A "$project_path" 2>/dev/null)" ]; then
     cat >&2 <<EOF
@@ -88,7 +88,7 @@ EOF
     exit "$EXIT_TARGET_EXISTS"
 fi
 
-# Scaffold (REQ-ONBOARD-06).
+# Scaffold.
 mkdir -p "$project_path"
 cd "$project_path"
 git init -q
@@ -184,7 +184,7 @@ case "$editor_choice" in
         ;;
 esac
 
-# Pre-flight announcement (REQ-ONBOARD-07).
+# Pre-flight announcement.
 if [ "$editor_launched" = "claude-desktop" ]; then
     printf '→ Launched Claude Code desktop app — %s.\n' "$desktop_path_announce"
 elif [ -n "$editor_launched" ]; then
@@ -235,6 +235,6 @@ fi
 # `mcp__chub__*` glob covers chub MCP additions without future churn here.
 ALLOWED_TOOLS="mcp__chub__*,WebFetch,WebSearch,Bash(chub:*),Bash(uv:*),Bash(git:*),Bash(grep:*),Bash(pytest:*),Bash(test:*)"
 
-# Hand off (REQ-ONBOARD-08). `--` stops `claude` from interpreting any leading
+# Hand off. `--` stops `claude` from interpreting any leading
 # dash in the seed prompt as a flag.
 exec claude --permission-mode acceptEdits --allowedTools "$ALLOWED_TOOLS" -- "$seed_prompt"

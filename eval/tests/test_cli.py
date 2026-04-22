@@ -30,7 +30,7 @@ def test_behavioral_no_subprocess_no_network(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ):
-    """EC-3.1.3: behavioral eval must not spawn subprocesses or import phoenix."""
+    """Behavioral eval must not spawn subprocesses or import phoenix."""
     # Fingerprint subprocess.run + phoenix import — any attempt should flag the test.
     import subprocess
 

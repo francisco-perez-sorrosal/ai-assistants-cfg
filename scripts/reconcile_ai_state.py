@@ -229,8 +229,8 @@ def reconcile_adr_numbers() -> bool:
 
     Returns True if any renumbering was done.
     """
-    # DEPRECATED: retained for one release as a defensive safety net per
-    # AC-20 of the concurrency-collab pipeline. The primary ADR-finalize
+    # DEPRECATED: retained for one release as a defensive safety net
+    # flagged during the concurrency-collab pipeline. The primary ADR-finalize
     # path is scripts/finalize_adrs.py, invoked by the post-merge hook
     # after this reconcile pass. When drafts are present, that path owns
     # ADR lifecycle management and this legacy renumber code path is

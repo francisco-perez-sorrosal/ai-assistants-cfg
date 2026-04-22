@@ -163,6 +163,12 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/commit_gate.sh ${CLAUDE_PLUGIN_ROOT}/hooks/remind_memory.py",
             "timeout": 15,
             "async": false
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/commit_gate.sh ${CLAUDE_PLUGIN_ROOT}/scripts/check_id_citation_discipline.py",
+            "timeout": 20,
+            "async": false
           }
         ]
       },

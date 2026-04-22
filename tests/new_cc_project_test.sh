@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # Tests for new_cc_project.sh greenfield onboarding script.
 #
-# Validates REQ-ONBOARD-01..08 (bash-observable behavior).
-# T1: req01 -- no args -> usage on stderr, exit 2
+# Validates the bash-observable behaviors of the scaffold:
+# T1: no args -> usage on stderr, exit 2
 # T2: security -- invalid project name -> exit 2, no mkdir
-# T3: req02 -- missing claude -> exit 3, message mentions claude
-# T4: req03 -- missing i-am plugin record -> exit 4
-# T5: req04 -- missing git -> exit 5
-# T6: req05 -- target exists & non-empty -> exit 6, no mutation
-# T7: req06+req07+req08 -- happy path: scaffold + pre-flight + exec claude
+# T3: missing claude -> exit 3, message mentions claude
+# T4: missing i-am plugin record -> exit 4
+# T5: missing git -> exit 5
+# T6: target exists & non-empty -> exit 6, no mutation
+# T7: happy path -- scaffold + pre-flight + exec claude
 #
-# Run from repo root after Step 1 lands new_cc_project.sh:
+# Run from repo root:
 #   bash tests/new_cc_project_test.sh
 #
 # Exits 0 on full pass, 1 on any failure. Portable to macOS (BSD) + Linux.
@@ -200,7 +200,7 @@ EOF
         fail "T7: .claude/ should be empty"; return
     fi
     if ! cmp -s "$expected_gitignore" "$project_dir/.gitignore"; then
-        fail "T7: .gitignore byte-mismatch (expected REQ-ONBOARD-06 content)"; return
+        fail "T7: .gitignore byte-mismatch (expected canonical content)"; return
     fi
     if ! grep -qE '(Scaffold|Launching|Claude)' "$LAST_OUT"; then
         fail "T7: pre-flight stdout line missing; stdout=$(cat "$LAST_OUT")"; return
