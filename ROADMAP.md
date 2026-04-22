@@ -590,7 +590,7 @@ Items to remove or retire during the roadmap execution:
 | `github-star` skill | Move to command (procedure, not domain expertise). The `/star-repo` command already exists | 4 |
 | `TODO.md` | Retired in Phase 1.7 (2026-04-16) — single upstream-issue watch folded into ROADMAP/resolved upstream | 1 ✅ |
 | `SOLID_FOUNDATION_IMPROVEMENTS.md` | Retire. Open items migrated to this ROADMAP. Done items are historical record | 1 |
-| `task-chronograph-mcp/.ai-work/` | Delete leftover pipeline artifacts | 1 |
+| `task-chronograph-mcp/.ai-work/` | Deleted (2026-04-21): stale March 31 pipeline fragments from observability-platform feature; gotchas verified as reflected in committed code | 1 ✅ |
 | `/co` + `/cop` duplication | Refactor: extract shared commit process, `/cop` adds push step | 2 |
 | `scripts/__pycache__` | Confirmed in Phase 1.7 — `__pycache__/` + `*.pyc` in `.gitignore`; nothing tracked | 1 ✅ |
 | Rename `/cajalogic` | Create `/memory` alias for discoverability (keep `/cajalogic` for backward compatibility) | 2 |
