@@ -418,6 +418,39 @@ The plugin manifest lives in `.claude-plugin/plugin.json`. Key constraints:
 - The plugin is distributed via the [`bit-agora`](https://github.com/francisco-perez-sorrosal/bit-agora) GitHub marketplace
 - When installed, commands are namespaced as `/i-am:<name>`
 
+### Plugin cache contains the full repo
+
+When `claude plugin install i-am@bit-agora` runs, Claude Code clones the entire Praxion repo at the marketplace-pinned tag into `~/.claude/plugins/cache/bit-agora/i-am/<version>/`. The plugin mechanism only **loads** what `plugin.json` declares (skills, commands, agents, hooks, MCP servers) — but the rest of the repo (rules, CLI scripts, `install.sh`, `lib/`, `memory-mcp/`, `task-chronograph-mcp/`, `eval/`, etc.) sits on disk unused by the loader.
+
+`/praxion-complete-install` relies on this. It resolves `${CLAUDE_PLUGIN_ROOT}` (set by Claude Code) and invokes the cached `install.sh` with `--complete-install`, which symlinks `${CLAUDE_PLUGIN_ROOT}/rules/` → `~/.claude/rules/` and `${CLAUDE_PLUGIN_ROOT}/scripts/` → `~/.local/bin/`. Source and destination are both local; no network, no extra clone.
+
+### Marketplace-only install flow (internal architecture)
+
+The three system-level surfaces (rules, scripts, context-hub MCP) that the plugin mechanism doesn't cover are reached through two cooperating artifacts:
+
+- `install_claude.sh::complete_install_from_plugin()` — the actual logic. Prompts per-surface for consent, reuses `link_rules()` from `lib/install_shared.sh` and the same filter predicate as `relink_all()` for scripts, delegates to `prompt_chub_mcp()` for the MCP entry.
+- `commands/praxion-complete-install.md` — thin slash command that resolves `CLAUDE_PLUGIN_ROOT` and invokes `install.sh code --complete-install` from the cache.
+
+The inverse pair (`complete_uninstall_from_plugin()` + `/praxion-complete-uninstall`) removes only symlinks whose target begins with the plugin cache path. Hand-installed rules/scripts from other sources are left alone.
+
+### Three install modes coexist
+
+| Flag | Plugin body source | Rules + scripts source | When to use |
+|---|---|---|---|
+| `./install.sh code` | Marketplace @ latest tag | Local checkout | Clone-based install (default) |
+| `./install.sh code --from-local` | Local checkout (symlinked into cache) | Local checkout | Active dev on Praxion itself |
+| `/praxion-complete-install` (after `claude plugin install ...`) | Marketplace @ latest tag | Plugin cache @ same tag | Marketplace-only, no clone |
+
+**Don't mix modes.** If you've used `--from-local`, the cache is a symlink to your working tree. Running `/praxion-complete-install` on top would be redundant (rules/scripts already point where needed via `install.sh`'s regular relink). If you switch from `--from-local` to marketplace mode (by running `claude plugin install` again), the cache is replaced with a real copy, and the old symlinks from your working tree become orphaned — re-run `./install.sh code` or `/praxion-complete-install` to rewire.
+
+### Post-update refresh
+
+`claude plugin update i-am` replaces the cache directory entirely. Any symlinks that pointed at the old cache dir now dangle. Re-run `/praxion-complete-install` (or `./install.sh code --relink` for clone-based installs) to rewire symlinks to the new version. No automatic refresh hook exists today because Claude Code doesn't expose a PostPluginUpdate event — filed as a watch-item for when that API lands.
+
+### Uninstall ordering
+
+Always run `/praxion-complete-uninstall` **before** `claude plugin uninstall i-am`. Reversing the order leaves dangling symlinks pointing at a deleted cache directory. The complete-uninstall still cleans them up correctly in that case (filter by `target begins with ${CLAUDE_PLUGIN_ROOT}` — absent target doesn't matter, the link itself gets removed), but the right-order path avoids the intermediate broken state.
+
 ## Quality Evals
 
 Quality measurement for agent pipelines that runs **separately from pipeline execution**, not as part of it. The developer invokes `/i-am:eval` by hand after a pipeline has finished; no hook triggers it automatically, and no agent ever calls it while a pipeline is in flight (binding constraint: [`dec-040`](.ai-state/decisions/040-eval-framework-out-of-band.md)). The framework lives in `eval/` as a standalone `uv` project and is **not** bundled with the plugin.

@@ -240,9 +240,13 @@ This installs the plugin body only (skills, commands, agents, hooks, MCP servers
 /praxion-complete-install
 ```
 
-The command finds the plugin in its cache and prompts for consent before each system-level change (rules in `~/.claude/rules/`, scripts in `~/.local/bin/`, context-hub MCP in `~/.claude.json`). Idempotent — safe to re-run.
+The command prompts for consent before each system-level change (rules in `~/.claude/rules/`, scripts in `~/.local/bin/`, context-hub MCP in `~/.claude.json`). Idempotent — safe to re-run.
 
-To reverse, run `/praxion-complete-uninstall`. The plugin body is preserved; remove it separately with `claude plugin uninstall i-am`.
+**No additional download needed.** `claude plugin install` already fetched the *full Praxion repo* at the marketplace-pinned tag into `~/.claude/plugins/cache/bit-agora/i-am/<version>/`. The plugin mechanism only *loads* skills, commands, agents, hooks, and MCP servers from it, but the rest of the repo — rules, CLI scripts, `install.sh` itself — is already on disk in the cache. `/praxion-complete-install` symlinks from that cache; it does not clone, download, or require internet access.
+
+**Refresh after plugin update.** When you run `claude plugin update i-am`, the cache directory is replaced with the new version. Existing symlinks in `~/.claude/rules/` and `~/.local/bin/` now point at the previous cache dir which no longer exists. Re-run `/praxion-complete-install` to refresh them against the new version.
+
+**Uninstall order matters.** If you want to remove Praxion completely, run `/praxion-complete-uninstall` **first**, then `claude plugin uninstall i-am`. Doing the reverse order leaves dangling symlinks that target a deleted cache directory. If that happens, `/praxion-complete-uninstall` will still clean them up (it filters by "target begins with plugin cache path"; an absent target doesn't matter, the link itself gets removed).
 
 ### Claude Desktop (`./install.sh desktop`)
 
