@@ -124,14 +124,20 @@ Run the full test suite after remediation. Collisions surface as pytest collecti
 Three levels of defense, increasing invasiveness:
 
 1. **Hook is already in force.** The `check_id_citation_discipline.py` gate fires on every `git commit` routed through Claude Code, via Praxion's hooks.json. Zero extra setup per project.
-2. **Optional CI check.** Add a step to the project's CI workflow:
+2. **Optional CI check.** Add a step to the project's CI workflow. The cleanest approach is to invoke the globally-linked detector (when the CI runner has run `install_claude.sh`), or pin to a specific detector version via `curl` or `pip`. A minimal GitHub Actions example:
 
    ```yaml
    - name: ID citation discipline
-     run: python3 "$GITHUB_WORKSPACE/.claude/plugins/..../scripts/check_id_citation_discipline.py"
+     run: |
+       if command -v check_id_citation_discipline.py >/dev/null 2>&1; then
+         check_id_citation_discipline.py
+       else
+         echo "detector not on PATH; install Praxion or pin the script" >&2
+         exit 1
+       fi
    ```
 
-   This catches contributors who commit outside Claude Code (plain `git commit`) and bypass the Claude-Code hook.
+   This catches contributors who commit outside Claude Code (plain `git commit`) and bypass the Claude-Code hook. Adjust the setup step for your CI provider.
 3. **Git pre-commit hook.** For projects that want enforcement at the git layer (independent of Claude Code), install a git pre-commit hook that invokes the detector. Praxion does not ship this by default — it's an opt-in per-project install.
 
 ## Decontamination of Memory Entries

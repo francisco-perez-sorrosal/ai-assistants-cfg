@@ -12,15 +12,22 @@ Run the `check_id_citation_discipline.py` detector on the current project and re
 
 ## Procedure
 
-1. **Load the skill.** Read `skills/id-decontamination/SKILL.md` for the six-step methodology.
+1. **Activate the `id-decontamination` skill** — its description-based trigger should fire automatically when this command runs; if not, load it explicitly. The skill contains the canonical six-step methodology.
 
-2. **Run the detector.**
+2. **Locate and run the detector.** Try these in order until one succeeds:
 
    ```bash
+   # (a) Globally-installed symlink (install_claude.sh puts it on PATH in user projects):
+   check_id_citation_discipline.py
+
+   # (b) Plugin install path (if $CLAUDE_PLUGIN_ROOT is set):
    python3 "$CLAUDE_PLUGIN_ROOT/scripts/check_id_citation_discipline.py"
+
+   # (c) Praxion source checkout (only valid inside the Praxion repo itself):
+   python3 scripts/check_id_citation_discipline.py
    ```
 
-   If `$CLAUDE_PLUGIN_ROOT` is unset (running from the Praxion source checkout rather than an installed plugin), fall back to `scripts/check_id_citation_discipline.py`.
+   If none resolve, report "Detector not installed — reinstall Praxion via `install_claude.sh`" and stop.
 
 3. **Classify findings.**
    - 0 violations → report "clean" and stop.

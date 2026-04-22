@@ -148,25 +148,25 @@ PATTERNS: tuple[tuple[str, re.Pattern[str], str], ...] = (
     ),
     (
         "test-req-name",
-        re.compile(r"\bdef test_req\d+_\w+"),
+        re.compile(r"\bdef test_req\d+"),
         "test function name with REQ prefix — name after the behavior "
         "(e.g., test_expired_token_returns_401)",
     ),
     (
         "test-ac-name",
-        re.compile(r"\bdef test_ac\d+_\w+"),
+        re.compile(r"\bdef test_ac\d+"),
         "test function name with AC prefix — name after the behavior",
     ),
     (
         "class-req-name",
-        re.compile(r"\bclass Test[A-Z]\w*Req\d+\w*"),
-        "test class name with Req{NN} suffix — name after the behavioral "
+        re.compile(r"\bclass Test\w*Req\d+\w*"),
+        "test class name with Req{NN} in the identifier — name after the behavioral "
         "concept (e.g., TestSecretRedaction)",
     ),
     (
         "class-ac-name",
-        re.compile(r"\bclass Test[A-Z]\w*Ac\d+\w*"),
-        "test class name with Ac{NN} suffix — name after the behavioral concept",
+        re.compile(r"\bclass Test\w*Ac\d+\w*"),
+        "test class name with Ac{NN} in the identifier — name after the behavioral concept",
     ),
 )
 
