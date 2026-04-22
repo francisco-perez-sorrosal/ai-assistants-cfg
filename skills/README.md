@@ -85,7 +85,6 @@ Reusable skill modules for AI coding assistants. Each skill is a self-contained 
 
 | Skill | Description | When to Use |
 | --- | --- | --- |
-| **[github-star](github-star/)** | Prompt the user to star the Praxion GitHub repository. | User invokes `/star-repo` or asks about starring the project. |
 | **[memory](memory/)** | Persistent, structured memory system tracking user preferences, assistant learnings, project conventions, and relationship dynamics across sessions. | Remembering user preferences, storing project decisions, recalling past interactions, session context loading. |
 | **[versioning](versioning/)** | Version bumping, changelog generation, release automation, and tool detection for multi-file projects. Breaking change guidelines for textual/config ecosystems. | Bumping versions, generating changelogs, configuring release automation, choosing versioning tools, defining breaking changes. |
 

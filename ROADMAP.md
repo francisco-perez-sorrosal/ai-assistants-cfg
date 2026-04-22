@@ -433,7 +433,7 @@ New capabilities informed by external research and gap analysis.
 
 **Deferred (follow-up items):**
 - `typescript-development` skill (general TS development beyond prompt engineering) — remains open, not blocked
-- `github-star` → command migration — remains open
+- `github-star` → command migration ✅ DONE (2026-04-21) — procedure inlined into `commands/star-repo.md`; `skills/github-star/` directory removed; ADR-014 precedent citations updated
 - `mcp-crafting` TS context — partly addressed by `llm-prompt-engineering/contexts/typescript.md` for prompt concerns, but a dedicated `mcp-crafting/contexts/typescript.md` is still needed for TS MCP SDK patterns
 
 **Dependencies**: 1.1 (token budget for new skills) — satisfied.
@@ -587,7 +587,7 @@ Items to remove or retire during the roadmap execution:
 |------|--------|-------|
 | `claude/config/CLAUDE.md` | **KEEP** — intentionally versioned mirror of `~/.claude/CLAUDE.md`; project preserves it under git so the user-level philosophy travels with the repo | — |
 | `claude/config/CLAUDE_OLD.md`, `CLAUDE_UNPOLISHED.md` | Deleted in Phase 1.7 (historical trial-version prompts) | 1 ✅ |
-| `github-star` skill | Move to command (procedure, not domain expertise). The `/star-repo` command already exists | 4 |
+| `github-star` skill | Retired (2026-04-21): procedure inlined into `commands/star-repo.md`; skill directory deleted; ADR-014 precedent citations updated | 4 ✅ |
 | `TODO.md` | Retired in Phase 1.7 (2026-04-16) — single upstream-issue watch folded into ROADMAP/resolved upstream | 1 ✅ |
 | `SOLID_FOUNDATION_IMPROVEMENTS.md` | Retire. Open items migrated to this ROADMAP. Done items are historical record | 1 |
 | `task-chronograph-mcp/.ai-work/` | Deleted (2026-04-21): stale March 31 pipeline fragments from observability-platform feature; gotchas verified as reflected in committed code | 1 ✅ |

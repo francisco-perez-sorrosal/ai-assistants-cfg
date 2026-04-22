@@ -98,7 +98,7 @@ Reusable knowledge modules loaded automatically based on context. See [`skills/R
 | Software Development | python-development, python-prj-mgmt, project-exploration, refactoring, code-review, software-planning, spec-driven-development, agent-evals, cicd, testing-strategy, versioning |
 | Security | context-security-review |
 | OSS Contribution | upstream-stewardship |
-| Project | memory, github-star |
+| Project | memory |
 
 ### Commands
 

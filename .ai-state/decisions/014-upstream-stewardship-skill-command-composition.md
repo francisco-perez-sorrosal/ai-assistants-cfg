@@ -52,7 +52,7 @@ A new `upstream-steward` agent with its own context window.
 
 ### Option 3: Skill + Command (chosen)
 
-Skill provides methodology. Command provides user trigger. Follows the `github-star` + `star-repo` pattern.
+Skill provides methodology. Command provides user trigger.
 
 **Pros:** Best user ergonomics via `/report-upstream`. Skill reusable by agents. No agent count increase. Command runs in main context (no overhead). Follows dec-007 skill-centric precedent.
 **Cons:** No autonomous detection. User must invoke manually.
@@ -71,7 +71,7 @@ Skill provides methodology. Agent provides automation.
 - Command is immediately discoverable via `/` slash-command menu
 - Skill methodology is reusable by researcher, implementer, or verifier when they encounter upstream bugs
 - Tracker provides git-committed audit trail of all upstream interactions
-- Pattern follows two established precedents (github-star + star-repo, dec-007)
+- Pattern follows the skill-centric precedent established in dec-007
 
 **Negative:**
 - No autonomous upstream bug detection -- agents can flag but not file

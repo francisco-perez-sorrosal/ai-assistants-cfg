@@ -22,7 +22,6 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── deployment/
 ├── doc-management/
 ├── external-api-docs/
-├── github-star/
 ├── hook-crafting/
 ├── llm-prompt-engineering/
 ├── mcp-crafting/
