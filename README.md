@@ -98,7 +98,7 @@ Reusable knowledge modules loaded automatically based on context. See [`skills/R
 | Software Development | python-development, python-prj-mgmt, project-exploration, refactoring, code-review, software-planning, spec-driven-development, agent-evals, cicd, testing-strategy, versioning |
 | Security | context-security-review |
 | OSS Contribution | upstream-stewardship |
-| Project | memory |
+| Project | memory, id-decontamination |
 
 ### Commands
 
@@ -115,6 +115,7 @@ Slash commands invoked with `/<name>`. In Claude Code plugin mode, use `/i-am:<n
 | `/add-rules` | Copy rules into the current project for customization |
 | `/manage-readme` | Create or refine README.md files |
 | `/clean-work` | Clean the `.ai-work/` directory after pipeline completion |
+| `/decontaminate-ids` | Detect and remediate REQ/AC/step citations in project source code |
 | `/cajalogic` | Manage persistent memory (user prefs, learnings, conventions, observations) |
 | `/onboard-project` | Onboard the current project to work with the ecosystem |
 | `/sdd-coverage` | Report spec-to-test and spec-to-code coverage for REQ IDs |

@@ -85,6 +85,7 @@ Reusable skill modules for AI coding assistants. Each skill is a self-contained 
 
 | Skill | Description | When to Use |
 | --- | --- | --- |
+| **[id-decontamination](id-decontamination/)** | Detection and remediation methodology for ephemeral identifier citations (REQ, AC, step numbers) in project source code. Pairs with the `check_id_citation_discipline.py` detector. | Cleaning up a project contaminated with id citations from pipelines predating the id-citation-discipline rule, responding to detector violations, invoked via `/decontaminate-ids`. |
 | **[memory](memory/)** | Persistent, structured memory system tracking user preferences, assistant learnings, project conventions, and relationship dynamics across sessions. | Remembering user preferences, storing project decisions, recalling past interactions, session context loading. |
 | **[versioning](versioning/)** | Version bumping, changelog generation, release automation, and tool detection for multi-file projects. Breaking change guidelines for textual/config ecosystems. | Bumping versions, generating changelogs, configuring release automation, choosing versioning tools, defining breaking changes. |
 

@@ -23,6 +23,7 @@ skills/                              # Shared skill modules (assistant-agnostic)
 ├── doc-management/
 ├── external-api-docs/
 ├── hook-crafting/
+├── id-decontamination/
 ├── llm-prompt-engineering/
 ├── mcp-crafting/
 ├── memory/
@@ -51,6 +52,7 @@ commands/                            # Shared slash commands
 ├── cop.md
 ├── create-simple-python-prj.md
 ├── create-worktree.md
+├── decontaminate-ids.md
 ├── eval.md
 ├── explore-project.md
 ├── full-security-scan.md

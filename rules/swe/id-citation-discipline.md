@@ -87,4 +87,10 @@ Describe behavior, constraints, or intent. Do not embed REQ/AC/step references. 
 
 ### Enforcement
 
-The sentinel and the `check_shipped_artifact_isolation.py` pair currently enforce outbound isolation. Inbound enforcement (this rule) is taught here and applied by implementer/test-engineer self-review and the verifier's convention compliance phase. A mechanical check — parallel to the outbound one — can be added when violation rates justify it.
+**Outbound** (shipped artifacts must not reference `.ai-state/` entries): the sentinel plus `scripts/check_shipped_artifact_isolation.py` invoked via `hooks/commit_gate.sh` enforce this discipline.
+
+**Inbound** (code must not reference `.ai-work/` entries, this rule): `scripts/check_id_citation_discipline.py` mechanically enforces this via `hooks/commit_gate.sh` on every `git commit` — the inbound counterpart to the outbound check. Exempt paths include teaching material (`rules/`, `skills/`, `agents/`, `commands/`, `claude/config/`, `cursor/config/`), history (`CHANGELOG.md`, `ROADMAP.md`), pipeline state (`.ai-work/`, `.ai-state/`, `docs/`), installer UI (`install*.sh`), test fixtures, and vendored dependency trees. The implementer/test-engineer self-review and the verifier's convention compliance phase also teach the discipline, but the gate is the primary enforcement layer.
+
+**Remediation** (for projects already contaminated before this discipline was in force): the [`id-decontamination` skill](../../skills/id-decontamination/SKILL.md) bundles the six-step procedure — prerequisite check, detection, salvage, triage & remediation, verification, regression prevention — and is invoked via the [`/decontaminate-ids`](../../commands/decontaminate-ids.md) command. Use it for any project that reports detector violations.
+
+**Escape hatch**: intentional references (e.g., detector scripts describing the forbidden patterns) can be marked with `id-citation-discipline:ignore` on the same line. Use sparingly — exempt paths should handle most legitimate cases.
