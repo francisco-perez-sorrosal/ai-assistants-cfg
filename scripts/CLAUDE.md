@@ -4,6 +4,7 @@ Utility and operational scripts for the Praxion ecosystem.
 
 ## Available Scripts
 
+- `praxion-claude-dev` — Launch Claude Code with the Praxion working tree as the plugin source (wraps `claude --plugin-dir`). Passes `--dangerously-skip-permissions` by default; set `PRAXION_DEV_SAFE=1` to keep prompts. See [Session-scoped local testing](../README_DEV.md#session-scoped-local-testing)
 - `ccwt` — Claude Code Worktrees: opens a tmux session with one pane per git worktree, each running Claude Code
 - `chronograph-ctl` — Development helper for the Task Chronograph MCP server (start/stop/restart/status/logs from source)
 - `phoenix-ctl` — Manage the Phoenix observability daemon (install/start/stop/restart/status/uninstall via launchd)

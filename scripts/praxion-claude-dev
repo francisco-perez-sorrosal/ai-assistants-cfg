@@ -6,12 +6,18 @@
 # session (per Claude Code docs — no uninstall needed). Edits to skills,
 # commands, agents, or hooks are live; run /reload-plugins inside the
 # session to refresh without relaunching.
+#
+# By default the launcher also passes --dangerously-skip-permissions,
+# because dev loops against your own working tree rarely benefit from
+# per-tool prompts and those prompts break the "edit → reload → retry"
+# flow. To keep permission prompts enabled (e.g., when testing a hook's
+# permission behavior), run with PRAXION_DEV_SAFE=1 in the environment.
 
 set -euo pipefail
 
 # Resolve this script's real path even when invoked through a symlink
-# (e.g., via ~/.local/bin/claude-dev). macOS-safe — avoids GNU readlink -f
-# and handles nested symlinks.
+# (e.g., via ~/.local/bin/praxion-claude-dev). macOS-safe — avoids GNU
+# readlink -f and handles nested symlinks.
 self="${BASH_SOURCE[0]}"
 while [ -L "$self" ]; do
     dir="$(cd -P "$(dirname "$self")" && pwd)"
@@ -22,9 +28,15 @@ done
 praxion_root="$(cd -P "$(dirname "$self")/.." && pwd)"
 
 if [ ! -f "$praxion_root/.claude-plugin/plugin.json" ]; then
-    printf "claude-dev: %s does not look like the Praxion repo root\n" "$praxion_root" >&2
+    printf "praxion-claude-dev: %s does not look like the Praxion repo root\n" "$praxion_root" >&2
     printf "  (expected %s/.claude-plugin/plugin.json)\n" "$praxion_root" >&2
     exit 1
 fi
 
-exec claude --plugin-dir "$praxion_root" "$@"
+# Safe mode: caller opted out of --dangerously-skip-permissions.
+if [ "${PRAXION_DEV_SAFE:-0}" = "1" ]; then
+    exec claude --plugin-dir "$praxion_root" "$@"
+fi
+
+# Default: skip per-tool permission prompts during the dev loop.
+exec claude --plugin-dir "$praxion_root" --dangerously-skip-permissions "$@"
