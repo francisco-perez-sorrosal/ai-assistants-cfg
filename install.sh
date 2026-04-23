@@ -164,7 +164,7 @@ EOF
 
 show_usage() {
     cat <<EOF
-Usage: $(basename "$0") [code|desktop|cursor [path]] [--check] [--dry-run] [--uninstall] [--from-local] [--help]
+Usage: $(basename "$0") [code|desktop|cursor [path]] [--check] [--dry-run] [--uninstall] [--help]
 
   code         Install for Claude Code (default)
   desktop      Install for Claude Desktop
@@ -174,11 +174,6 @@ Usage: $(basename "$0") [code|desktop|cursor [path]] [--check] [--dry-run] [--un
   --dry-run    Show what would be installed (no writes)
   --uninstall  Remove installation
   --relink     Re-symlink config, rules, and scripts (no prompts)
-  --from-local Dev mode: install plugin body from local working tree via
-               symlink (bypasses the marketplace). Rules/scripts already
-               symlink live; this extends uniform local state to the
-               plugin body so edits to skills/commands/agents are
-               immediate. Only valid with 'code'.
   --complete-install
                Marketplace-only users: finish a 'claude plugin install
                i-am@bit-agora' by symlinking rules, CLI scripts, and
@@ -206,7 +201,6 @@ CHECK=false
 DRY_RUN=false
 UNINSTALL=false
 RELINK=false
-FROM_LOCAL=false
 COMPLETE_INSTALL=false
 COMPLETE_UNINSTALL=false
 CURSOR_TARGET=""
@@ -220,7 +214,6 @@ while [ $# -gt 0 ]; do
         --dry-run)    DRY_RUN=true ;;
         --uninstall)  UNINSTALL=true ;;
         --relink)     RELINK=true ;;
-        --from-local) FROM_LOCAL=true ;;
         --complete-install)   COMPLETE_INSTALL=true ;;
         --complete-uninstall) COMPLETE_UNINSTALL=true ;;
         -h|--help)    show_usage ;;
@@ -256,7 +249,6 @@ case "$MODE" in
         $DRY_RUN            && delegate_args+=(--dry-run)
         $UNINSTALL          && delegate_args+=(--uninstall)
         $RELINK             && delegate_args+=(--relink)
-        $FROM_LOCAL         && delegate_args+=(--from-local)
         $COMPLETE_INSTALL   && delegate_args+=(--complete-install)
         $COMPLETE_UNINSTALL && delegate_args+=(--complete-uninstall)
         ;;

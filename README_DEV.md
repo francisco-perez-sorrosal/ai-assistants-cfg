@@ -361,46 +361,14 @@ Load the plugin directly from the cloned repo for a single session. Changes to s
 claude --plugin-dir /path/to/Praxion
 ```
 
-Personal config and rules are **not** loaded. Use `./install.sh code --from-local` if you also need those.
-
-### Persistent local-mode install (recommended for active development)
-
-`./install.sh code` installs a hybrid state by default: the plugin body is pinned to the marketplace version (the current stable tag), while rules and CLI scripts symlink to your working tree. This asymmetry is fine for convention work (rules iterate freely) but surprising when you edit a skill or command and reinstall — the plugin body stays at the marketplace tag and your edit is invisible.
-
-`--from-local` is the developer mode that eliminates the asymmetry:
-
-```bash
-./install.sh code --from-local
-```
-
-What it does:
-
-- Clears any existing plugin cache entry for `i-am@bit-agora`
-- Creates a **symlink** from the plugin cache directly to your Praxion checkout, using a synthetic version key of the form `local-<short-sha>[-dirty]`
-- Registers the install in `~/.claude/plugins/installed_plugins.json` with a `localMode: true` marker and the real `plugin.json` version (e.g., `0.2.1.dev0`)
-- Reuses the existing rules + scripts symlink layer — now all three surfaces trace back to the same working tree
-
-Edits to any file under the checkout (skill, command, agent, hook, rule, script) are visible to Claude Code on the next load — no reinstall needed.
-
-**Caveat**: `claude plugin update i-am` will overwrite the symlink with a marketplace snapshot, silently exiting local mode. Re-run `./install.sh code --from-local` to restore it. `--uninstall` correctly tears down the symlink (it targets the cache directory, not the working tree).
-
-**Manual equivalent** (if you want to bypass `install.sh` entirely, e.g., in CI or a container):
-
-```bash
-rm -rf ~/.claude/plugins/cache/bit-agora/i-am/*
-ln -s "$(pwd)" ~/.claude/plugins/cache/bit-agora/i-am/local-dev
-# And manually update installed_plugins.json to register the new installPath
-```
-
-The `--from-local` flag does this plus the registry update atomically; prefer the flag unless you're deliberately bypassing the installer.
+Personal config and rules are **not** loaded — this mode only tests plugin content.
 
 ### Updating the plugin cache
 
 After modifying the plugin manifest or adding new components, update the installed copy:
 
 ```bash
-./install.sh code              # Re-run installer (marketplace install — use for stable-tag testing)
-./install.sh code --from-local # Persistent local dev mode (recommended for active development)
+./install.sh code              # Re-run installer (marketplace install)
 claude plugin install i-am@bit-agora --scope user   # Or install directly from the marketplace
 ```
 
@@ -433,15 +401,14 @@ The three system-level surfaces (rules, scripts, context-hub MCP) that the plugi
 
 The inverse pair (`complete_uninstall_from_plugin()` + `/praxion-complete-uninstall`) removes only symlinks whose target begins with the plugin cache path. Hand-installed rules/scripts from other sources are left alone.
 
-### Three install modes coexist
+### Two install modes coexist
 
 | Flag | Plugin body source | Rules + scripts source | When to use |
 |---|---|---|---|
 | `./install.sh code` | Marketplace @ latest tag | Local checkout | Clone-based install (default) |
-| `./install.sh code --from-local` | Local checkout (symlinked into cache) | Local checkout | Active dev on Praxion itself |
 | `/praxion-complete-install` (after `claude plugin install ...`) | Marketplace @ latest tag | Plugin cache @ same tag | Marketplace-only, no clone |
 
-**Don't mix modes.** If you've used `--from-local`, the cache is a symlink to your working tree. Running `/praxion-complete-install` on top would be redundant (rules/scripts already point where needed via `install.sh`'s regular relink). If you switch from `--from-local` to marketplace mode (by running `claude plugin install` again), the cache is replaced with a real copy, and the old symlinks from your working tree become orphaned — re-run `./install.sh code` or `/praxion-complete-install` to rewire.
+For live-edit development on Praxion itself, use `claude --plugin-dir /path/to/Praxion` to launch a session that loads the plugin directly from the working tree (see [Session-scoped local testing](#session-scoped-local-testing)).
 
 ### Post-update refresh
 
