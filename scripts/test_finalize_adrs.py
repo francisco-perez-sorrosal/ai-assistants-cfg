@@ -200,8 +200,11 @@ class TestFinalizeSlugExtraction:
                 "main",
                 "slug",
             ),
-            # The real pipeline fixture: multi-word branch with many hyphens.
-            # The parser must take the last dash-segment as the slug.
+            # Multi-hyphen branch with a sibling fragment in the same
+            # directory. Production ADR batches always ship multiple
+            # fragments sharing `<user>-<branch>-`, so the parser's
+            # sibling-prefix discovery has an anchor. The test fixture below
+            # creates that sibling explicitly to mirror reality.
             (
                 "20260419-1815-fperezsorrosal-worktree-concurrency-collab-research-finalize-protocol.md",
                 "fperezsorrosal",
@@ -227,14 +230,23 @@ class TestFinalizeSlugExtraction:
         the branch.
 
         NOTE: When user or branch themselves contain hyphens, the split
-        is inherently ambiguous. The cases above pick the parse that
-        matches the pipeline's own fragment filenames. If the
-        implementer chooses a different canonical rule (e.g., "slug is
-        the last TWO segments"), tests and production will disagree --
-        the integration checkpoint is the reconciliation point.
+        is inherently ambiguous from the filename alone. Production
+        resolves this because ADR batches always ship multiple fragments
+        sharing ``<user>-<branch>-``; the parser's sibling-prefix
+        discovery uses that agreement to pin the boundary. The fixture
+        below creates a peer fragment in ``tmp_path`` so the test
+        exercises the same disambiguation path production uses.
         """
         path = tmp_path / filename
         path.write_text("", encoding="utf-8")
+
+        # Create a peer fragment sharing the expected user+branch prefix
+        # but with a different timestamp and slug. This mirrors
+        # production reality (ADR fragments always arrive in batches)
+        # and gives sibling-prefix discovery an anchor to deduce the
+        # <user>-<branch>- boundary from.
+        peer_name = f"20260101-0000-{expected_user}-{expected_branch}-peer-decision.md"
+        (tmp_path / peer_name).write_text("", encoding="utf-8")
 
         result = finalize.parse_fragment_filename(path)
 

@@ -79,10 +79,19 @@ def parse_fragment_filename(path: Path) -> tuple[datetime, str, str, str]:
 
     Filename shape: `<YYYYMMDD-HHMM>-<user>-<branch>-<slug>.md` where user,
     branch, and slug are each sanitized to `[a-z0-9-]`. Because all three can
-    contain hyphens, pure-filename parsing is ambiguous. We resolve by
-    probing the current git identity and branch to recover the user/branch
-    prefix lengths. When git is unavailable, we fall back to a heuristic:
-    user = first segment, branch = second segment, slug = remainder.
+    contain hyphens, pure-filename parsing is ambiguous. The parser resolves
+    the user/branch/slug boundaries in order of decreasing confidence:
+
+    1. Exact match against `git config user.*` + `git rev-parse HEAD`. The
+       happy path when `finalize` runs on the branch that created the draft.
+    2. Sibling-prefix discovery: scan fragments sharing `path.parent` for a
+       common `<user>-<branch>-` prefix. Pipeline-authored drafts arrive in
+       batches sharing user+branch, so the longest common dash-aligned
+       prefix is the branch. Handles the post-merge case where git hints
+       are stale (branch is `main`, not the authoring branch).
+    3. Heuristic fallback: user = first token, branch = second token, slug
+       = remainder. Ambiguous when user or branch themselves contain
+       hyphens; logs a warning so the caller knows the parse is best-effort.
 
     Raises ValueError if the filename does not match the fragment pattern.
     """
@@ -100,35 +109,192 @@ def parse_fragment_filename(path: Path) -> tuple[datetime, str, str, str]:
 
     user_slug_hint = _current_git_user_slug()
     branch_slug_hint = _current_git_branch_slug()
-    user, branch, slug = _split_user_branch_slug(rest, user_slug_hint, branch_slug_hint)
+    user, branch, slug = _split_user_branch_slug(
+        rest,
+        user_slug_hint,
+        branch_slug_hint,
+        siblings_dir=path.parent,
+        self_name=path.name,
+    )
     return timestamp, user, branch, slug
 
 
 def _split_user_branch_slug(
-    rest: str, user_hint: str | None, branch_hint: str | None
+    rest: str,
+    user_hint: str | None,
+    branch_hint: str | None,
+    siblings_dir: Path | None = None,
+    self_name: str | None = None,
 ) -> tuple[str, str, str]:
-    """Split `<user>-<branch>-<slug>` using hints from git config when possible.
+    """Split `<user>-<branch>-<slug>` using hints and sibling discovery.
 
-    When both hints match a prefix of `rest`, we consume them exactly.
-    Otherwise we fall back to: user = first token, branch = second token,
-    slug = remainder. The heuristic fallback is imperfect but deterministic.
+    Priority order:
+        1. Both git hints match a prefix of `rest` -- consume exactly.
+        2. Sibling-prefix discovery -- scan other fragments in
+           `siblings_dir` for a common `<user>-<branch>-` prefix.
+        3. Heuristic fallback -- user=first, branch=second, slug=rest
+           (imperfect for multi-hyphen branches but deterministic).
     """
     if user_hint and rest.startswith(user_hint + "-"):
         after_user = rest[len(user_hint) + 1 :]
         if branch_hint and after_user.startswith(branch_hint + "-"):
             slug = after_user[len(branch_hint) + 1 :]
             return user_hint, branch_hint, slug
-        # Branch hint did not match; second segment is branch.
+
+        # User hint matched but branch hint did not. Try sibling-prefix
+        # discovery before falling back to the first-token heuristic.
+        discovered = _discover_branch_from_siblings(
+            rest, user_hint, siblings_dir, self_name
+        )
+        if discovered is not None:
+            branch, slug = discovered
+            return user_hint, branch, slug
+
+        # Last-resort heuristic: branch = first token after user, slug = rest.
         tokens = after_user.split("-", 1)
         if len(tokens) < 2:
             raise ValueError(f"cannot extract slug from fragment tail: {rest}")
+        logger.warning(
+            "finalize_adrs: parse_fragment_filename: no sibling drafts to "
+            "disambiguate branch from slug in %r; assuming branch=%r. Pass "
+            "--branch explicitly or populate drafts/ to resolve.",
+            rest,
+            tokens[0],
+        )
         return user_hint, tokens[0], tokens[1]
+
+    # Sibling-prefix discovery without git user hint -- useful when finalize
+    # runs outside a git config context (e.g., CI without user.email set).
+    sibling_parse = _parse_via_siblings(rest, siblings_dir, self_name)
+    if sibling_parse is not None:
+        return sibling_parse
 
     # Heuristic fallback: user=first, branch=second, slug=rest.
     tokens = rest.split("-", 2)
     if len(tokens) < 3:
         raise ValueError(f"fragment tail too short to split: {rest}")
     return tokens[0], tokens[1], tokens[2]
+
+
+def _discover_branch_from_siblings(
+    rest: str,
+    user_hint: str,
+    siblings_dir: Path | None,
+    self_name: str | None,
+) -> tuple[str, str] | None:
+    """Discover branch+slug via dash-aligned LCP across sibling fragments.
+
+    Given user_hint matches `rest`, examine other fragments in `siblings_dir`
+    whose names also begin with the same user prefix. The longest common
+    dash-aligned prefix *after* `<user>-` across the batch is the branch.
+
+    Returns (branch, slug) when a common prefix is discovered; None
+    otherwise (no siblings, no agreement, or degenerate common prefix).
+    """
+    if siblings_dir is None or not siblings_dir.is_dir():
+        return None
+
+    peer_tails = _collect_peer_tails(siblings_dir, user_hint, self_name)
+    if not peer_tails:
+        return None
+
+    after_user = rest[len(user_hint) + 1 :]
+    common_branch = _dash_aligned_common_prefix([after_user, *peer_tails])
+    if not common_branch:
+        return None
+
+    slug = after_user[len(common_branch) + 1 :]
+    if not slug:
+        return None
+    return common_branch, slug
+
+
+def _parse_via_siblings(
+    rest: str, siblings_dir: Path | None, self_name: str | None
+) -> tuple[str, str, str] | None:
+    """Parse user+branch+slug by LCP across siblings when no user_hint is set.
+
+    Pipeline drafts share a `<user>-<branch>-` prefix across the batch. When
+    we cannot rely on git config, the LCP itself carries that prefix. We
+    split the discovered prefix at the first dash boundary to recover user
+    and branch: the first dash-segment is the user, the remainder is the
+    branch.
+    """
+    if siblings_dir is None or not siblings_dir.is_dir():
+        return None
+
+    peer_rests = _collect_peer_rests(siblings_dir, self_name)
+    if not peer_rests:
+        return None
+
+    common = _dash_aligned_common_prefix([rest, *peer_rests])
+    if not common:
+        return None
+    parts = common.split("-", 1)
+    if len(parts) < 2:
+        return None
+    user, branch = parts[0], parts[1]
+    slug = rest[len(common) + 1 :]
+    if not user or not branch or not slug:
+        return None
+    return user, branch, slug
+
+
+def _collect_peer_tails(
+    siblings_dir: Path, user_hint: str, self_name: str | None
+) -> list[str]:
+    """Return the `<branch>-<slug>` tails of peer fragments sharing user_hint."""
+    tails: list[str] = []
+    prefix = user_hint + "-"
+    for entry in siblings_dir.iterdir():
+        if not entry.is_file():
+            continue
+        if self_name is not None and entry.name == self_name:
+            continue
+        match = FRAGMENT_ADR_PATTERN.match(entry.name)
+        if match is None:
+            continue
+        peer_rest = match.group("rest")
+        if not peer_rest.startswith(prefix):
+            continue
+        tails.append(peer_rest[len(prefix) :])
+    return tails
+
+
+def _collect_peer_rests(siblings_dir: Path, self_name: str | None) -> list[str]:
+    """Return the `<user>-<branch>-<slug>` rests of peer fragments."""
+    rests: list[str] = []
+    for entry in siblings_dir.iterdir():
+        if not entry.is_file():
+            continue
+        if self_name is not None and entry.name == self_name:
+            continue
+        match = FRAGMENT_ADR_PATTERN.match(entry.name)
+        if match is None:
+            continue
+        rests.append(match.group("rest"))
+    return rests
+
+
+def _dash_aligned_common_prefix(strings: list[str]) -> str:
+    """Return the longest dash-aligned common prefix across `strings`.
+
+    Dash-aligned means the prefix must end just before a `-` in every
+    input -- we never split a token mid-word. Returns an empty string
+    when the inputs share no dash-aligned prefix.
+    """
+    if not strings:
+        return ""
+    shortest = min(strings, key=len)
+    last_dash = -1
+    for i, ch in enumerate(shortest):
+        if any(i >= len(s) or s[i] != ch for s in strings):
+            break
+        if ch == "-":
+            last_dash = i
+    if last_dash < 0:
+        return ""
+    return shortest[:last_dash]
 
 
 def _current_git_user_slug() -> str | None:
