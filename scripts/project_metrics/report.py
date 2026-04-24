@@ -147,15 +147,12 @@ _DEEP_DIVE_LAYOUT: dict[str, tuple[tuple[str, str, Any], ...]] = {
         ("language_count", "Languages detected", _fmt_int),
     ),
     "lizard": (),
-    "complexipy": (
-        ("functions_analyzed", "Functions analyzed", _fmt_int),
-        ("cognitive_p95", "Cognitive p95", _fmt_float_2),
-        ("cognitive_max", "Cognitive max", _fmt_float_raw),
-    ),
-    "pydeps": (
-        ("modules", "Modules", _fmt_int),
-        ("cyclic_sccs", "Cyclic SCCs", _fmt_int),
-    ),
+    # complexipy and pydeps both nest their aggregate metrics under
+    # ``data["aggregate"]`` and emit per-module / per-file dicts at the
+    # top level. The layout map only addresses top-level scalars, so
+    # both collectors are summarized via _DEEP_DIVE_SUMMARIZERS instead.
+    "complexipy": (),
+    "pydeps": (),
     "coverage": (
         ("line_pct", "Line coverage", _fmt_float_2),
         ("artifact_format", "Artifact format", _fmt_float_raw),
@@ -262,9 +259,93 @@ def _summarize_lizard(data: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _summarize_complexipy(data: dict[str, Any]) -> list[str]:
+    """Highlights for complexipy's per-file cognitive map and aggregate block."""
+
+    lines: list[str] = []
+    aggregate = data.get("aggregate")
+    if isinstance(aggregate, dict):
+        for key, label, formatter in (
+            ("total_function_count", "Functions analyzed", _fmt_int),
+            ("cognitive_p95", "Cognitive p95", _fmt_float_2),
+            ("cognitive_p75", "Cognitive p75", _fmt_float_2),
+        ):
+            if key in aggregate and aggregate[key] is not None:
+                lines.append(f"- {label}: {formatter(aggregate[key])}")
+    files = data.get("files")
+    if isinstance(files, dict) and files:
+        scored: list[tuple[str, float, int]] = []
+        for path, file_data in files.items():
+            if not isinstance(file_data, dict):
+                continue
+            score = file_data.get("p95_cognitive")
+            if score is None:
+                score = file_data.get("max_cognitive", 0)
+            scored.append(
+                (path, _fmt_score(score), int(file_data.get("function_count", 0)))
+            )
+        scored.sort(key=lambda triple: -triple[1])
+        top = scored[:5]
+        if top:
+            lines.append(
+                f"- Top {len(top)} most cognitively complex files "
+                f"(p95 cognitive, of {len(files)}):"
+            )
+            for path, score, fcount in top:
+                score_str = f"{score:.1f}" if score % 1 else f"{int(score)}"
+                lines.append(
+                    f"    - `{path}` — p95 cognitive {score_str} ({fcount} functions)"
+                )
+    return lines
+
+
+def _summarize_pydeps(data: dict[str, Any]) -> list[str]:
+    """Highlights for pydeps's import-graph rollup."""
+
+    lines: list[str] = []
+    aggregate = data.get("aggregate")
+    if isinstance(aggregate, dict):
+        for key, label, formatter in (
+            ("total_modules", "Modules analyzed", _fmt_int),
+            ("cyclic_deps", "Non-trivial cyclic SCCs", _fmt_int),
+        ):
+            if key in aggregate and aggregate[key] is not None:
+                lines.append(f"- {label}: {formatter(aggregate[key])}")
+    cyclic_sccs = data.get("cyclic_sccs")
+    if isinstance(cyclic_sccs, list) and cyclic_sccs:
+        lines.append(f"- Cyclic SCCs detected ({len(cyclic_sccs)}):")
+        for index, scc in enumerate(cyclic_sccs[:5], start=1):
+            if not isinstance(scc, list):
+                continue
+            members = ", ".join(f"`{m}`" for m in scc[:6])
+            extra = "" if len(scc) <= 6 else f" (+{len(scc) - 6} more)"
+            lines.append(f"    - SCC {index} ({len(scc)} modules): {members}{extra}")
+    modules = data.get("modules")
+    if isinstance(modules, dict) and modules:
+        # Top 5 most-coupled modules by Ce + Ca.
+        coupling: list[tuple[str, float, int, int]] = []
+        for name, entry in modules.items():
+            if not isinstance(entry, dict):
+                continue
+            ca = int(entry.get("afferent_coupling", 0) or 0)
+            ce = int(entry.get("efferent_coupling", 0) or 0)
+            coupling.append((name, float(ca + ce), ca, ce))
+        coupling.sort(key=lambda quad: -quad[1])
+        top = coupling[:5]
+        if top:
+            lines.append(
+                f"- Top {len(top)} most-coupled modules by Ca + Ce (of {len(modules)}):"
+            )
+            for name, total, ca, ce in top:
+                lines.append(f"    - `{name}` — Ca {ca} + Ce {ce} = {int(total)}")
+    return lines
+
+
 _DEEP_DIVE_SUMMARIZERS: dict[str, Any] = {
     "git": _summarize_git,
     "lizard": _summarize_lizard,
+    "complexipy": _summarize_complexipy,
+    "pydeps": _summarize_pydeps,
 }
 
 

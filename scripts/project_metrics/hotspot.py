@@ -50,6 +50,23 @@ _SCC_FALLBACK_MARKER = "scc_fallback"
 _LIZARD_MARKER = "lizard"
 
 
+def _normalize_path(path: str) -> str:
+    """Strip a leading ``./`` so paths from different collectors join cleanly.
+
+    ``GitCollector`` emits ``task-chronograph-mcp/tests/test_otel_relay.py``
+    while ``LizardCollector`` emits ``./task-chronograph-mcp/tests/...``.
+    Without normalization, the set intersection in ``_score_files`` finds
+    no shared paths and the hot-spot Top-N is empty even when the data is
+    rich. Normalization is one-way (no canonicalization beyond the leading
+    ``./``) — we trust each collector to emit forward-slash POSIX paths
+    relative to the repo root and only reconcile the cosmetic prefix.
+    """
+
+    while path.startswith("./"):
+        path = path[2:]
+    return path
+
+
 def compose_hotspots(report: Report) -> Report:
     """Compose hotspot Top-N and aggregate hotspot columns.
 
@@ -122,7 +139,7 @@ def _extract_churn(report: Report) -> dict[str, int]:
     churn = data.get("churn_90d", {})
     if not isinstance(churn, dict):
         return {}
-    return churn
+    return {_normalize_path(path): value for path, value in churn.items()}
 
 
 def _extract_complexity(
@@ -166,7 +183,7 @@ def _extract_lizard_complexity(report: Report) -> dict[str, int | float] | None:
             continue
         max_ccn = entry.get("max_ccn")
         if isinstance(max_ccn, (int, float)):
-            out[path] = max_ccn
+            out[_normalize_path(path)] = max_ccn
     return out if out else None
 
 
@@ -190,7 +207,7 @@ def _extract_scc_complexity(report: Report) -> dict[str, int | float] | None:
     out: dict[str, int | float] = {}
     for path, value in per_file.items():
         if isinstance(value, (int, float)):
-            out[path] = value
+            out[_normalize_path(path)] = value
     return out if out else None
 
 

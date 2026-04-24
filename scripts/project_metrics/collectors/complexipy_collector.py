@@ -148,23 +148,49 @@ class ComplexipyCollector(Collector):
     # ------------------------------------------------------------------ collect
 
     def collect(self, ctx: CollectionContext) -> CollectorResult:
-        """Run ``uvx complexipy --output-json`` over ``ctx.repo_root``.
+        """Run ``uvx complexipy --output-format json`` over ``ctx.repo_root``.
 
         Invoked inside a scratch cwd so that complexipy's cwd-relative
-        ``--output-json`` side-effect — a ``complexipy-results.json`` file
-        written next to wherever the tool is invoked — lands in a disposable
-        tempdir and is swept on scope exit, rather than polluting the project
-        root. The repo root is still passed as a positional argument, so the
+        side-effect file — a ``complexipy-results.json`` file written next
+        to wherever the tool is invoked — lands in a disposable tempdir and
+        is swept on scope exit, rather than polluting the project root.
+        The repo root is still passed as a positional argument, so the
         scan target is unaffected.
+
+        Modern complexipy writes structured JSON to that side-effect file
+        and emits pretty-printed text on stdout; the parser must read the
+        file rather than the captured stdout. The ``--output-format json``
+        flag replaces the deprecated ``--output-json`` (still accepted by
+        current versions but slated for removal).
         """
+
+        # Resolve the scan target to an absolute path BEFORE entering the
+        # tempdir-as-cwd context: complexipy interprets relative arguments
+        # against the subprocess cwd, and ``ctx.repo_root`` arrives as "."
+        # (the runner's convention). Without resolution, complexipy would
+        # scan the empty scratch tempdir instead of the project root.
+        scan_target = str(Path(ctx.repo_root).resolve())
 
         with tempfile.TemporaryDirectory(prefix="praxion-complexipy-") as scratch:
             try:
-                completed = subprocess.run(
-                    ["uvx", "complexipy", ctx.repo_root, "--output-json"],
+                # ``check=False`` is intentional: complexipy exits non-zero
+                # when any analyzed function exceeds its built-in complexity
+                # threshold, but the analysis still completes and the
+                # results file is still written. We do not care about the
+                # threshold judgement -- we want the per-function data.
+                # The presence of the results file (verified below) is the
+                # real success signal.
+                subprocess.run(
+                    [
+                        "uvx",
+                        "complexipy",
+                        scan_target,
+                        "--output-format",
+                        "json",
+                    ],
                     capture_output=True,
                     text=True,
-                    check=True,
+                    check=False,
                     timeout=_COLLECT_TIMEOUT_SECONDS,
                     cwd=scratch,
                 )
@@ -173,16 +199,8 @@ class ComplexipyCollector(Collector):
                     status="timeout",
                     data={},
                     issues=[
-                        "uvx complexipy --output-json timed out after "
+                        "uvx complexipy --output-format json timed out after "
                         f"{int(_COLLECT_TIMEOUT_SECONDS)}s."
-                    ],
-                )
-            except subprocess.CalledProcessError as exc:
-                return CollectorResult(
-                    status="error",
-                    data={},
-                    issues=[
-                        f"uvx complexipy --output-json exited with status {exc.returncode}."
                     ],
                 )
             except FileNotFoundError:
@@ -192,7 +210,29 @@ class ComplexipyCollector(Collector):
                     issues=["uvx not found on PATH during collect."],
                 )
 
-        return _parse_complexipy_json(completed.stdout)
+            results_file = Path(scratch) / "complexipy-results.json"
+            if not results_file.is_file():
+                return CollectorResult(
+                    status="error",
+                    data={},
+                    issues=[
+                        "complexipy did not produce complexipy-results.json "
+                        f"at {results_file}; the analysis failed silently or "
+                        "the JSON output contract changed."
+                    ],
+                )
+            try:
+                results_text = results_file.read_text(encoding="utf-8")
+            except OSError as exc:
+                return CollectorResult(
+                    status="error",
+                    data={},
+                    issues=[
+                        f"failed to read complexipy results file {results_file}: {exc!r}"
+                    ],
+                )
+
+            return _parse_complexipy_json(results_text)
 
 
 # ---------------------------------------------------------------------------
@@ -320,9 +360,12 @@ class _RecordError:
 def _parse_record(record: Any) -> tuple[str, int] | _RecordError:
     """Extract ``(file_path, cognitive_complexity)`` from a single record.
 
-    Complexipy emits objects like
-    ``{"file": "src/app.py", "function_name": "foo",
-       "cognitive_complexity": 5, "line_start": 12}``.
+    Modern complexipy emits objects like
+    ``{"path": "src/app.py", "file_name": "app.py",
+       "function_name": "foo", "complexity": 5}``. Older versions
+    used ``"file"`` and ``"cognitive_complexity"``; we tolerate both
+    so the collector survives a future complexipy schema flip-back.
+
     Missing keys, wrong types, or non-integer scores are captured as
     ``_RecordError`` so the caller can record the skip and continue.
     """
@@ -333,18 +376,23 @@ def _parse_record(record: Any) -> tuple[str, int] | _RecordError:
             f"{type(record).__name__}."
         )
 
-    file_path = record.get("file")
+    # Path: prefer ``path`` (modern) then ``file`` (legacy) then
+    # ``file_name`` (basename-only fallback).
+    file_path = record.get("path") or record.get("file") or record.get("file_name")
     if not isinstance(file_path, str) or not file_path:
         return _RecordError(
             "Skipped malformed complexipy record: missing or non-string "
-            f"'file' field (record={record!r})."
+            f"path/file/file_name field (record={record!r})."
         )
 
-    raw_score = record.get("cognitive_complexity")
+    # Score: prefer ``complexity`` (modern) then ``cognitive_complexity`` (legacy).
+    raw_score = record.get("complexity")
+    if raw_score is None:
+        raw_score = record.get("cognitive_complexity")
     if not isinstance(raw_score, int) or isinstance(raw_score, bool):
         return _RecordError(
             f"Skipped malformed complexipy record for {file_path!r}: "
-            f"non-integer cognitive_complexity={raw_score!r}."
+            f"non-integer complexity={raw_score!r}."
         )
 
     return file_path, raw_score

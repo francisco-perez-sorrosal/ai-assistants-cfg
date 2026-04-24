@@ -710,3 +710,69 @@ class TestTrendsMostRecentPriorSelection:
         )
         # Sanity-check: sloc delta reflects T2's prior value (850).
         assert trend.deltas["sloc_total"]["delta"] == 150
+
+
+# ---------------------------------------------------------------------------
+# Delta records carry current and prior values -- the MD renderer reads them
+# to fill the Current and Prior columns of the trends table, so the previous
+# shape (delta + delta_pct only) made those columns silently render em-dashes.
+# ---------------------------------------------------------------------------
+
+
+class TestDeltaRecordsCarryCurrentAndPrior:
+    """Each numeric delta record must include "current" and "prior" keys."""
+
+    def test_numeric_delta_carries_current_and_prior(self, tmp_path: Path) -> None:
+        from scripts.project_metrics.trends import compute_trends
+
+        ai_state = tmp_path / ".ai-state"
+        ai_state.mkdir()
+        _write_prior_report(
+            ai_state,
+            timestamp="2026-04-22T12:00:00Z",
+            schema_version="1.0.0",
+            overrides={"sloc_total": 1000},
+        )
+        current = _build_report(
+            timestamp="2026-04-23T12:00:00Z",
+            schema_version="1.0.0",
+            sloc_total=1234,
+        )
+
+        trend = compute_trends(current, ai_state)
+
+        record = trend.deltas["sloc_total"]
+        assert record["current"] == 1234
+        assert record["prior"] == 1000
+        assert record["delta"] == 234
+
+    def test_null_input_delta_carries_current_and_prior_too(
+        self, tmp_path: Path
+    ) -> None:
+        """Even when delta is None (null on at least one side), the current
+        and prior values must still be surfaced so the renderer can show the
+        actual values — not just the sentinel."""
+
+        from scripts.project_metrics.trends import compute_trends
+
+        ai_state = tmp_path / ".ai-state"
+        ai_state.mkdir()
+        _write_prior_report(
+            ai_state,
+            timestamp="2026-04-22T12:00:00Z",
+            schema_version="1.0.0",
+            overrides={"coverage_line_pct": None},
+        )
+        current = _build_report(
+            timestamp="2026-04-23T12:00:00Z",
+            schema_version="1.0.0",
+            coverage_line_pct=0.75,
+        )
+
+        trend = compute_trends(current, ai_state)
+
+        record = trend.deltas["coverage_line_pct"]
+        assert record["current"] == 0.75
+        assert record["prior"] is None
+        assert record["delta"] is None
+        assert record.get("reason") == "null_input"

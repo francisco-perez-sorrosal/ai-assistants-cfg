@@ -159,7 +159,17 @@ class PydepsCollector(Collector):
     # ------------------------------------------------------------------ collect
 
     def collect(self, ctx: CollectionContext) -> CollectorResult:
-        """Run ``uvx pydeps <pkg> --show-deps --no-show --json`` and roll up metrics."""
+        """Run ``uvx pydeps <pkg> --show-deps --no-output`` and roll up metrics.
+
+        ``--show-deps`` writes a JSON-shaped dependency dict to stdout
+        natively — current pydeps has no ``--json`` flag, and adding one
+        is a hard error (``unrecognized arguments: --json``). The
+        ``--no-output`` flag prevents pydeps from generating an .svg/.png
+        file as a side effect; it also implies ``--no-show`` (no display
+        program invocation). Together they keep the run silent and side-
+        effect-free while preserving the JSON-on-stdout the parser
+        depends on.
+        """
 
         package_root = _pick_package_root(ctx.repo_root)
         if package_root is None:
@@ -179,8 +189,7 @@ class PydepsCollector(Collector):
                     "pydeps",
                     package_root,
                     "--show-deps",
-                    "--no-show",
-                    "--json",
+                    "--no-output",
                 ],
                 capture_output=True,
                 text=True,

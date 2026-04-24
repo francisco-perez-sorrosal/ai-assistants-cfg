@@ -549,3 +549,52 @@ class TestHotspotTopNLimit:
         hotspots = _extract_hotspots(result, report)
 
         assert len(hotspots["top_n"]) == 5
+
+
+# ---------------------------------------------------------------------------
+# Path normalization -- git emits "task-chronograph-mcp/foo.py" while lizard
+# emits "./task-chronograph-mcp/foo.py". Without normalization the path
+# intersection is empty even when the two collectors observed the same files,
+# which silently produces a Top-0 Hot-spots block.
+# ---------------------------------------------------------------------------
+
+
+class TestHotspotPathNormalization:
+    """Hotspot composer joins paths from collectors that prefix differently."""
+
+    def test_finds_intersection_when_one_side_has_leading_dot_slash(self) -> None:
+        from scripts.project_metrics.hotspot import compose_hotspots
+
+        # git-style paths: no leading "./".
+        churn = {"src/main.py": 100, "src/util.py": 50}
+        # lizard-style paths: leading "./".
+        max_ccn = {"./src/main.py": 10, "./src/util.py": 5}
+
+        report = _make_report(churn=churn, lizard_max_ccn=max_ccn, top_n=10)
+        result = compose_hotspots(report)
+        hotspots = _extract_hotspots(result, report)
+
+        paths_in_topn = [row["path"] for row in hotspots["top_n"]]
+        assert "src/main.py" in paths_in_topn, (
+            f"Expected src/main.py in Top-N after path normalization; got "
+            f"{paths_in_topn!r}. Without normalization, the intersection of "
+            "{'src/main.py'} and {'./src/main.py'} is empty."
+        )
+        assert "src/util.py" in paths_in_topn
+
+    def test_normalization_does_not_double_count_same_file_with_different_prefix(
+        self,
+    ) -> None:
+        from scripts.project_metrics.hotspot import compose_hotspots
+
+        # Same file with both prefixes on the lizard side.
+        churn = {"src/main.py": 100}
+        max_ccn = {"./src/main.py": 10, "src/main.py": 12}
+
+        report = _make_report(churn=churn, lizard_max_ccn=max_ccn, top_n=10)
+        result = compose_hotspots(report)
+        hotspots = _extract_hotspots(result, report)
+
+        paths_in_topn = [row["path"] for row in hotspots["top_n"]]
+        # Exactly one entry — duplicate prefix variants collapse to one key.
+        assert paths_in_topn.count("src/main.py") == 1

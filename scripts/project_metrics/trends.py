@@ -201,12 +201,19 @@ def _compute_deltas(
 
     Policy:
 
-    * Both sides numeric → ``{"delta": current - prior, "delta_pct": pct}``
-      where ``delta_pct`` is ``delta / prior`` when ``prior != 0``, else
-      ``None``.
-    * Either side ``None`` → ``{"delta": None, "reason": "null_input"}``.
+    * Both sides numeric → ``{"current": cur, "prior": prev,
+      "delta": cur - prev, "delta_pct": pct}`` where ``delta_pct`` is
+      ``delta / prev`` when ``prev != 0``, else ``None``.
+    * Either side ``None`` → ``{"current": cur, "prior": prev,
+      "delta": None, "reason": "null_input"}``.
     * Both sides non-numeric (e.g. the three string metadata columns
       ``schema_version`` / ``timestamp`` / ``commit_sha``) → omitted.
+
+    The ``current`` and ``prior`` keys are populated for every emitted
+    record so the MD renderer can show absolute values alongside the
+    delta, not just the delta in isolation. The previous shape omitted
+    them, which made the trends table render em-dashes in the Current
+    and Prior columns despite both sides carrying real numbers.
     """
 
     deltas: dict[str, Any] = {}
@@ -217,13 +224,23 @@ def _compute_deltas(
         if _is_numeric(current_value) and _is_numeric(prior_value):
             delta = current_value - prior_value
             delta_pct = (delta / prior_value) if prior_value != 0 else None
-            deltas[column] = {"delta": delta, "delta_pct": delta_pct}
+            deltas[column] = {
+                "current": current_value,
+                "prior": prior_value,
+                "delta": delta,
+                "delta_pct": delta_pct,
+            }
             continue
 
         # Nulls on either side of a numeric-typed column propagate as an
         # explicit sentinel — distinguishable from "0 delta" at the UI.
         if _is_nullable_numeric_slot(current_value, prior_value):
-            deltas[column] = {"delta": None, "reason": "null_input"}
+            deltas[column] = {
+                "current": current_value,
+                "prior": prior_value,
+                "delta": None,
+                "reason": "null_input",
+            }
 
         # Otherwise (both non-numeric, non-null) the column is metadata
         # and is not a delta candidate — omit silently.

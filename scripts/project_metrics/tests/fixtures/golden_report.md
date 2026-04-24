@@ -1,6 +1,6 @@
 # Project Metrics Report
 
-Generated at 2026-04-24T21:11:47Z
+Generated at 2026-04-24T21:59:42Z
 
 - Commit: `abcdef1234567890abcdef1234567890abcdef12`
 - Schema version: `1.0.0`
@@ -107,8 +107,8 @@ _not computed — install complexipy_
 
 ### pydeps
 
-- Modules: 48
-- Cyclic SCCs: 0
+- modules: 48
+- cyclic_sccs: 0
 
 _Full payload for `pydeps` lives in the sibling `METRICS_REPORT_<timestamp>.json` under the `pydeps` key._
 

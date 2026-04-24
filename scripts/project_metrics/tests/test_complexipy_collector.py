@@ -242,6 +242,32 @@ def _route_by_argv(
     return _side_effect
 
 
+def _writing_side_effect(json_text: str) -> Any:
+    """Build a ``side_effect`` that simulates modern complexipy's file-based output.
+
+    Modern complexipy (post --output-json deprecation) writes its structured
+    JSON to a side-effect file ``complexipy-results.json`` in the current
+    working directory and emits pretty-printed text on stdout. The collector
+    reads that file rather than parsing stdout. Tests need to replicate the
+    file write so the collector finds something to read.
+
+    The collector invokes subprocess.run with ``cwd=<scratch tempdir>``;
+    the side effect inspects ``kwargs["cwd"]`` and writes ``json_text`` to
+    ``<cwd>/complexipy-results.json``. Returns a successful CompletedProcess.
+    """
+
+    def _side_effect(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        cwd = kwargs.get("cwd")
+        if cwd is not None:
+            (Path(cwd) / "complexipy-results.json").write_text(
+                json_text, encoding="utf-8"
+            )
+        argv = args[0] if args else kwargs.get("args") or []
+        return _make_completed_process(stdout="", args=argv)
+
+    return _side_effect
+
+
 def _make_context(repo_root: Path) -> Any:
     """Build a CollectionContext from the protocol base module.
 
@@ -608,7 +634,7 @@ class TestComplexipyCollectSuccess:
         target = "scripts.project_metrics.collectors.complexipy_collector"
         with patch(
             f"{target}.subprocess.run",
-            return_value=_make_completed_process(stdout=_SAMPLE_COMPLEXIPY_JSON),
+            side_effect=_writing_side_effect(_SAMPLE_COMPLEXIPY_JSON),
         ):
             result = collector.collect(_make_context(tmp_path))
 
@@ -626,7 +652,7 @@ class TestComplexipyCollectSuccess:
         target = "scripts.project_metrics.collectors.complexipy_collector"
         with patch(
             f"{target}.subprocess.run",
-            return_value=_make_completed_process(stdout=_SAMPLE_COMPLEXIPY_JSON),
+            side_effect=_writing_side_effect(_SAMPLE_COMPLEXIPY_JSON),
         ):
             result = collector.collect(_make_context(tmp_path))
 
@@ -660,7 +686,7 @@ class TestComplexipyCollectSuccess:
         target = "scripts.project_metrics.collectors.complexipy_collector"
         with patch(
             f"{target}.subprocess.run",
-            return_value=_make_completed_process(stdout=_SAMPLE_COMPLEXIPY_JSON),
+            side_effect=_writing_side_effect(_SAMPLE_COMPLEXIPY_JSON),
         ):
             result = collector.collect(_make_context(tmp_path))
 
@@ -686,7 +712,7 @@ class TestComplexipyCollectSuccess:
         target = "scripts.project_metrics.collectors.complexipy_collector"
         with patch(
             f"{target}.subprocess.run",
-            return_value=_make_completed_process(stdout=_SAMPLE_COMPLEXIPY_JSON),
+            side_effect=_writing_side_effect(_SAMPLE_COMPLEXIPY_JSON),
         ):
             result = collector.collect(_make_context(tmp_path))
 
@@ -722,7 +748,7 @@ class TestComplexipyCollectSuccess:
         target = "scripts.project_metrics.collectors.complexipy_collector"
         with patch(
             f"{target}.subprocess.run",
-            return_value=_make_completed_process(stdout=_SAMPLE_COMPLEXIPY_JSON),
+            side_effect=_writing_side_effect(_SAMPLE_COMPLEXIPY_JSON),
         ):
             result = collector.collect(_make_context(tmp_path))
 
@@ -765,7 +791,7 @@ class TestComplexipyAggregateRollup:
         target = "scripts.project_metrics.collectors.complexipy_collector"
         with patch(
             f"{target}.subprocess.run",
-            return_value=_make_completed_process(stdout=_SAMPLE_COMPLEXIPY_JSON),
+            side_effect=_writing_side_effect(_SAMPLE_COMPLEXIPY_JSON),
         ):
             result = collector.collect(_make_context(tmp_path))
 
@@ -795,7 +821,7 @@ class TestComplexipyAggregateRollup:
         target = "scripts.project_metrics.collectors.complexipy_collector"
         with patch(
             f"{target}.subprocess.run",
-            return_value=_make_completed_process(stdout=_SAMPLE_COMPLEXIPY_JSON),
+            side_effect=_writing_side_effect(_SAMPLE_COMPLEXIPY_JSON),
         ):
             result = collector.collect(_make_context(tmp_path))
 
@@ -827,7 +853,7 @@ class TestComplexipyAggregateRollup:
         target = "scripts.project_metrics.collectors.complexipy_collector"
         with patch(
             f"{target}.subprocess.run",
-            return_value=_make_completed_process(stdout=empty_json),
+            side_effect=_writing_side_effect(empty_json),
         ):
             result = collector.collect(_make_context(tmp_path))
 

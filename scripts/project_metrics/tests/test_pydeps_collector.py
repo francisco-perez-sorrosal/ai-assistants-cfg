@@ -972,15 +972,19 @@ class TestPydepsCollectTimeout:
 # ---------------------------------------------------------------------------
 
 
-def test_collect_invokes_pydeps_with_json_and_show_deps_flags(tmp_path: Path) -> None:
-    """The collect() invocation must ask pydeps for JSON dep output.
+def test_collect_invokes_pydeps_with_show_deps_and_no_output_flags(
+    tmp_path: Path,
+) -> None:
+    """The collect() invocation must ask pydeps for JSON deps on stdout.
 
-    The JSON parser is tuned to the shape pydeps emits under
-    ``--show-deps --no-show --json``. A silent switch to the default output
-    format (SVG/DOT) would yield parse errors; worse, a silent switch to
-    ``--only`` or ``--externals`` would change the result shape in a way
-    the parser might still accept, silently producing wrong metrics. This
-    defensive test pins the argv shape at the subprocess boundary.
+    Modern pydeps has no ``--json`` flag (passing it is a hard error:
+    ``unrecognized arguments: --json``). ``--show-deps`` emits a JSON-
+    shaped dependency dict to stdout natively, which is what the parser
+    expects. ``--no-output`` prevents pydeps from generating an .svg/.png
+    file as a side effect (and implies ``--no-show``). This defensive
+    test pins both flags and additionally pins the absence of ``--json``
+    so a regression is caught at the subprocess boundary, not later
+    when the unparseable output reaches the parser.
     """
 
     from scripts.project_metrics.collectors.pydeps_collector import (
@@ -997,11 +1001,9 @@ def test_collect_invokes_pydeps_with_json_and_show_deps_flags(tmp_path: Path) ->
     with patch(f"{target}.subprocess.run", mock_run):
         collector.collect(_make_context(tmp_path))
 
-    # At least one invocation must carry --json and --show-deps in its argv.
-    # Accept either positional (args[0]) or kwarg (args=) forms to stay
-    # robust across subprocess.run invocation styles.
     found_json_flag = False
     found_show_deps_flag = False
+    found_no_output_flag = False
     for call in mock_run.call_args_list:
         argv_candidate = call.args[0] if call.args else call.kwargs.get("args", [])
         if isinstance(argv_candidate, (list, tuple)):
@@ -1009,13 +1011,20 @@ def test_collect_invokes_pydeps_with_json_and_show_deps_flags(tmp_path: Path) ->
                 found_json_flag = True
             if "--show-deps" in argv_candidate:
                 found_show_deps_flag = True
-    assert found_json_flag, (
-        "Expected collect() to invoke pydeps with --json; none of the "
-        f"observed subprocess.run calls carried that flag. Calls: "
-        f"{mock_run.call_args_list!r}"
-    )
+            if "--no-output" in argv_candidate:
+                found_no_output_flag = True
     assert found_show_deps_flag, (
         "Expected collect() to invoke pydeps with --show-deps; none of the "
         f"observed subprocess.run calls carried that flag. Calls: "
+        f"{mock_run.call_args_list!r}"
+    )
+    assert found_no_output_flag, (
+        "Expected collect() to invoke pydeps with --no-output (suppresses "
+        "side-effect .svg/.png file creation); none of the observed "
+        f"subprocess.run calls carried that flag. Calls: {mock_run.call_args_list!r}"
+    )
+    assert not found_json_flag, (
+        "Expected collect() NOT to invoke pydeps with --json (the flag does "
+        "not exist in current pydeps and causes a hard error). Calls: "
         f"{mock_run.call_args_list!r}"
     )
