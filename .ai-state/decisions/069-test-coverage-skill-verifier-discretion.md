@@ -1,5 +1,5 @@
 ---
-id: dec-draft-f008ca29
+id: dec-069
 title: Verifier loads test-coverage skill at its own discretion (not hard trigger)
 status: proposed
 category: behavioral

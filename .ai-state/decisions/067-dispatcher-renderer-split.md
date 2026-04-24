@@ -1,5 +1,5 @@
 ---
-id: dec-draft-acb60f8e
+id: dec-067
 title: test-coverage skill as dispatcher + renderer, not tool installer
 status: proposed
 category: architectural
