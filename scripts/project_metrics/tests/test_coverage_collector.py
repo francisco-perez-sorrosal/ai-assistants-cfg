@@ -790,3 +790,54 @@ class TestCoverageSkipMarker:
             "reason": "tool_unavailable",
             "tool": "coverage",
         }
+
+
+# ---------------------------------------------------------------------------
+# Context-aware install hint -- when pyproject.toml has [tool.coverage.*]
+# the hint should point at the existing --refresh-coverage CLI flag instead
+# of the generic "generate a coverage report" message.
+# ---------------------------------------------------------------------------
+
+
+class TestCoverageContextAwareInstallHint:
+    """``_choose_install_hint`` adapts to the project's coverage config."""
+
+    def test_hint_points_at_refresh_flag_when_pyproject_has_coverage_config(
+        self, tmp_path: Path
+    ) -> None:
+        from scripts.project_metrics.collectors.coverage_collector import (
+            _choose_install_hint,
+        )
+
+        (tmp_path / "pyproject.toml").write_text(
+            "[project]\nname = 'demo'\n\n[tool.coverage.run]\nbranch = true\n"
+        )
+        hint = _choose_install_hint(tmp_path)
+        assert "--refresh-coverage" in hint, (
+            f"Expected refresh-flag hint when pyproject has coverage config; "
+            f"got {hint!r}"
+        )
+
+    def test_hint_falls_back_to_generic_when_no_pyproject(
+        self, tmp_path: Path
+    ) -> None:
+        from scripts.project_metrics.collectors.coverage_collector import (
+            _COVERAGE_INSTALL_HINT_GENERIC,
+            _choose_install_hint,
+        )
+
+        # tmp_path has no pyproject.toml
+        hint = _choose_install_hint(tmp_path)
+        assert hint == _COVERAGE_INSTALL_HINT_GENERIC
+
+    def test_hint_falls_back_to_generic_when_pyproject_lacks_coverage_section(
+        self, tmp_path: Path
+    ) -> None:
+        from scripts.project_metrics.collectors.coverage_collector import (
+            _COVERAGE_INSTALL_HINT_GENERIC,
+            _choose_install_hint,
+        )
+
+        (tmp_path / "pyproject.toml").write_text("[project]\nname = 'demo'\n")
+        hint = _choose_install_hint(tmp_path)
+        assert hint == _COVERAGE_INSTALL_HINT_GENERIC

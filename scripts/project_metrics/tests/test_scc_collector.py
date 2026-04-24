@@ -742,3 +742,90 @@ class TestSccNamespaceSkipMarker:
             f"got {marker!r}. Adding/removing keys breaks the uniform-rendering "
             f"invariant."
         )
+
+
+# ---------------------------------------------------------------------------
+# Path-filter integration -- ecosystem-noise paths must never reach the data
+# dict (.ai-state, .ai-work, build caches, virtualenvs, etc.) and the CLI
+# invocation must include --exclude-dir for the single-component entries.
+# ---------------------------------------------------------------------------
+
+
+class TestSccPathFilterIntegration:
+    """SccCollector drops ecosystem-noise paths and recomputes language totals."""
+
+    def test_excluded_paths_dropped_from_per_file_sloc(self) -> None:
+        from scripts.project_metrics.collectors.scc_collector import _build_data_payload
+
+        payload = [
+            {
+                "Name": "Python",
+                "Code": 100,
+                "Count": 2,
+                "Files": [
+                    {"Filename": "src/main.py", "Code": 60},
+                    {"Filename": ".ai-state/observations.jsonl", "Code": 40},
+                ],
+            },
+            {
+                "Name": "Markdown",
+                "Code": 50,
+                "Count": 2,
+                "Files": [
+                    {"Filename": "README.md", "Code": 30},
+                    {"Filename": ".claude/worktrees/scratch.md", "Code": 20},
+                ],
+            },
+        ]
+
+        data = _build_data_payload(payload)
+
+        assert ".ai-state/observations.jsonl" not in data["per_file_sloc"]
+        assert ".claude/worktrees/scratch.md" not in data["per_file_sloc"]
+        assert "src/main.py" in data["per_file_sloc"]
+        assert "README.md" in data["per_file_sloc"]
+
+    def test_language_breakdown_recomputed_from_filtered_files(self) -> None:
+        from scripts.project_metrics.collectors.scc_collector import _build_data_payload
+
+        payload = [
+            {
+                "Name": "Python",
+                "Code": 100,
+                "Count": 2,
+                "Files": [
+                    {"Filename": "src/main.py", "Code": 60},
+                    {"Filename": ".ai-state/observations.jsonl", "Code": 40},
+                ],
+            },
+        ]
+
+        data = _build_data_payload(payload)
+
+        assert data["language_breakdown"]["Python"] == {"sloc": 60, "file_count": 1}
+        assert data["sloc_total"] == 60
+        assert data["file_count"] == 1
+
+    def test_collect_invokes_scc_with_exclude_dir_flag(self) -> None:
+        from scripts.project_metrics.collectors.scc_collector import SccCollector
+
+        ctx = SimpleNamespace(repo_root="/tmp/fake", window_days=90, git_sha="x" * 40)
+        captured: dict[str, list[str]] = {}
+
+        def fake_run(argv: list[str], **_kwargs: Any) -> SimpleNamespace:
+            captured["argv"] = argv
+            return SimpleNamespace(returncode=0, stdout="[]", stderr="")
+
+        with patch(
+            "scripts.project_metrics.collectors.scc_collector.subprocess.run",
+            side_effect=fake_run,
+        ):
+            SccCollector().collect(ctx)
+
+        assert "--exclude-dir" in captured["argv"], (
+            "scc CLI must be invoked with --exclude-dir to skip ecosystem dirs"
+        )
+        idx = captured["argv"].index("--exclude-dir")
+        csv = captured["argv"][idx + 1]
+        assert ".ai-state" in csv.split(",")
+        assert ".ai-work" in csv.split(",")

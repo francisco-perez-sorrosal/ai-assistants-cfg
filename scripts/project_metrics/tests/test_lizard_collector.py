@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -770,3 +771,88 @@ def test_subprocess_run_is_called_with_xml_flag(tmp_path: Path) -> None:
         f"subprocess.run calls carried that flag. Calls: "
         f"{mock_run.call_args_list!r}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Path-filter integration -- excluded paths must not pollute the per-file
+# CCN map or the aggregate p95, and the CLI must include --exclude flags.
+# ---------------------------------------------------------------------------
+
+
+class TestLizardPathFilterIntegration:
+    """LizardCollector drops ecosystem-noise paths and recomputes aggregate."""
+
+    def test_excluded_paths_dropped_from_files_block(self) -> None:
+        from scripts.project_metrics.collectors.lizard_collector import (
+            _parse_lizard_xml,
+        )
+
+        xml = """<?xml version='1.0'?>
+<cppncss>
+  <measure type="Function">
+    <labels><label>Nr.</label><label>NCSS</label><label>CCN</label><label>Functions</label></labels>
+    <item name="alpha(int) at src/main.py:10"><value>1</value><value>5</value><value>4</value><value>1</value></item>
+    <item name="beta(int) at .ai-state/decisions/000-foo.md:20"><value>2</value><value>3</value><value>2</value><value>1</value></item>
+    <item name="gamma(int) at .claude/worktrees/scratch.py:30"><value>3</value><value>4</value><value>3</value><value>1</value></item>
+  </measure>
+</cppncss>"""
+
+        result = _parse_lizard_xml(xml)
+        files = result.data["files"]
+
+        assert "src/main.py" in files
+        assert ".ai-state/decisions/000-foo.md" not in files
+        assert ".claude/worktrees/scratch.py" not in files
+
+    def test_aggregate_computed_from_filtered_set_only(self) -> None:
+        from scripts.project_metrics.collectors.lizard_collector import (
+            _parse_lizard_xml,
+        )
+
+        # CCN values: kept files contribute 4 only; excluded files 2 and 3 are
+        # ignored. Aggregate p95 of [4] is 4.
+        xml = """<?xml version='1.0'?>
+<cppncss>
+  <measure type="Function">
+    <labels><label>Nr.</label><label>NCSS</label><label>CCN</label><label>Functions</label></labels>
+    <item name="a() at src/keep.py:1"><value>1</value><value>1</value><value>4</value><value>1</value></item>
+    <item name="b() at .venv/lib/x.py:2"><value>2</value><value>1</value><value>2</value><value>1</value></item>
+    <item name="c() at __pycache__/y.pyc:3"><value>3</value><value>1</value><value>3</value><value>1</value></item>
+  </measure>
+</cppncss>"""
+
+        result = _parse_lizard_xml(xml)
+        aggregate = result.data["aggregate"]
+
+        assert aggregate["total_function_count"] == 1
+        assert aggregate["ccn_p95"] == 4
+
+    def test_collect_invokes_lizard_with_exclude_flags(self) -> None:
+        from unittest.mock import patch
+        from scripts.project_metrics.collectors.lizard_collector import LizardCollector
+
+        ctx = SimpleNamespace(repo_root="/tmp/fake", window_days=90, git_sha="x" * 40)
+        captured: dict[str, list[str]] = {}
+
+        def fake_run(argv: list[str], **_kwargs: Any) -> SimpleNamespace:
+            captured["argv"] = argv
+            return SimpleNamespace(
+                returncode=0,
+                stdout="<?xml version='1.0'?><cppncss/>",
+                stderr="",
+            )
+
+        with patch(
+            "scripts.project_metrics.collectors.lizard_collector.subprocess.run",
+            side_effect=fake_run,
+        ):
+            LizardCollector().collect(ctx)
+
+        # Lizard --exclude takes a glob; we emit one --exclude per excluded entry.
+        exclude_flags = [argv for argv in captured["argv"] if argv == "--exclude"]
+        assert len(exclude_flags) >= 4, (
+            "lizard CLI must receive multiple --exclude patterns to skip "
+            f"ecosystem dirs; saw argv={captured['argv']!r}"
+        )
+        # Multi-component pattern preserved
+        assert "*/.claude/worktrees/*" in captured["argv"]

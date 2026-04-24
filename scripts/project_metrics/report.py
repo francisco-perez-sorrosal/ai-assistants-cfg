@@ -127,31 +127,26 @@ def _fmt_float_raw(value: Any) -> str:
     return str(value)
 
 
-def _fmt_list_csv(value: Any) -> str:
-    if value is None:
-        return _NULL_CELL
-    if isinstance(value, list):
-        return ", ".join(str(item) for item in value)
-    return str(value)
-
-
 # Per-collector deep-dive rendering. Each entry is (key, label, formatter).
+# Keys must match what the collector actually emits in ``data`` -- the
+# renderer silently skips absent keys, so a typo here means the row never
+# appears. Collectors with nested or per-file payloads are summarized by
+# the matching entry in ``_DEEP_DIVE_SUMMARIZERS`` below; the layout map
+# carries only top-level scalar fields.
 _DEEP_DIVE_LAYOUT: dict[str, tuple[tuple[str, str, Any], ...]] = {
     "git": (
-        ("commits_in_window", "Total commits in window", _fmt_int),
-        ("unique_authors", "Unique authors", _fmt_int),
-        ("change_entropy", "Change entropy", _fmt_float_2),
+        ("file_count", "Files touched in window", _fmt_int),
+        ("churn_total_90d", "Total churn (lines + or -)", _fmt_int),
+        ("change_entropy_90d", "Change entropy (bits)", _fmt_float_2),
+        ("truck_factor", "Truck factor", _fmt_int),
+        ("churn_source", "Churn source", _fmt_float_raw),
     ),
     "scc": (
-        ("files_counted", "Files counted", _fmt_int),
+        ("file_count", "Files counted", _fmt_int),
         ("sloc_total", "SLOC total", _fmt_int),
-        ("languages", "Languages", _fmt_list_csv),
+        ("language_count", "Languages detected", _fmt_int),
     ),
-    "lizard": (
-        ("functions_analyzed", "Functions analyzed", _fmt_int),
-        ("ccn_p95", "CCN p95", _fmt_float_2),
-        ("ccn_max", "CCN max", _fmt_float_raw),
-    ),
+    "lizard": (),
     "complexipy": (
         ("functions_analyzed", "Functions analyzed", _fmt_int),
         ("cognitive_p95", "Cognitive p95", _fmt_float_2),
@@ -162,10 +157,124 @@ _DEEP_DIVE_LAYOUT: dict[str, tuple[tuple[str, str, Any], ...]] = {
         ("cyclic_sccs", "Cyclic SCCs", _fmt_int),
     ),
     "coverage": (
-        ("line_coverage_pct", "Line coverage %", _fmt_float_2),
-        ("files_covered", "Files covered", _fmt_int),
+        ("line_pct", "Line coverage", _fmt_float_2),
+        ("artifact_format", "Artifact format", _fmt_float_raw),
+        ("artifact_path", "Artifact path", _fmt_float_raw),
     ),
 }
+
+
+# Per-collector summarizers -- each takes the collector's ``data`` dict and
+# returns a list of bullet lines that render BELOW the layout bullets.
+# Summarizers exist so per-file dicts (churn_90d, ownership, files) and
+# similar heavy structures collapse to a few highlight lines instead of
+# being dumped wholesale into the MD report. Full per-file/per-pair detail
+# remains available in the JSON sibling artifact.
+
+
+def _summarize_git(data: dict[str, Any]) -> list[str]:
+    """Highlights for git's heavy per-file dicts; full data lives in JSON."""
+
+    lines: list[str] = []
+    churn = data.get("churn_90d")
+    if isinstance(churn, dict) and churn:
+        top = sorted(churn.items(), key=lambda kv: -_fmt_score(kv[1]))[:5]
+        lines.append(f"- Top {len(top)} churning files (of {len(churn)} touched):")
+        for path, value in top:
+            lines.append(f"    - `{path}` — {_fmt_int(value)} lines")
+    coupling = data.get("change_coupling")
+    if isinstance(coupling, dict):
+        pairs = coupling.get("pairs", [])
+        if isinstance(pairs, list) and pairs:
+            top_pairs = pairs[:5]
+            threshold = coupling.get("threshold", "?")
+            lines.append(
+                f"- Top {len(top_pairs)} co-changing pairs "
+                f"(threshold ≥{threshold}, {len(pairs)} total):"
+            )
+            for pair in top_pairs:
+                files = pair.get("files", [])
+                count = pair.get("count", "?")
+                if isinstance(files, list) and len(files) == 2:
+                    lines.append(f"    - `{files[0]}` ↔ `{files[1]}` — {count} commits")
+    ownership = data.get("ownership")
+    if isinstance(ownership, dict) and ownership:
+        sole = sum(
+            1
+            for entry in ownership.values()
+            if isinstance(entry, dict)
+            and isinstance(entry.get("major"), list)
+            and len(entry["major"]) == 1
+        )
+        total = len(ownership)
+        pct = (sole / total * 100.0) if total else 0.0
+        lines.append(f"- Files with a single major owner: {sole}/{total} ({pct:.1f}%)")
+    age = data.get("age_days")
+    if isinstance(age, dict) and age:
+        try:
+            oldest_path, oldest_days = max(age.items(), key=lambda kv: kv[1])
+            newest_path, newest_days = min(age.items(), key=lambda kv: kv[1])
+            lines.append(
+                f"- Oldest in window: `{oldest_path}` ({oldest_days} days); "
+                f"newest: `{newest_path}` ({newest_days} days)"
+            )
+        except (TypeError, ValueError):
+            pass
+    return lines
+
+
+def _summarize_lizard(data: dict[str, Any]) -> list[str]:
+    """Highlights for lizard's per-file CCN map and aggregate block."""
+
+    lines: list[str] = []
+    aggregate = data.get("aggregate")
+    if isinstance(aggregate, dict):
+        for key, label, formatter in (
+            ("total_function_count", "Functions analyzed", _fmt_int),
+            ("ccn_p95", "CCN p95", _fmt_float_2),
+            ("ccn_p75", "CCN p75", _fmt_float_2),
+        ):
+            if key in aggregate and aggregate[key] is not None:
+                lines.append(f"- {label}: {formatter(aggregate[key])}")
+    files = data.get("files")
+    if isinstance(files, dict) and files:
+        scored: list[tuple[str, float, int]] = []
+        for path, file_data in files.items():
+            if not isinstance(file_data, dict):
+                continue
+            score = file_data.get("p95_ccn")
+            if score is None:
+                score = file_data.get("max_ccn", 0)
+            scored.append(
+                (path, _fmt_score(score), int(file_data.get("function_count", 0)))
+            )
+        scored.sort(key=lambda triple: -triple[1])
+        top = scored[:5]
+        if top:
+            lines.append(
+                f"- Top {len(top)} most complex files by p95 CCN (of {len(files)}):"
+            )
+            for path, score, fcount in top:
+                score_str = f"{score:.1f}" if score % 1 else f"{int(score)}"
+                lines.append(
+                    f"    - `{path}` — p95 CCN {score_str} ({fcount} functions)"
+                )
+    return lines
+
+
+_DEEP_DIVE_SUMMARIZERS: dict[str, Any] = {
+    "git": _summarize_git,
+    "lizard": _summarize_lizard,
+}
+
+
+def _fmt_score(value: Any) -> float:
+    """Coerce a numeric-ish value to float for sorting; non-numerics become 0."""
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 # Aggregate-column formatting — mirrors the AggregateBlock field types.
@@ -458,7 +567,21 @@ def _render_deep_dive(report: Report) -> str:
 
 
 def _render_collector_body(name: str, result: Any, report: Report) -> list[str]:
-    """Return body lines for one collector's deep-dive subsection."""
+    """Return body lines for one collector's deep-dive subsection.
+
+    The body is composed of three pieces, in order:
+
+    1. **Layout bullets** — top-level scalar fields per ``_DEEP_DIVE_LAYOUT``.
+    2. **Summarizer bullets** — highlights derived from heavy per-file or
+       nested structures, per ``_DEEP_DIVE_SUMMARIZERS``. Summaries
+       deliberately surface only the top-N items; the full data is
+       available in the JSON sibling artifact.
+    3. **JSON pointer footer** — a one-line italic reminder that the
+       canonical machine-readable payload lives in the JSON.
+
+    Skip / error / timeout collectors short-circuit to a single marker
+    line and do not emit a JSON pointer (there is nothing to point at).
+    """
 
     avail = report.tool_availability.get(name)
     if avail is not None and avail.status == "unavailable":
@@ -484,37 +607,62 @@ def _render_collector_body(name: str, result: Any, report: Report) -> list[str]:
             seconds = result.data.get("timeout_seconds", 0)
         return [_timeout_marker(seconds)]
 
-    # status == ok / partial — render bullet list from data per layout map.
-    layout = _DEEP_DIVE_LAYOUT.get(name)
-    if layout is None:
-        return _render_generic_bullets(result.data)
-    bullets: list[str] = []
     data = result.data or {}
+    bullets: list[str] = []
+
+    layout = _DEEP_DIVE_LAYOUT.get(name, ())
     for key, label, formatter in layout:
         if key not in data:
             continue
         rendered = formatter(data[key])
         bullets.append(f"- {label}: {rendered}")
+
+    summarizer = _DEEP_DIVE_SUMMARIZERS.get(name)
+    if summarizer is not None:
+        bullets.extend(summarizer(data))
+
     if not bullets:
-        return _render_generic_bullets(data)
+        bullets = _render_safe_fallback(data)
+
+    bullets.append("")
+    bullets.append(_json_pointer_line(name))
     return bullets
 
 
-def _render_generic_bullets(data: Any) -> list[str]:
-    """Fallback renderer when no layout is registered for a collector."""
+def _render_safe_fallback(data: Any) -> list[str]:
+    """Safe fallback when no layout / summarizer registered for a collector.
+
+    Never dumps a dict via ``str(value)``: lists and dicts are summarized as
+    ``<N items>`` / ``<N entries>`` and the reader is referred to the JSON
+    for full content. Scalars render as themselves. The result is bounded
+    in size regardless of how deep the input payload is.
+    """
 
     if not isinstance(data, dict) or not data:
         return [_NULL_CELL]
-    lines = []
+    lines: list[str] = []
     for key, value in data.items():
-        if isinstance(value, list):
-            rendered = _fmt_list_csv(value)
-        elif isinstance(value, float):
-            rendered = _fmt_float_2(value)
+        if isinstance(value, bool) or isinstance(value, (int, float, str)):
+            rendered = _fmt_float_2(value) if isinstance(value, float) else str(value)
+            lines.append(f"- {key}: {rendered}")
+        elif isinstance(value, list):
+            lines.append(f"- {key}: {len(value)} items (see JSON)")
+        elif isinstance(value, dict):
+            lines.append(f"- {key}: {len(value)} entries (see JSON)")
+        elif value is None:
+            lines.append(f"- {key}: {_NULL_CELL}")
         else:
-            rendered = str(value)
-        lines.append(f"- {key}: {rendered}")
+            lines.append(f"- {key}: <see JSON>")
     return lines
+
+
+def _json_pointer_line(namespace: str) -> str:
+    """Italic one-line pointer to the JSON sibling artifact for a namespace."""
+
+    return (
+        f"_Full payload for `{namespace}` lives in the sibling "
+        f"`METRICS_REPORT_<timestamp>.json` under the `{namespace}` key._"
+    )
 
 
 # ---------------------------------------------------------------------------

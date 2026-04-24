@@ -167,25 +167,83 @@ def _reference_collectors() -> dict[str, Any]:
         "git": CollectorResult(
             status="ok",
             data={
-                "commits_in_window": 250,
-                "unique_authors": 6,
-                "change_entropy": 2.10,
+                "file_count": 42,
+                "churn_total_90d": 567,
+                "change_entropy_90d": 2.10,
+                "truck_factor": 2,
+                "churn_source": "numstat",
+                "churn_90d": {
+                    "src/core/engine.py": 120,
+                    "src/core/parser.py": 80,
+                    "src/api/routes.py": 60,
+                },
+                "change_coupling": {
+                    "pairs": [
+                        {
+                            "files": ["src/core/engine.py", "src/core/parser.py"],
+                            "count": 5,
+                        },
+                    ],
+                    "threshold": 3,
+                },
+                "ownership": {
+                    "src/core/engine.py": {
+                        "top_author": "Alice",
+                        "top_author_pct": 0.8,
+                        "major": [["Alice", 0.8], ["Bob", 0.2]],
+                        "minor": [],
+                    },
+                    "src/api/routes.py": {
+                        "top_author": "Alice",
+                        "top_author_pct": 1.0,
+                        "major": [["Alice", 1.0]],
+                        "minor": [],
+                    },
+                },
+                "age_days": {
+                    "src/core/engine.py": 45,
+                    "src/util/log.py": 12,
+                },
             },
         ),
         "scc": CollectorResult(
             status="ok",
             data={
-                "files_counted": 42,
+                "file_count": 42,
                 "sloc_total": 1234,
-                "languages": ["Python", "Markdown", "YAML"],
+                "language_count": 3,
+                "language_breakdown": {
+                    "Python": {"sloc": 900, "file_count": 30},
+                    "Markdown": {"sloc": 250, "file_count": 8},
+                    "YAML": {"sloc": 84, "file_count": 4},
+                },
             },
         ),
         "lizard": CollectorResult(
             status="ok",
             data={
-                "functions_analyzed": 210,
-                "ccn_p95": 7.5,
-                "ccn_max": 18.0,
+                "aggregate": {
+                    "ccn_p95": 7.5,
+                    "ccn_p75": 3.0,
+                    "total_function_count": 210,
+                },
+                "files": {
+                    "src/core/engine.py": {
+                        "p95_ccn": 18.0,
+                        "max_ccn": 22,
+                        "p75_ccn": 10.0,
+                        "function_count": 12,
+                        "ccns": [22, 18, 10, 5, 3],
+                    },
+                    "src/core/parser.py": {
+                        "p95_ccn": 14.0,
+                        "max_ccn": 16,
+                        "p75_ccn": 8.0,
+                        "function_count": 8,
+                        "ccns": [16, 14, 8, 4],
+                    },
+                },
+                "per_language_ccn_p95": {"Python": 7.5},
             },
         ),
         "complexipy": CollectorResult(

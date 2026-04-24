@@ -36,6 +36,11 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from scripts.project_metrics._path_filter import (
+    filter_path_dict,
+    is_excluded_path,
+    scc_exclude_dir_args,
+)
 from scripts.project_metrics.collectors.base import (
     Available,
     CollectionContext,
@@ -148,9 +153,24 @@ class SccCollector(Collector):
         a safety net for bugs, not the primary error path.
         """
 
+        # Extend scc's built-in exclusion defaults (.git, .hg, .svn) with our
+        # ecosystem-noise list so the underlying tool never even reads those
+        # directories. The post-filter pass below catches anything not
+        # expressible as a single-component dir name (e.g., .claude/worktrees).
+        # ``--by-file`` is required: without it, scc emits per-language
+        # aggregates only, the ``Files`` array is empty, and the post-filter
+        # pass has nothing to operate on.
+        argv = [
+            "scc",
+            "--format",
+            "json",
+            "--by-file",
+            *scc_exclude_dir_args(),
+            ctx.repo_root,
+        ]
         try:
             completed = subprocess.run(
-                ["scc", "--format", "json", ctx.repo_root],
+                argv,
                 capture_output=True,
                 text=True,
                 check=True,
@@ -211,6 +231,13 @@ def _build_data_payload(payload: Any) -> dict[str, Any]:
     empty breakdown rather than raising — the caller still records a
     status='ok' result because the subprocess did succeed; downstream
     composition tolerates empty aggregates.
+
+    Excluded paths (per ``scripts.project_metrics._path_filter``) are
+    dropped from ``per_file_sloc`` and the per-language totals are
+    recomputed from the kept files. The scc CLI itself is invoked with
+    ``--exclude-dir`` so most exclusions never reach this point; this
+    pass is defense in depth for multi-component patterns that
+    ``--exclude-dir`` cannot express (e.g., ``.claude/worktrees``).
     """
 
     if not isinstance(payload, list):
@@ -222,32 +249,37 @@ def _build_data_payload(payload: Any) -> dict[str, Any]:
             "file_count": 0,
         }
 
-    language_breakdown: dict[str, dict[str, int]] = {}
     per_file_sloc: dict[str, int] = {}
-    sloc_total = 0
+    per_file_language: dict[str, str] = {}
 
     for language_entry in payload:
         if not isinstance(language_entry, dict):
             continue
         language_name = str(language_entry.get("Name", ""))
-        language_code = _safe_int(language_entry.get("Code", 0))
-        language_file_count = _safe_int(language_entry.get("Count", 0))
-        sloc_total += language_code
-        if language_name:
-            language_breakdown[language_name] = {
-                "sloc": language_code,
-                "file_count": language_file_count,
-            }
         files = language_entry.get("Files", [])
         if not isinstance(files, list):
             continue
         for file_entry in files:
             if not isinstance(file_entry, dict):
                 continue
-            filename = file_entry.get("Filename")
-            if not isinstance(filename, str) or not filename:
+            # Prefer ``Location`` (full relative path) over ``Filename``
+            # (basename only). Path-filtering and per-file aggregation
+            # both need the directory context that ``Location`` carries.
+            path = file_entry.get("Location") or file_entry.get("Filename")
+            if not isinstance(path, str) or not path:
                 continue
-            per_file_sloc[filename] = _safe_int(file_entry.get("Code", 0))
+            if is_excluded_path(path):
+                continue
+            per_file_sloc[path] = _safe_int(file_entry.get("Code", 0))
+            if language_name:
+                per_file_language[path] = language_name
+
+    # Defense in depth — catches anything that bypassed the in-loop check.
+    per_file_sloc = filter_path_dict(per_file_sloc)
+    per_file_language = filter_path_dict(per_file_language)
+
+    language_breakdown = _rebuild_language_breakdown(per_file_sloc, per_file_language)
+    sloc_total = sum(per_file_sloc.values())
 
     return {
         "language_breakdown": language_breakdown,
@@ -256,6 +288,28 @@ def _build_data_payload(payload: Any) -> dict[str, Any]:
         "language_count": len(language_breakdown),
         "file_count": len(per_file_sloc),
     }
+
+
+def _rebuild_language_breakdown(
+    per_file_sloc: dict[str, int],
+    per_file_language: dict[str, str],
+) -> dict[str, dict[str, int]]:
+    """Sum per-language ``sloc`` and ``file_count`` from the filtered file set.
+
+    Languages whose every file was excluded drop out of the breakdown
+    entirely — ``language_count`` therefore reflects languages that
+    survived filtering, not what scc originally reported.
+    """
+
+    breakdown: dict[str, dict[str, int]] = {}
+    for filename, sloc in per_file_sloc.items():
+        language = per_file_language.get(filename)
+        if not language:
+            continue
+        entry = breakdown.setdefault(language, {"sloc": 0, "file_count": 0})
+        entry["sloc"] += sloc
+        entry["file_count"] += 1
+    return breakdown
 
 
 def _safe_int(value: Any) -> int:

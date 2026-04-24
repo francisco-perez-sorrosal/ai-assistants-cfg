@@ -33,6 +33,10 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
+from scripts.project_metrics._path_filter import (
+    is_excluded_path,
+    lizard_exclude_args,
+)
 from scripts.project_metrics._quantiles import p_nth as _p_nth
 from scripts.project_metrics.collectors.base import (
     Available,
@@ -155,9 +159,14 @@ class LizardCollector(Collector):
     def collect(self, ctx: CollectionContext) -> CollectorResult:
         """Run ``uvx lizard --xml`` over ``ctx.repo_root`` and roll up CCN."""
 
+        # Exclude ecosystem-noise directories at the source so lizard never
+        # parses them. The post-filter pass in _parse_lizard_xml is defense
+        # in depth for any file that slips through (e.g., when the pattern
+        # form does not match exactly how lizard normalizes paths).
+        argv = ["uvx", "lizard", "--xml", *lizard_exclude_args(), ctx.repo_root]
         try:
             completed = subprocess.run(
-                ["uvx", "lizard", "--xml", ctx.repo_root],
+                argv,
                 capture_output=True,
                 text=True,
                 check=True,
@@ -220,6 +229,10 @@ def _parse_lizard_xml(xml_text: str) -> CollectorResult:
             issues.append(parsed.message)
             continue
         file_path, ccn = parsed
+        # Defense in depth — drop ecosystem-noise paths even if the
+        # --exclude flags passed to lizard did not catch them.
+        if is_excluded_path(file_path):
+            continue
         per_file_ccns.setdefault(file_path, []).append(ccn)
         all_ccns.append(ccn)
 

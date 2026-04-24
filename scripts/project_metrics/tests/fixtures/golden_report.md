@@ -1,6 +1,6 @@
 # Project Metrics Report
 
-Generated at 2026-04-23T12:00:00Z
+Generated at 2026-04-24T21:11:47Z
 
 - Commit: `abcdef1234567890abcdef1234567890abcdef12`
 - Schema version: `1.0.0`
@@ -66,21 +66,40 @@ The repository carries 1234 SLOC across 42 files in 3 languages; 90-day churn to
 
 ### git
 
-- Total commits in window: 250
-- Unique authors: 6
-- Change entropy: 2.10
+- Files touched in window: 42
+- Total churn (lines + or -): 567
+- Change entropy (bits): 2.10
+- Truck factor: 2
+- Churn source: numstat
+- Top 3 churning files (of 3 touched):
+    - `src/core/engine.py` — 120 lines
+    - `src/core/parser.py` — 80 lines
+    - `src/api/routes.py` — 60 lines
+- Top 1 co-changing pairs (threshold ≥3, 1 total):
+    - `src/core/engine.py` ↔ `src/core/parser.py` — 5 commits
+- Files with a single major owner: 1/2 (50.0%)
+- Oldest in window: `src/core/engine.py` (45 days); newest: `src/util/log.py` (12 days)
+
+_Full payload for `git` lives in the sibling `METRICS_REPORT_<timestamp>.json` under the `git` key._
 
 ### scc
 
 - Files counted: 42
 - SLOC total: 1234
-- Languages: Python, Markdown, YAML
+- Languages detected: 3
+
+_Full payload for `scc` lives in the sibling `METRICS_REPORT_<timestamp>.json` under the `scc` key._
 
 ### lizard
 
 - Functions analyzed: 210
 - CCN p95: 7.50
-- CCN max: 18.0
+- CCN p75: 3.00
+- Top 2 most complex files by p95 CCN (of 2):
+    - `src/core/engine.py` — p95 CCN 18 (12 functions)
+    - `src/core/parser.py` — p95 CCN 14 (8 functions)
+
+_Full payload for `lizard` lives in the sibling `METRICS_REPORT_<timestamp>.json` under the `lizard` key._
 
 ### complexipy
 
@@ -91,6 +110,8 @@ _not computed — install complexipy_
 - Modules: 48
 - Cyclic SCCs: 0
 
+_Full payload for `pydeps` lives in the sibling `METRICS_REPORT_<timestamp>.json` under the `pydeps` key._
+
 ### coverage
 
 _not applicable for this repository_
@@ -99,9 +120,9 @@ _not applicable for this repository_
 
 | Language | Files | SLOC | CCN p95 | Cognitive p95 |
 | --- | --- | --- | --- | --- |
-| Python | — | — | 7.50 | _not computed — install complexipy_ |
-| Markdown | — | — | — | — |
-| YAML | — | — | — | — |
+| Python | 30 | 900 | 7.50 | _not computed — install complexipy_ |
+| Markdown | 8 | 250 | — | — |
+| YAML | 4 | 84 | — | — |
 
 ## Run Metadata
 

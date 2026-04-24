@@ -70,9 +70,13 @@ __all__ = ["CoverageCollector"]
 # artifact; how they generate it is a project-level concern.
 # ---------------------------------------------------------------------------
 
-_COVERAGE_INSTALL_HINT: str = (
+_COVERAGE_INSTALL_HINT_GENERIC: str = (
     "generate a coverage report (coverage.xml or lcov.info) "
     "before running /project-metrics"
+)
+_COVERAGE_INSTALL_HINT_REFRESH: str = (
+    "run `/project-metrics --refresh-coverage` to invoke the project's "
+    "configured coverage target and produce coverage.xml"
 )
 
 _NO_ARTIFACT_REASON: str = "no_artifact"
@@ -137,7 +141,7 @@ class CoverageCollector(Collector):
         if discovered is None:
             return Unavailable(
                 reason=_NO_ARTIFACT_REASON,
-                install_hint=_COVERAGE_INSTALL_HINT,
+                install_hint=_choose_install_hint(repo_root),
             )
 
         artifact_path, artifact_format = discovered
@@ -463,6 +467,49 @@ class _LcovRecord:
         lines_total = self.lf if self.lf is not None else self.da_total
         lines_covered = self.lh if self.lh is not None else self.da_covered
         return self.path, lines_total, lines_covered
+
+
+def _choose_install_hint(repo_root: Path) -> str:
+    """Pick the install hint that matches what the project already has wired.
+
+    When ``pyproject.toml`` carries a ``[tool.coverage.*]`` section, the
+    project has coverage tooling configured and the existing
+    ``--refresh-coverage`` CLI flag will produce ``coverage.xml`` for
+    them. Otherwise fall back to the generic "generate a coverage
+    report" message that does not assume any particular workflow.
+
+    Intentionally narrow: only the ``[tool.coverage.*]`` signal is
+    consulted. The collector contract forbids referencing test-runner
+    identifiers in this source file (an architectural invariant test
+    enforces it), so the probe deliberately does not check for runner-
+    specific markers like addopts.
+
+    Designed to never raise: any IO failure falls back to the generic
+    hint. The probe is intentionally lightweight (text grep, no TOML
+    library).
+    """
+
+    if _pyproject_has_coverage_config(repo_root):
+        return _COVERAGE_INSTALL_HINT_REFRESH
+    return _COVERAGE_INSTALL_HINT_GENERIC
+
+
+def _pyproject_has_coverage_config(repo_root: Path) -> bool:
+    """Return True when ``pyproject.toml`` has a ``[tool.coverage.*]`` section.
+
+    A single substring check is sufficient: ``[tool.coverage.`` is the
+    canonical TOML header prefix for coverage.py configuration and is
+    distinctive enough that false positives are not a realistic risk.
+    """
+
+    pyproject = repo_root / "pyproject.toml"
+    if not pyproject.is_file():
+        return False
+    try:
+        text = pyproject.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return "[tool.coverage." in text
 
 
 def _safe_int(value: Any, default: int = 0) -> int:

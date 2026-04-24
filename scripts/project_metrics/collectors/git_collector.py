@@ -43,6 +43,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from scripts.project_metrics._path_filter import is_excluded_path
 from scripts.project_metrics.collectors.base import (
     Available,
     CollectionContext,
@@ -174,6 +175,12 @@ class GitCollector(Collector):
 
         is_shallow = _is_shallow_repository(repo_root)
         commits = _run_git_log(repo_root, ctx.window_days)
+        # Drop excluded paths (.ai-state, .ai-work, build caches, etc.) at the
+        # commit level so every downstream metric -- churn, entropy, coupling,
+        # ownership, age, file_count -- sees the same filtered view. Filtering
+        # later (per-metric) would risk inconsistency between, say, churn_total
+        # and change_entropy if the two filters drifted apart.
+        commits = _filter_commits(commits)
         churn_source = "numstat"
         if is_shallow:
             churn_source = "commit_count_fallback"
@@ -346,6 +353,33 @@ def _safe_int(value: str) -> int:
         return int(value)
     except ValueError:
         return 0
+
+
+def _filter_commits(commits: list[_Commit]) -> list[_Commit]:
+    """Drop excluded paths from each commit's ``file_changes`` dict.
+
+    A commit whose only touched files were excluded ends up with an empty
+    ``file_changes`` dict; it is preserved (not dropped) so commit count
+    stays honest. Downstream metrics handle empty-file commits naturally
+    (entropy contributes 0.0; ownership / coupling skip them).
+    """
+
+    filtered: list[_Commit] = []
+    for commit in commits:
+        kept = {
+            path: change
+            for path, change in commit.file_changes.items()
+            if not is_excluded_path(path)
+        }
+        filtered.append(
+            _Commit(
+                sha=commit.sha,
+                author=commit.author,
+                author_timestamp=commit.author_timestamp,
+                file_changes=kept,
+            )
+        )
+    return filtered
 
 
 # ---------------------------------------------------------------------------

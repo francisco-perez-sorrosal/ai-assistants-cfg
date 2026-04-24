@@ -996,3 +996,87 @@ class TestMinimalRepoFixtureIntegrity:
         assert authors == expected, (
             f"minimal_repo must have exactly three authors ({expected}); got {authors}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Path-filter integration -- excluded paths must not pollute any per-file
+# git metric (churn, ownership, age, coupling). Filtering happens at the
+# commit level so all metrics see one consistent view.
+# ---------------------------------------------------------------------------
+
+
+class TestGitPathFilterIntegration:
+    """``_filter_commits`` strips excluded paths from every commit's file_changes."""
+
+    def test_drops_excluded_paths_from_file_changes(self) -> None:
+        from scripts.project_metrics.collectors.git_collector import (
+            _Commit,
+            _filter_commits,
+        )
+
+        commits = [
+            _Commit(
+                sha="abc123",
+                author="Alice",
+                author_timestamp=1700000000,
+                file_changes={
+                    "src/main.py": (10, 2),
+                    ".ai-state/observations.jsonl": (50, 5),
+                    ".claude/worktrees/scratch.py": (3, 0),
+                    "README.md": (1, 0),
+                },
+            ),
+        ]
+
+        filtered = _filter_commits(commits)
+
+        assert len(filtered) == 1
+        kept = filtered[0].file_changes
+        assert "src/main.py" in kept
+        assert "README.md" in kept
+        assert ".ai-state/observations.jsonl" not in kept
+        assert ".claude/worktrees/scratch.py" not in kept
+
+    def test_preserves_commit_with_only_excluded_files(self) -> None:
+        """A commit whose every touched file is excluded keeps its identity
+        but ends up with an empty ``file_changes`` dict; commit count stays
+        honest, downstream metrics naturally treat empty-change commits as
+        zero-contribution."""
+
+        from scripts.project_metrics.collectors.git_collector import (
+            _Commit,
+            _filter_commits,
+        )
+
+        commits = [
+            _Commit(
+                sha="def456",
+                author="Bob",
+                author_timestamp=1700001000,
+                file_changes={".ai-state/observations.jsonl": (10, 0)},
+            ),
+        ]
+
+        filtered = _filter_commits(commits)
+
+        assert len(filtered) == 1
+        assert filtered[0].sha == "def456"
+        assert filtered[0].file_changes == {}
+
+    def test_does_not_mutate_original_commits(self) -> None:
+        from scripts.project_metrics.collectors.git_collector import (
+            _Commit,
+            _filter_commits,
+        )
+
+        original = _Commit(
+            sha="abc",
+            author="A",
+            author_timestamp=1,
+            file_changes={"src/x.py": (1, 0), ".ai-state/y": (1, 0)},
+        )
+        original_changes_snapshot = dict(original.file_changes)
+
+        _filter_commits([original])
+
+        assert original.file_changes == original_changes_snapshot
