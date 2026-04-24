@@ -185,6 +185,115 @@ uninstall_scc_cli() {
 }
 
 # =============================================================================
+# Shared — Python Tooling for Praxion (uv + PEP 735 dev group)
+# =============================================================================
+
+install_python_tooling() {
+    header "Shared — Python Tooling for Praxion"
+
+    local has_uv=false
+    local has_venv_deps=false
+
+    command -v uv &>/dev/null && has_uv=true
+    if [ -d "${SCRIPT_DIR}/.venv" ] && \
+       "${SCRIPT_DIR}/.venv/bin/python3" -c "import pytest_cov" &>/dev/null; then
+        has_venv_deps=true
+    fi
+
+    if $has_uv && $has_venv_deps; then
+        info "uv installed ($(uv --version 2>/dev/null))"
+        info "Praxion .venv present with pytest-cov importable"
+        return
+    fi
+
+    cat <<EOF
+
+  ${B}[1] Install Python tooling for Praxion (recommended)${R}
+      ${D}(a) Installs uv if missing — Python package manager used by${R}
+      ${D}    the metrics collectors (complexipy/lizard/pydeps via uvx)${R}
+      ${D}    and as Praxion's own env manager.${R}
+      ${D}(b) Runs 'uv sync --group dev' at the repo root to install${R}
+      ${D}    Praxion's PEP 735 dev group (pytest + pytest-cov) into${R}
+      ${D}    .venv/ (gitignored). Produces uv.lock at root — commit${R}
+      ${D}    it once so the dev env is reproducible across machines.${R}
+      ${D}Required for 'pytest' and '/project-metrics --refresh-coverage'${R}
+      ${D}to work against Praxion itself.${R}
+
+  ${B}[2] Skip${R}
+      ${D}No Python-level setup. /project-metrics still runs but the${R}
+      ${D}Tier 1 collectors will downgrade (skip markers in the report)${R}
+      ${D}and --refresh-coverage will warn and continue. Install later:${R}
+      ${D}  curl -LsSf https://astral.sh/uv/install.sh | sh${R}
+      ${D}  cd praxion && uv sync --group dev${R}
+EOF
+    ask 1 2
+
+    if [ "$REPLY" -eq 2 ]; then
+        step "Python tooling skipped"
+        return
+    fi
+
+    # (a) Install uv if missing
+    if ! $has_uv; then
+        step "Installing uv via Astral installer..."
+        step "(running: curl -LsSf https://astral.sh/uv/install.sh | sh)"
+        if curl -LsSf https://astral.sh/uv/install.sh | sh 2>&1 | tail -3; then
+            # uv typically lands in ~/.local/bin; ensure it's on PATH this session
+            export PATH="${HOME}/.local/bin:${PATH}"
+            if command -v uv &>/dev/null; then
+                info "uv installed ($(uv --version 2>/dev/null))"
+                has_uv=true
+            else
+                warn "uv installed but not yet on PATH — restart your shell and re-run install.sh"
+                return
+            fi
+        else
+            warn "uv install failed — install manually: https://docs.astral.sh/uv/"
+            return
+        fi
+    fi
+
+    # (b) Sync dev group
+    step "Syncing Praxion dev dependencies (uv sync --group dev)..."
+    if (cd "$SCRIPT_DIR" && uv sync --group dev 2>&1 | tail -5); then
+        info "Praxion .venv ready under ${SCRIPT_DIR}/.venv"
+        if [ -f "${SCRIPT_DIR}/uv.lock" ]; then
+            step "uv.lock generated at repo root — run 'git add uv.lock && git commit' once to lock versions"
+        fi
+    else
+        warn "uv sync failed; run manually: cd $SCRIPT_DIR && uv sync --group dev"
+    fi
+}
+
+check_python_tooling() {
+    printf "\n  ${B}Python Tooling for Praxion:${R}\n"
+    if command -v uv &>/dev/null; then
+        info "uv installed ($(uv --version 2>/dev/null))"
+    else
+        warn "uv not installed (optional — Tier 1 metrics + dev-group sync)"
+    fi
+    if [ -d "${SCRIPT_DIR}/.venv" ] && \
+       "${SCRIPT_DIR}/.venv/bin/python3" -c "import pytest_cov" &>/dev/null; then
+        info "Praxion .venv present with pytest-cov"
+    else
+        warn "Praxion .venv missing or pytest-cov not installed — run install.sh"
+    fi
+}
+
+uninstall_python_tooling() {
+    if [ -d "${SCRIPT_DIR}/.venv" ]; then
+        step "Removing Praxion .venv..."
+        rm -rf "${SCRIPT_DIR}/.venv" \
+            && info "Praxion .venv removed" \
+            || warn ".venv removal failed"
+    fi
+    if command -v uv &>/dev/null; then
+        step "uv is a user-wide tool (not auto-removing). Remove manually if desired:"
+        step "  rm -rf ~/.local/bin/uv ~/.local/share/uv ~/.cache/uv"
+    fi
+}
+
+# =============================================================================
 # Overview banner
 # =============================================================================
 
@@ -197,6 +306,7 @@ show_overview() {
   Shared:
     • External API docs (chub CLI — curated docs for 600+ libraries)
     • Optional metrics tool (scc — SLOC counter used by /project-metrics)
+    • Python tooling (uv + pytest/pytest-cov for Praxion's own tests and coverage)
 EOF
 
     case "$mode" in
@@ -361,18 +471,22 @@ elif $CHECK; then
     delegate || delegate_rc=$?
     check_chub_cli
     check_scc_cli
+    check_python_tooling
     exit $delegate_rc
 elif $UNINSTALL; then
     delegate
     uninstall_chub_cli
     uninstall_scc_cli
+    uninstall_python_tooling
 elif $DRY_RUN; then
     check_chub_cli
     check_scc_cli
+    check_python_tooling
     delegate
 else
     # Install: shared CLIs first, then tool-specific
     install_chub_cli
     install_scc_cli
+    install_python_tooling
     delegate
 fi

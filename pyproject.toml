@@ -1,3 +1,15 @@
+# Minimal project metadata — Praxion's root is a coordination surface, not a
+# distributed package. The [project] table exists only so that `uv sync --group
+# dev` can install the dev dependency group into .venv/ at this repo root.
+# Keep [project].version in sync with [tool.commitizen].version below; the
+# commitizen bump will not auto-update this field unless added to
+# [tool.commitizen].version_files with a disambiguating regex.
+[project]
+name = "praxion"
+version = "0.2.1.dev0"
+description = "Operational infrastructure for spec-driven development and context engineering"
+requires-python = ">=3.11"
+
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "0.2.1.dev0"
@@ -38,6 +50,11 @@ dev = [
 [tool.pytest.ini_options]
 addopts = "--cov --cov-report=xml --cov-report=term-missing"
 testpaths = ["tests", "scripts"]
+# Repo root on sys.path so tests can import `scripts.project_metrics.*`
+# without requiring PYTHONPATH to be set by the invoker. scripts/ is not
+# an installable package; this is the standard pytest pattern for flat
+# layouts that ship helper tests alongside source.
+pythonpath = ["."]
 
 [tool.coverage.run]
 branch = true
