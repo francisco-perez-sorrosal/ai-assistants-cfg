@@ -1,6 +1,6 @@
 ---
 description: Compute project complexity/health metrics (churn, complexity, coupling, hot-spots, trends) and write a timestamped report triple to .ai-state/
-argument-hint: "[--window-days N] [--top-n N]"
+argument-hint: "[--window-days N] [--top-n N] [--refresh-coverage]"
 allowed-tools: [Bash(python3:*), Bash(git:*), Read]
 ---
 
@@ -10,12 +10,13 @@ The command is a thin wrapper over the `scripts.project_metrics` Python CLI. Eve
 
 ## Arguments
 
-Two optional flags parsed from `$ARGUMENTS` and forwarded verbatim to the Python CLI:
+Three optional flags parsed from `$ARGUMENTS` and forwarded verbatim to the Python CLI:
 
 | Flag | Default | Meaning |
 |------|---------|---------|
 | `--window-days N` | `90` | Look-back window (days) for churn, ownership, and delta computations. Must be a positive integer. |
 | `--top-n N` | `10` | Size of the hot-spot Top-N ranking in the MD report. Must be a positive integer. |
+| `--refresh-coverage` | off | Opt-in. Before the read-only metrics pipeline runs, invoke the project's canonical coverage target (via the `test-coverage` skill's probe order) to refresh `coverage.xml`. A refresh failure degrades to a stderr warning and the pipeline still runs. The sole exception to the otherwise read-only contract. |
 
 Invalid arguments (non-positive, non-integer, unknown flag) are rejected by the CLI via `argparse` **before** any file under `.ai-state/` is touched — the no-partial-writes contract is enforced at the orchestration layer, not here.
 
@@ -72,6 +73,7 @@ commit with `git add <paths> && git commit`.
 - **Non-positive `--window-days` or `--top-n`**: CLI exits non-zero with a clear stderr message; nothing is written. Surface the stderr text as-is.
 - **`git rev-parse --show-toplevel` fails inside the CLI**: CLI refuses to invent an `.ai-state/` location and exits non-zero. Surface the stderr text as-is.
 - **Missing optional tooling** (`scc`, `uvx`-hosted collectors, language-specific analyzers): collectors downgrade to skip markers; the run still succeeds and the MD rendering notes which collectors were skipped with install hints. No special handling needed here.
+- **`--refresh-coverage` dispatch failure**: if the project has no canonical coverage target, or the target exits non-zero, the CLI degrades to a stderr warning and proceeds with the existing (possibly stale or missing) `coverage.xml`. The run still exits 0 and writes all three artifacts; the MD rendering surfaces coverage as stale/skipped.
 
 ## Notes
 
