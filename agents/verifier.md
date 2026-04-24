@@ -9,7 +9,7 @@ description: >
   committing results.
 tools: Read, Glob, Grep, Bash, Write
 disallowedTools: Edit
-skills: [code-review, context-security-review]
+skills: [code-review, context-security-review, test-coverage]
 permissionMode: default
 background: true
 memory: user
@@ -202,6 +202,17 @@ When tests exist or are expected:
 4. Note untested edge cases in complex logic.
 5. Flag if the plan required tests that were not written.
 6. When verifying agent-based systems, consult the `agent-evals` skill for agent-specific evaluation methodology (non-determinism handling, trajectory evaluation, grader design).
+
+#### Invoking the `test-coverage` skill (permission, not obligation)
+
+The `test-coverage` skill is loaded into your context and is available to locate, invoke, and render the project's canonical coverage target. Use it at your discretion when the following signals suggest coverage measurement is worth the time:
+
+- The pipeline tier is Standard or Full.
+- Test files were changed in this pipeline.
+- Acceptance criteria in `SYSTEMS_PLAN.md` mention coverage (threshold, minimum, goal).
+- `TEST_RESULTS.md` is missing or ambiguous about coverage.
+
+These signals are permission, not obligation. Invocation is never mandatory — coverage runs are expensive, and many verifications touch no coverage-relevant code. Not invoking the skill is a valid outcome and never produces a FAIL on its own. When you do invoke the skill, fold its output into your test-coverage findings; when you do not, proceed with the qualitative assessment above.
 
 ### Phase 11 -- Context Artifact Completeness (pipeline mode only)
 
