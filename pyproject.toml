@@ -12,3 +12,18 @@ changelog_start_rev = "v0.0.0"
 annotated_tag = true
 update_changelog_on_bump = false
 major_version_zero = true
+
+# PEP 735 dependency groups — dev tooling for the repo root (scripts/
+# and cross-cutting quality tools). Subpackages manage their own project
+# dependencies in their respective pyproject.toml files.
+#
+# The coverage-tool configuration (pyproject.toml [tool.coverage.*],
+# [tool.pytest.ini_options] coverage flags, etc.) is defined by the
+# test-coverage skill's Python reference as a reusable default that
+# Praxion adopts. Projects using pytest-cov elsewhere may reuse that
+# reference or override it per their own needs.
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
