@@ -1,5 +1,5 @@
 ---
-id: dec-draft-e8df5e0b
+id: dec-071
 title: Tech-debt ledger as a living artifact in `.ai-state/`
 status: proposed
 category: architectural

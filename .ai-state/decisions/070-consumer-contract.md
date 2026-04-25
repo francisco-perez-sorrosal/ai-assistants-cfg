@@ -1,5 +1,5 @@
 ---
-id: dec-draft-b63e3623
+id: dec-070
 title: Tech-debt ledger consumer contract — single-line input on five agents (permission, not obligation)
 status: proposed
 category: behavioral
@@ -20,7 +20,7 @@ affected_files:
 
 ## Context
 
-The ledger ADR (dec-draft-e8df5e0b) defines the destination. The producer ADR (dec-draft-e9a055bb) defines who fills it. This ADR defines who **reads** it — and how.
+The ledger ADR (dec-071) defines the destination. The producer ADR (dec-072) defines who fills it. This ADR defines who **reads** it — and how.
 
 The user resolved that the consumer mechanism is a **single input-contract line per consumer agent**, not main-agent injection or a wiring layer. Five consumers were chosen: `systems-architect`, `implementation-planner`, `implementer`, `test-engineer`, `doc-engineer`. Three potential consumers are explicitly excluded:
 
@@ -73,7 +73,7 @@ These exclusions are documented here so future contributors do not "obviously" a
 
 The contract uses "address items where possible…by updating `status`" — the verb `update` is non-optional **when the agent acts on a row**. If a consumer addresses a ledger item, it MUST update `status` to `resolved` (with `resolved-by`) or `in-flight`. Action without status update is a contract violation. Non-action is fine; partial action without status update is not.
 
-This obligation is the single most important behavioral commitment in the contract. Sentinel TD05 (defined in dec-draft-e9a055bb) audits status-update discipline by surfacing stale `in-flight` rows and `open` rows in resolved-feature areas. The audit is the enforcement loop.
+This obligation is the single most important behavioral commitment in the contract. Sentinel TD05 (defined in dec-072) audits status-update discipline by surfacing stale `in-flight` rows and `open` rows in resolved-feature areas. The audit is the enforcement loop.
 
 ## Considered Options
 
@@ -130,7 +130,7 @@ This ADR **re-affirms dec-069** in a different context. Dec-069 ratified "permis
 
 ## Prior Decisions Referenced
 
-- **dec-draft-e8df5e0b** (Tech-debt ledger as living artifact) — defines the ledger this ADR's consumers read.
-- **dec-draft-e9a055bb** (Tech-debt producers — verifier + sentinel) — defines the producers; sentinel TD05 in that ADR is the enforcement loop for this ADR's status-update obligation.
+- **dec-071** (Tech-debt ledger as living artifact) — defines the ledger this ADR's consumers read.
+- **dec-072** (Tech-debt producers — verifier + sentinel) — defines the producers; sentinel TD05 in that ADR is the enforcement loop for this ADR's status-update obligation.
 - **dec-069** (Verifier loads test-coverage skill at its own discretion) — re-affirmed by this ADR. Establishes the "permission, not obligation" framing that this consumer contract carries forward.
 - **dec-013** (Layered duplication prevention; no new agent) — sets the precedent for solving cross-cutting concerns by extending existing agents. This ADR adds one prose line to each of five existing agents — no new agent.

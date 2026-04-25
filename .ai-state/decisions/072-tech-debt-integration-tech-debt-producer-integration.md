@@ -1,5 +1,5 @@
 ---
-id: dec-draft-e9a055bb
+id: dec-072
 title: Tech-debt producers — verifier migration + sentinel TD dimension
 status: proposed
 category: behavioral
@@ -18,7 +18,7 @@ affected_files:
 
 ## Context
 
-The ledger artifact ADR (dec-draft-e8df5e0b) defines the destination. This ADR defines the **two producers** that fill it.
+The ledger artifact ADR (dec-071) defines the destination. This ADR defines the **two producers** that fill it.
 
 Today, the **verifier** writes per-change debt signals (`[DEAD-CODE-UNREMOVED]`, `[BLOAT]`, duplication, size/nesting violations) into `LEARNINGS.md ## Technical Debt`. That section's end-of-feature destination per the LEARNINGS template is "Issue tracker or CLAUDE.md" — vague, non-Praxion-native, and conceptually wrong (debt is not a learning). The verifier's per-change scope is correct; the destination is the weak link.
 
@@ -135,7 +135,7 @@ Both producers write; both reference the same canonical class-to-role table.
 
 ## Prior Decisions Referenced
 
-- **dec-draft-e8df5e0b** (Tech-debt ledger as living artifact) — defines the ledger that this ADR's producers write to.
+- **dec-071** (Tech-debt ledger as living artifact) — defines the ledger that this ADR's producers write to.
 - **dec-013** (Layered duplication prevention; no new agent) — affirms that adding capability to existing agents is preferred over introducing a new agent. This ADR continues that pattern: no new producer agent, just extensions to verifier and sentinel.
 - **dec-062** through **dec-066** (proposed `/project-metrics` ADRs) — schema, collector protocol, graceful degradation, hotspot formula, planning conventions. Sentinel TD01–TD04 read against the schema dec-062 froze; the freeze rule keeps this ADR's read protocol stable.
 - **dec-067** (test-coverage skill scope) — establishes that `coverage-gap` items are owned by `test-engineer`; this ADR's owner-role heuristic codifies that as a no-override entry.
