@@ -26,7 +26,7 @@ The user resolved 10 questions before this ADR was drafted (see `.ai-work/tech-d
 
 ## Decision
 
-Introduce `.ai-state/TECH_DEBT_LEDGER.md` as a **single, persistent, living artifact** — one Markdown table with stable `td-NNN` IDs, append-only rows, status-updated-in-place. Schema: 13 displayed fields (`id`, `severity`, `class`, `direction`, `location`, `goal-ref-type`, `goal-ref-value`, `source`, `first-seen`, `last-seen`, `owner-role`, `status`, `resolved-by`, `notes`) plus a 14th structural field `dedup_key` for finalize-time deduplication.
+Introduce `.ai-state/TECH_DEBT_LEDGER.md` as a **single, persistent, living artifact** — one Markdown table with stable `td-NNN` IDs, append-only rows, status-updated-in-place. Schema: 14 displayed fields (`id`, `severity`, `class`, `direction`, `location`, `goal-ref-type`, `goal-ref-value`, `source`, `first-seen`, `last-seen`, `owner-role`, `status`, `resolved-by`, `notes`) plus a 15th structural field `dedup_key` for finalize-time deduplication. Total: 15 fields.
 
 Schema, lifecycle, worktree-merge semantics, and the canonical class-to-role mapping for `owner-role` are registered in `rules/swe/agent-intermediate-documents.md` adjacent to the existing artifact registrations. The artifact is added to the §Permanent row of the Document Lifecycle table.
 
