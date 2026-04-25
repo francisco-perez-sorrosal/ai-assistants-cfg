@@ -177,6 +177,8 @@ Skip this phase entirely when no prior spec was identified in Phase 1 (greenfiel
 
 For every significant design decision, make the trade-offs explicit:
 
+**Tech-debt ledger awareness (permission, not obligation).** Read `.ai-state/TECH_DEBT_LEDGER.md`, filter by `owner-role = systems-architect` and `location` overlapping the design scope you are analyzing, and address items where natural to the current task by updating `status` (to `resolved` with `resolved-by`, or `in-flight`); leave out-of-scope items at `status = open` — do not delete. Non-action is a valid outcome. Schema and field constraints live in [rules/swe/agent-intermediate-documents.md](../rules/swe/agent-intermediate-documents.md) under `TECH_DEBT_LEDGER.md`.
+
 > When the activation gate fires (see [design-synthesis.md — When to Activate](../skills/software-planning/references/design-synthesis.md#when-to-activate)), run the lens sweep and the convergence check in that reference before writing the Decision block below. Record an **Activation:** line in the ADR body (either the fired outcome or `no — <reason>`) per the [ADR obligation](../skills/software-planning/references/design-synthesis.md#adr-obligation).
 
 ```markdown
