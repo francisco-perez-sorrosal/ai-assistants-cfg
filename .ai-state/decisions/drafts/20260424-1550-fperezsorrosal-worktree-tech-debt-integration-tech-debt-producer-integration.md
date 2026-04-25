@@ -9,8 +9,6 @@ tags: [tech-debt, ledger, verifier, sentinel, producer, agent-pipeline]
 made_by: agent
 agent_type: systems-architect
 pipeline_tier: standard
-supersedes:
-re_affirms:
 affected_files:
   - agents/verifier.md
   - agents/sentinel.md
