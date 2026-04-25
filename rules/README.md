@@ -10,6 +10,7 @@ rules/
 │   ├── adr-conventions.md
 │   ├── agent-behavioral-contract.md
 │   ├── agent-intermediate-documents.md
+│   ├── agent-model-routing.md
 │   ├── coding-style.md
 │   ├── memory-protocol.md
 │   ├── staleness-policy.md
@@ -27,6 +28,7 @@ rules/
 | ---- | ------- |
 | `swe/agent-behavioral-contract.md` | Four-behavior contract (Surface Assumptions, Register Objection, Stay Surgical, Simplicity First) for every write/plan/review agent. Always-loaded |
 | `swe/agent-intermediate-documents.md` | Agent document locations (`.ai-work/` ephemeral, `.ai-state/` persistent), lifecycle tiers, cleanup |
+| `swe/agent-model-routing.md` | Per-agent Claude model tier table (13 agents → opus/sonnet/haiku), 4-layer override precedence, operator kill switch, quality-cliff guards. Always-loaded |
 | `swe/coding-style.md` | Immutability, function/file size, nesting, error handling, naming, validation |
 | `swe/adr-conventions.md` | ADR file format (YAML frontmatter + MADR body), naming convention, supersession protocol, agent authoring guidance |
 | `swe/staleness-policy.md` | Marker syntax and threshold protocol for drift-prone skill sections. Path-scoped: loads only when accessing `**/SKILL.md` |

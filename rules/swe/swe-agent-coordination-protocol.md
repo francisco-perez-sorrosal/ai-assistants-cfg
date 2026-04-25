@@ -147,7 +147,7 @@ Agents communicate through shared documents, not direct invocation. The pipeline
 
 ### Agent Selection Criteria
 
-Use an agent when the task benefits from a separate context window (large scope, multiple phases, structured output). Work directly for quick lookups, single changes, one-step edits.
+Use an agent when the task benefits from a separate context window (large scope, multiple phases, structured output). Work directly for quick lookups, single changes, one-step edits. Per-agent Claude model tier is governed by [`agent-model-routing.md`](agent-model-routing.md).
 
 ### Delegation Depth
 
