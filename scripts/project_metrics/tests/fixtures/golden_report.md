@@ -87,6 +87,10 @@ _Full payload for `git` lives in the sibling `METRICS_REPORT_<timestamp>.json` u
 - Files counted: 42
 - SLOC total: 1234
 - Languages detected: 3
+- Top 3 languages by SLOC (of 3):
+    - Python — 30 files, 900 SLOC
+    - Markdown — 8 files, 250 SLOC
+    - YAML — 4 files, 84 SLOC
 
 _Full payload for `scc` lives in the sibling `METRICS_REPORT_<timestamp>.json` under the `scc` key._
 

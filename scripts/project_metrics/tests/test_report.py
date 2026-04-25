@@ -716,6 +716,36 @@ class TestReportPerCollectorDeepDive:
                 "registered collector must be named in the deep dive."
             )
 
+    def test_scc_subsection_emits_top_n_languages_by_sloc_descending(self) -> None:
+        from scripts.project_metrics.report import render_markdown
+
+        md = render_markdown(_build_reference_report())
+        section = _extract_section(md, "Per-collector Deep Dive")
+        scc_start = section.lower().index("### scc")
+        next_heading = section.find("### ", scc_start + 1)
+        scc_body = (
+            section[scc_start:next_heading]
+            if next_heading != -1
+            else section[scc_start:]
+        )
+
+        assert "Top 3 languages by SLOC (of 3):" in scc_body, (
+            "scc subsection must surface a 'Top N languages by SLOC' bullet "
+            "so readers see the language breakdown inline next to "
+            "'Languages detected'."
+        )
+        python_pos = scc_body.find("Python — 30 files, 900 SLOC")
+        markdown_pos = scc_body.find("Markdown — 8 files, 250 SLOC")
+        yaml_pos = scc_body.find("YAML — 4 files, 84 SLOC")
+        assert python_pos != -1 and markdown_pos != -1 and yaml_pos != -1, (
+            "scc subsection must list each language with '<Name> — "
+            "<files> files, <sloc> SLOC'."
+        )
+        assert python_pos < markdown_pos < yaml_pos, (
+            "Languages in the scc summary must be sorted by SLOC "
+            "descending (Python 900 > Markdown 250 > YAML 84)."
+        )
+
     def test_skipped_collectors_emit_skip_marker_in_deep_dive(self) -> None:
         from scripts.project_metrics.report import render_markdown
 

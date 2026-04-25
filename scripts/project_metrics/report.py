@@ -341,8 +341,41 @@ def _summarize_pydeps(data: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _summarize_scc(data: dict[str, Any]) -> list[str]:
+    """Highlights for scc's language breakdown; full table lives further down and in JSON."""
+
+    lines: list[str] = []
+    breakdown = data.get("language_breakdown")
+    if not isinstance(breakdown, dict) or not breakdown:
+        return lines
+    scored: list[tuple[str, int, int]] = []
+    for name, entry in breakdown.items():
+        if not isinstance(entry, dict):
+            continue
+        try:
+            sloc_int = int(entry.get("sloc", 0))
+        except (TypeError, ValueError):
+            sloc_int = 0
+        try:
+            file_int = int(entry.get("file_count", 0))
+        except (TypeError, ValueError):
+            file_int = 0
+        scored.append((str(name), file_int, sloc_int))
+    scored.sort(key=lambda triple: -triple[2])
+    top = scored[:5]
+    if not top:
+        return lines
+    lines.append(f"- Top {len(top)} languages by SLOC (of {len(breakdown)}):")
+    for language, files, sloc in top:
+        lines.append(
+            f"    - {language} — {_fmt_int(files)} files, {_fmt_int(sloc)} SLOC"
+        )
+    return lines
+
+
 _DEEP_DIVE_SUMMARIZERS: dict[str, Any] = {
     "git": _summarize_git,
+    "scc": _summarize_scc,
     "lizard": _summarize_lizard,
     "complexipy": _summarize_complexipy,
     "pydeps": _summarize_pydeps,
