@@ -74,6 +74,8 @@ disallowedTools: Write, Edit
 - `opus`: Most capable, for complex reasoning
 - `haiku`: Fastest, for quick searches
 
+The frontmatter `model:` declares a **capability floor** — the minimum tier this agent can safely run on. The orchestrator may route up via the Agent tool's per-spawn `model:` parameter, never below the floor. The authoritative tier table for Praxion subagents lives in `rules/swe/agent-model-routing.md`.
+
 **permissionMode**
 
 - `default`: Standard permission prompts
