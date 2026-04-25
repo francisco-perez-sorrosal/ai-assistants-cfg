@@ -117,6 +117,31 @@ Convention checks (derived from `coding-style` rule):
 - Code organization (modular, no catch-all utils)
 - Code duplication (no repeated logic within files; for changed files, read sibling files in the same module — capped at 5 — and use LLM judgment to assess cross-module semantic similarity; report duplicated patterns with file paths and line ranges)
 
+#### Tech-Debt Ledger Writes
+
+For each per-change debt finding surfaced by Phase 5 or Phase 5.5 (`[DEAD-CODE-UNREMOVED]`, `[BLOAT]`, duplication, function-size or file-size ceiling breaches, nesting-depth violations), append a row to `.ai-state/TECH_DEBT_LEDGER.md` per the canonical schema in `rules/swe/agent-intermediate-documents.md` (`#### TECH_DEBT_LEDGER.md` — 14 row fields + `dedup_key`).
+
+Writing a row means:
+
+- **`id`**: next-available `td-NNN`. Scan the ledger's existing rows and take max + 1 (zero-padded, 3 digits).
+- **`severity`**: sentinel-aligned tier — `critical` (correctness risk or contract violation), `important` (quality ceiling breach or systemic duplication), `suggested` (surviving overrides, low-impact cleanup).
+- **`class`**: one of `duplication`, `complexity`, `dead-code`, `drift`, `stale-todo`, `coverage-gap`, `cyclic-dep`, `other`. Size / nesting-depth breaches map to `complexity`; `[BLOAT]` maps to `complexity` unless the bloat is a dedicated unused symbol (then `dead-code`).
+- **`direction`**: default `code-to-goals` for change-introduced debt; use `goals-to-code` only when the finding is about code not yet meeting a stated goal.
+- **`location`**: file path(s) affected, with optional `:start-end` line ranges; one path per list entry.
+- **`goal-ref-type`**: `code-quality` for universal engineering-principle findings (the common case for verifier). Use `adr` / `spec-req` / `architecture` / `claude-md` only when the violation has a specific Praxion-native goal anchor (e.g., an ADR invariant broken by the change).
+- **`goal-ref-value`**: the referenced anchor when `goal-ref-type` ≠ `code-quality`; empty otherwise.
+- **`source`**: `verifier`.
+- **`first-seen`** / **`last-seen`**: current ISO date (`YYYY-MM-DD`). Both identical on row creation.
+- **`owner-role`**: assigned from the canonical class-to-role mapping in the same rule file (`#### TECH_DEBT_LEDGER.md` → **Owner-role heuristic**). Do not re-derive the mapping — look it up.
+- **`status`**: `open`.
+- **`resolved-by`**: empty.
+- **`notes`**: one short sentence describing the finding. Cite the tag (`[BLOAT]` / `[DEAD-CODE-UNREMOVED]`) or the breached ceiling (e.g., "function 63 lines, ceiling 50") when relevant.
+- **`dedup_key`**: computed per the formula in the rule — `sha1(f"{class}|{normalize(location)}|{direction}|{goal-ref-type}|{goal-ref-value}")[:12]`.
+
+**De-duplication at write time.** Before appending, scan the ledger for an existing row with the same `dedup_key`. If one exists, update its `last-seen` to today rather than appending a new row. Do not change its `status`, `notes`, or `owner-role` — consumers own those fields.
+
+Ledger writes are independent from the `VERIFICATION_REPORT.md` findings: a single finding produces both a report entry (for the current pipeline review) and a ledger row (for persistence beyond the pipeline). Do not write debt findings into `LEARNINGS.md` or into any section of `VERIFICATION_REPORT.md` intended as the persistence surface — the ledger is the single persistence surface for debt.
+
 #### Phase 5.5 -- Behavioral Contract Compliance
 
 Scan the change set for behavioral-contract violations and emit findings in the `### Behavioral Contract Findings` subsection of the report, using exactly the six canonical tags. Consult `rules/swe/agent-behavioral-contract.md` for the four behaviors and `skills/code-review/references/report-template.md` for tag definitions and emission syntax.
@@ -128,7 +153,7 @@ Scan the change set for behavioral-contract violations and emit findings in the 
 | `[NON-SURGICAL]` | Changes touch files, modules, or behavior outside the declared scope without being load-bearing for the stated task (violates Stay Surgical) |
 | `[SCOPE-CREEP]` | Scope expanded mid-execution without being re-surfaced and re-approved (violates Stay Surgical) |
 | `[BLOAT]` | A simpler solution would have achieved the same behavior; unnecessary abstraction, speculative generality, or dead parameters were introduced (violates Simplicity First) |
-| `[DEAD-CODE-UNREMOVED]` | The change supersedes code that should have been deleted but was left in place (violates Simplicity First) |
+| `[DEAD-CODE-UNREMOVED]` | The change supersedes code that should have been deleted but was left in place (violates Simplicity First). When a `[DEAD-CODE-UNREMOVED]` FAIL is overridden by the user or scope-deferred, also promote the finding to a tech-debt ledger row with `severity = suggested`, `status = open`, and a survivor flag in `notes` per the schema in `rules/swe/agent-intermediate-documents.md` — survivors must persist as tracked debt rather than be lost. |
 
 Tag emission is required whenever a violation is observed; "no violations" is a valid Phase 5.5 result and should be recorded explicitly. The sentinel aggregates tag frequencies across `VERIFICATION_REPORT.md` files.
 
