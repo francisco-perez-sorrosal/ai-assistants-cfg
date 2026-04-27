@@ -382,7 +382,7 @@ Ship all seven by default; L1 / L2 / L7 may be omitted only if anchor generation
 
 ## §Agent Pipeline Block
 
-Append this block to `CLAUDE.md` when the §Init idempotency predicate reports no existing heading. **Source of truth:** `commands/onboard-project.md` § Agent Pipeline Block is the authoritative version; the block below is a verbatim mirror. If you need to change the block, change it in `commands/onboard-project.md` first, then mirror here. Both commands must produce byte-identical CLAUDE.md sections.
+<!-- canonical-source: claude/canonical-blocks/agent-pipeline.md — edit the canonical file, then run: python3 scripts/sync_canonical_blocks.py --write -->
 
 ```markdown
 ## Agent Pipeline
@@ -404,7 +404,7 @@ Always include expected deliverables when delegating to an agent. The agent coor
 
 ## §Compaction Guidance Block
 
-Append this block to `CLAUDE.md` when the §Init idempotency predicate for `## Compaction Guidance` reports no existing heading. **Source of truth:** `commands/onboard-project.md` § Compaction Guidance Block — verbatim mirror below.
+<!-- canonical-source: claude/canonical-blocks/compaction-guidance.md — edit the canonical file, then run: python3 scripts/sync_canonical_blocks.py --write -->
 
 ```markdown
 ## Compaction Guidance
@@ -414,7 +414,7 @@ When this conversation compacts, always preserve: the active pipeline stage and 
 
 ## §Behavioral Contract Block
 
-Append this block to `CLAUDE.md` when the §Init idempotency predicate for `## Behavioral Contract` reports no existing heading. **Source of truth:** `commands/onboard-project.md` § Behavioral Contract Block — verbatim mirror below.
+<!-- canonical-source: claude/canonical-blocks/behavioral-contract.md — edit the canonical file, then run: python3 scripts/sync_canonical_blocks.py --write -->
 
 ```markdown
 ## Behavioral Contract
@@ -473,6 +473,8 @@ Scaffold staged. Two recommended next steps:
 The mushi doc's "What to read next" carries the same three-step language — `/onboard-project` first (smooth integration with the existing-project path), `/co` second (commit), and a pointer to `docs/greenfield-onboarding.md` (this command's companion doc) plus `docs/existing-project-onboarding.md` (the `/onboard-project` companion).
 
 ## §Praxion Process Block
+
+<!-- canonical-source: claude/canonical-blocks/praxion-process.md — edit the canonical file, then run: python3 scripts/sync_canonical_blocks.py --write -->
 
 ```markdown
 ## Praxion Process

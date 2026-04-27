@@ -29,7 +29,14 @@ import re
 import sys
 from pathlib import Path
 
-SHIPPED_ROOTS = ("rules", "skills", "agents", "commands", "claude/config")
+SHIPPED_ROOTS = (
+    "rules",
+    "skills",
+    "agents",
+    "commands",
+    "claude/config",
+    "claude/canonical-blocks",
+)
 
 IGNORE_MARKER = "<!-- shipped-artifact-isolation:ignore -->"
 

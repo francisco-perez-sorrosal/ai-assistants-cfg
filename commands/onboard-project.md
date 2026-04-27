@@ -399,7 +399,7 @@ The architect operates in a fresh context window (`Task` tool spawn) and reports
 
 ## §Agent Pipeline Block
 
-This is the canonical source of truth. The identical block lives in `commands/new-project.md` § Agent Pipeline Block — if you change one, mirror the change to the other so both produce byte-identical `CLAUDE.md` sections.
+<!-- canonical-source: claude/canonical-blocks/agent-pipeline.md — edit the canonical file, then run: python3 scripts/sync_canonical_blocks.py --write -->
 
 ```markdown
 ## Agent Pipeline
@@ -423,6 +423,8 @@ The block is **self-contained** — no cross-references to files that exist only
 
 ## §Compaction Guidance Block
 
+<!-- canonical-source: claude/canonical-blocks/compaction-guidance.md — edit the canonical file, then run: python3 scripts/sync_canonical_blocks.py --write -->
+
 ```markdown
 ## Compaction Guidance
 
@@ -430,6 +432,8 @@ When this conversation compacts, always preserve: the active pipeline stage and 
 ```
 
 ## §Behavioral Contract Block
+
+<!-- canonical-source: claude/canonical-blocks/behavioral-contract.md — edit the canonical file, then run: python3 scripts/sync_canonical_blocks.py --write -->
 
 ```markdown
 ## Behavioral Contract
@@ -445,6 +449,8 @@ Self-test: did I state assumptions, flag conflicts with reasons, stay inside dec
 ```
 
 ## §Praxion Process Block
+
+<!-- canonical-source: claude/canonical-blocks/praxion-process.md — edit the canonical file, then run: python3 scripts/sync_canonical_blocks.py --write -->
 
 ```markdown
 ## Praxion Process
