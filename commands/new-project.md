@@ -31,16 +31,17 @@ Onboard the current (freshly scaffolded) directory. Ask one question first, show
 
 Before anything else, verify the filesystem shape. The bash layer is supposed to have left a scaffolded-but-empty directory — if any of these checks fail, print the guarded-abort message and stop.
 
-Run these four checks from the project root:
+Run these five checks from the project root:
 
 1. `test -d .git` — the directory is a git repo.
 2. `grep -q '^# AI assistants$' .gitignore && grep -q '^\.ai-work/$' .gitignore` — the AI-assistants block is present.
 3. `test -d .claude && [ -z "$(ls -A .claude 2>/dev/null)" ]` — `.claude/` exists and is empty.
 4. `! test -e src || [ -z "$(ls -A src 2>/dev/null)" ]` — `src/` is absent, or is an empty directory.
+5. `[ "${PRAXION_ALLOW_SELF_ONBOARD:-}" = "1" ] || ! test -e .claude-plugin/plugin.json` — the project is not a Claude Code plugin source repo (Praxion itself or any plugin in development). Plugin source repos curate the four `CLAUDE.md` blocks (`## Agent Pipeline`, `## Compaction Guidance`, `## Behavioral Contract`, `## Praxion Process`) as canonical sources; injecting them again would duplicate content under conflicting headings and skew the source-of-truth chain. The override `PRAXION_ALLOW_SELF_ONBOARD=1` is provided for divergent forks that genuinely want self-onboarding.
 
 If any check fails, abort with:
 
-> This directory doesn't look like a freshly-scaffolded Praxion greenfield project. `/new-project` expects to run inside a directory produced by `new_project.sh` (a `.git/` repo with the AI-assistants `.gitignore` block, an empty `.claude/`, and no `src/` tree yet). If you meant to onboard an existing project, run `/onboard-project` instead.
+> This directory doesn't look like a freshly-scaffolded Praxion greenfield project. `/new-project` expects to run inside a directory produced by `new_project.sh` (a `.git/` repo with the AI-assistants `.gitignore` block, an empty `.claude/`, and no `src/` tree yet). If `.claude-plugin/plugin.json` is present, this is a Claude Code plugin source repo and self-onboarding requires `PRAXION_ALLOW_SELF_ONBOARD=1`. If you meant to onboard an existing project, run `/onboard-project` instead.
 
 Exit without writing anything.
 
