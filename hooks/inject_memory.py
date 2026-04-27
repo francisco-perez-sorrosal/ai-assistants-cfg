@@ -1,9 +1,8 @@
-"""SessionStart + SubagentStart hook: inject memory and decision context.
+"""SessionStart hook: inject memory and decision context.
 
-Fires at both SessionStart (main agent) and SubagentStart (subagents),
-ensuring every agent sees curated memory and architectural decisions
-from the first turn. Detects the event type from the payload and sets
-hookEventName accordingly.
+Fires at SessionStart (main agent only). SubagentStart additionalContext
+is silently ignored by Claude Code — use PreToolUse(Agent) with
+updatedInput for subagent context injection.
 
 Two independent data sources, combined into a single additionalContext:
 
@@ -410,13 +409,15 @@ def _build_adr_output(rows: list[dict], budget: int) -> str:
     return result
 
 
-def _emit_additional_context(context: str, payload: dict) -> None:
-    """Emit additionalContext keyed to the correct event name."""
-    is_subagent = bool(payload.get("agent_type"))
-    event_name = "SubagentStart" if is_subagent else "SessionStart"
+def _emit_additional_context(context: str) -> None:
+    """Emit additionalContext for SessionStart.
+
+    SubagentStart additionalContext is silently ignored by Claude Code —
+    use PreToolUse(Agent) with updatedInput for subagent context injection.
+    """
     output = {
         "hookSpecificOutput": {
-            "hookEventName": event_name,
+            "hookEventName": "SessionStart",
             "additionalContext": context,
         }
     }
@@ -432,11 +433,13 @@ def main() -> None:
     # driving voluntary remember() calls even though hook side-effects
     # are silenced.
     if mcp_disabled:
+        # Drain stdin even though we don't need the payload — stdin must
+        # be consumed or the hook framework may SIGPIPE on its write end.
         try:
-            payload = json.loads(sys.stdin.read())
-        except (json.JSONDecodeError, OSError):
-            return
-        _emit_additional_context(_MCP_DISABLED_NOTICE, payload)
+            sys.stdin.read()
+        except OSError:
+            pass
+        _emit_additional_context(_MCP_DISABLED_NOTICE)
         return
 
     if is_disabled(DISABLE_MEMORY_INJECTION):
@@ -493,9 +496,7 @@ def main() -> None:
     if not context:
         return
 
-    # hookEventName must match the triggering event (SessionStart vs
-    # SubagentStart) or additionalContext is silently ignored.
-    _emit_additional_context(context, payload)
+    _emit_additional_context(context)
 
 
 if __name__ == "__main__":

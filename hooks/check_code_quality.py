@@ -81,7 +81,7 @@ def main():
     if rc == 0 and output:
         _log(f"formatted: {output}")
     elif rc != 0:
-        _log(f"ruff format applied fixes")
+        _log("ruff format applied fixes")
 
     # Auto-fix: lint
     rc, output = _run([*ruff, "check", "--fix", *py_files])

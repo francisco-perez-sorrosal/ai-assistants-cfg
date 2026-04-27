@@ -180,7 +180,9 @@ def main() -> None:
     # IDs via ``tool_response["additionalContext"]`` (see dec-048 §Phase B).
     # Missing/malformed additionalContext degrades silently to empty strings.
     additional_context = (
-        tool_response.get("additionalContext", {}) if isinstance(tool_response, dict) else {}
+        tool_response.get("additionalContext", {})
+        if isinstance(tool_response, dict)
+        else {}
     )
     if not isinstance(additional_context, dict):
         additional_context = {}

@@ -22,7 +22,8 @@ Onboard the **current existing** project to work cleanly with the Praxion plugin
 13. §Agent Pipeline Block — canonical source of truth
 14. §Compaction Guidance Block
 15. §Behavioral Contract Block
-16. §Idempotency Predicates — per-phase contracts
+16. §Praxion Process Block
+17. §Idempotency Predicates — per-phase contracts
 
 ## §Pre-flight
 
@@ -67,7 +68,7 @@ Execute these phases in order. Each phase honors §Idempotency Predicates — re
 | 3 | Append `.gitattributes` entries + register merge drivers via `git config` | Entries detected by exact-line match; drivers detected via `git config --get` |
 | 4 | Symlink pre-commit + post-merge hooks (skip if `skip-phase-4` flag) | Symlinks detected via `readlink` resolving to the plugin path |
 | 5 | Write `.claude/settings.json` with chosen `PRAXION_DISABLE_*` flags | Existing keys preserved unless user explicitly chooses to override |
-| 6 | Append Agent Pipeline + Compaction Guidance + Behavioral Contract blocks to `CLAUDE.md` | `## Agent Pipeline` heading detection per block |
+| 6 | Append Agent Pipeline + Compaction Guidance + Behavioral Contract + Praxion Process blocks to `CLAUDE.md` | `## Agent Pipeline` heading detection per block |
 | 7 | Print companion-CLI install commands (advisory) | None — purely informational |
 | 8 | Architecture baseline — delegate to `systems-architect` in baseline mode → `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` (+ optional ADR draft) | `test -e .ai-state/ARCHITECTURE.md` OR `test -e docs/architecture.md` (skip if either exists) OR user picks "Skip" at Gate 8 |
 | 9 | Print summary + stage modified files (no commit) | None — terminal phase |
@@ -99,7 +100,7 @@ The default §Flow runs end-to-end without pause. To let users *learn* the model
 | 3 | 3 | `Phase 3 of 9: I add merge-driver entries to .gitattributes and run 'git config' to register Python-based semantic merge drivers for .ai-state/memory.json and .ai-state/observations.jsonl. Without these, concurrent edits get corrupted by line-based merge. Continue?` |
 | 4 | 4 | `Phase 4 of 9: I install two git hooks — pre-commit (id-citation discipline) and post-merge (ADR finalize + tech-debt dedupe + squash-safety check). Without the post-merge hook, draft ADRs never promote to stable dec-NNN. Symlinks resolve to the plugin scripts so updates flow automatically. Continue?` |
 | 5 | 5 | (Multi-select on PRAXION_DISABLE_* toggles — see §Phase 5 for option text) |
-| 6 | 6 | `Phase 6 of 9: I append three blocks to CLAUDE.md — the Agent Pipeline (how to use Praxion's subagents), Compaction Guidance (what to preserve when the conversation compacts), and Behavioral Contract reminder. Each block is idempotent via heading detection. Continue?` |
+| 6 | 6 | `Phase 6 of 9: I append four blocks to CLAUDE.md — the Agent Pipeline (how to use Praxion's subagents), Compaction Guidance (what to preserve when the conversation compacts), Behavioral Contract reminder, and Praxion Process (the tier-driven pipeline principle + rule-inheritance obligation). Each block is idempotent via heading detection. Continue?` |
 | 7 | 7 | `Phase 7 of 9: I check whether chub (external API docs), scc (SLOC counter), and uv (Python tooling) are installed. I won't install anything — I'll print one-line install commands you can run later if useful. Continue?` |
 | 8 | 8 | (Three-option pick — see §Phase 8 for the exact AskUserQuestion form. Default is `Run baseline now`. Headline: `Phase 8 of 9: Architecture baseline. I delegate to systems-architect in baseline mode to read your codebase and produce .ai-state/ARCHITECTURE.md (architect-facing, design-target) + docs/architecture.md (developer-facing, navigation guide). These docs become the architectural anchor for every future feature pipeline. Takes ~5–15 minutes for a medium project. Skip if you'd rather wait for your first feature pipeline to produce them. Pick:`) |
 
@@ -286,11 +287,12 @@ If `.claude/settings.json` already exists with other keys (e.g., `permissions`, 
 
 ## §Phase 6 — `CLAUDE.md` Praxion blocks
 
-**Predicate.** Three independent heading checks:
+**Predicate.** Four independent heading checks:
 
 - `## Agent Pipeline` heading present → skip the Agent Pipeline append
 - `## Compaction Guidance` heading present → skip the Compaction Guidance append
 - `## Behavioral Contract` heading present → skip the Behavioral Contract append
+- `## Praxion Process` heading present → skip the Praxion Process append
 
 **Action.**
 
@@ -300,6 +302,7 @@ If `.claude/settings.json` already exists with other keys (e.g., `permissions`, 
    - The §Agent Pipeline Block verbatim
    - The §Compaction Guidance Block verbatim
    - The §Behavioral Contract Block verbatim
+   - The §Praxion Process Block verbatim
 
    Append at the end of the file with one blank line separating from preceding content.
 
@@ -373,7 +376,7 @@ The architect operates in a fresh context window (`Task` tool spawn) and reports
      Phase 3: .gitattributes (appended 2 lines), git config (2 merge drivers registered)
      Phase 4: .git/hooks/pre-commit (new), .git/hooks/post-merge (symlink)
      Phase 5: .claude/settings.json (4 PRAXION_DISABLE_* env vars)
-     Phase 6: CLAUDE.md (appended Agent Pipeline + Compaction + Behavioral Contract blocks)
+     Phase 6: CLAUDE.md (appended Agent Pipeline + Compaction + Behavioral Contract + Praxion Process blocks)
      Phase 7: companion CLIs — chub missing (install: ...), scc missing (install: ...)
      Phase 8: architecture baseline produced — .ai-state/ARCHITECTURE.md + docs/architecture.md (+ N ADR draft(s))
    ```
@@ -440,6 +443,18 @@ Four non-negotiable behaviors for any agent (including Claude itself) writing, p
 Self-test: did I state assumptions, flag conflicts with reasons, stay inside declared scope, and choose the simplest path?
 ```
 
+## §Praxion Process Block
+
+```markdown
+## Praxion Process
+
+Apply Praxion's tier-driven pipeline for non-trivial work. Use the tier selector from `rules/swe/swe-agent-coordination-protocol.md`: Direct (single-file fix/typo) or Lightweight (2–3 files) may skip the full pipeline; Standard or Full tier work requires researcher → systems-architect → implementation-planner → implementer + test-engineer → verifier.
+
+**Rule-inheritance corollary.** When delegating to any subagent — Praxion-native or host-native (Explore, Plan, general-purpose) — carry the behavioral contract into every delegation prompt. Host-native subagents do not load CLAUDE.md; the orchestrator is the only delivery path.
+
+**Orchestrator obligation.** Every delegation prompt must name the task slug, expected deliverables, and the behavioral contract (Surface Assumptions · Register Objection · Stay Surgical · Simplicity First).
+```
+
 ## §Idempotency Predicates — per-phase contracts
 
 | Phase | Predicate (skip if true) |
@@ -449,7 +464,7 @@ Self-test: did I state assumptions, flag conflicts with reasons, stay inside dec
 | 3 | `grep -qF '.ai-state/memory.json merge=memory-json' .gitattributes` AND `git config --get merge.memory-json.driver` returns a value containing `i-am` AND same for `observations-jsonl` |
 | 4 | `readlink .git/hooks/pre-commit` resolves to a Praxion-shipped file (or the file is a script containing `check_id_citation_discipline`) AND `readlink .git/hooks/post-merge` resolves to a path containing `/i-am/` |
 | 5 | All four `PRAXION_DISABLE_*` keys present under `.env` in `.claude/settings.json` (any value) |
-| 6 | `grep -q '^## Agent Pipeline$' CLAUDE.md` (per block — checked individually for the three blocks) |
+| 6 | `grep -q '^## Agent Pipeline$' CLAUDE.md` (per block — checked individually for the four blocks; `grep -q '^## Praxion Process$' CLAUDE.md` for the Praxion Process block) |
 | 7 | None — phase 7 is advisory and always runs |
 | 8 | `test -e .ai-state/ARCHITECTURE.md` OR `test -e docs/architecture.md` (skip phase if either doc exists — covers re-runs and greenfield-followed-by-onboard); also skipped if the user picks `Skip` at Gate 8 |
 | 9 | None — terminal phase always runs |

@@ -818,9 +818,7 @@ class TestCoverageContextAwareInstallHint:
             f"got {hint!r}"
         )
 
-    def test_hint_falls_back_to_generic_when_no_pyproject(
-        self, tmp_path: Path
-    ) -> None:
+    def test_hint_falls_back_to_generic_when_no_pyproject(self, tmp_path: Path) -> None:
         from scripts.project_metrics.collectors.coverage_collector import (
             _COVERAGE_INSTALL_HINT_GENERIC,
             _choose_install_hint,

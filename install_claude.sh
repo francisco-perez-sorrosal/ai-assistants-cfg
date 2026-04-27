@@ -225,21 +225,12 @@ render_claude_md() {
         fail "Template not found: $CLAUDE_MD_TEMPLATE"
     fi
 
-    # Python handles the substitution: sed would need escape gymnastics for
-    # URLs and @ characters. str.replace is safe regardless of content.
-    python3 - "$CLAUDE_MD_TEMPLATE" "$CLAUDE_MD_RENDERED" \
-        "$PRAXION_USERNAME" "$PRAXION_EMAIL" "$PRAXION_GITHUB_URL" <<'PYEOF'
-import sys
-src, dst, username, email, github_url = sys.argv[1:6]
-with open(src) as f:
-    content = f.read()
-content = (content
-    .replace("{{USERNAME}}", username)
-    .replace("{{EMAIL}}", email)
-    .replace("{{GITHUB_URL}}", github_url))
-with open(dst, "w") as f:
-    f.write(content)
-PYEOF
+    # Delegate substitution to the extracted Python helper.  The script handles
+    # {{USERNAME}}, {{EMAIL}}, {{GITHUB_URL}} and logs residual placeholders to
+    # stderr without failing — matching the warn path below.
+    python3 "${SCRIPT_DIR}/scripts/render_claude_md.py" \
+        "$CLAUDE_MD_TEMPLATE" "$CLAUDE_MD_RENDERED" \
+        "$PRAXION_USERNAME" "$PRAXION_EMAIL" "$PRAXION_GITHUB_URL"
 
     # Guard against forgotten placeholders (e.g., a new {{FOO}} added to the
     # template but not to render_claude_md) — surface it loudly.

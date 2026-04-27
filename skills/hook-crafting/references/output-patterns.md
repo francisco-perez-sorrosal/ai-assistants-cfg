@@ -10,7 +10,9 @@ Injects text into Claude's conversation context. The most useful feedback mechan
 {"additionalContext": "[hook-name] ruff formatted foo.py (12 lines changed)"}
 ```
 
-**Supported events**: PostToolUse, PostToolUseFailure, SessionStart, UserPromptSubmit, SubagentStart, Notification, PreToolUse (exit 0 only).
+**Supported events**: PostToolUse, PostToolUseFailure, SessionStart, UserPromptSubmit, Notification, PreToolUse (exit 0 only).
+
+**Note**: SubagentStart is observational-only — `additionalContext` is silently ignored by Claude Code. Use PreToolUse(Agent) with `updatedInput` for subagent context injection.
 
 **Requirements**:
 - Hook must exit 0 (JSON is not parsed for exit 2)

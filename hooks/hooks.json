@@ -21,6 +21,25 @@
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/capture_session.py 2>/dev/null",
             "timeout": 5,
             "async": true
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/auto_complete_install.py",
+            "timeout": 35,
+            "async": false
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/inject_process_framing.py",
+            "timeout": 5,
+            "async": false
           }
         ]
       }
@@ -59,12 +78,6 @@
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/send_event.py 2>/dev/null",
             "timeout": 10,
             "async": true
-          },
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/inject_memory.py",
-            "timeout": 5,
-            "async": false
           },
           {
             "type": "command",
@@ -137,6 +150,17 @@
       }
     ],
     "PreToolUse": [
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/inject_subagent_context.py",
+            "timeout": 5,
+            "async": false
+          }
+        ]
+      },
       {
         "matcher": "Bash",
         "hooks": [

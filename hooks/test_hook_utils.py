@@ -160,14 +160,18 @@ def test_inject_memory_emits_disabled_notice_under_mcp_flag():
     assert "Decision Context (auto-injected)" not in context
 
 
-def test_inject_memory_mcp_flag_tags_subagent_start_when_payload_has_agent_type():
-    """For SubagentStart payloads (agent_type present), the notice must be
-    keyed to hookEventName=SubagentStart so Claude Code injects it."""
+def test_inject_memory_mcp_flag_always_emits_session_start_event_name():
+    """inject_memory.py fires on SessionStart only — hookEventName is always
+    SessionStart regardless of whether the payload contains agent_type.
+
+    SubagentStart additionalContext is silently ignored by Claude Code;
+    inject_memory.py is no longer registered for SubagentStart events.
+    """
     payload = {**_MINIMAL_PAYLOAD, "agent_type": "implementer"}
     result = _run_hook("inject_memory.py", payload, {"PRAXION_DISABLE_MEMORY_MCP": "1"})
     assert result.returncode == 0, result.stderr
     spec = json.loads(result.stdout)["hookSpecificOutput"]
-    assert spec["hookEventName"] == "SubagentStart"
+    assert spec["hookEventName"] == "SessionStart"
     assert "PRAXION_DISABLE_MEMORY_MCP" in spec["additionalContext"]
 
 
