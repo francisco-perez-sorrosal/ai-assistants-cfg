@@ -1,5 +1,5 @@
 ---
-id: dec-draft-26a0b592
+id: dec-082
 title: Build-time canonical-block sync over runtime bash injection
 status: proposed
 category: architectural

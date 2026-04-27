@@ -1,5 +1,5 @@
 ---
-id: dec-draft-3f54371e
+id: dec-077
 title: Frontmatter `model:` is a capability floor; rule table is authoritative
 status: accepted
 category: architectural
@@ -21,7 +21,7 @@ affected_reqs:
 
 ## Context
 
-The hybrid routing mechanism (dec-draft-8cbfa312) introduces a central rule table as the tier authority. This creates tension with three existing `model: opus` frontmatter pins on `systems-architect`, `promethean`, and `roadmap-cartographer` — either the pins or the rule is the source of truth, but not both without creating drift. Claude Code's layer-2 per-spawn override (from the main orchestrator) beats layer-3 frontmatter mechanically, so the question is what *semantic* to attach to the pin.
+The hybrid routing mechanism (dec-078) introduces a central rule table as the tier authority. This creates tension with three existing `model: opus` frontmatter pins on `systems-architect`, `promethean`, and `roadmap-cartographer` — either the pins or the rule is the source of truth, but not both without creating drift. Claude Code's layer-2 per-spawn override (from the main orchestrator) beats layer-3 frontmatter mechanically, so the question is what *semantic* to attach to the pin.
 
 The context-engineer shadow review (`CONTEXT_REVIEW.md §F4`) proposed a hybrid resolution: treat frontmatter as a **capability floor** — a declaration that "this agent must not route below tier X" — while the rule table remains authoritative and may route up via layer-2. This preserves local author intent (the pins survive copy-paste between projects) without creating a two-sources-of-truth drift.
 

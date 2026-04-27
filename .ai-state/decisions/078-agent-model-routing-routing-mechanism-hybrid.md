@@ -1,5 +1,5 @@
 ---
-id: dec-draft-8cbfa312
+id: dec-078
 title: Hybrid routing — central rule table with sparing per-spawn overrides
 status: accepted
 category: architectural
@@ -30,7 +30,7 @@ Praxion's 13 pipeline agents currently resolve their model via a mix of three fr
 Adopt a **hybrid** routing mechanism:
 
 - A central always-loaded rule `rules/swe/agent-model-routing.md` is the authoritative tier table. All 13 agents appear with an H/M/L tier and a one-line rationale.
-- The 3 existing `model: opus` frontmatter pins are retained as **capability floors** (see `dec-draft-3f54371e`).
+- The 3 existing `model: opus` frontmatter pins are retained as **capability floors** (see `dec-077`).
 - The main orchestrator passes layer-2 `model: <alias>` on every Agent-tool spawn for the 10 non-pinned agents, using the rule table as the source of truth.
 - Layer-2 overrides on *top of* the rule table are sanctioned for exactly two cases: (a) researcher mode selection (lookup vs comparative vs contested-evidence), (b) implementer step-level `tier:` hint from the planner. Any third case requires reopening this ADR.
 

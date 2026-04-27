@@ -1,5 +1,5 @@
 ---
-id: dec-draft-2a90de13
+id: dec-081
 title: Self-host guard for /onboard-project and /new-project
 status: proposed
 category: behavioral

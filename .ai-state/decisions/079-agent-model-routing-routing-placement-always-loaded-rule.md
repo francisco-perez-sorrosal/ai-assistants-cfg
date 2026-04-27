@@ -1,5 +1,5 @@
 ---
-id: dec-draft-1178a4ea
+id: dec-079
 title: Model-routing policy lives in a new always-loaded rule
 status: accepted
 category: architectural
@@ -19,7 +19,7 @@ affected_reqs:
 
 ## Context
 
-The hybrid routing mechanism (dec-draft-8cbfa312) requires the main orchestrator to consult the tier table on every Agent-tool spawn. That means the policy content must reach the main session's loaded context — not only a subagent's prompt. At the same time, Praxion's always-loaded budget (CLAUDE.md files + unscoped rules) has a 25,000-token ceiling per dec-050, with ~15,100 currently used. The placement decision must balance visibility at spawn time against token-budget impact, while coexisting with two overlapping artifacts: `skills/claude-ecosystem/` (consumer-side model selection) and `skills/agent-crafting/` (authoring agents).
+The hybrid routing mechanism (dec-078) requires the main orchestrator to consult the tier table on every Agent-tool spawn. That means the policy content must reach the main session's loaded context — not only a subagent's prompt. At the same time, Praxion's always-loaded budget (CLAUDE.md files + unscoped rules) has a 25,000-token ceiling per dec-050, with ~15,100 currently used. The placement decision must balance visibility at spawn time against token-budget impact, while coexisting with two overlapping artifacts: `skills/claude-ecosystem/` (consumer-side model selection) and `skills/agent-crafting/` (authoring agents).
 
 ## Decision
 
@@ -68,5 +68,5 @@ Cross-reference from `rules/swe/swe-agent-coordination-protocol.md § Agent Sele
 
 **Risks accepted:**
 
-- Rule becomes stale as Anthropic ships new models. Mitigated by aliases-only (no staleness markers needed); rule review cadence implicit in the one-month telemetry revisit (dec-draft-063470df).
+- Rule becomes stale as Anthropic ships new models. Mitigated by aliases-only (no staleness markers needed); rule review cadence implicit in the one-month telemetry revisit (dec-080).
 - Context-engineer independently arrived at the same decision in `CONTEXT_REVIEW.md §F3`; concurrent validation of the placement choice.

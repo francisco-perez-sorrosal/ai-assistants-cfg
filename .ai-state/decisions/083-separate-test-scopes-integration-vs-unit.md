@@ -1,5 +1,5 @@
 ---
-id: dec-draft-ef86f36f
+id: dec-083
 title: Separate test scopes for canonical-blocks refactor — integration vs. unit
 status: proposed
 category: implementation

@@ -1,5 +1,5 @@
 ---
-id: dec-draft-43104bf3
+id: dec-076
 title: Routing dimensionality — 1D now, defer 2D (model × effort)
 status: accepted
 category: architectural
@@ -44,7 +44,7 @@ Ship the policy as **1D** — tier-alias only — for v1. Defer 2D (model × eff
 **Positive:**
 
 - Policy ships days, not weeks.
-- The rule stays within ~800 tokens (dec-draft-1178a4ea token budget).
+- The rule stays within ~800 tokens (dec-079 token budget).
 - Clear re-open trigger preserves optionality.
 
 **Negative:**
@@ -53,4 +53,4 @@ Ship the policy as **1D** — tier-alias only — for v1. Defer 2D (model × eff
 
 **Risks accepted:**
 
-- 2D becomes material after 1D ships — the re-open trigger is the safety net. Telemetry stance (dec-draft-063470df) provides the signal.
+- 2D becomes material after 1D ships — the re-open trigger is the safety net. Telemetry stance (dec-080) provides the signal.

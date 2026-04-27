@@ -1,5 +1,5 @@
 ---
-id: dec-draft-063470df
+id: dec-080
 title: Defer routing telemetry — ship v1 without transcript-scraping
 status: accepted
 category: architectural
