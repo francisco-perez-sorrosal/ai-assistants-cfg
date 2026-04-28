@@ -134,7 +134,8 @@ Rule: lowercase everything, replace spaces with `-`, strip punctuation except `-
 
 - TL;DR sections that jump the reader to a subsection
 - Table of contents entries at the document top
-- Cross-references within a long document ("see [Configuration](#configuration)")
+- Cross-references within a long document ("see [Configuration](#configuration)") <!-- validate-references:ignore -->
+<!-- The bracketed example above is illustrative; #configuration is a hypothetical anchor used for teaching, not a navigable link in this file. -->
 
 ### When NOT to use
 

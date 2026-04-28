@@ -61,7 +61,8 @@ Content sections (the planner/implementer fleshes out text during implementation
    - Reviewers do NOT review `DECISIONS_INDEX.md` changes -- regenerated post-merge, not authored.
 5. **Forward path for multi-user mode.** Author identity already encoded in fragment filenames (dec-056); `finalize_adrs.py --author <email>` per-author filtering is a 10-line extension.
 
-`rules/swe/vcs/git-conventions.md` -- add one line: "See also: [`pr-conventions.md`](pr-conventions.md) for PR-specific workflow." No duplication.
+`rules/swe/vcs/git-conventions.md` -- add one line: "See also: [`pr-conventions.md`](pr-conventions.md) for PR-specific workflow." No duplication. <!-- validate-references:ignore -->
+<!-- The bracketed link above is template content showing what to insert into git-conventions.md (where the relative path resolves correctly); it is not a navigable link from this ADR. -->
 
 ## Considered Options
 

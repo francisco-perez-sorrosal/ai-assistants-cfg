@@ -671,6 +671,7 @@ class OTelRelay:
                     self._finalize_tool_span(
                         open_span,
                         agent_id,
+                        tool_name,
                         output_summary,
                         is_error,
                         error_msg,
@@ -698,6 +699,7 @@ class OTelRelay:
         self,
         span: trace.Span,
         agent_id: str,
+        tool_name: str,
         output_summary: str,
         is_error: bool,
         error_msg: str,
@@ -707,7 +709,9 @@ class OTelRelay:
         """Close an open tool span with output attrs and explicit end time.
 
         ``tool.id`` was set at ``start_tool`` time (as the correlation key),
-        so there's no need to set it again here.
+        so there's no need to set it again here. ``tool_name`` is passed in
+        rather than recovered from ``span.attributes`` because the public
+        ``trace.Span`` interface does not expose attribute readback.
         """
         if output_summary:
             span.set_attribute(SpanAttributes.OUTPUT_VALUE, output_summary)
@@ -746,11 +750,8 @@ class OTelRelay:
         span.end(end_time=end_time_ns)
 
         # Record the tool name on the agent's rollup set for end_agent.
-        tool_name_attr = (
-            span.attributes.get(SpanAttributes.TOOL_NAME, "") if span.attributes else ""
-        )
-        if tool_name_attr:
-            self._track_tool_used(agent_id, str(tool_name_attr))
+        if tool_name:
+            self._track_tool_used(agent_id, tool_name)
 
         self._increment_stat(agent_id, "tool_count")
         if is_error:

@@ -964,7 +964,12 @@ class TestADREndToEnd:
         assert "## Decision Context (auto-injected)" in ctx
 
     def test_hook_event_name_present(self, project_dir: Path):
-        """Output JSON includes hookEventName: SubagentStart."""
+        """Output JSON includes hookEventName: SessionStart.
+
+        The hook is registered on SessionStart only -- SubagentStart
+        additionalContext is silently ignored by Claude Code, so the
+        SessionStart event is what gets emitted.
+        """
         _make_decisions_index(_SAMPLE_ADR_ROWS[:1], path=project_dir)
         payload = json.dumps({"cwd": str(project_dir), "agent_type": "researcher"}).encode()
         import io
@@ -976,7 +981,7 @@ class TestADREndToEnd:
         ):
             inject_memory.main()
         result = json.loads(mock_stdout.getvalue())
-        assert result["hookSpecificOutput"]["hookEventName"] == "SubagentStart"
+        assert result["hookSpecificOutput"]["hookEventName"] == "SessionStart"
 
     def test_decisions_appear_before_memory_in_output(self, project_dir: Path):
         """ADR section appears before memory section in the injected context."""
