@@ -23,6 +23,7 @@ Retrieve accurate, current API documentation for external libraries transparentl
 
 - [references/context-hub.md](references/context-hub.md) -- context-hub (chub) provider: CLI reference, setup, configuration, telemetry controls
 - [references/mcp-setup.md](references/mcp-setup.md) -- MCP server configuration for Claude Code, Cursor, and Claude Desktop
+- [references/upstream-skill.md](references/upstream-skill.md) -- verbatim pass-through of chub's own `get-api-docs` skill (provenance + relationship to this skill)
 
 ## Gotchas
 
@@ -58,7 +59,9 @@ Call with the library or API name; if results are returned, proceed to Step 2, o
 
 | | MCP | CLI |
 |---|---|---|
-| **Search** | `chub_search({ query: "stripe", type: "docs" })` | `chub search "stripe" --json` |
+| **Search** | `chub_search({ query: "stripe" })` | `chub search "stripe" --json` |
+
+`chub_search` accepts `{ query?, tags?, lang?, limit? }`. Pass `tags: "openai,chat"` to filter; omit `query` to enumerate. There is no `type` filter -- both docs and skills come back in one ranked list.
 
 ### Step 2: Fetch Targeted Content
 
@@ -66,9 +69,12 @@ Fetch by entry ID; for large docs via CLI, use `-o` to write to a file and read 
 
 | | MCP | CLI |
 |---|---|---|
-| **Fetch by entry** | `chub_get({ id: "stripe/api", language: "python" })` | `chub get stripe/api --lang python` |
+| **Fetch by entry** | `chub_get({ id: "stripe/api", lang: "python" })` | `chub get stripe/api --lang python` |
 | **Fetch specific file** | `chub_get({ id: "stripe/api", file: "references/webhooks.md" })` | `chub get stripe/api --file references/webhooks.md` |
+| **Pin to a doc version** | `chub_get({ id: "stripe/api", version: "19.1.0", lang: "python" })` | `chub get stripe/api --version 19.1.0 --lang python` |
 | **Save to file** | N/A (content returned directly) | `chub get stripe/api -o tmp/api-docs/` |
+
+Use `version` when the project pins a specific library version -- it keeps the fetched docs aligned with the code being written and feeds the [API Version Drift Detection](#api-version-drift-detection) protocol below.
 
 ### Step 3: Use the Content
 
@@ -78,10 +84,14 @@ Extract only what the task needs — endpoint signatures, auth patterns, error c
 
 When you find a gotcha, correction, or non-obvious pattern, persist it — e.g. "v2 PaymentIntents require idempotency keys for retries; omitting causes silent duplicate charges." Every note must end with the identity suffix (see [Identity Attribution](#identity-attribution)); annotations auto-append to future fetches of that entry.
 
-| | MCP | CLI |
+`chub_annotate` is **modal** -- choose one mode per call:
+
+| Mode | MCP | CLI |
 |---|---|---|
-| **Save a note** | `chub_annotate({ id: "stripe/api", note: "<body>. — <name> (<email>)" })` | `chub annotate stripe/api "<note>"` |
-| **List existing notes** | N/A | `chub annotate --list` |
+| **Save a note** (write/overwrite) | `chub_annotate({ id: "stripe/api", note: "<body>. — <name> (<email>)" })` | `chub annotate stripe/api "<note>"` |
+| **Read existing note** | `chub_annotate({ id: "stripe/api" })` | (read via `chub get`; the note auto-appends) |
+| **Clear a note** | `chub_annotate({ id: "stripe/api", clear: true })` | `chub annotate stripe/api --clear` |
+| **List all notes** | `chub_annotate({ list: true })` | `chub annotate --list` |
 
 ### Step 5: Give Feedback
 
@@ -91,8 +101,12 @@ After using a doc, **always** rate it — every rating needs a label, a concrete
 
 | | MCP | CLI |
 |---|---|---|
-| **Upvote** | `chub_feedback({ id, vote: "up", label: "accurate", comment: "<body>. — <name> (<email>)" })` | `chub feedback <id> up --label accurate "<comment>"` |
-| **Downvote** | `chub_feedback({ id, vote: "down", label: "outdated", comment: "<body>. — <name> (<email>)" })` | `chub feedback <id> down --label outdated "<comment>"` |
+| **Upvote** | `chub_feedback({ id, rating: "up", labels: ["accurate"], comment: "<body>. — <name> (<email>)" })` | `chub feedback <id> up --label accurate "<comment>"` |
+| **Downvote** | `chub_feedback({ id, rating: "down", labels: ["outdated"], comment: "<body>. — <name> (<email>)" })` | `chub feedback <id> down --label outdated "<comment>"` |
+| **Multiple labels** | `chub_feedback({ id, rating: "down", labels: ["outdated", "wrong-examples"], comment: "..." })` | `chub feedback <id> down --label outdated --label wrong-examples "<comment>"` |
+| **Inspect wiring** | N/A | `chub feedback --status` (does not send feedback; prints runtime state) |
+
+The MCP tool key is `rating` (not `vote`) and `labels` is an **array of enum values**, not a single string -- attach as many labels as honestly apply. The CLI's `--label` flag is repeatable for the same effect. The MCP also accepts the same metadata flags as the CLI -- `type`, `lang`, `version`, `file` -- pass them when known to make feedback more actionable for upstream maintainers. Passing `agent` and `model` (CLI only as of 0.1.4: `--agent`, `--model`) lets maintainers see which agent stack produced the rating.
 
 ### Identity Attribution
 
@@ -139,13 +153,17 @@ Never send feedback silently. The user must see every rating submitted to a thir
 | Goal | MCP tool | CLI equivalent |
 |------|----------|----------------|
 | Find a doc | `chub_search({ query: "stripe" })` | `chub search "stripe" --json` |
-| List all docs | `chub_list()` | `chub search` (no query) |
-| Fetch Python docs | `chub_get({ id: "stripe/api", language: "python" })` | `chub get stripe/api --lang py` |
+| List all entries | `chub_list()` | `chub search` (no query; the standalone `chub list` subcommand was removed in 0.1.4) |
+| Fetch Python docs | `chub_get({ id: "stripe/api", lang: "python" })` | `chub get stripe/api --lang py` |
 | Fetch specific file | `chub_get({ id: "stripe/api", file: "references/webhooks.md" })` | `chub get stripe/api --file references/webhooks.md` |
+| Pin doc version | `chub_get({ id: "stripe/api", version: "19.1.0" })` | `chub get stripe/api --version 19.1.0` |
 | Save to file | N/A (MCP returns content directly) | `chub get stripe/api -o docs.md` |
 | Save a note | `chub_annotate({ id: "stripe/api", note: "..." })` | `chub annotate stripe/api "..."` |
-| List notes | N/A | `chub annotate --list` |
-| Rate a doc | `chub_feedback({ id: "stripe/api", vote: "up" })` | `chub feedback stripe/api up` |
+| Read a note | `chub_annotate({ id: "stripe/api" })` | (auto-appended on `chub get`) |
+| Clear a note | `chub_annotate({ id: "stripe/api", clear: true })` | `chub annotate stripe/api --clear` |
+| List notes | `chub_annotate({ list: true })` | `chub annotate --list` |
+| Rate a doc | `chub_feedback({ id: "stripe/api", rating: "up", labels: ["accurate"] })` | `chub feedback stripe/api up --label accurate` |
+| Inspect wiring | N/A | `chub feedback --status` |
 
 ## Fallback Hierarchy
 
@@ -167,7 +185,7 @@ This skill defines the **methodology** for external API documentation retrieval;
 |----------|------|----------|-------|
 | **[context-hub](references/context-hub.md)** (default) | MCP + CLI | ~600+ curated API doc packages | Praxion installer (Step 6) or `npm install -g @aisuite/chub` |
 
-See [references/context-hub.md](references/context-hub.md) for CLI reference, configuration, and telemetry controls; [references/mcp-setup.md](references/mcp-setup.md) for MCP server configuration per tool.
+See [references/context-hub.md](references/context-hub.md) for CLI reference, configuration, and telemetry controls; [references/mcp-setup.md](references/mcp-setup.md) for MCP server configuration per tool; [references/upstream-skill.md](references/upstream-skill.md) for the verbatim copy of chub's own `get-api-docs` skill (chub's recommended distribution path is to copy that skill directly into your agent's skill directory; Praxion's wrapper subsumes it).
 
 ## Pipeline Integration
 

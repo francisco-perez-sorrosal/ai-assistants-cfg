@@ -21,7 +21,7 @@ The default provider is [context-hub](https://github.com/andrewyng/context-hub) 
 - **Claude Code** (`./install.sh`): Step 6 offers to configure the context-hub MCP server in `~/.claude/settings.json`. Telemetry is disabled by default.
 - **Cursor** (`./install.sh cursor`): The `mcp.json` template includes context-hub automatically.
 
-Both use `npx -y @aisuite/chub mcp`, which auto-downloads on first use. The only prerequisite is **Node.js 18+** (which `npx` requires).
+Both use `npx -y -p @aisuite/chub chub-mcp`, which auto-downloads on first use. The only prerequisite is **Node.js 18+** (which `npx` requires). The `@aisuite/chub` package ships two bin entries — `chub` (CLI) and `chub-mcp` (MCP stdio server); there is no `chub mcp` subcommand.
 
 Verify the MCP server is working by asking the agent: "What chub tools are available?"
 
@@ -37,7 +37,7 @@ If you skipped the installer step or want to set up manually:
   "mcpServers": {
     "chub": {
       "command": "npx",
-      "args": ["-y", "@aisuite/chub", "mcp"],
+      "args": ["-y", "-p", "@aisuite/chub", "chub-mcp"],
       "env": {
         "CHUB_TELEMETRY": "0",
         "CHUB_FEEDBACK": "1"
