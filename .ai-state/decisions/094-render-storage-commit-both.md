@@ -15,6 +15,9 @@ affected_files:
   - skills/doc-management/references/diagram-conventions.md
   - rules/writing/diagram-conventions.md
   - commands/onboard-project.md
+re_affirmed_by:
+  - dec-draft-bbf06bcb
+  - dec-draft-cfb2c584
 ---
 
 ## Context
