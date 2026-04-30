@@ -104,6 +104,24 @@ Workflow for contributors without local binaries:
 
 ## AI Tooling
 
-<!-- TODO (Step 3): Populate this section with LikeC4 MCP server (@likec4/mcp) wiring
-instructions and the likec4-dsl Agent Skill registration command
-(`npx skills add https://likec4.dev/`). -->
+### LikeC4 Agent Skill (one-time, system-scope)
+
+When authoring `.c4` files, register the LikeC4 DSL Agent Skill for in-editor guidance:
+
+    npx skills add https://likec4.dev/
+
+Claude Code, Cursor, and Windsurf auto-load this skill when editing `.c4` files.
+
+### Full LikeC4 reference (headless / non-IDE contexts)
+
+For full LikeC4 DSL/API reference outside the auto-loaded Agent Skill context
+(e.g., headless agents, future MCP consumers, agents on systems without the
+Vercel skills protocol registered), fetch `https://likec4.dev/llms-full.txt`
+directly with a fetch-date annotation (per the `external-api-docs` skill's
+freshness discipline). No chub upstream entry currently exists for LikeC4 —
+the chub MCP has no ingestion tool for new entries; if one is added later,
+this section can be updated to point at it.
+
+The thin `https://likec4.dev/llms.txt` navigation index is intentionally not
+vendored; its function is fully subsumed by either the Agent Skill or
+`llms-full.txt`.

@@ -359,6 +359,10 @@ See [`rules/README.md`](rules/README.md) for the full rule specification, writin
 
 For user-facing installation instructions, see [`README.md`](README.md#installation).
 
+### LikeC4 Agent Skill (one-time, system-scope)
+
+Register the LikeC4 DSL Agent Skill for in-editor `.c4` file guidance — see [`docs/architecture-diagrams.md#ai-tooling`](docs/architecture-diagrams.md#ai-tooling).
+
 ### Session-scoped local testing
 
 For active development on Praxion itself, launch Claude Code with the working tree as the plugin source:
