@@ -8,7 +8,7 @@ description: >
   researcher → systems-architect pipeline. Use proactively when the user wants
   fresh ideas, has no specific task, or when project gaps and opportunities
   should be explored.
-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
+tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion, WebFetch
 model: opus  # capability floor; orchestrator may route up via per-spawn override, never below. See rules/swe/agent-model-routing.md.
 permissionMode: default
 memory: user
@@ -66,6 +66,16 @@ Establish the ecosystem's current health state before ideating. The sentinel's p
 3. **If no report exists**, halt with this message: _"No sentinel report found in `.ai-state/sentinel_reports/`. Run the sentinel agent first to establish an ecosystem baseline before ideation. Recommended: invoke sentinel with a full ecosystem sweep."_
 4. **Record the sentinel report reference** — save the timestamp from the log entry for inclusion in the idea ledger output
 5. **Carry health data forward** — use it in Phase 4 (Idea Generation) to prioritize ideas that address ecosystem gaps and avoid proposing ideas that would worsen existing issues
+
+### Phase 2.5 — Landscape Scan (external grounding)
+
+After internal ecosystem health, gather a thin slice of external context from the project's curated landscape watchlist if one exists. The scan is **enrichment, not gate** — degrade gracefully when the file is missing or stale.
+
+1. **Read `.ai-state/LANDSCAPE_WATCHLIST.md`** if present. The file follows the [llms.txt convention](https://llmstxt.org): H1 title, blockquote summary, H2 sections (peer projects, blogs, standards bodies, reference repos, optional, inactive). If absent, skip to Phase 3 and note "no landscape watchlist available — proposals will lack adjacent-project grounding" in your IDEA_PROPOSAL output. Suggest the user run `/landscape-refresh` to bootstrap one.
+2. **Pick 1–3 entries** most relevant to your seed/scope (Phase 1). Prefer Peer projects and Standards bodies for structural-traction signals; prefer Blogs for emergent-pattern signals. Skip the `## Optional` section unless turn budget permits.
+3. **Fetch a fresh signal** from each picked entry via `WebFetch` (project README, latest blog post, current spec draft). Read for: design patterns, recent shifts, decisions that ripple into the project's design space.
+4. **Carry signals into Phase 4** — use external signals to (a) ground new ideas in adjacent-project traction, (b) avoid ideas the landscape has already invalidated, (c) surface evolution-trend opportunities the project's internal state alone would not reveal.
+5. **Note staleness** — if any picked entry's `last-checked` field is more than 90 days old, surface that as a memory candidate so the user knows to run `/landscape-refresh`.
 
 ### Phase 3 — Project Discovery
 
