@@ -16,8 +16,8 @@ affected_files:
   - rules/writing/diagram-conventions.md
   - commands/onboard-project.md
 re_affirmed_by:
-  - dec-draft-bbf06bcb
-  - dec-draft-cfb2c584
+  - dec-098
+  - dec-099
 ---
 
 ## Context

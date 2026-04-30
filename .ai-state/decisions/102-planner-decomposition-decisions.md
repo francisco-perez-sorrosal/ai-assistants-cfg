@@ -1,5 +1,5 @@
 ---
-id: dec-draft-69bd9db8
+id: dec-102
 title: AaC+DaC v1 implementation decomposition — two-worktree split at Phase 3/4 boundary
 status: proposed
 category: implementation

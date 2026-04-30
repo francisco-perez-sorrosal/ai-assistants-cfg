@@ -1,5 +1,5 @@
 ---
-id: dec-draft-cfb2c584
+id: dec-099
 title: Idea 8 directory premise reconciled — `.c4` source lives at `<doc-dir>/diagrams/`, not `architecture/` at project root
 status: re-affirmation
 category: architectural

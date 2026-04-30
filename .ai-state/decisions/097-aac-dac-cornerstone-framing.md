@@ -1,5 +1,5 @@
 ---
-id: dec-draft-bed0027e
+id: dec-097
 title: AaC+DaC cornerstone framed as clauses under existing principles, not a new top-level principle
 status: proposed
 category: architectural

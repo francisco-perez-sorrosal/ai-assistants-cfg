@@ -1,5 +1,5 @@
 ---
-id: dec-draft-bbf06bcb
+id: dec-098
 title: Hybrid generated/authored markdown contract via fenced HTML-comment regions
 status: re-affirmation
 category: configuration

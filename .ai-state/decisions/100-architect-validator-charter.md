@@ -1,5 +1,5 @@
 ---
-id: dec-draft-a0b3a823
+id: dec-100
 title: architect-validator agent — pre-merge / on-demand structural validator for code↔DSL↔ADR coherence
 status: re-affirmation
 category: architectural
@@ -14,7 +14,7 @@ affected_files:
   - rules/swe/swe-agent-coordination-protocol.md
   - rules/swe/agent-intermediate-documents.md
   - .claude-plugin/plugin.json
-re_affirms: dec-draft-bbf06bcb
+re_affirms: dec-098
 ---
 
 ## Context
@@ -121,4 +121,4 @@ background: true
 
 ## Prior Decision
 
-This ADR depends on (re-affirms) `dec-draft-bbf06bcb` (the fence contract) — the validator's "Generated-region drift" section presupposes the fence schema. If the fence contract is later superseded with a different mechanism (e.g., sidecar files), the validator's Phase 3 input source changes; the boundary table and modes carry over.
+This ADR depends on (re-affirms) `dec-098` (the fence contract) — the validator's "Generated-region drift" section presupposes the fence schema. If the fence contract is later superseded with a different mechanism (e.g., sidecar files), the validator's Phase 3 input source changes; the boundary table and modes carry over.

@@ -1,5 +1,5 @@
 ---
-id: dec-draft-1f5a3bdd
+id: dec-101
 title: Architectural fitness functions infrastructure — fitness/ at project root, import-linter + pytest, citation contract, waiver mechanism
 status: proposed
 category: architectural
