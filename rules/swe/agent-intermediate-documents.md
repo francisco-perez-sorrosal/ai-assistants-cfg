@@ -116,12 +116,13 @@ Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log
 
 `.ai-state/TECH_DEBT_LEDGER.md` is a single, persistent, append-only Markdown table that holds grounded debt findings — problems anchored in current source code with respect to current system goals (or vice versa). It is structurally distinct from `LEARNINGS.md` (gotchas/patterns), idea ledgers (speculative future work), and roadmap narration (strategic weaknesses). Producers append rows; consumers update `status` in place; rows are never deleted.
 
-**Writers (only two):**
+**Writers (only three):**
 
 - **verifier** — appends per-change debt findings (e.g., dead-code survivors of FAIL overrides, bloat, duplication, size/nesting violations) during Phase 5/5.5
 - **sentinel** — appends repo-wide debt findings via its TD dimension (hotspots, cyclic SCCs, coverage-floor breaches, p95 complexity crossings); TD05 status-update-discipline check reads the ledger but never writes to it
+- **orchestrator** — the main agent appends rows under explicit user direction when a finding is grounded but does not fit verifier's per-change scope or sentinel's periodic-audit scope (e.g., debt surfaced during ad-hoc work that the user wants persisted). Orchestrator writes are the exception, not the routine path; verifier/sentinel remain the canonical producers and may re-source orchestrator-filed rows on subsequent runs
 
-No other agent writes ledger rows. Consumer agents (systems-architect, implementation-planner, implementer, test-engineer, doc-engineer) read the ledger, filter by their `owner-role`, and update `status` / `resolved-by` / `last-seen` on existing rows when they address an item.
+No agent outside the three writers above creates new ledger rows. Consumer agents (systems-architect, implementation-planner, implementer, test-engineer, doc-engineer) read the ledger, filter by their `owner-role`, and update `status` / `resolved-by` / `last-seen` on existing rows when they address an item.
 
 **Lifecycle conventions:**
 
@@ -142,7 +143,7 @@ No other agent writes ledger rows. Consumer agents (systems-architect, implement
 | `location` | list | Affected file paths + optional `:start-end` line ranges | One path per list entry; ranges use `path/to/file.py:42-58` syntax |
 | `goal-ref-type` | enum | `adr` \| `spec-req` \| `architecture` \| `claude-md` \| `code-quality` | `code-quality` covers universal engineering principles with no Praxion-specific anchor |
 | `goal-ref-value` | string | ADR id (`dec-NNN`) \| REQ id (`REQ-NN`) \| ARCHITECTURE.md section path \| CLAUDE.md principle name \| empty (only when `goal-ref-type = code-quality`) | |
-| `source` | enum | `verifier` \| `sentinel` | Producer identity |
+| `source` | enum | `verifier` \| `sentinel` \| `orchestrator` | Producer identity. `orchestrator` is reserved for explicit-user-direction main-agent writes; `verifier` and `sentinel` remain the canonical producers |
 | `first-seen` | ISO date | `YYYY-MM-DD` | Set once at row creation; never updated |
 | `last-seen` | ISO date | `YYYY-MM-DD` | Updated on every re-detection by the same `source` |
 | `owner-role` | enum | `systems-architect` \| `implementation-planner` \| `implementer` \| `test-engineer` \| `doc-engineer` \| `unassigned` | Assigned by producer per the heuristic below; downstream consumer MAY re-assign with notes |
