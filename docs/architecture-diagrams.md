@@ -25,7 +25,7 @@ before editing `.c4` source files.
 ### LikeC4
 
 ```bash
-npm install -g @likec4/likec4   # installs the likec4 CLI globally
+npm install -g likec4   # installs the likec4 CLI globally
 ```
 
 Version constraint: `^1.56` (verified against npm registry 2026-04-30).
@@ -33,7 +33,7 @@ Version constraint: `^1.56` (verified against npm registry 2026-04-30).
 To pin to the exact resolved version:
 
 ```bash
-npm install -g @likec4/likec4@1.56.0
+npm install -g likec4@1.56.0
 ```
 
 Verify:
