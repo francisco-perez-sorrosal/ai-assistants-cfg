@@ -102,14 +102,14 @@ Replaced the Mermaid-only diagram convention with a dual-toolchain policy: LikeC
 
 ## Decisions Made
 
-Four ADR drafts were authored by the systems-architect and implementation-planner. Draft IDs will be rewritten to `dec-NNN` at merge-to-main by the finalize protocol.
+Four ADRs were authored by the systems-architect and implementation-planner. Draft IDs were promoted to stable `dec-NNN` at merge-to-main by the finalize protocol.
 
-| Draft ID | Title | Category | Notes |
-|----------|-------|----------|-------|
-| `dec-draft-55bf38a6` | LikeC4 + D2 toolchain choice | architectural | Core toolchain selection; LikeC4 over Structurizr/Mermaid-C4 |
-| `dec-draft-05e16d0e` | Two-toolchain coexistence policy | configuration | Re-affirms `dec-028` path-scoping; mandates LikeC4 for C4, Mermaid for rest |
-| `dec-draft-9e43c4f6` | Commit both source and rendered artifacts | configuration | Commits `.c4` + `.d2` + `.svg` together; pre-commit hook for freshness |
-| `dec-draft-1814704c` | Step ordering constraint | implementation | Rule update must commit before any `.c4` file; hook before live migrations |
+| ADR ID | Title | Category | Notes |
+|--------|-------|----------|-------|
+| `dec-095` | LikeC4 + D2 toolchain choice | architectural | Core toolchain selection; LikeC4 over Structurizr/Mermaid-C4 |
+| `dec-093` | Two-toolchain coexistence policy | configuration | Re-affirms `dec-028` path-scoping; mandates LikeC4 for C4, Mermaid for rest |
+| `dec-094` | Commit both source and rendered artifacts | configuration | Commits `.c4` + `.d2` + `.svg` together; pre-commit hook for freshness |
+| `dec-096` | Step ordering constraint | implementation | Rule update must commit before any `.c4` file; hook before live migrations |
 
 ## Verification Outcome
 
