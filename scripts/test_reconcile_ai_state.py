@@ -231,12 +231,15 @@ class TestReconcileADRNumbers:
         self._make_adr(decisions_dir, 1, "alpha", "2026-01-01")
         self._make_adr(decisions_dir, 1, "beta", "2026-01-02")  # duplicate!
 
-        original = reconcile.DECISIONS_DIR
+        original_dir = reconcile.DECISIONS_DIR
+        original_has_drafts = reconcile.has_drafts_directory_changed_in_merge
         reconcile.DECISIONS_DIR = decisions_dir
+        reconcile.has_drafts_directory_changed_in_merge = lambda: False
         try:
             changed = reconcile.reconcile_adr_numbers()
         finally:
-            reconcile.DECISIONS_DIR = original
+            reconcile.DECISIONS_DIR = original_dir
+            reconcile.has_drafts_directory_changed_in_merge = original_has_drafts
 
         assert changed is True
         # First stays as 001, second renumbered to 002
@@ -256,12 +259,15 @@ class TestReconcileADRNumbers:
         self._make_adr(decisions_dir, 1, "beta", "2026-01-02")  # duplicate!
         self._make_adr(decisions_dir, 2, "gamma", "2026-01-03")  # 002 already taken
 
-        original = reconcile.DECISIONS_DIR
+        original_dir = reconcile.DECISIONS_DIR
+        original_has_drafts = reconcile.has_drafts_directory_changed_in_merge
         reconcile.DECISIONS_DIR = decisions_dir
+        reconcile.has_drafts_directory_changed_in_merge = lambda: False
         try:
             changed = reconcile.reconcile_adr_numbers()
         finally:
-            reconcile.DECISIONS_DIR = original
+            reconcile.DECISIONS_DIR = original_dir
+            reconcile.has_drafts_directory_changed_in_merge = original_has_drafts
 
         assert changed is True
         # beta should get 003 (since 002 is taken by gamma)
