@@ -1,5 +1,5 @@
 ---
-id: dec-draft-55a70b47
+id: dec-105
 title: W2 agent-intermediate-documents — verify-only; no further edit needed
 status: proposed
 category: implementation
