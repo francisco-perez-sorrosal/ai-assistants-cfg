@@ -326,3 +326,87 @@ Authored rationale paragraph.
     assert bytes_before == bytes_after, (
         "Validator mutated the input file — before and after bytes differ"
     )
+
+
+# ===========================================================================
+# 8. Fences inside backtick code blocks are ignored → PASS
+# ===========================================================================
+
+
+def test_fence_inside_markdown_code_block_is_ignored():
+    """aac: markers inside a backtick fenced code block must be ignored.
+
+    Documentation files commonly show the convention syntax as examples inside
+    code blocks.  The validator must not treat these as real fence regions —
+    otherwise every doc that demonstrates the syntax would produce false FAILs.
+    """
+    from scripts.aac_fence_validator import validate  # noqa: PLC0415
+
+    md = FIXTURES / "fence_inside_backtick_code_block.md"
+    result = validate(md)
+
+    assert result.verdict in {"PASS", "PASS_WITH_WARNINGS"}, (
+        f"Expected PASS (or PASS_WITH_WARNINGS) for aac: markers inside a "
+        f"backtick code block, got {result.verdict!r}.  Findings: {result.findings!r}"
+    )
+    fail_findings = [f for f in result.findings if f.severity == "FAIL"]
+    assert not fail_findings, (
+        f"No FAIL findings expected; the inner fence markers should be ignored. "
+        f"Got: {fail_findings!r}"
+    )
+
+
+# ===========================================================================
+# 9. Fences inside tilde code blocks are ignored → PASS
+# ===========================================================================
+
+
+def test_fence_inside_tilde_code_block_is_ignored():
+    """aac: markers inside a tilde fenced code block must be ignored.
+
+    CommonMark allows both backtick (```) and tilde (~~~) fence delimiters.
+    The validator must respect both forms when deciding to skip inner content.
+    """
+    from scripts.aac_fence_validator import validate  # noqa: PLC0415
+
+    md = FIXTURES / "fence_inside_tilde_code_block.md"
+    result = validate(md)
+
+    assert result.verdict in {"PASS", "PASS_WITH_WARNINGS"}, (
+        f"Expected PASS (or PASS_WITH_WARNINGS) for aac: markers inside a "
+        f"tilde code block, got {result.verdict!r}.  Findings: {result.findings!r}"
+    )
+    fail_findings = [f for f in result.findings if f.severity == "FAIL"]
+    assert not fail_findings, (
+        f"No FAIL findings expected; the inner fence markers should be ignored. "
+        f"Got: {fail_findings!r}"
+    )
+
+
+# ===========================================================================
+# 10. Real aac fence after a code block is still parsed → PASS or WARN
+# ===========================================================================
+
+
+def test_aac_fence_after_code_block_still_parses():
+    """A real aac: region that follows a closed code block must still be parsed.
+
+    The in_code_block flag must reset to False when the code block closes so
+    that subsequent aac: fence regions are recognized and validated normally.
+    A valid aac:authored region after a code block should produce PASS
+    (or PASS_WITH_WARNINGS — never FAIL).
+    """
+    from scripts.aac_fence_validator import validate  # noqa: PLC0415
+
+    md = FIXTURES / "real_aac_fence_after_code_block.md"
+    result = validate(md)
+
+    assert result.verdict in {"PASS", "PASS_WITH_WARNINGS"}, (
+        f"Expected PASS (or PASS_WITH_WARNINGS) for a valid aac:authored region "
+        f"after a code block, got {result.verdict!r}.  Findings: {result.findings!r}"
+    )
+    fail_findings = [f for f in result.findings if f.severity == "FAIL"]
+    assert not fail_findings, (
+        f"No FAIL findings expected for the authored region after the code block. "
+        f"Got: {fail_findings!r}"
+    )

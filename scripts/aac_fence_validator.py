@@ -60,6 +60,9 @@ _GENERATED_PATTERN = re.compile(r"<!--\s*aac:generated(.*?)-->")
 _AUTHORED_PATTERN = re.compile(r"<!--\s*aac:authored(.*?)-->")
 _CLOSER_PATTERN = re.compile(r"<!--\s*aac:end\s*-->")
 _ATTR_PATTERN = re.compile(r"(\w[\w-]*)=(\S+)")
+# Matches CommonMark fenced-code-block delimiters: 3+ backticks or 3+ tildes
+# at the start of a line (after optional leading spaces per CommonMark spec).
+_CODE_FENCE_PATTERN = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})")
 
 
 def _parse_attributes(attr_string: str) -> dict[str, str]:
@@ -159,16 +162,26 @@ def _check_authored_opener(attrs: dict[str, str], lineno: int) -> list[Finding]:
 def _validate_lines(lines: list[str]) -> list[Finding]:
     """Walk markdown lines and emit findings for all fence violations."""
     findings: list[Finding] = []
-    inside_fence = False
+    fence_depth: int = 0  # supports nested aac: regions
     opener_line: int = 0
     current_kind: str = ""
+    in_code_block = False
 
     for lineno, raw_line in enumerate(lines, start=1):
         line = raw_line.rstrip("\n")
 
+        if _CODE_FENCE_PATTERN.match(line):
+            in_code_block = not in_code_block
+            continue
+
+        if in_code_block:
+            continue
+
         if _CLOSER_PATTERN.search(line):
-            inside_fence = False
-            current_kind = ""
+            if fence_depth > 0:
+                fence_depth -= 1
+            if fence_depth == 0:
+                current_kind = ""
             continue
 
         generated_match = _GENERATED_PATTERN.search(line)
@@ -177,22 +190,9 @@ def _validate_lines(lines: list[str]) -> list[Finding]:
         if not (generated_match or authored_match):
             continue
 
-        if inside_fence:
-            # Opener before the previous fence was closed — FAIL the prior one.
-            findings.append(
-                Finding(
-                    severity=Severity.FAIL,
-                    code="unbalanced-fence",
-                    message=(
-                        f"aac:{current_kind} fence opened at line {opener_line} "
-                        "was never closed before the next opener"
-                    ),
-                    line=opener_line,
-                )
-            )
-
-        inside_fence = True
-        opener_line = lineno
+        if fence_depth == 0:
+            opener_line = lineno
+        fence_depth += 1
 
         if generated_match:
             current_kind = "generated"
@@ -204,7 +204,7 @@ def _validate_lines(lines: list[str]) -> list[Finding]:
             attrs = _parse_attributes(authored_match.group(1))
             findings.extend(_check_authored_opener(attrs, lineno))
 
-    if inside_fence:
+    if fence_depth > 0:
         findings.append(
             Finding(
                 severity=Severity.FAIL,
