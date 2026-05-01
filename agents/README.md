@@ -32,10 +32,13 @@ flowchart TD
     EX -->|"VERIFICATION_REPORT.md"| V["<b>verifier</b><br/>(optional)"]
     V -.->|"SKILL_GENESIS_REPORT.md"| SG["<b>skill-genesis</b><br/>(optional)"]
 
+    AV["<b>architect-validator</b><br/>(per-PR / on-demand)"] -->|"ARCHITECTURE_VALIDATION.md<br/>TECH_DEBT_LEDGER.md"| ANY
+    
     SE["<b>sentinel</b><br/>(independent audit)"]
     SE -.->|"SENTINEL_REPORT_*.md +<br/>SENTINEL_LOG.md<br/>(.ai-state/sentinel_reports/)"| ANY["Any agent or user<br/>can consume reports"]
 
     style SE fill:#f0f0f0,stroke:#999,stroke-dasharray: 5 5
+    style AV fill:#f0f0f0,stroke:#999,stroke-dasharray: 5 5
 ```
 
 | Agent | Description | Skills Used |
@@ -48,6 +51,7 @@ flowchart TD
 | `implementer` | Implements individual plan steps with skill-augmented coding, self-reviews against conventions, and reports completion. Supports sequential and parallel execution | `software-planning`, `code-review`, `refactoring` |
 | `test-engineer` | Designs, writes, and refactors test suites with expert-level test strategy. Handles dedicated testing steps: complex test scenarios (property-based, contract, integration), test suite refactoring, and testing infrastructure. Operates at the same pipeline level as the implementer | `software-planning`, `code-review`, `refactoring` |
 | `verifier` | Verifies completed implementation against acceptance criteria, coding conventions, and test coverage; produces `VERIFICATION_REPORT.md` with pass/fail/warn findings | `code-review` |
+| `architect-validator` | Per-PR and on-demand structural validator that verifies code↔DSL↔ADR triangle consistency; runs in two modes (`pre-merge` as CI gate, `on-demand` for local validation); produces `ARCHITECTURE_VALIDATION.md` with drift findings and appends `TECH_DEBT_LEDGER.md` rows on FAIL | `external-api-docs` |
 | `doc-engineer` | Maintains project-facing documentation quality (README.md, catalogs, architecture docs, changelogs); runs in parallel with implementer and test-engineer on planner-assigned doc steps; validates cross-references, catalog completeness, naming consistency, and writing quality | `doc-management` |
 | `sentinel` | Independent read-only ecosystem quality auditor scanning all context artifacts across ten dimensions (eight per-artifact + code health + ecosystem coherence as system-level composite); produces timestamped `SENTINEL_REPORT_*.md` (accumulates) and `SENTINEL_LOG.md` (historical metrics) in `.ai-state/sentinel_reports/` — any agent or user can consume its reports | — |
 | `skill-genesis` | Post-implementation learning harvester that triages entries from `LEARNINGS.md` and `VERIFICATION_REPORT.md`, deduplicates patterns, proposes artifacts (memory entries, rules, skills, agent definitions) through interactive dialog, and produces `SKILL_GENESIS_REPORT.md` with artifact specifications ready for handoff | `skill-crafting`, `rule-crafting` |
@@ -135,7 +139,9 @@ Agents require explicit file paths in `plugin.json` (directory wildcards are not
   "./agents/test-engineer.md",
   "./agents/sentinel.md",
   "./agents/skill-genesis.md",
-  "./agents/cicd-engineer.md"
+  "./agents/cicd-engineer.md",
+  "./agents/roadmap-cartographer.md",
+  "./agents/architect-validator.md"
 ]
 ```
 
