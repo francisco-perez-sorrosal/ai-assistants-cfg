@@ -1,5 +1,5 @@
 ---
-id: dec-draft-237a18f6
+id: dec-108
 title: Golden-rule enforcement at commit time via standalone script invoked from pre-commit hook
 status: proposed
 category: architectural
@@ -14,7 +14,7 @@ affected_files:
   - scripts/git-pre-commit-hook.sh
   - rules/writing/aac-dac-conventions.md
   - agents/sentinel.md
-re_affirms: dec-draft-d6c028a9
+re_affirms: dec-106
 ---
 
 ## Context
@@ -101,4 +101,4 @@ Invoke the script from `scripts/git-pre-commit-hook.sh` as **Block D** (after Bl
 
 ## Prior Decision
 
-This ADR re-affirms `dec-draft-d6c028a9` (the AaC architecture CI pipeline, sibling draft). The CI pipeline at PR time and the commit-time gate share the `check_aac_golden_rule.py` script as substrate but operate at different lifecycle points; they remain two ADRs because they have distinct surfaces and triggers. If the CI pipeline ADR is later superseded with a different enforcement architecture, the script's gate-mode use survives and the audit-mode use migrates to whatever replaces sentinel.
+This ADR re-affirms `dec-106` (the AaC architecture CI pipeline, sibling draft). The CI pipeline at PR time and the commit-time gate share the `check_aac_golden_rule.py` script as substrate but operate at different lifecycle points; they remain two ADRs because they have distinct surfaces and triggers. If the CI pipeline ADR is later superseded with a different enforcement architecture, the script's gate-mode use survives and the audit-mode use migrates to whatever replaces sentinel.

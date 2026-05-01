@@ -1,5 +1,5 @@
 ---
-id: dec-draft-39d5e378
+id: dec-107
 title: Diátaxis-aligned DaC companion as reference under doc-management with per-mode fence-regenerability rules
 status: proposed
 category: configuration
@@ -13,7 +13,7 @@ affected_files:
   - skills/doc-management/references/diataxis-modes.md
   - skills/doc-management/SKILL.md
   - agents/doc-engineer.md
-re_affirms: dec-draft-237a18f6
+re_affirms: dec-108
 ---
 
 ## Context
@@ -103,4 +103,4 @@ Update `agents/doc-engineer.md` Phase 1 (Scope Assessment) with one paragraph (�
 
 ## Prior Decision
 
-This ADR re-affirms `dec-draft-237a18f6` (the golden-rule enforcement hook). The Diátaxis companion makes correct fence choice easier; the enforcement hook catches incorrect fence choice when it manifests as drift. The two operate at different cognitive layers — methodology (this ADR) and enforcement (the hook ADR) — but together they close the "right content in right fence" loop.
+This ADR re-affirms `dec-108` (the golden-rule enforcement hook). The Diátaxis companion makes correct fence choice easier; the enforcement hook catches incorrect fence choice when it manifests as drift. The two operate at different cognitive layers — methodology (this ADR) and enforcement (the hook ADR) — but together they close the "right content in right fence" loop.

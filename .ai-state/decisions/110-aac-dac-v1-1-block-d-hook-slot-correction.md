@@ -1,5 +1,5 @@
 ---
-id: dec-draft-0ee8f919
+id: dec-110
 title: golden-rule hook placement in Block D, not Block C
 status: proposed
 category: implementation
@@ -13,12 +13,12 @@ affected_files:
   - scripts/git-pre-commit-hook.sh
   - .ai-work/aac-dac-v1-1/IMPLEMENTATION_PLAN.md
 supersedes:
-re_affirms: dec-draft-237a18f6
+re_affirms: dec-108
 ---
 
 ## Context
 
-`dec-draft-237a18f6` (the golden-rule enforcement hook ADR) refers to the pre-commit hook addition as "Block C". During implementation planning, codebase verification revealed that `scripts/git-pre-commit-hook.sh` already has three blocks:
+`dec-108` (the golden-rule enforcement hook ADR) refers to the pre-commit hook addition as "Block C". During implementation planning, codebase verification revealed that `scripts/git-pre-commit-hook.sh` already has three blocks:
 
 - Block A: Shipped-artifact isolation (`check_shipped_artifact_isolation.py`)
 - Block B: Canonical-block sync (`sync_canonical_blocks.py`)
@@ -30,7 +30,7 @@ re_affirms: dec-draft-237a18f6
 
 The golden-rule enforcement script (`scripts/check_aac_golden_rule.py`) is wired into `scripts/git-pre-commit-hook.sh` as **Block D** — the next sequential block label after the existing three. No renaming of existing blocks is needed.
 
-The `dec-draft-237a18f6` ADR remains correct in every other respect (script design, override syntax, sentinel EC reuse). Only the block label is corrected here.
+The `dec-108` ADR remains correct in every other respect (script design, override syntax, sentinel EC reuse). Only the block label is corrected here.
 
 ## Considered Options
 
@@ -74,4 +74,4 @@ Merge the golden-rule check into the existing Block C.
 
 ## Prior Decision
 
-This ADR re-affirms `dec-draft-237a18f6`. The golden-rule enforcement design is correct; only the block label is corrected. The systemic cause (architect did not re-read the hook file after v1 landed) is noted so future architects can add "read hook file to verify block labels" to the AaC-related planning checklist.
+This ADR re-affirms `dec-108`. The golden-rule enforcement design is correct; only the block label is corrected. The systemic cause (architect did not re-read the hook file after v1 landed) is noted so future architects can add "read hook file to verify block labels" to the AaC-related planning checklist.

@@ -1,5 +1,5 @@
 ---
-id: dec-draft-65b8c5e5
+id: dec-109
 title: likec4-querying skill — path-scoped progressive-disclosure rubric for MCP-vs-direct-read decisions
 status: proposed
 category: architectural

@@ -1,5 +1,5 @@
 ---
-id: dec-draft-d6c028a9
+id: dec-106
 title: Architecture CI pipeline — three parallel jobs invoking architect-validator on architectural-touch PRs
 status: proposed
 category: architectural
@@ -12,7 +12,7 @@ pipeline_tier: standard
 affected_files:
   - .github/workflows/architecture.yml
   - agents/cicd-engineer.md
-re_affirms: dec-draft-237a18f6
+re_affirms: dec-108
 ---
 
 ## Context
@@ -109,4 +109,4 @@ Ship `.github/workflows/architecture.yml` with three jobs running in parallel:
 
 ## Prior Decision
 
-This ADR re-affirms `dec-draft-237a18f6` (the golden-rule enforcement hook, sibling draft). The CI workflow and the commit-time hook share `scripts/check_aac_golden_rule.py` as substrate but operate at different lifecycle points; they remain two ADRs because they have distinct surfaces and triggers. The CI workflow does **not** invoke `check_aac_golden_rule.py` directly — instead, it relies on the contributor's pre-commit hook to have caught the violation locally; the CI's three jobs cover the *post-commit* drift surfaces (render diff, fitness, fence/structural). If contributors disable their pre-commit hook, the golden-rule violation surfaces at PR time via the regenerate-and-diff job (renders re-generated will differ from committed) and via `dsl-validate` (fence validator catches fence-interior edits if the source did not change).
+This ADR re-affirms `dec-108` (the golden-rule enforcement hook, sibling draft). The CI workflow and the commit-time hook share `scripts/check_aac_golden_rule.py` as substrate but operate at different lifecycle points; they remain two ADRs because they have distinct surfaces and triggers. The CI workflow does **not** invoke `check_aac_golden_rule.py` directly — instead, it relies on the contributor's pre-commit hook to have caught the violation locally; the CI's three jobs cover the *post-commit* drift surfaces (render diff, fitness, fence/structural). If contributors disable their pre-commit hook, the golden-rule violation surfaces at PR time via the regenerate-and-diff job (renders re-generated will differ from committed) and via `dsl-validate` (fence validator catches fence-interior edits if the source did not change).
