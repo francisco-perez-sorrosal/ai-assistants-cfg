@@ -683,6 +683,7 @@ def test_run_check_returns_zero_when_all_blocks_in_sync(tmp_path: Path, capsys) 
     mod = _load_module()
     mod.CANONICAL_DIR = canonical_dir  # type: ignore[attr-defined]
     mod.COMMAND_FILES = (onboard, new_proj)  # type: ignore[attr-defined]
+    mod.SLUGS = tuple(ALL_BLOCK_SLUGS)  # type: ignore[attr-defined]
 
     exit_code = mod.run_check()
     assert exit_code == 0, (
@@ -715,6 +716,7 @@ def test_run_check_returns_one_when_any_block_drifted(tmp_path: Path, capsys) ->
     mod = _load_module()
     mod.CANONICAL_DIR = canonical_dir  # type: ignore[attr-defined]
     mod.COMMAND_FILES = (onboard, new_proj)  # type: ignore[attr-defined]
+    mod.SLUGS = tuple(ALL_BLOCK_SLUGS)  # type: ignore[attr-defined]
 
     exit_code = mod.run_check()
     assert exit_code == 1, (
@@ -751,6 +753,7 @@ def test_run_write_corrects_drift_and_check_passes(tmp_path: Path, capsys) -> No
     mod = _load_module()
     mod.CANONICAL_DIR = canonical_dir  # type: ignore[attr-defined]
     mod.COMMAND_FILES = (onboard, new_proj)  # type: ignore[attr-defined]
+    mod.SLUGS = tuple(ALL_BLOCK_SLUGS)  # type: ignore[attr-defined]
 
     write_code = mod.run_write()
     assert write_code == 0, f"run_write should return 0 on success. Got {write_code}."
@@ -759,6 +762,7 @@ def test_run_write_corrects_drift_and_check_passes(tmp_path: Path, capsys) -> No
     mod2 = _load_module()
     mod2.CANONICAL_DIR = canonical_dir  # type: ignore[attr-defined]
     mod2.COMMAND_FILES = (onboard, new_proj)  # type: ignore[attr-defined]
+    mod2.SLUGS = tuple(ALL_BLOCK_SLUGS)  # type: ignore[attr-defined]
 
     check_code = mod2.run_check()
     assert check_code == 0, (
@@ -793,6 +797,7 @@ def test_run_dry_run_does_not_modify_files(tmp_path: Path, capsys) -> None:
     mod = _load_module()
     mod.CANONICAL_DIR = canonical_dir  # type: ignore[attr-defined]
     mod.COMMAND_FILES = (onboard, new_proj)  # type: ignore[attr-defined]
+    mod.SLUGS = tuple(ALL_BLOCK_SLUGS)  # type: ignore[attr-defined]
 
     exit_code = mod.run_dry_run()
     assert exit_code != 0, (

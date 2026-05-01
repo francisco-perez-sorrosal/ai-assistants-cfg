@@ -1,11 +1,24 @@
 #!/usr/bin/env python3
 """Sync canonical-block files with embedded blocks in command files.
 
-Four canonical CLAUDE.md blocks live in ``claude/canonical-blocks/<slug>.md``
-and are embedded verbatim (inside a fenced Markdown code block) in both
-``commands/onboard-project.md`` and ``commands/new-project.md``.  Each
-embedded block is anchored by a ``<!-- canonical-source: ... -->`` comment that
-names the canonical file.
+Canonical content blocks live in ``claude/canonical-blocks/<slug>.md`` and
+are embedded verbatim into one or more consumer command files.  Each embedded
+block is anchored by a ``<!-- canonical-source: ... -->`` comment that names
+the canonical file, followed by a fence pair that bounds the embedded body.
+
+Two fence styles are supported, configured per-block in ``BLOCKS`` below:
+
+* **Code-fenced** (``\`\`\`markdown`` / ``\`\`\```) — for blocks that the
+  consumer command will *install* into a destination file (e.g., the four
+  CLAUDE.md blocks shared between ``onboard-project`` and ``new-project``).
+  The fence keeps the content visually grouped and tells readers it is a
+  payload to be copied verbatim.
+* **HTML-comment-fenced** (``<!-- canonical-content-start -->`` /
+  ``<!-- canonical-content-end -->``) — for blocks whose content is the
+  command's own prose (e.g., the shared commit workflow embedded in
+  ``commands/co.md`` and ``commands/cop.md``). HTML comments are invisible
+  in rendered Markdown, so the embedded content reads as a normal part of
+  the command prompt rather than as a code block.
 
 Three invocation modes:
 
@@ -28,6 +41,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import NamedTuple
 
@@ -40,29 +54,103 @@ REPO_ROOT = SCRIPT_DIR.parent
 
 CANONICAL_DIR = REPO_ROOT / "claude" / "canonical-blocks"
 
-COMMAND_FILES = (
+# Default fence style: a Markdown code block. Used by blocks that the consumer
+# command will install verbatim into a destination file (e.g., CLAUDE.md).
+CODE_FENCE_OPENER = "```markdown"
+CODE_FENCE_CLOSER = "```"
+
+# Alternative fence style: HTML comments, invisible in rendered Markdown. Used
+# by blocks whose content is the command's own prose, so they read inline as
+# part of the prompt rather than as a code block.
+COMMENT_FENCE_OPENER = "<!-- canonical-content-start -->"
+COMMENT_FENCE_CLOSER = "<!-- canonical-content-end -->"
+
+
+@dataclass(frozen=True)
+class BlockSpec:
+    """Per-block configuration: which files embed it, and which fence to use."""
+
+    consumers: tuple[Path, ...]
+    fence_opener: str = CODE_FENCE_OPENER
+    fence_closer: str = CODE_FENCE_CLOSER
+
+
+_ONBOARDING_PAIR = (
     REPO_ROOT / "commands" / "onboard-project.md",
     REPO_ROOT / "commands" / "new-project.md",
 )
 
-# Ordered so help/error messages list blocks consistently
-SLUGS = (
-    "agent-pipeline",
-    "compaction-guidance",
-    "behavioral-contract",
-    "praxion-process",
+_COMMIT_PAIR = (
+    REPO_ROOT / "commands" / "co.md",
+    REPO_ROOT / "commands" / "cop.md",
 )
 
-FENCE_OPENER = "```markdown"
-FENCE_CLOSER = "```"
+# Block registry. Order is preserved for deterministic help/error messages.
+BLOCKS: dict[str, BlockSpec] = {
+    "agent-pipeline": BlockSpec(consumers=_ONBOARDING_PAIR),
+    "compaction-guidance": BlockSpec(consumers=_ONBOARDING_PAIR),
+    "behavioral-contract": BlockSpec(consumers=_ONBOARDING_PAIR),
+    "praxion-process": BlockSpec(consumers=_ONBOARDING_PAIR),
+    "commit-process": BlockSpec(
+        consumers=_COMMIT_PAIR,
+        fence_opener=COMMENT_FENCE_OPENER,
+        fence_closer=COMMENT_FENCE_CLOSER,
+    ),
+}
+
+# Derived: every consumer file mentioned by any block, sorted for stable iteration.
+COMMAND_FILES: tuple[Path, ...] = tuple(
+    sorted({path for spec in BLOCKS.values() for path in spec.consumers})
+)
+
+# Legacy module-level alias. Tests patch SLUGS to restrict iteration scope; production
+# code derives it from BLOCKS at import time. `_slugs_for` honors SLUGS as the iteration
+# source so a test override propagates without needing to touch BLOCKS.
+SLUGS: tuple[str, ...] = tuple(BLOCKS.keys())
+
+
+def _slugs_for(cmd_path: Path) -> list[str]:
+    """Return the slugs whose consumer list includes cmd_path.
+
+    Iterates the module-level `SLUGS` tuple (which tests can override). For
+    paths inside the real repository the consumer-membership filter applies,
+    so heterogeneous block ownership (e.g., commit-process not installed in
+    onboarding files) is honored. For paths outside REPO_ROOT — i.e., test
+    fixtures under pytest's tmp_path — the filter is skipped and the test's
+    SLUGS override is trusted as-is. Slugs not in BLOCKS are silently skipped.
+    """
+    try:
+        cmd_path.resolve().relative_to(REPO_ROOT)
+        is_repo_path = True
+    except ValueError:
+        is_repo_path = False
+
+    if not is_repo_path:
+        return [slug for slug in SLUGS if slug in BLOCKS]
+    return [
+        slug for slug in SLUGS if slug in BLOCKS and cmd_path in BLOCKS[slug].consumers
+    ]
+
 
 CANONICAL_SOURCE_PREFIX = "canonical-source: claude/canonical-blocks/"
 CANONICAL_SOURCE_SUFFIX = ".md"
 
-REMEDIATION_HINT = (
-    "  Fix:  python3 scripts/sync_canonical_blocks.py --write\n"
-    "        git add commands/onboard-project.md commands/new-project.md"
-)
+
+def _remediation_hint() -> str:
+    """Build a remediation hint listing every consumer file under the registry."""
+    parts: list[str] = []
+    for path in COMMAND_FILES:
+        try:
+            parts.append(str(path.relative_to(REPO_ROOT)))
+        except ValueError:
+            # Test fixtures live outside REPO_ROOT (under pytest's tmp_path); fall
+            # back to the absolute path so the hint stays readable in test output.
+            parts.append(str(path))
+    files_str = " ".join(parts)
+    return (
+        "  Fix:  python3 scripts/sync_canonical_blocks.py --write\n"
+        f"        git add {files_str}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -110,25 +198,26 @@ def _find_fence_closer(lines: list[str], start: int, closer: str) -> int | None:
 
 
 def extract_block(lines: list[str], slug: str, file_path: Path) -> BlockLocation:
-    """Extract the fenced block for slug from lines.
+    """Extract the fenced block for slug from lines using its per-spec fence.
 
     Raises SystemExit(2) on parse failure.
     """
+    spec = BLOCKS[slug]
     marker_idx = _find_canonical_source_line(lines, slug)
     if marker_idx is None:
         _error(f"canonical-source marker for '{slug}' not found in {file_path}")
 
-    fence_start = _find_fence_after(lines, marker_idx + 1, FENCE_OPENER)
+    fence_start = _find_fence_after(lines, marker_idx + 1, spec.fence_opener)
     if fence_start is None:
         _error(
-            f"no '{FENCE_OPENER}' fence found after canonical-source marker "
+            f"no '{spec.fence_opener}' fence found after canonical-source marker "
             f"for '{slug}' in {file_path}"
         )
 
-    fence_end = _find_fence_closer(lines, fence_start + 1, FENCE_CLOSER)
+    fence_end = _find_fence_closer(lines, fence_start + 1, spec.fence_closer)
     if fence_end is None:
         _error(
-            f"no '{FENCE_CLOSER}' closing fence found after '{FENCE_OPENER}' "
+            f"no '{spec.fence_closer}' closing fence found after '{spec.fence_opener}' "
             f"for '{slug}' in {file_path}"
         )
 
@@ -179,7 +268,7 @@ def _error(message: str) -> None:
 def check_file(
     cmd_path: Path,
 ) -> list[tuple[str, list[str]]]:
-    """Check one command file for drift.
+    """Check one command file for drift across the slugs it owns.
 
     Returns a list of (slug, diff_lines) for each drifted block.  Empty list
     means the file is fully in sync.  Exits 2 on script errors.
@@ -192,7 +281,7 @@ def check_file(
     lines = content.splitlines(keepends=True)
     drifted: list[tuple[str, list[str]]] = []
 
-    for slug in SLUGS:
+    for slug in _slugs_for(cmd_path):
         canonical_path = CANONICAL_DIR / f"{slug}.md"
         try:
             canonical_body = canonical_path.read_text(encoding="utf-8")
@@ -225,7 +314,7 @@ def write_file(cmd_path: Path, dry_run: bool = False) -> list[str]:
 
     # Process slugs in reverse order so that line-index replacements do not
     # shift the positions of earlier slugs.
-    for slug in reversed(SLUGS):
+    for slug in reversed(_slugs_for(cmd_path)):
         canonical_path = CANONICAL_DIR / f"{slug}.md"
         try:
             canonical_body = canonical_path.read_text(encoding="utf-8")
@@ -286,12 +375,12 @@ def run_check() -> int:
 
     if any_drift:
         print("canonical-block sync check failed.")
-        print(REMEDIATION_HINT)
+        print(_remediation_hint())
         return 1
 
     file_count = len(COMMAND_FILES)
-    block_count = len(SLUGS)
-    print(f"checked {block_count} block(s) in {file_count} file(s); all in sync.")
+    block_count = len(BLOCKS)
+    print(f"checked {block_count} block(s) across {file_count} file(s); all in sync.")
     return 0
 
 
