@@ -28,6 +28,7 @@ OPTIONAL_FIELDS = {
     "license",
     "metadata",
     "compatibility",
+    "paths",  # path-scoped activation — Claude Code skill convention
     "staleness_sensitive_sections",  # per rules/swe/staleness-policy.md
     "staleness_threshold_days",  # per rules/swe/staleness-policy.md
 }
