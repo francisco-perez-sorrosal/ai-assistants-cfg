@@ -1,17 +1,17 @@
 ---
-id: dec-draft-f1ca4785
+id: dec-112
 title: Sentinel AC-dimension extension — three conditional-activation checks for fence integrity, model↔markdown agreement, and traceability orphans
 status: re-affirmation
 category: behavioral
 date: 2026-05-01
-summary: Extend the sentinel's existing AC dimension with three conditional-activation checks (AC10 fence integrity, AC11 model↔markdown agreement, AC12 traceability orphans) mirroring the TT dimension's activation pattern. Reuses scripts/aac_fence_validator.py and the LikeC4 MCP query-by-metadata; introduces no new tooling. AC12 depends on the bidirectional convention defined in dec-draft-8f022304.
+summary: Extend the sentinel's existing AC dimension with three conditional-activation checks (AC10 fence integrity, AC11 model↔markdown agreement, AC12 traceability orphans) mirroring the TT dimension's activation pattern. Reuses scripts/aac_fence_validator.py and the LikeC4 MCP query-by-metadata; introduces no new tooling. AC12 depends on the bidirectional convention defined in dec-111.
 tags: [aac, dac, sentinel, architectural-coherence, traceability, validation, conditional-activation]
 made_by: agent
 agent_type: systems-architect
 pipeline_tier: standard
 affected_files:
   - agents/sentinel.md
-re_affirms: dec-draft-8f022304
+re_affirms: dec-111
 ---
 
 ## Context
@@ -20,11 +20,11 @@ The sentinel's Architecture Completeness (AC) dimension currently holds nine che
 
 1. **Fence integrity** — `aac:generated` / `aac:authored` fences in `**/ARCHITECTURE.md` and `docs/architecture.md` could be stripped, malformed, or unbalanced. The architect-validator catches this per-PR; the sentinel's role is the periodic audit safety net.
 2. **Model↔markdown agreement** — components named in ARCHITECTURE.md should correspond to elements in the LikeC4 model (or, fallback, raw `.c4` files). The architect-validator's Phase 3 catches drift on PRs that touch architectural slices; the sentinel's role is to catch drift that lands via PRs that did not touch the slice (e.g., a refactor renamed a module, the markdown was not updated, no `.c4` file changed).
-3. **Traceability orphans** — once the bidirectional REQ↔architectural-element convention (dec-draft-8f022304) lands, REQs with no architectural element and elements with no REQ become detectable. Without a periodic audit, drift between the two sides accumulates silently between PRs.
+3. **Traceability orphans** — once the bidirectional REQ↔architectural-element convention (dec-111) lands, REQs with no architectural element and elements with no REQ become detectable. Without a periodic audit, drift between the two sides accumulates silently between PRs.
 
 The three checks share a common shape: each operates on a substrate that may or may not be present in a given project (fences, LikeC4 model, populated traceability metadata). The TT (Test Topology) dimension already established the conditional-activation idiom — skip the entire dimension when its substrate is absent, emit one INFO note, never WARN/FAIL for absence. The same idiom fits these three checks per substrate.
 
-These checks must reuse existing scripts and MCP tools, not introduce new logic. `scripts/aac_fence_validator.py` is the canonical fence checker (dec-098); `query-by-metadata` is the canonical metadata lookup; the bidirectional convention from dec-draft-8f022304 is the substrate AC12 reads.
+These checks must reuse existing scripts and MCP tools, not introduce new logic. `scripts/aac_fence_validator.py` is the canonical fence checker (dec-098); `query-by-metadata` is the canonical metadata lookup; the bidirectional convention from dec-111 is the substrate AC12 reads.
 
 ## Decision
 
@@ -80,7 +80,7 @@ Both substrates must be present. When only one is present, AC11 emits an INFO no
 - AND (LikeC4 model present) `list-projects` returns ≥1 project OR `find docs/diagrams -name '*.c4'` returns ≥1 file
 - AND (bidirectional convention populated) at least one of: any LikeC4 element returns from `query-by-metadata { key: "req_ids", matchMode: "exists" }`, OR any SPEC frontmatter contains `architectural_elements:`
 
-The third clause is the "convention-populated" gate. AC12 is **only meaningful** when the convention from dec-draft-8f022304 has been adopted by at least one feature; without it, every REQ is an orphan and the noise floor is the entire spec corpus.
+The third clause is the "convention-populated" gate. AC12 is **only meaningful** when the convention from dec-111 has been adopted by at least one feature; without it, every REQ is an orphan and the noise floor is the entire spec corpus.
 
 **Implementation:**
 
@@ -141,7 +141,7 @@ Ship AC10 + AC11 now; ship AC12 only after a feature has populated both substrat
 
 **Pros:** AC12 has zero work to do at v1; deferring would mean fewer checks to maintain.
 
-**Cons:** AC12's spec is small (the activation trigger handles "no work" gracefully — emits an INFO note and exits). Deferring it means a future ADR re-opens this design space; bundling it now closes the loop in one decision. The substrate dependency on dec-draft-8f022304 is intentional and tracked via this ADR's `re_affirms`.
+**Cons:** AC12's spec is small (the activation trigger handles "no work" gracefully — emits an INFO note and exits). Deferring it means a future ADR re-opens this design space; bundling it now closes the loop in one decision. The substrate dependency on dec-111 is intentional and tracked via this ADR's `re_affirms`.
 
 ## Consequences
 
@@ -150,7 +150,7 @@ Ship AC10 + AC11 now; ship AC12 only after a feature has populated both substrat
 - The sentinel becomes the periodic audit safety net for the AaC substrate that the architect-validator already enforces per-PR.
 - Fence stripping (the dec-098 ADR's named risk) becomes a periodic-audit finding even when it lands via a PR that bypasses the architectural-touch slice gate.
 - Model↔markdown drift accumulates visibly rather than silently.
-- The bidirectional convention from dec-draft-8f022304 has a sentinel consumer that turns drift into tracked findings.
+- The bidirectional convention from dec-111 has a sentinel consumer that turns drift into tracked findings.
 - All three checks reuse existing scripts and MCP tools — no new code paths, no new dependencies.
 
 **Negative:**
@@ -169,6 +169,6 @@ Ship AC10 + AC11 now; ship AC12 only after a feature has populated both substrat
 
 ## Prior Decision
 
-This ADR re-affirms dec-draft-8f022304 — the bidirectional REQ↔architectural-element traceability convention. AC12 is the consumer the convention was designed to feed: without the convention, AC12's third activation clause never fires and the check is permanently inert. With the convention, AC12 turns the drift surface introduced by bidirectional schemes into a tracked, periodic-audit finding.
+This ADR re-affirms dec-111 — the bidirectional REQ↔architectural-element traceability convention. AC12 is the consumer the convention was designed to feed: without the convention, AC12's third activation clause never fires and the check is permanently inert. With the convention, AC12 turns the drift surface introduced by bidirectional schemes into a tracked, periodic-audit finding.
 
-The convention and the sentinel check are intentionally bundled (dec-draft-8f022304 + this ADR) because shipping one without the other leaves a half-built capability. The convention without AC12 has no audit feedback loop; AC12 without the convention has no substrate to audit. This ADR's `re_affirms` cross-reference makes the dependency explicit; the finalize protocol will rewrite the reference to `dec-NNN` at merge-to-main.
+The convention and the sentinel check are intentionally bundled (dec-111 + this ADR) because shipping one without the other leaves a half-built capability. The convention without AC12 has no audit feedback loop; AC12 without the convention has no substrate to audit. This ADR's `re_affirms` cross-reference makes the dependency explicit; the finalize protocol will rewrite the reference to `dec-NNN` at merge-to-main.

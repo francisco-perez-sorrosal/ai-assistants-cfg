@@ -1,5 +1,5 @@
 ---
-id: dec-draft-8f022304
+id: dec-111
 title: Bidirectional REQ↔architectural-element traceability convention
 status: proposed
 category: behavioral
