@@ -112,9 +112,9 @@ Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log
 
 **`docs/architecture.md`** — developer-facing architecture navigation guide. Every component name and file path is verified against the codebase. Derived from `.ai-state/ARCHITECTURE.md` by filtering to Built components. Created by systems-architect alongside the architect doc, updated by implementation-planner (planning-stage structural gaps) and implementer (step 7.7), maintained by doc-engineer at pipeline checkpoints. Template at `skills/doc-management/assets/ARCHITECTURE_GUIDE_TEMPLATE.md`. Lives in `docs/`, not `.ai-state/`, because it is developer-facing project documentation.
 
-#### `TECH_DEBT_LEDGER.md` — living tech-debt ledger
+#### `TECH_DEBT_LEDGER.md` + `TECH_DEBT_RESOLVED.md` — living tech-debt ledger pair
 
-`.ai-state/TECH_DEBT_LEDGER.md` is a single, persistent, append-only Markdown table that holds grounded debt findings — problems anchored in current source code with respect to current system goals (or vice versa). It is structurally distinct from `LEARNINGS.md` (gotchas/patterns), idea ledgers (speculative future work), and roadmap narration (strategic weaknesses). Producers append rows; consumers update `status` in place; rows are never deleted.
+`.ai-state/TECH_DEBT_LEDGER.md` and its sibling `.ai-state/TECH_DEBT_RESOLVED.md` form a **two-file pair** holding grounded debt findings — problems anchored in current source code with respect to current system goals (or vice versa). The pair is structurally distinct from `LEARNINGS.md` (gotchas/patterns), idea ledgers (speculative future work), and roadmap narration (strategic weaknesses). The **active ledger** holds rows with `status ∈ {open, in-flight}`; the **resolved file** holds rows with `status ∈ {resolved, wontfix}`. The pair is one logical namespace: `id` (`td-NNN`) and `dedup_key` are unique across both files; cross-references in ADRs, sentinel reports, and code may cite a `td-NNN` regardless of which file currently holds it.
 
 **Writers (only four):**
 
@@ -127,11 +127,13 @@ No agent outside the four writers above creates new ledger rows. Consumer agents
 
 **Lifecycle conventions:**
 
-- **Append-only rows** — producers add new rows at the end of the table
-- **Status updates in place** — consumers update `status`, `resolved-by`, and `last-seen`; never delete rows. Resolved rows accumulate as a debt-fix audit trail
-- **`wontfix` is a tombstone** — once written, it stays; sentinel may re-surface it but never removes it
-- **No per-run regeneration** — unlike timestamped sentinel reports, the ledger is a single living file that accumulates
-- **No section ownership** — the artifact is a single Markdown table with a small header comment; section ownership is unnecessary
+- **Append-only at write** — producers append new rows to the **active LEDGER** (never to RESOLVED.md directly)
+- **Status updates in place** — consumers update `status`, `resolved-by`, and `last-seen` in whichever file currently holds the row
+- **Migration on terminal-status** — when a row's `status` transitions to `resolved` or `wontfix`, the entire row moves (cut + paste) from LEDGER to RESOLVED. The move is performed by `scripts/finalize_tech_debt_ledger.py` at post-merge, and may also be done in-commit by the resolving agent or human
+- **Re-open on recurrence** — if a producer files a new active row whose `dedup_key` matches a row in RESOLVED, the resolved row moves back to LEDGER with `status = open`, `last-seen = today`, and `notes` suffixed `// recurrence: re-opened YYYY-MM-DD`. The newly-filed row is collapsed into it (preserving the historical row's `id` and `first-seen`)
+- **Audit trail preserved** — both files are committed to git; rows are never deleted from the pair as a whole. `wontfix` is a tombstone in RESOLVED.md (sentinel may re-surface but never removes)
+- **Reclassification recomputes `dedup_key`** — when a producer changes a row's `class` (e.g., `other` → `token-budget`), the producer recomputes `dedup_key` from the new field set so future findings can match
+- **No section ownership** — each file is a single Markdown table with a small header; section ownership is unnecessary
 
 **Schema (14 row fields + 1 structural `dedup_key` field):**
 
@@ -139,7 +141,7 @@ No agent outside the four writers above creates new ledger rows. Consumer agents
 |-------|------|-----------|-------|
 | `id` | string | `td-NNN` zero-padded sequence | Stable across status updates; assigned at write time by next-available-NNN scan |
 | `severity` | enum | `critical` \| `important` \| `suggested` | Aligned with sentinel severity tiering |
-| `class` | enum | `duplication` \| `complexity` \| `dead-code` \| `drift` \| `stale-todo` \| `coverage-gap` \| `cyclic-dep` \| `topology-drift` \| `other` | `other` is an escape hatch for emergent classes; producers SHOULD propose a new enum value if `other` rows accumulate (>5). `topology-drift` is now a named class (re-classify any `other` rows whose notes describe a test-topology staleness symptom) |
+| `class` | enum | `duplication` \| `complexity` \| `dead-code` \| `drift` \| `stale-todo` \| `coverage-gap` \| `cyclic-dep` \| `topology-drift` \| `token-budget` \| `other` | `other` is an escape hatch for emergent classes; producers SHOULD propose a new enum value if `other` rows accumulate (>5). `topology-drift` and `token-budget` are named classes — re-classify any `other` rows whose notes describe a test-topology staleness symptom or always-loaded token-budget headroom optimization, and recompute `dedup_key` from the new field set when reclassifying |
 | `direction` | enum | `code-to-goals` \| `goals-to-code` | The two debt directions in the operating definition |
 | `location` | list | Affected file paths + optional `:start-end` line ranges | One path per list entry; ranges use `path/to/file.py:42-58` syntax |
 | `goal-ref-type` | enum | `adr` \| `spec-req` \| `architecture` \| `claude-md` \| `code-quality` | `code-quality` covers universal engineering principles with no Praxion-specific anchor |
@@ -169,22 +171,10 @@ Both producers reference this single table when assigning `owner-role` to a new 
 | `coverage-gap` | `test-engineer` | None — coverage is always test-engineer-owned |
 | `cyclic-dep` | `implementation-planner` | Always — module-graph reshuffle is a planning concern |
 | `topology-drift` | `implementation-planner` | Always — topology refresh requires a planning-level decision (group splits, merges, or integration_boundary changes) |
+| `token-budget` | `implementer` | Doc-style edits to rule files; escalate to `implementation-planner` only when the cut requires coordinating skill frontmatter or agent injection |
 | `other` | `unassigned` | Producer's `notes` field SHOULD propose an owner; downstream consumers may re-assign |
 
-**Worktree concurrency:** ledger rows are append-only and may be filed independently by pipelines running in separate worktrees. Conflicts surface only at merge-to-main, where a post-merge dedupe step (`scripts/finalize_tech_debt_ledger.py`, modeled on `scripts/finalize_adrs.py`: idempotent, advisory file lock, bounded scope, dry-run flag) collapses rows sharing a `dedup_key`. Status precedence on collapse is `resolved > in-flight > open > wontfix`; ties break by newer `last-seen`. Non-conflicting fields are merged (notes concatenated with ` // ` — chosen to avoid collision with the Markdown table column delimiter `|`; locations union-sorted).
-
-```mermaid
-sequenceDiagram
-    participant W as Worktree (pipeline)
-    participant G as Git
-    participant F as Post-merge finalize
-    participant L as TECH_DEBT_LEDGER.md (main)
-    W->>L: append rows during pipeline
-    W->>G: commit + merge to main
-    G->>F: post-merge hook fires (chain: finalize_adrs -> finalize_tech_debt_ledger -> squash-safety)
-    F->>L: dedupe by dedup_key; status precedence + tie-break by last-seen
-    F->>L: write back; idempotent
-```
+**Worktree concurrency:** rows are filed and updated independently by pipelines running in separate worktrees. Conflicts surface only at merge-to-main, where the post-merge step `scripts/finalize_tech_debt_ledger.py` (modeled on `scripts/finalize_adrs.py`: idempotent, advisory file lock, bounded scope, dry-run flag) reconciles the pair. The script (a) collapses rows sharing a `dedup_key` with status precedence `resolved > in-flight > open > wontfix` and tie-break by newer `last-seen`, (b) routes terminal-status rows to RESOLVED.md and active-status rows to LEDGER.md, and (c) handles re-open: when a new active row's `dedup_key` matches a row in RESOLVED.md, the resolved row moves back to LEDGER.md with `status = open` and a recurrence note, and the new row is collapsed into it. Non-conflicting fields are merged (notes concatenated with ` // ` — chosen to avoid collision with the Markdown table column delimiter `|`; locations union-sorted). The advisory `fcntl` lock covers both files via a single shared lock path.
 
 **Consumer-contract framing:** the ledger's input contract on its five consumer agents is "permission, not obligation" — adding the contract line does not make every consumer process every open item on every run. Non-action is a valid outcome. This framing prevents future agents from over-interpreting the contract as a mandate, which would degrade per-agent phase-budget discipline and produce noise.
 
@@ -196,7 +186,7 @@ sequenceDiagram
 | Ephemeral | `.ai-work/<task-slug>/` | `TEST_RESULTS.md` — implementer (or test-engineer) test-run handoff artifact (canonical schema in `skills/software-planning/references/agent-pipeline-details.md`) | Single pipeline run — merge into `VERIFICATION_REPORT.md`, then delete |
 | Ephemeral | `.ai-work/<task-slug>/` | `traceability.yml` — REQ-to-test/implementation mapping (canonical source of truth during the pipeline; rendered into the archived SPEC's matrix at feature end per [`id-citation-discipline.md`](id-citation-discipline.md)) | Single pipeline run — rendered into archived SPEC matrix, then deleted with `.ai-work/` |
 | Session-persistent | `.ai-work/<task-slug>/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions — merge learnings into permanent locations at feature end |
-| Permanent | `.ai-state/` | `idea_ledgers/IDEA_LEDGER_*.md`, `sentinel_reports/{SENTINEL_REPORT_*.md, SENTINEL_LOG.md}`, `metrics_reports/{METRICS_REPORT_*.{md,json}, METRICS_LOG.md}`, `specs/SPEC_*.md`, `calibration_log.md`, `decisions/<NNN>-<slug>.md`, `SYSTEM_DEPLOYMENT.md`, `ARCHITECTURE.md`, `TEST_TOPOLOGY.md`, `TECH_DEBT_LEDGER.md` | Project lifetime — committed to git, timestamped per run or living document |
+| Permanent | `.ai-state/` | `idea_ledgers/IDEA_LEDGER_*.md`, `sentinel_reports/{SENTINEL_REPORT_*.md, SENTINEL_LOG.md}`, `metrics_reports/{METRICS_REPORT_*.{md,json}, METRICS_LOG.md}`, `specs/SPEC_*.md`, `calibration_log.md`, `decisions/<NNN>-<slug>.md`, `SYSTEM_DEPLOYMENT.md`, `ARCHITECTURE.md`, `TEST_TOPOLOGY.md`, `TECH_DEBT_LEDGER.md` (active) + `TECH_DEBT_RESOLVED.md` (terminal) | Project lifetime — committed to git, timestamped per run or living document |
 | Permanent | `docs/` | `architecture.md` | Project lifetime — committed to git, derived from `.ai-state/ARCHITECTURE.md`, maintained by pipeline agents |
 
 ### Version Control and Cleanup

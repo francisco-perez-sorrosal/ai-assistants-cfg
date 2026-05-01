@@ -168,7 +168,14 @@ def write_ledger(path: Path, rows: list[str]) -> None:
 
 
 def read_rows(path: Path) -> list[str]:
-    """Return only the data rows from a ledger file (skipping header)."""
+    """Return only the data rows from a ledger file (skipping header).
+
+    Absent file returns []. The script's lazy-creation contract is that
+    RESOLVED.md is created only when a terminal-status row needs to land
+    there; absence is the canonical "no resolved rows" state.
+    """
+    if not path.is_file():
+        return []
     text = path.read_text(encoding="utf-8")
     lines = text.splitlines(keepends=True)
     data_rows: list[str] = []
@@ -197,14 +204,24 @@ def parse_row(row_line: str) -> dict[str, str]:
     return dict(zip(FIELD_ORDER, parts))
 
 
+def write_resolved(path: Path, rows: list[str]) -> None:
+    """Seed RESOLVED.md with the same minimal HEADER + given rows.
+
+    Tests that exercise re-open or within-RESOLVED collapse use this to
+    pre-populate RESOLVED.md before invoking the script.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(HEADER + "".join(rows), encoding="utf-8")
+
+
 @pytest.fixture
 def ledger_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Build a minimal repo layout and redirect the script at tmp_path.
 
-    The implementer's script is expected to derive the ledger path from a
-    module-level constant (REPO_ROOT or LEDGER_PATH). We rebind whichever
-    name(s) exist to the tmp_path equivalent so the script operates on the
-    fixture tree rather than the real repo state.
+    Rebinds LEDGER_PATH, RESOLVED_PATH, REPO_ROOT, and LOCK_PATH so the
+    script operates on the fixture tree rather than the real repo state.
+    Tests that need RESOLVED.md access additionally use the `resolved_path`
+    fixture to read or write that file.
     """
     path = tmp_path / ".ai-state" / "TECH_DEBT_LEDGER.md"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -212,12 +229,24 @@ def ledger_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     for attr, new_value in (
         ("REPO_ROOT", tmp_path),
         ("LEDGER_PATH", path),
+        ("RESOLVED_PATH", tmp_path / ".ai-state" / "TECH_DEBT_RESOLVED.md"),
         ("LOCK_PATH", tmp_path / ".ai-state" / ".tech_debt_ledger_finalize.lock"),
     ):
         if hasattr(finalize_td, attr):
             monkeypatch.setattr(finalize_td, attr, new_value)
 
     return path
+
+
+@pytest.fixture
+def resolved_path(tmp_path: Path) -> Path:
+    """Return the resolved-pair file path for tests that read or seed it.
+
+    Path-only fixture; the active-ledger fixture is responsible for the
+    monkeypatch rebinds. Tests that check migration semantics read from
+    this path after invoking the script.
+    """
+    return tmp_path / ".ai-state" / "TECH_DEBT_RESOLVED.md"
 
 
 # -- Empty / trivial inputs ---------------------------------------------------
@@ -331,11 +360,17 @@ class TestStatusPrecedenceOnCollapse:
     def test_higher_precedence_status_wins_regardless_of_order(
         self,
         ledger_path: Path,
+        resolved_path: Path,
         status_a: str,
         status_b: str,
         expected_winner: str,
     ) -> None:
-        """Across every pairing, the higher-precedence status wins."""
+        """Across every pairing, the higher-precedence status wins.
+
+        After collapse, the survivor is routed to LEDGER (active status) or
+        RESOLVED (terminal status). Tests assert the survivor's location
+        matches the expected-winner status, not just its presence in LEDGER.
+        """
         shared_key = "statuspriorty"
         rows = [
             make_row(id="td-001", dedup_key=shared_key, status=status_a),
@@ -346,14 +381,20 @@ class TestStatusPrecedenceOnCollapse:
         code = finalize_td.finalize_ledger(ledger_path, dry_run=False)
 
         assert code == 0
-        surviving = read_rows(ledger_path)
+        target_path = (
+            resolved_path if expected_winner in ("resolved", "wontfix") else ledger_path
+        )
+        other_path = ledger_path if target_path is resolved_path else resolved_path
+
+        surviving = read_rows(target_path)
         assert len(surviving) == 1
         assert parse_row(surviving[0])["status"] == expected_winner
+        assert read_rows(other_path) == []
 
     def test_three_way_collapse_honors_full_precedence_chain(
-        self, ledger_path: Path
+        self, ledger_path: Path, resolved_path: Path
     ) -> None:
-        """Three rows with resolved + in-flight + open collapse to resolved."""
+        """Three rows with resolved + in-flight + open collapse to resolved (in RESOLVED.md)."""
         shared_key = "threewaychain"
         rows = [
             make_row(id="td-001", dedup_key=shared_key, status="open"),
@@ -365,9 +406,10 @@ class TestStatusPrecedenceOnCollapse:
         code = finalize_td.finalize_ledger(ledger_path, dry_run=False)
 
         assert code == 0
-        surviving = read_rows(ledger_path)
+        surviving = read_rows(resolved_path)
         assert len(surviving) == 1
         assert parse_row(surviving[0])["status"] == "resolved"
+        assert read_rows(ledger_path) == []
 
 
 # -- last-seen tie-break ------------------------------------------------------
@@ -685,3 +727,222 @@ class TestCLIContract:
         # the exit is 2.
         assert result.returncode == 0
         assert "--dry-run" in result.stdout
+
+
+# -- Pair migration: terminal-status rows leave LEDGER for RESOLVED ----------
+
+
+class TestPairMigration:
+    """Rows whose status is `resolved` or `wontfix` migrate from LEDGER to RESOLVED."""
+
+    def test_resolved_row_in_ledger_migrates_to_resolved_file(
+        self, ledger_path: Path, resolved_path: Path
+    ) -> None:
+        """A standalone resolved row moves to RESOLVED.md and leaves LEDGER empty."""
+        rows = [
+            make_row(
+                id="td-001",
+                dedup_key="resolveonly1",
+                status="resolved",
+                resolved_by="abc1234",
+            )
+        ]
+        write_ledger(ledger_path, rows)
+
+        code = finalize_td.finalize_ledger(ledger_path, dry_run=False)
+
+        assert code == 0
+        assert read_rows(ledger_path) == []
+        migrated = read_rows(resolved_path)
+        assert len(migrated) == 1
+        assert parse_row(migrated[0])["id"] == "td-001"
+        assert parse_row(migrated[0])["status"] == "resolved"
+
+    def test_wontfix_row_in_ledger_migrates_to_resolved_file(
+        self, ledger_path: Path, resolved_path: Path
+    ) -> None:
+        """`wontfix` is a terminal status — same migration path as resolved."""
+        rows = [
+            make_row(
+                id="td-002",
+                dedup_key="wontfixonly1",
+                status="wontfix",
+                notes="rationale: out-of-scope",
+            )
+        ]
+        write_ledger(ledger_path, rows)
+
+        code = finalize_td.finalize_ledger(ledger_path, dry_run=False)
+
+        assert code == 0
+        assert read_rows(ledger_path) == []
+        migrated = read_rows(resolved_path)
+        assert len(migrated) == 1
+        assert parse_row(migrated[0])["status"] == "wontfix"
+
+    def test_active_only_ledger_does_not_create_resolved_file(
+        self, ledger_path: Path, resolved_path: Path
+    ) -> None:
+        """When nothing is terminal, RESOLVED.md is not lazily created."""
+        rows = [make_row(id="td-001", dedup_key="activeonly01", status="open")]
+        write_ledger(ledger_path, rows)
+
+        code = finalize_td.finalize_ledger(ledger_path, dry_run=False)
+
+        assert code == 0
+        assert not resolved_path.exists()
+        assert len(read_rows(ledger_path)) == 1
+
+
+# -- Pair re-open: cross-file dedup_key match ---------------------------------
+
+
+class TestPairReopen:
+    """A new active row whose dedup_key matches a resolved row triggers re-open."""
+
+    def test_recurrence_moves_resolved_row_back_to_ledger_with_marker(
+        self, ledger_path: Path, resolved_path: Path
+    ) -> None:
+        """Cross-file dedup_key match: resolved row returns to LEDGER as `open`."""
+        shared_key = "recurringbug"
+        # Historical resolved row in RESOLVED.md
+        write_resolved(
+            resolved_path,
+            [
+                make_row(
+                    id="td-001",
+                    dedup_key=shared_key,
+                    status="resolved",
+                    first_seen="2026-01-01",
+                    last_seen="2026-02-15",
+                    resolved_by="def5678",
+                    notes="initial finding",
+                )
+            ],
+        )
+        # Recurrence: new active finding in LEDGER
+        write_ledger(
+            ledger_path,
+            [
+                make_row(
+                    id="td-099",
+                    dedup_key=shared_key,
+                    status="open",
+                    first_seen="2026-04-30",
+                    last_seen="2026-04-30",
+                    notes="re-detected",
+                )
+            ],
+        )
+
+        code = finalize_td.finalize_ledger(ledger_path, dry_run=False)
+
+        assert code == 0
+        # Historical row returned to LEDGER, recurrence row collapsed into it
+        active = read_rows(ledger_path)
+        assert len(active) == 1
+        row = parse_row(active[0])
+        assert row["id"] == "td-001"  # historical id preserved
+        assert row["first-seen"] == "2026-01-01"  # historical first-seen preserved
+        assert row["status"] == "open"  # re-opened
+        assert row["last-seen"] == "2026-04-30"  # recurrence date wins
+        assert row["resolved-by"] == ""  # cleared
+        assert "recurrence: re-opened 2026-04-30" in row["notes"]
+        # RESOLVED is now empty (or absent if lazily not rewritten); both
+        # outcomes satisfy the contract.
+        assert read_rows(resolved_path) == []
+
+
+# -- Within-RESOLVED collapse -------------------------------------------------
+
+
+class TestWithinResolvedCollapse:
+    """Two resolved rows with the same dedup_key collapse but stay in RESOLVED."""
+
+    def test_two_resolved_rows_collapse_within_resolved_file(
+        self, ledger_path: Path, resolved_path: Path
+    ) -> None:
+        """Within-file collapse routes the survivor to RESOLVED (terminal)."""
+        shared_key = "duplicateres1"
+        write_ledger(ledger_path, rows=[])
+        write_resolved(
+            resolved_path,
+            [
+                make_row(
+                    id="td-005",
+                    dedup_key=shared_key,
+                    status="resolved",
+                    last_seen="2026-03-01",
+                    notes="first",
+                ),
+                make_row(
+                    id="td-006",
+                    dedup_key=shared_key,
+                    status="resolved",
+                    last_seen="2026-04-01",
+                    notes="second",
+                ),
+            ],
+        )
+
+        code = finalize_td.finalize_ledger(ledger_path, dry_run=False)
+
+        assert code == 0
+        # No active rows; survivor stays terminal
+        assert read_rows(ledger_path) == []
+        survivors = read_rows(resolved_path)
+        assert len(survivors) == 1
+        row = parse_row(survivors[0])
+        assert row["status"] == "resolved"
+        assert row["last-seen"] == "2026-04-01"  # newer last-seen wins on tie
+
+
+# -- Settled-pair idempotency -------------------------------------------------
+
+
+class TestPairIdempotency:
+    """A settled LEDGER + RESOLVED state is byte-equivalent across reruns."""
+
+    def test_settled_pair_is_byte_equivalent_no_op(
+        self, ledger_path: Path, resolved_path: Path
+    ) -> None:
+        """Active row in LEDGER + resolved row in RESOLVED -> no rewrites."""
+        write_ledger(
+            ledger_path,
+            [make_row(id="td-001", dedup_key="settledact01", status="open")],
+        )
+        write_resolved(
+            resolved_path,
+            [
+                make_row(
+                    id="td-002",
+                    dedup_key="settledres01",
+                    status="resolved",
+                    resolved_by="abc1234",
+                )
+            ],
+        )
+        ledger_before = ledger_path.read_bytes()
+        resolved_before = resolved_path.read_bytes()
+
+        code = finalize_td.finalize_ledger(ledger_path, dry_run=False)
+
+        assert code == 0
+        assert ledger_path.read_bytes() == ledger_before
+        assert resolved_path.read_bytes() == resolved_before
+
+    def test_double_run_after_migration_is_idempotent(
+        self, ledger_path: Path, resolved_path: Path
+    ) -> None:
+        """First run migrates; second run on settled state is a no-op."""
+        rows = [make_row(id="td-001", dedup_key="migratethis1", status="resolved")]
+        write_ledger(ledger_path, rows)
+
+        finalize_td.finalize_ledger(ledger_path, dry_run=False)
+        ledger_after_first = ledger_path.read_bytes()
+        resolved_after_first = resolved_path.read_bytes()
+
+        finalize_td.finalize_ledger(ledger_path, dry_run=False)
+
+        assert ledger_path.read_bytes() == ledger_after_first
+        assert resolved_path.read_bytes() == resolved_after_first
