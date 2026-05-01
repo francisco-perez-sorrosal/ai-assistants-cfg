@@ -262,6 +262,261 @@ def _classify_mcp_tool(tool_name):
     return (server, tool)
 
 
+def _enrich_mcp_meta(meta, tool_name):
+    """Add MCP server/tool fields to a metadata dict when the tool is a Praxion MCP tool."""
+    mcp_info = _classify_mcp_tool(tool_name)
+    if mcp_info:
+        meta["artifact_type"] = "mcp_tool"
+        meta["mcp_server"] = mcp_info[0]
+        meta["mcp_tool"] = mcp_info[1]
+
+
+def _handle_session_start(sid, proj, git):
+    """Return events for SessionStart hook."""
+    return [
+        {
+            "event_type": "session_start",
+            "agent_type": "",
+            "session_id": sid,
+            "project_dir": proj,
+            "metadata": {"git": git},
+        }
+    ], []
+
+
+def _handle_stop(sid, proj, git):
+    """Return events for Stop hook."""
+    return [
+        {
+            "event_type": "session_stop",
+            "agent_type": "",
+            "session_id": sid,
+            "project_dir": proj,
+            "metadata": {"git": git},
+        }
+    ], []
+
+
+def _handle_subagent_start(data, sid, aid, proj, git):
+    """Return events and interactions for SubagentStart hook."""
+    agent = data.get("agent_type", "")
+    label = _agent_label(data)
+    description = data.get("description", "")
+    task_slug = _extract_task_slug(data.get("prompt", "") or description)
+    event = {
+        "event_type": "agent_start",
+        "agent_type": agent or label,
+        "session_id": sid,
+        "agent_id": aid,
+        "parent_session_id": sid,
+        "message": f"Agent {label} started",
+        "project_dir": proj,
+        "metadata": {"git": git},
+    }
+    if task_slug:
+        event["metadata"]["task_slug"] = task_slug
+    interaction = {
+        "source": "main_agent",
+        "target": aid or agent or label,
+        "summary": f"Delegated to {label}",
+        "interaction_type": "delegation",
+    }
+    return [event], [interaction]
+
+
+def _handle_subagent_stop(data, sid, aid, proj):
+    """Return events and interactions for SubagentStop hook."""
+    agent = data.get("agent_type", "")
+    label = _agent_label(data)
+    event = {
+        "event_type": "agent_stop",
+        "agent_type": agent or label,
+        "session_id": sid,
+        "agent_id": aid,
+        "parent_session_id": sid,
+        "message": f"Agent {label} stopped",
+        "project_dir": proj,
+    }
+    transcript = data.get("agent_transcript_path", "")
+    if transcript:
+        event["metadata"] = {"agent_transcript_path": transcript}
+    interaction = {
+        "source": aid or agent or label,
+        "target": "main_agent",
+        "summary": f"{label} returned results",
+        "interaction_type": "result",
+    }
+    return [event], [interaction]
+
+
+def _handle_pre_tool_use(data, sid, aid, proj):
+    """Return events for PreToolUse hook.
+
+    Without a correlation id we can't pair Pre/Post; let PostToolUse
+    emit an instant span (fallback path) instead of opening a dangling span.
+    """
+    tool_name = data.get("tool_name", "")
+    tool_use_id = data.get("tool_use_id", "")
+    if not tool_name or not tool_use_id:
+        return [], []
+    meta = {
+        "input_summary": _summarize_tool_input(data),
+        "input_size_bytes": len(
+            _raw_tool_input_text(data).encode("utf-8", errors="replace")
+        ),
+    }
+    _enrich_mcp_meta(meta, tool_name)
+    return [
+        {
+            "event_type": "tool_start",
+            "agent_type": data.get("agent_type", ""),
+            "agent_id": aid,
+            "session_id": sid,
+            "tool_name": tool_name,
+            "tool_use_id": tool_use_id,
+            "project_dir": proj,
+            "metadata": meta,
+        }
+    ], []
+
+
+def _extract_progress_content(tool_input):
+    """Extract PROGRESS.md write content from a tool_input dict."""
+    if not isinstance(tool_input, dict):
+        return ""
+    return tool_input.get("content", "") or tool_input.get("new_string", "")
+
+
+def _handle_post_tool_use(data, sid, aid, proj):
+    """Return events for PostToolUse hook."""
+    tool_name = data.get("tool_name", "")
+    tool_use_id = data.get("tool_use_id", "")
+    tool_input = data.get("tool_input", {})
+    fp = tool_input.get("file_path", "") if isinstance(tool_input, dict) else ""
+    events = []
+
+    # Detect Skill invocations
+    if tool_name == "Skill":
+        skill_name = tool_input.get("skill", "") if isinstance(tool_input, dict) else ""
+        if skill_name:
+            events.append(
+                {
+                    "event_type": "skill_use",
+                    "agent_type": data.get("agent_type", ""),
+                    "agent_id": aid,
+                    "session_id": sid,
+                    "tool_name": f"skill:{skill_name}",
+                    "project_dir": proj,
+                    "metadata": {
+                        "artifact_type": "skill",
+                        "artifact_name": skill_name,
+                        "args": tool_input.get("args", "")
+                        if isinstance(tool_input, dict)
+                        else "",
+                    },
+                }
+            )
+
+    # Build metadata for tool_use event with MCP enrichment.
+    # Sizes are captured before truncation so span analytics keep the real size signal.
+    meta = {
+        "input_summary": _summarize_tool_input(data),
+        "output_summary": _summarize_tool_output(data),
+        "input_size_bytes": len(
+            _raw_tool_input_text(data).encode("utf-8", errors="replace")
+        ),
+        "output_size_bytes": len(
+            _raw_tool_output_text(data).encode("utf-8", errors="replace")
+        ),
+    }
+    _enrich_mcp_meta(meta, tool_name)
+
+    # Always emit a tool_use event for every tool call
+    events.append(
+        {
+            "event_type": "tool_use",
+            "agent_type": data.get("agent_type", ""),
+            "agent_id": aid,
+            "session_id": sid,
+            "tool_name": tool_name,
+            "tool_use_id": tool_use_id,
+            "project_dir": proj,
+            "metadata": meta,
+        }
+    )
+
+    # Additionally detect PROGRESS.md writes for phase transitions
+    if PROGRESS_MARKER in fp:
+        content = _extract_progress_content(tool_input)
+        parsed = _parse_last_progress_line(content) if content else None
+        if parsed:
+            events.append(
+                {
+                    "event_type": "phase_transition",
+                    "agent_type": parsed["agent_type"],
+                    "agent_id": aid,
+                    "session_id": sid,
+                    "phase": parsed["phase"],
+                    "total_phases": parsed["total_phases"],
+                    "phase_name": parsed["phase_name"],
+                    "message": parsed["message"],
+                    "project_dir": proj,
+                }
+            )
+
+    return events, []
+
+
+def _handle_post_tool_use_failure(data, sid, aid, proj):
+    """Return events for PostToolUseFailure hook."""
+    tool_name = data.get("tool_name", "")
+    tool_use_id = data.get("tool_use_id", "")
+    error_msg = data.get("error", data.get("message", "Tool call failed"))
+    if isinstance(error_msg, dict):
+        error_msg = json.dumps(error_msg)
+    return [
+        {
+            "event_type": "error",
+            "agent_type": data.get("agent_type", ""),
+            "agent_id": aid,
+            "session_id": sid,
+            "tool_name": tool_name,
+            "tool_use_id": tool_use_id,
+            "message": str(error_msg),
+            "project_dir": proj,
+            "metadata": {
+                "input_summary": _summarize_tool_input(data),
+                "input_size_bytes": len(
+                    _raw_tool_input_text(data).encode("utf-8", errors="replace")
+                ),
+            },
+        }
+    ], []
+
+
+_HOOK_DISPATCH = {
+    "SessionStart": lambda data, sid, aid, proj, git: _handle_session_start(
+        sid, proj, git
+    ),
+    "Stop": lambda data, sid, aid, proj, git: _handle_stop(sid, proj, git),
+    "SubagentStart": lambda data, sid, aid, proj, git: _handle_subagent_start(
+        data, sid, aid, proj, git
+    ),
+    "SubagentStop": lambda data, sid, aid, proj, git: _handle_subagent_stop(
+        data, sid, aid, proj
+    ),
+    "PreToolUse": lambda data, sid, aid, proj, git: _handle_pre_tool_use(
+        data, sid, aid, proj
+    ),
+    "PostToolUse": lambda data, sid, aid, proj, git: _handle_post_tool_use(
+        data, sid, aid, proj
+    ),
+    "PostToolUseFailure": lambda data, sid, aid, proj, git: (
+        _handle_post_tool_use_failure(data, sid, aid, proj)
+    ),
+}
+
+
 def _build_events(data):
     """Map a Claude Code hook payload to Chronograph events + interactions."""
     hook = data.get("hook_event_name", "")
@@ -269,227 +524,12 @@ def _build_events(data):
     aid = data.get("agent_id", "")
     proj = _project_dir(data)
     git = _git_context(proj)
-    events = []
-    interactions = []
 
-    if hook == "SessionStart":
-        events.append(
-            {
-                "event_type": "session_start",
-                "agent_type": "",
-                "session_id": sid,
-                "project_dir": proj,
-                "metadata": {"git": git},
-            }
-        )
+    handler = _HOOK_DISPATCH.get(hook)
+    if handler is None:
+        return [], []
 
-    elif hook == "Stop":
-        events.append(
-            {
-                "event_type": "session_stop",
-                "agent_type": "",
-                "session_id": sid,
-                "project_dir": proj,
-                "metadata": {"git": git},
-            }
-        )
-
-    elif hook == "SubagentStart":
-        agent = data.get("agent_type", "")
-        label = _agent_label(data)
-        description = data.get("description", "")
-        task_slug = _extract_task_slug(data.get("prompt", "") or description)
-        event = {
-            "event_type": "agent_start",
-            "agent_type": agent or label,
-            "session_id": sid,
-            "agent_id": aid,
-            "parent_session_id": sid,
-            "message": f"Agent {label} started",
-            "project_dir": proj,
-            "metadata": {"git": git},
-        }
-        if task_slug:
-            event["metadata"]["task_slug"] = task_slug
-        events.append(event)
-        interactions.append(
-            {
-                "source": "main_agent",
-                "target": aid or agent or label,
-                "summary": f"Delegated to {label}",
-                "interaction_type": "delegation",
-            }
-        )
-
-    elif hook == "SubagentStop":
-        agent = data.get("agent_type", "")
-        label = _agent_label(data)
-        event = {
-            "event_type": "agent_stop",
-            "agent_type": agent or label,
-            "session_id": sid,
-            "agent_id": aid,
-            "parent_session_id": sid,
-            "message": f"Agent {label} stopped",
-            "project_dir": proj,
-        }
-        transcript = data.get("agent_transcript_path", "")
-        if transcript:
-            event["metadata"] = {"agent_transcript_path": transcript}
-        events.append(event)
-        interactions.append(
-            {
-                "source": aid or agent or label,
-                "target": "main_agent",
-                "summary": f"{label} returned results",
-                "interaction_type": "result",
-            }
-        )
-
-    elif hook == "PreToolUse":
-        tool_name = data.get("tool_name", "")
-        tool_use_id = data.get("tool_use_id", "")
-        # Without a correlation id we can't pair Pre/Post; let PostToolUse
-        # emit an instant span (fallback path) instead of opening a dangling span.
-        if not tool_name or not tool_use_id:
-            return events, interactions
-        meta = {
-            "input_summary": _summarize_tool_input(data),
-            "input_size_bytes": len(
-                _raw_tool_input_text(data).encode("utf-8", errors="replace")
-            ),
-        }
-        mcp_info = _classify_mcp_tool(tool_name)
-        if mcp_info:
-            meta["artifact_type"] = "mcp_tool"
-            meta["mcp_server"] = mcp_info[0]
-            meta["mcp_tool"] = mcp_info[1]
-        events.append(
-            {
-                "event_type": "tool_start",
-                "agent_type": data.get("agent_type", ""),
-                "agent_id": aid,
-                "session_id": sid,
-                "tool_name": tool_name,
-                "tool_use_id": tool_use_id,
-                "project_dir": proj,
-                "metadata": meta,
-            }
-        )
-
-    elif hook == "PostToolUse":
-        tool_name = data.get("tool_name", "")
-        tool_use_id = data.get("tool_use_id", "")
-        tool_input = data.get("tool_input", {})
-        fp = tool_input.get("file_path", "") if isinstance(tool_input, dict) else ""
-
-        # Detect Skill invocations
-        if tool_name == "Skill":
-            skill_name = (
-                tool_input.get("skill", "") if isinstance(tool_input, dict) else ""
-            )
-            if skill_name:
-                events.append(
-                    {
-                        "event_type": "skill_use",
-                        "agent_type": data.get("agent_type", ""),
-                        "agent_id": aid,
-                        "session_id": sid,
-                        "tool_name": f"skill:{skill_name}",
-                        "project_dir": proj,
-                        "metadata": {
-                            "artifact_type": "skill",
-                            "artifact_name": skill_name,
-                            "args": tool_input.get("args", "")
-                            if isinstance(tool_input, dict)
-                            else "",
-                        },
-                    }
-                )
-
-        # Build metadata for tool_use event with MCP enrichment.
-        # Sizes are captured before truncation so span analytics keep the real size signal.
-        meta = {
-            "input_summary": _summarize_tool_input(data),
-            "output_summary": _summarize_tool_output(data),
-            "input_size_bytes": len(
-                _raw_tool_input_text(data).encode("utf-8", errors="replace")
-            ),
-            "output_size_bytes": len(
-                _raw_tool_output_text(data).encode("utf-8", errors="replace")
-            ),
-        }
-        mcp_info = _classify_mcp_tool(tool_name)
-        if mcp_info:
-            meta["artifact_type"] = "mcp_tool"
-            meta["mcp_server"] = mcp_info[0]
-            meta["mcp_tool"] = mcp_info[1]
-
-        # Always emit a tool_use event for every tool call
-        events.append(
-            {
-                "event_type": "tool_use",
-                "agent_type": data.get("agent_type", ""),
-                "agent_id": aid,
-                "session_id": sid,
-                "tool_name": tool_name,
-                "tool_use_id": tool_use_id,
-                "project_dir": proj,
-                "metadata": meta,
-            }
-        )
-
-        # Additionally detect PROGRESS.md writes for phase transitions
-        if PROGRESS_MARKER in fp:
-            content = (
-                tool_input.get("content", "") if isinstance(tool_input, dict) else ""
-            )
-            if not content:
-                content = (
-                    tool_input.get("new_string", "")
-                    if isinstance(tool_input, dict)
-                    else ""
-                )
-            parsed = _parse_last_progress_line(content) if content else None
-            if parsed:
-                events.append(
-                    {
-                        "event_type": "phase_transition",
-                        "agent_type": parsed["agent_type"],
-                        "agent_id": aid,
-                        "session_id": sid,
-                        "phase": parsed["phase"],
-                        "total_phases": parsed["total_phases"],
-                        "phase_name": parsed["phase_name"],
-                        "message": parsed["message"],
-                        "project_dir": proj,
-                    }
-                )
-
-    elif hook == "PostToolUseFailure":
-        tool_name = data.get("tool_name", "")
-        tool_use_id = data.get("tool_use_id", "")
-        error_msg = data.get("error", data.get("message", "Tool call failed"))
-        if isinstance(error_msg, dict):
-            error_msg = json.dumps(error_msg)
-        events.append(
-            {
-                "event_type": "error",
-                "agent_type": data.get("agent_type", ""),
-                "agent_id": aid,
-                "session_id": sid,
-                "tool_name": tool_name,
-                "tool_use_id": tool_use_id,
-                "message": str(error_msg),
-                "project_dir": proj,
-                "metadata": {
-                    "input_summary": _summarize_tool_input(data),
-                    "input_size_bytes": len(
-                        _raw_tool_input_text(data).encode("utf-8", errors="replace")
-                    ),
-                },
-            }
-        )
+    events, interactions = handler(data, sid, aid, proj, git)
 
     # Phase 4 (ADR 052): every event carries the Claude Code hook name in metadata
     # so Phoenix can answer "which hook produced this span?" without guessing.
