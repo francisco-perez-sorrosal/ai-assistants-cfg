@@ -66,3 +66,25 @@ The fence comments are the contract surface that the validator and the architect
 ## Validator
 
 `scripts/aac_fence_validator.py` is the canonical check. It is stdlib-only, idempotent, and side-effect-free: it never edits files, and running it twice on the same input produces identical output. When `likec4` is unavailable in the validator's environment, it emits one WARN per `aac:generated` fence rather than failing. For the full CLI interface, run `python scripts/aac_fence_validator.py --help`.
+
+## Override Syntax
+
+When an editor must legitimately modify a generated artifact (a rendered `.d2`/`.svg` or content inside an `aac:generated` fence) without staging the corresponding source change, a line-adjacent override comment justifies the change. The comment captures the reason in one line so reviewers and future agents can audit whether the hand-edit was warranted.
+
+**Code, D2, YAML, and shell files** (any file where `#` is the comment character):
+
+```
+# aac-override: <non-empty-reason>
+```
+
+**SVG, HTML, and Markdown files:**
+
+```
+<!-- aac-override: <non-empty-reason> -->
+```
+
+**Line-adjacency rule**: the override comment must appear on the same line as the change, or on the line immediately above it. A comment two or more lines above the change does not count.
+
+**Reason requirement**: the reason must be non-empty — at least one non-whitespace token after the colon and space. An override with an empty or whitespace-only reason is treated as absent.
+
+Enforcement: `scripts/check_aac_golden_rule.py --mode=gate` (wired into the pre-commit hook Block D) gates every commit that touches architectural surfaces. The same script in `--mode=audit` is consumed by the sentinel EC dimension for historical drift analysis.

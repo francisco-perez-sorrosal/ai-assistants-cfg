@@ -208,6 +208,7 @@ Schema definitions, identifier registries, and closure semantics referenced by T
 | EC04 | L | Pipeline stages have complete handoff coverage | Every pipeline output doc has a producing and consuming agent; no dead ends |
 | EC05 | L | No structural gaps for stated purpose | Given CLAUDE.md description and Future Paths, are obvious artifact types missing? |
 | EC06 | L | Condensed pipeline-deliverables block matches authoritative Delegation Checklists | In `claude/config/CLAUDE.md`, locate the "Standard/Full pipeline deliverables to always include" block (the 4-bullet list covering systems-architect, implementation-planner, implementer, verifier). In `rules/swe/swe-agent-coordination-protocol.md`, locate the `### Delegation Checklists` section. **Scope: outputs only** — the condensed block names deliverables produced; ignore "Read X" / "Verify against X" input clauses in the rule. For each of the four agents, every **produced** deliverable named in the rule's checklist (files written or updated, including conditionals) must appear (verbatim or as a recognizable shorthand like "architecture doc validation" for "ARCHITECTURE.md + docs/architecture.md") in the condensed block. Every conditional clause ("if deployment in scope", "if structural", "if tests") must appear in both files or neither. Drift in either direction is a WARN — the rule is the authoritative source per the sync-contract pointer in CLAUDE.md, so when drift is detected the condensed block is the one to reconcile. Unconditional (always-loaded in both files). |
+| EC07 | A | AaC golden-rule drift in recent commits | Run `python3 scripts/check_aac_golden_rule.py --mode=audit --json` over last N commits (default horizon 10). Findings of severity `important` → TECH_DEBT_LEDGER rows (`class: drift, source: sentinel, owner-role: implementer`). PASS when script exits 0 with no important-severity findings; WARN when important findings exist; skip when `scripts/check_aac_golden_rule.py` absent. |
 
 ### Spec Health (SH)
 
@@ -347,7 +348,7 @@ Guidelines:
 3. Record PASS/WARN/FAIL for each check with evidence
 4. Target: **~15-20 turns total** for all auto checks (not 50+)
 
-When `.ai-state/specs/` exists with spec files, include SH01-SH02 (auto) in this pass. When `.ai-state/calibration_log.md` exists, include CA01 (auto) in this pass.
+When `.ai-state/specs/` exists with spec files, include SH01-SH02 (auto) in this pass. When `.ai-state/calibration_log.md` exists, include CA01 (auto) in this pass. When `scripts/check_aac_golden_rule.py` exists, include EC07 (auto) in this pass: `python3 scripts/check_aac_golden_rule.py --mode=audit --json`.
 
 This pass is deterministic and fast. Complete it fully before starting Pass 2.
 
@@ -393,7 +394,7 @@ Uses the same A-F scale as other per-artifact dimensions.
 
 A holistic metric reflecting whether the ecosystem works as a connected whole. This is NOT an aggregation of per-artifact coherence scores — it evaluates emergent properties that only exist at the system level:
 
-- **System-level EC checks** — EC01 (pipeline diagram completeness), EC04 (handoff coverage), EC05 (structural gaps) — these don't map to individual artifacts
+- **System-level EC checks** — EC01 (pipeline diagram completeness), EC04 (handoff coverage), EC05 (structural gaps), EC07 (AaC golden-rule drift) — these don't map to individual artifacts
 - **Cross-dimension anomalies** — patterns that span multiple artifacts (e.g., pipeline stages with no producing agent, dimensions with consistently low grades across many artifacts)
 - **Artifact coherence distribution** — informs the grade but is not the grade itself; a system where every artifact scores A individually can still have poor ecosystem coherence if the connections between them are broken
 
@@ -435,6 +436,7 @@ Report schema:
 | EC01 | [PASS/FAIL] | [detail] |
 | EC04 | [PASS/FAIL] | [detail] |
 | EC05 | [PASS/FAIL] | [detail] |
+| EC07 | [PASS/WARN/SKIP] | [detail] |
 
 **Cross-dimension anomalies:**
 [Pipeline gaps, consistently weak dimensions across many artifacts, structural blind spots]

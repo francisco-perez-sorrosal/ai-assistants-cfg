@@ -16,6 +16,19 @@ Procedural expertise for writing, maintaining, and validating project-facing doc
 - [references/advanced-markdown-patterns.md](references/advanced-markdown-patterns.md) -- `<details>`/`<summary>`, GitHub Alerts, footnotes, anchor links: decision rules, syntax, and scope constraints for human-facing GitHub-rendered docs
 - [assets/ARCHITECTURE_GUIDE_TEMPLATE.md](assets/ARCHITECTURE_GUIDE_TEMPLATE.md) -- 8-section template for developer-facing `docs/architecture.md` navigation guide
 
+## Diátaxis Modes
+
+The four Diátaxis modes — Tutorial, How-to, Reference, and Explanation — pair with the AaC fence convention from `rules/writing/aac-dac-conventions.md` to select the correct fence type per content section.
+
+| Mode | Default fence | Reader intent |
+|------|---------------|---------------|
+| Tutorial | `aac:authored` | Learning by doing |
+| How-to | `aac:authored` (with `aac:generated` for sourced examples) | Solving a specific problem |
+| Reference | `aac:generated` | Authoritative information lookup |
+| Explanation | `aac:authored` | Understanding rationale |
+
+See [`references/diataxis-modes.md`](references/diataxis-modes.md) for per-mode rationale, common pitfalls, and worked examples.
+
 ## Gotchas
 
 - **Trusting counts in prose without filesystem verification.** Documentation stating "Contains 5 modules" may silently become wrong after adding or removing one. Always count against the filesystem -- never assume the prose count is current.

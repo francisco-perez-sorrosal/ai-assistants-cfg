@@ -15,6 +15,7 @@ Utility and operational scripts for the Praxion ecosystem.
 - `check_squash_safety.py` — Post-merge diagnostic: detect `.ai-state/` entry erasure from squash-merges and emit a recovery warning. Non-blocking (exit 0). Invoked by post-merge hook after finalize
 - `check_id_citation_discipline.py` — Inbound id-citation discipline check: scans committed code files for ephemeral identifier citations that must not appear in source. Wired into `hooks/commit_gate.sh` on `git commit`. Parallel to the outbound `check_shipped_artifact_isolation.py`. See `rules/swe/id-citation-discipline.md`
 - `check_shipped_artifact_isolation.py` — Outbound shipped-artifact isolation check: scans shipped artifact surfaces for references to specific pipeline/state entries. Wired into `hooks/commit_gate.sh`. See `rules/swe/shipped-artifact-isolation.md`
+- `check_aac_golden_rule.py` — AaC golden-rule enforcement: detects staged generated-artifact edits (`docs/diagrams/<name>/<view>.{d2,svg}` or content inside `<!-- aac:generated -->` fences) without a co-staged source change. Gate mode (`--mode=gate`, default) wired into `git-pre-commit-hook.sh` Block D; audit mode (`--mode=audit --json`) consumed by sentinel EC07. Stdlib-only; side-effect-free. See `rules/writing/aac-dac-conventions.md`
 - `migrate_worktree_home.sh` — Print copy-paste-ready `git worktree move` commands to migrate legacy `.trees/<name>/` worktrees to `.claude/worktrees/<name>/`. Performs no automatic move
 
 ## Conventions

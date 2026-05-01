@@ -44,7 +44,7 @@ The **task slug** (provided in your prompt as `Task slug: <slug>`) scopes all `.
 
 Before making changes, gather context:
 
-1. **Read existing workflows** -- check `.github/workflows/` for current CI/CD configuration
+1. **Read existing workflows** -- check `.github/workflows/` for current CI/CD configuration. For projects consuming the AaC v1 substrate (LikeC4 diagrams, fitness functions, architect-validator agent), `.github/workflows/architecture.yml` is the canonical three-job AaC CI pattern — read it as a reference when authoring or modifying architectural CI.
 2. **Read project config and load language skill** -- detect the primary language from project config files and load the matching language skill by name:
    - `pyproject.toml` --> load `python-development` (and `python-prj-mgmt` for pixi/uv dependency commands)
    - `package.json` --> load `typescript-development`

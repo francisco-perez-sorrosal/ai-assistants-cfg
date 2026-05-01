@@ -115,4 +115,47 @@ if [ -f "$DIAGRAM_HOOK" ] && [ -x "$DIAGRAM_HOOK" ]; then
     fi
 fi
 
+# ---------------------------------------------------------------------------
+# Block D: AaC golden-rule gate
+# ---------------------------------------------------------------------------
+
+# Run the golden-rule check when staged paths touch architectural surfaces
+# (docs/diagrams/, *.c4, ARCHITECTURE.md, docs/architecture.md).
+# Blocks the commit if a generated artifact was edited without staging the
+# corresponding source change and without an adjacent override comment.
+STAGED_AAC="$(git diff --cached --name-only --diff-filter=ACMR \
+    | grep -E '^(docs/diagrams/|.*\.c4$|.*ARCHITECTURE\.md$|docs/architecture\.md$)' \
+    || true)"
+
+if [ -n "$STAGED_AAC" ]; then
+    AAC_SCRIPT="$REPO_ROOT/scripts/check_aac_golden_rule.py"
+    if [ ! -f "$AAC_SCRIPT" ]; then
+        echo "info: check_aac_golden_rule.py not found — skipping Block D golden-rule gate"
+    else
+        AAC_EXIT=0
+        python3 "$AAC_SCRIPT" --mode=gate || AAC_EXIT=$?
+        if [ "$AAC_EXIT" -ne 0 ]; then
+            cat >&2 <<'EOF'
+
+error: AaC golden-rule violation(s) detected in staged files.
+
+  A generated artifact (docs/diagrams/<name>/<view>.{d2,svg} or content
+  inside an aac:generated fence) was edited without a co-staged source
+  change. Either:
+
+  1. Stage the corresponding source file (.c4 or the fence's source= path)
+     so the generated artifact is regenerated from the model, OR
+
+  2. Add a line-adjacent override comment to justify the hand-edit:
+       # aac-override: <reason>               (code/d2/yaml/sh)
+       <!-- aac-override: <reason> -->        (SVG/HTML/Markdown)
+
+  Convention: rules/writing/aac-dac-conventions.md (Override Syntax)
+  Bypass (risky): git commit --no-verify
+EOF
+            exit 1
+        fi
+    fi
+fi
+
 exit 0
