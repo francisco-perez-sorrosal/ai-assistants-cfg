@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
-# Import the script as a module
 import importlib.util
+import json
+import subprocess
+import sys
+from pathlib import Path
 
 _SCRIPT_PATH = Path(__file__).resolve().parent / "reconcile_ai_state.py"
 
@@ -21,6 +21,14 @@ def _load_module():
 
 
 reconcile = _load_module()
+
+
+def _make_completed_process(
+    returncode: int, stdout: str = "", stderr: str = ""
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.CompletedProcess(
+        args=[], returncode=returncode, stdout=stdout, stderr=stderr
+    )
 
 
 # -- memory.json tests --------------------------------------------------------
@@ -295,3 +303,776 @@ class TestConflictDetection:
     def test_missing_file_not_conflicted(self, tmp_path: Path):
         """Missing files are not detected as conflicted."""
         assert reconcile.is_conflicted(tmp_path / "nope.json") is False
+
+
+# -- reconcile_memory: ours-wins branch -------------------------------------------
+
+
+class TestReconcileMemoryOursWins:
+    def _make_memory(self, entries: dict, session_count: int = 1) -> str:
+        return json.dumps(
+            {
+                "schema_version": "2.0",
+                "session_count": session_count,
+                "memories": entries,
+            }
+        )
+
+    def test_duplicate_key_ours_wins_when_same_timestamp(self):
+        """When both sides share the same updated_at, ours entry is kept."""
+        ours = self._make_memory(
+            {
+                "learnings": {
+                    "shared": {
+                        "value": "ours value",
+                        "updated_at": "2026-03-01T00:00:00Z",
+                    }
+                }
+            }
+        )
+        theirs = self._make_memory(
+            {
+                "learnings": {
+                    "shared": {
+                        "value": "theirs value",
+                        "updated_at": "2026-02-01T00:00:00Z",
+                    }
+                }
+            }
+        )
+        result = reconcile.reconcile_memory(ours, theirs)
+        assert result["memories"]["learnings"]["shared"]["value"] == "ours value"
+
+    def test_category_with_all_empty_entries_excluded(self):
+        """A category that ends up with zero entries is not included in output."""
+        # Both sides have the same key in the same category; the merged result
+        # still produces one entry, but a category with NO keys at all is excluded.
+        ours = self._make_memory({"empty_cat": {}})
+        theirs = self._make_memory({"other_cat": {"k": {"v": "1", "updated_at": ""}}})
+        result = reconcile.reconcile_memory(ours, theirs)
+        # empty_cat has no keys → must not appear in merged output
+        assert "empty_cat" not in result["memories"]
+        assert "other_cat" in result["memories"]
+
+
+# -- observations.jsonl: blank-line skip ------------------------------------------
+
+
+class TestReconcileObservationsBlankLines:
+    def test_whitespace_only_lines_skipped(self):
+        """Whitespace-only lines sandwiched between valid JSON lines are ignored."""
+        obs_a = json.dumps(
+            {
+                "timestamp": "2026-01-01T00:00:00Z",
+                "session_id": "s1",
+                "event_type": "tool_use",
+                "tool_name": "Bash",
+            }
+        )
+        obs_b = json.dumps(
+            {
+                "timestamp": "2026-01-02T00:00:00Z",
+                "session_id": "s2",
+                "event_type": "session_stop",
+                "tool_name": "",
+            }
+        )
+        # Blank line between two valid lines — strip() won't remove it
+        ours = obs_a + "\n   \n" + obs_b + "\n"
+        theirs = ""
+        result = reconcile.reconcile_observations(ours, theirs)
+        lines = [ln for ln in result.strip().splitlines() if ln.strip()]
+        assert len(lines) == 2
+
+
+# -- has_drafts_directory_changed_in_merge ----------------------------------------
+
+
+class TestHasDraftsDirectoryChangedInMerge:
+    def test_returns_false_when_git_command_fails(self):
+        """A failing git diff-tree returns False (fail-safe behaviour)."""
+        original_git = reconcile.git
+        reconcile.git = lambda *args: _make_completed_process(returncode=1, stdout="")
+        try:
+            result = reconcile.has_drafts_directory_changed_in_merge()
+        finally:
+            reconcile.git = original_git
+        assert result is False
+
+    def test_returns_true_when_draft_md_changed(self):
+        """A changed .md file under drafts/ returns True."""
+        original_git = reconcile.git
+        reconcile.git = lambda *args: _make_completed_process(
+            returncode=0,
+            stdout=".ai-state/decisions/drafts/20260101-user-main-my-decision.md\n",
+        )
+        try:
+            result = reconcile.has_drafts_directory_changed_in_merge()
+        finally:
+            reconcile.git = original_git
+        assert result is True
+
+    def test_claude_md_in_drafts_does_not_trigger(self):
+        """A CLAUDE.md file inside drafts/ is excluded from the draft signal."""
+        original_git = reconcile.git
+        reconcile.git = lambda *args: _make_completed_process(
+            returncode=0,
+            stdout=".ai-state/decisions/drafts/CLAUDE.md\n",
+        )
+        try:
+            result = reconcile.has_drafts_directory_changed_in_merge()
+        finally:
+            reconcile.git = original_git
+        assert result is False
+
+    def test_non_draft_md_does_not_trigger(self):
+        """Changed .md files outside drafts/ do not trigger the draft signal."""
+        original_git = reconcile.git
+        reconcile.git = lambda *args: _make_completed_process(
+            returncode=0,
+            stdout=".ai-state/decisions/001-some-adr.md\n",
+        )
+        try:
+            result = reconcile.has_drafts_directory_changed_in_merge()
+        finally:
+            reconcile.git = original_git
+        assert result is False
+
+
+# -- reconcile_adr_numbers: no decisions directory --------------------------------
+
+
+class TestReconcileAdrNumbersNoDir:
+    def test_returns_false_when_decisions_dir_absent(self, tmp_path: Path):
+        """When the decisions directory does not exist, no renumbering occurs."""
+        absent_dir = tmp_path / "decisions_nonexistent"
+        original_dir = reconcile.DECISIONS_DIR
+        original_has_drafts = reconcile.has_drafts_directory_changed_in_merge
+        reconcile.DECISIONS_DIR = absent_dir
+        reconcile.has_drafts_directory_changed_in_merge = lambda: False
+        try:
+            result = reconcile.reconcile_adr_numbers()
+        finally:
+            reconcile.DECISIONS_DIR = original_dir
+            reconcile.has_drafts_directory_changed_in_merge = original_has_drafts
+        assert result is False
+
+    def test_defers_to_finalize_when_drafts_present(self, tmp_path: Path):
+        """When draft ADRs changed in merge, renumbering is deferred and returns False."""
+        decisions_dir = tmp_path / "decisions"
+        decisions_dir.mkdir(parents=True)
+        original_dir = reconcile.DECISIONS_DIR
+        original_has_drafts = reconcile.has_drafts_directory_changed_in_merge
+        reconcile.DECISIONS_DIR = decisions_dir
+        reconcile.has_drafts_directory_changed_in_merge = lambda: True
+        try:
+            result = reconcile.reconcile_adr_numbers()
+        finally:
+            reconcile.DECISIONS_DIR = original_dir
+            reconcile.has_drafts_directory_changed_in_merge = original_has_drafts
+        assert result is False
+
+
+# -- reconcile_file orchestrator --------------------------------------------------
+
+
+class TestReconcileFile:
+    def _make_memory_json(self, entries: dict) -> str:
+        return json.dumps(
+            {"schema_version": "2.0", "session_count": 1, "memories": entries}
+        )
+
+    def test_returns_false_when_file_absent(self, tmp_path: Path):
+        """reconcile_file returns False when the target file does not exist."""
+        result = reconcile.reconcile_file(
+            tmp_path / "ghost.json",
+            ".ai-state/ghost.json",
+            reconcile.reconcile_memory,
+        )
+        assert result is False
+
+    def test_returns_false_and_warns_for_clean_json_file(self, tmp_path: Path):
+        """A non-conflicted JSON file passes validation and returns False (no change)."""
+        f = tmp_path / "memory.json"
+        f.write_text(
+            self._make_memory_json(
+                {"learnings": {"k": {"value": "v", "updated_at": "2026-01-01"}}}
+            )
+        )
+        result = reconcile.reconcile_file(
+            f, ".ai-state/memory.json", reconcile.reconcile_memory
+        )
+        assert result is False
+        # File must be unchanged
+        data = json.loads(f.read_text())
+        assert "learnings" in data["memories"]
+
+    def test_returns_false_and_warns_for_invalid_json_after_automerge(
+        self, tmp_path: Path, capsys
+    ):
+        """An auto-merged JSON file that is invalid JSON emits a warning."""
+        f = tmp_path / "memory.json"
+        f.write_text("this is not json at all\n")
+        result = reconcile.reconcile_file(
+            f, ".ai-state/memory.json", reconcile.reconcile_memory
+        )
+        assert result is False
+        # A warning must have been printed to stdout
+        out = capsys.readouterr().out
+        assert "manual fix" in out
+
+    def test_conflicted_file_reconciled_and_written(self, tmp_path: Path):
+        """A conflicted JSON file is reconciled, written, and returns True."""
+        f = tmp_path / "memory.json"
+        # Plant conflict markers so is_conflicted() returns True
+        f.write_text("<<<<<<< HEAD\n{...}\n=======\n{...}\n>>>>>>> branch\n")
+
+        ours_content = self._make_memory_json(
+            {
+                "learnings": {
+                    "k": {"value": "ours", "updated_at": "2026-01-01T00:00:00Z"}
+                }
+            }
+        )
+        theirs_content = self._make_memory_json(
+            {
+                "learnings": {
+                    "k": {"value": "theirs", "updated_at": "2026-02-01T00:00:00Z"}
+                }
+            }
+        )
+
+        # Patch git to return ours/theirs from stages and accept git add
+        git_calls: list[tuple] = []
+
+        def fake_git(*args: str) -> subprocess.CompletedProcess[str]:
+            git_calls.append(args)
+            if args[0] == "show" and ":2:" in args[1]:
+                return _make_completed_process(0, stdout=ours_content)
+            if args[0] == "show" and ":3:" in args[1]:
+                return _make_completed_process(0, stdout=theirs_content)
+            return _make_completed_process(0)
+
+        original_git = reconcile.git
+        reconcile.git = fake_git
+        try:
+            result = reconcile.reconcile_file(
+                f, ".ai-state/memory.json", reconcile.reconcile_memory
+            )
+        finally:
+            reconcile.git = original_git
+
+        assert result is True
+        merged = json.loads(f.read_text())
+        # theirs has newer updated_at — it wins
+        assert merged["memories"]["learnings"]["k"]["value"] == "theirs"
+        # git add must have been called
+        assert any(args[0] == "add" for args in git_calls)
+
+    def test_conflicted_file_with_write_fn_uses_custom_writer(self, tmp_path: Path):
+        """reconcile_file uses write_fn when provided (e.g. for text files)."""
+        f = tmp_path / "observations.jsonl"
+        f.write_text(
+            '<<<<<<< HEAD\n{"timestamp":"a"}\n=======\n{"timestamp":"b"}\n>>>>>>> branch\n'
+        )
+        obs_a = json.dumps(
+            {"timestamp": "2026-01-01T00:00:00Z", "session_id": "s1", "event_type": "e"}
+        )
+        obs_b = json.dumps(
+            {"timestamp": "2026-02-01T00:00:00Z", "session_id": "s2", "event_type": "e"}
+        )
+
+        def fake_git(*args: str) -> subprocess.CompletedProcess[str]:
+            if args[0] == "show" and ":2:" in args[1]:
+                return _make_completed_process(0, stdout=obs_a + "\n")
+            if args[0] == "show" and ":3:" in args[1]:
+                return _make_completed_process(0, stdout=obs_b + "\n")
+            return _make_completed_process(0)
+
+        original_git = reconcile.git
+        reconcile.git = fake_git
+        try:
+            result = reconcile.reconcile_file(
+                f,
+                ".ai-state/observations.jsonl",
+                reconcile.reconcile_observations,
+                write_fn=reconcile.write_text_file,
+            )
+        finally:
+            reconcile.git = original_git
+
+        assert result is True
+        lines = [ln for ln in f.read_text().strip().splitlines() if ln.strip()]
+        assert len(lines) == 2
+
+    def test_conflicted_file_warns_when_git_stages_missing(
+        self, tmp_path: Path, capsys
+    ):
+        """A conflicted file with no git stages emits a warning and returns False."""
+        f = tmp_path / "memory.json"
+        f.write_text("<<<<<<< HEAD\n{}\n=======\n{}\n>>>>>>> branch\n")
+
+        original_git = reconcile.git
+        reconcile.git = lambda *args: _make_completed_process(returncode=1)
+        try:
+            result = reconcile.reconcile_file(
+                f, ".ai-state/memory.json", reconcile.reconcile_memory
+            )
+        finally:
+            reconcile.git = original_git
+
+        assert result is False
+        out = capsys.readouterr().out
+        assert "cannot extract" in out
+
+
+# -- write_text_file --------------------------------------------------------------
+
+
+class TestWriteTextFile:
+    def test_writes_content_to_file(self, tmp_path: Path):
+        """write_text_file creates the file with the given content."""
+        dest = tmp_path / "out.txt"
+        reconcile.write_text_file(dest, "hello\nworld\n")
+        assert dest.read_text() == "hello\nworld\n"
+
+    def test_overwrites_existing_content(self, tmp_path: Path):
+        """write_text_file replaces existing file content."""
+        dest = tmp_path / "out.txt"
+        dest.write_text("old content\n")
+        reconcile.write_text_file(dest, "new content\n")
+        assert dest.read_text() == "new content\n"
+
+
+# -- _check_merge_drivers ---------------------------------------------------------
+
+
+class TestCheckMergeDrivers:
+    def test_warns_when_driver_not_registered(self, capsys):
+        """Missing merge drivers produce a warning on stdout."""
+        original_git = reconcile.git
+        # Simulate git config returning non-zero (driver not registered)
+        reconcile.git = lambda *args: _make_completed_process(returncode=1)
+        try:
+            reconcile._check_merge_drivers()
+        finally:
+            reconcile.git = original_git
+        out = capsys.readouterr().out
+        assert "memory-json" in out or "observations-jsonl" in out
+
+    def test_no_warning_when_drivers_registered(self, capsys):
+        """Registered merge drivers produce no warning."""
+        original_git = reconcile.git
+        reconcile.git = lambda *args: _make_completed_process(
+            returncode=0, stdout="memory-json merge driver\n"
+        )
+        try:
+            reconcile._check_merge_drivers()
+        finally:
+            reconcile.git = original_git
+        out = capsys.readouterr().out
+        assert "not registered" not in out
+
+
+# -- _reconcile_adr_and_index -----------------------------------------------------
+
+
+class TestReconcileAdrAndIndex:
+    def _make_adr(self, decisions_dir: Path, num: int, slug: str, date: str) -> Path:
+        path = decisions_dir / f"{num:03d}-{slug}.md"
+        path.write_text(
+            f"---\nid: dec-{num:03d}\ntitle: {slug}\nstatus: accepted\n"
+            f"category: architectural\ndate: {date}\n"
+            f"summary: Test decision\ntags: [test]\nmade_by: agent\n---\n\n"
+            f"## Context\n\nTest.\n",
+            encoding="utf-8",
+        )
+        return path
+
+    def test_returns_false_when_decisions_dir_absent(self, tmp_path: Path):
+        """No decisions directory means no changes."""
+        absent = tmp_path / "no_decisions"
+        original_dir = reconcile.DECISIONS_DIR
+        original_has_drafts = reconcile.has_drafts_directory_changed_in_merge
+        original_script_dir = reconcile.SCRIPT_DIR
+        reconcile.DECISIONS_DIR = absent
+        reconcile.has_drafts_directory_changed_in_merge = lambda: False
+        reconcile.SCRIPT_DIR = tmp_path  # ensure regenerate_adr_index.py not found
+        try:
+            result = reconcile._reconcile_adr_and_index()
+        finally:
+            reconcile.DECISIONS_DIR = original_dir
+            reconcile.has_drafts_directory_changed_in_merge = original_has_drafts
+            reconcile.SCRIPT_DIR = original_script_dir
+        assert result is False
+
+    def test_returns_true_after_renumbering_duplicates(self, tmp_path: Path):
+        """Duplicate ADRs trigger renumbering and _reconcile_adr_and_index returns True."""
+        decisions_dir = tmp_path / "decisions"
+        decisions_dir.mkdir(parents=True)
+        self._make_adr(decisions_dir, 1, "alpha", "2026-01-01")
+        self._make_adr(decisions_dir, 1, "beta", "2026-01-02")  # duplicate
+
+        original_dir = reconcile.DECISIONS_DIR
+        original_has_drafts = reconcile.has_drafts_directory_changed_in_merge
+        original_script_dir = reconcile.SCRIPT_DIR
+        reconcile.DECISIONS_DIR = decisions_dir
+        reconcile.has_drafts_directory_changed_in_merge = lambda: False
+        # Point SCRIPT_DIR at tmp_path where regenerate_adr_index.py does not exist
+        reconcile.SCRIPT_DIR = tmp_path
+        try:
+            result = reconcile._reconcile_adr_and_index()
+        finally:
+            reconcile.DECISIONS_DIR = original_dir
+            reconcile.has_drafts_directory_changed_in_merge = original_has_drafts
+            reconcile.SCRIPT_DIR = original_script_dir
+        assert result is True
+
+    def test_no_duplicates_and_no_regen_script_returns_false(self, tmp_path: Path):
+        """No duplicates and no regenerate script means no changes."""
+        decisions_dir = tmp_path / "decisions"
+        decisions_dir.mkdir(parents=True)
+        self._make_adr(decisions_dir, 1, "only-one", "2026-01-01")
+
+        original_dir = reconcile.DECISIONS_DIR
+        original_has_drafts = reconcile.has_drafts_directory_changed_in_merge
+        original_script_dir = reconcile.SCRIPT_DIR
+        reconcile.DECISIONS_DIR = decisions_dir
+        reconcile.has_drafts_directory_changed_in_merge = lambda: False
+        reconcile.SCRIPT_DIR = tmp_path  # no regenerate_adr_index.py here
+        try:
+            result = reconcile._reconcile_adr_and_index()
+        finally:
+            reconcile.DECISIONS_DIR = original_dir
+            reconcile.has_drafts_directory_changed_in_merge = original_has_drafts
+            reconcile.SCRIPT_DIR = original_script_dir
+        assert result is False
+
+
+# -- main entry-point modes -------------------------------------------------------
+
+
+class TestMain:
+    """Tests for main() — uses monkey-patching to isolate filesystem and git I/O."""
+
+    def _patch_reconcile(self, tmp_path: Path):
+        """Return a dict of patches to apply for a clean main() run."""
+        return {
+            "MEMORY_PATH": tmp_path / "memory.json",
+            "OBSERVATIONS_PATH": tmp_path / "observations.jsonl",
+            "DECISIONS_DIR": tmp_path / "decisions",
+        }
+
+    def test_main_prints_nothing_to_reconcile_when_files_absent(
+        self, tmp_path: Path, capsys, monkeypatch
+    ):
+        """main() with no files and no decisions reports nothing to reconcile."""
+        monkeypatch.setattr(reconcile, "MEMORY_PATH", tmp_path / "memory.json")
+        monkeypatch.setattr(
+            reconcile, "OBSERVATIONS_PATH", tmp_path / "observations.jsonl"
+        )
+        monkeypatch.setattr(reconcile, "DECISIONS_DIR", tmp_path / "decisions")
+        monkeypatch.setattr(
+            reconcile, "has_drafts_directory_changed_in_merge", lambda: False
+        )
+        monkeypatch.setattr(reconcile, "git", lambda *args: _make_completed_process(0))
+
+        monkeypatch.setattr(sys, "argv", ["reconcile_ai_state.py"])
+        reconcile.main()
+        out = capsys.readouterr().out
+        assert "Nothing to reconcile" in out
+
+    def test_main_post_merge_skips_memory_and_observations(
+        self, tmp_path: Path, capsys, monkeypatch
+    ):
+        """--post-merge skips memory/observations reconciliation paths."""
+        # Create memory and observations files that would normally be processed
+        memory = tmp_path / "memory.json"
+        memory.write_text(
+            json.dumps({"schema_version": "2.0", "session_count": 1, "memories": {}})
+        )
+        obs = tmp_path / "observations.jsonl"
+        obs.write_text("")
+
+        monkeypatch.setattr(reconcile, "MEMORY_PATH", memory)
+        monkeypatch.setattr(reconcile, "OBSERVATIONS_PATH", obs)
+        monkeypatch.setattr(reconcile, "DECISIONS_DIR", tmp_path / "decisions")
+        monkeypatch.setattr(
+            reconcile, "has_drafts_directory_changed_in_merge", lambda: False
+        )
+        monkeypatch.setattr(reconcile, "git", lambda *args: _make_completed_process(0))
+        monkeypatch.setattr(sys, "argv", ["reconcile_ai_state.py", "--post-merge"])
+        reconcile.main()
+        out = capsys.readouterr().out
+        # Should not mention memory.json processing in --post-merge mode
+        assert "memory.json" not in out
+
+    def test_main_processes_clean_memory_file(
+        self, tmp_path: Path, capsys, monkeypatch
+    ):
+        """main() reports no conflicts for a clean (non-conflicted) memory.json."""
+        memory = tmp_path / "memory.json"
+        memory.write_text(
+            json.dumps({"schema_version": "2.0", "session_count": 1, "memories": {}})
+        )
+
+        monkeypatch.setattr(reconcile, "MEMORY_PATH", memory)
+        monkeypatch.setattr(
+            reconcile, "OBSERVATIONS_PATH", tmp_path / "observations.jsonl"
+        )
+        monkeypatch.setattr(reconcile, "DECISIONS_DIR", tmp_path / "decisions")
+        monkeypatch.setattr(
+            reconcile, "has_drafts_directory_changed_in_merge", lambda: False
+        )
+        monkeypatch.setattr(reconcile, "git", lambda *args: _make_completed_process(0))
+        monkeypatch.setattr(sys, "argv", ["reconcile_ai_state.py"])
+        reconcile.main()
+        out = capsys.readouterr().out
+        assert "memory.json: no conflicts" in out
+
+    def test_main_processes_clean_observations_file(
+        self, tmp_path: Path, capsys, monkeypatch
+    ):
+        """main() reports no conflicts for a clean observations.jsonl file."""
+        obs = tmp_path / "observations.jsonl"
+        obs.write_text(
+            json.dumps(
+                {
+                    "timestamp": "2026-01-01T00:00:00Z",
+                    "session_id": "s1",
+                    "event_type": "tool_use",
+                    "tool_name": "Bash",
+                }
+            )
+            + "\n"
+        )
+
+        monkeypatch.setattr(reconcile, "MEMORY_PATH", tmp_path / "memory.json")
+        monkeypatch.setattr(reconcile, "OBSERVATIONS_PATH", obs)
+        monkeypatch.setattr(reconcile, "DECISIONS_DIR", tmp_path / "decisions")
+        monkeypatch.setattr(
+            reconcile, "has_drafts_directory_changed_in_merge", lambda: False
+        )
+        monkeypatch.setattr(reconcile, "git", lambda *args: _make_completed_process(0))
+        monkeypatch.setattr(sys, "argv", ["reconcile_ai_state.py"])
+        reconcile.main()
+        out = capsys.readouterr().out
+        assert "observations.jsonl: no conflicts" in out
+
+    def test_main_reports_reconciliation_complete_when_changes_made(
+        self, tmp_path: Path, capsys, monkeypatch
+    ):
+        """main() prints 'Reconciliation complete' when any changes were made."""
+        # Use a conflicted memory.json so reconcile_file returns True
+        memory = tmp_path / "memory.json"
+        memory.write_text("<<<<<<< HEAD\n{...}\n=======\n{...}\n>>>>>>> branch\n")
+
+        ours_content = json.dumps(
+            {"schema_version": "2.0", "session_count": 1, "memories": {}}
+        )
+        theirs_content = json.dumps(
+            {"schema_version": "2.0", "session_count": 2, "memories": {}}
+        )
+
+        def fake_git(*args: str) -> subprocess.CompletedProcess[str]:
+            if args[0] == "show" and ":2:" in args[1]:
+                return _make_completed_process(0, stdout=ours_content)
+            if args[0] == "show" and ":3:" in args[1]:
+                return _make_completed_process(0, stdout=theirs_content)
+            return _make_completed_process(0)
+
+        monkeypatch.setattr(reconcile, "MEMORY_PATH", memory)
+        monkeypatch.setattr(
+            reconcile, "OBSERVATIONS_PATH", tmp_path / "observations.jsonl"
+        )
+        monkeypatch.setattr(reconcile, "DECISIONS_DIR", tmp_path / "decisions")
+        monkeypatch.setattr(
+            reconcile, "has_drafts_directory_changed_in_merge", lambda: False
+        )
+        monkeypatch.setattr(reconcile, "git", fake_git)
+        monkeypatch.setattr(sys, "argv", ["reconcile_ai_state.py"])
+        reconcile.main()
+        out = capsys.readouterr().out
+        assert "Reconciliation complete" in out
+
+
+# -- reconcile_adr_numbers: non-ADR files in decisions dir ------------------------
+
+
+class TestReconcileAdrNumbersNonAdrFiles:
+    def _make_adr(self, decisions_dir: Path, num: int, slug: str, date: str) -> Path:
+        path = decisions_dir / f"{num:03d}-{slug}.md"
+        path.write_text(
+            f"---\nid: dec-{num:03d}\ntitle: {slug}\nstatus: accepted\n"
+            f"category: architectural\ndate: {date}\n"
+            f"summary: Test decision\ntags: [test]\nmade_by: agent\n---\n\n"
+            f"## Context\n\nTest.\n",
+            encoding="utf-8",
+        )
+        return path
+
+    def test_non_adr_filenames_skipped_during_iteration(self, tmp_path: Path):
+        """Files that don't match NNN-slug.md pattern are ignored without error."""
+        decisions_dir = tmp_path / "decisions"
+        decisions_dir.mkdir(parents=True)
+        # Place a file that doesn't match the ADR pattern
+        (decisions_dir / "DECISIONS_INDEX.md").write_text("# Index\n")
+        (decisions_dir / "README.md").write_text("# Notes\n")
+        self._make_adr(decisions_dir, 1, "real-adr", "2026-01-01")
+
+        original_dir = reconcile.DECISIONS_DIR
+        original_has_drafts = reconcile.has_drafts_directory_changed_in_merge
+        reconcile.DECISIONS_DIR = decisions_dir
+        reconcile.has_drafts_directory_changed_in_merge = lambda: False
+        try:
+            changed = reconcile.reconcile_adr_numbers()
+        finally:
+            reconcile.DECISIONS_DIR = original_dir
+            reconcile.has_drafts_directory_changed_in_merge = original_has_drafts
+
+        assert changed is False
+        # Non-ADR files must be untouched
+        assert (decisions_dir / "DECISIONS_INDEX.md").exists()
+        assert (decisions_dir / "README.md").exists()
+
+
+# -- reconcile_file: non-JSON file (no suffix validation) -------------------------
+
+
+class TestReconcileFileNonJson:
+    def test_non_json_file_without_conflict_returns_false(self, tmp_path: Path):
+        """A non-conflicted non-JSON file is accepted as-is and returns False."""
+        f = tmp_path / "observations.jsonl"
+        f.write_text(
+            json.dumps(
+                {
+                    "timestamp": "2026-01-01T00:00:00Z",
+                    "session_id": "s1",
+                    "event_type": "tool_use",
+                    "tool_name": "Bash",
+                }
+            )
+            + "\n"
+        )
+        result = reconcile.reconcile_file(
+            f,
+            ".ai-state/observations.jsonl",
+            reconcile.reconcile_observations,
+            write_fn=reconcile.write_text_file,
+        )
+        assert result is False
+        # File content must be preserved
+        assert "tool_use" in f.read_text()
+
+
+# -- _reconcile_adr_and_index: regen script paths ---------------------------------
+
+
+class TestReconcileAdrAndIndexRegenScript:
+    def _make_adr(self, decisions_dir: Path, num: int, slug: str) -> Path:
+        path = decisions_dir / f"{num:03d}-{slug}.md"
+        path.write_text(
+            f"---\nid: dec-{num:03d}\ntitle: {slug}\nstatus: accepted\n"
+            f"category: architectural\ndate: 2026-01-01\n"
+            f"summary: Test\ntags: [test]\nmade_by: agent\n---\n\n## Context\n\nTest.\n",
+            encoding="utf-8",
+        )
+        return path
+
+    def test_regen_script_success_returns_true(self, tmp_path: Path, monkeypatch):
+        """When regenerate_adr_index.py exists and succeeds, returns True."""
+        decisions_dir = tmp_path / "decisions"
+        decisions_dir.mkdir(parents=True)
+        self._make_adr(decisions_dir, 1, "one-adr")
+
+        # Create a stub regen script that exits successfully
+        regen_script = tmp_path / "regenerate_adr_index.py"
+        regen_script.write_text("import sys; sys.exit(0)\n")
+
+        monkeypatch.setattr(reconcile, "DECISIONS_DIR", decisions_dir)
+        monkeypatch.setattr(reconcile, "SCRIPT_DIR", tmp_path)
+        monkeypatch.setattr(
+            reconcile, "has_drafts_directory_changed_in_merge", lambda: False
+        )
+        monkeypatch.setattr(reconcile, "git", lambda *args: _make_completed_process(0))
+
+        result = reconcile._reconcile_adr_and_index()
+        assert result is True
+
+    def test_regen_script_failure_warns_and_returns_false(
+        self, tmp_path: Path, capsys, monkeypatch
+    ):
+        """When regenerate_adr_index.py fails, a warning is emitted and changes=False."""
+        decisions_dir = tmp_path / "decisions"
+        decisions_dir.mkdir(parents=True)
+        self._make_adr(decisions_dir, 1, "one-adr")
+
+        # Create a stub regen script that exits with failure
+        regen_script = tmp_path / "regenerate_adr_index.py"
+        regen_script.write_text(
+            "import sys; print('regen failed', file=sys.stderr); sys.exit(1)\n"
+        )
+
+        monkeypatch.setattr(reconcile, "DECISIONS_DIR", decisions_dir)
+        monkeypatch.setattr(reconcile, "SCRIPT_DIR", tmp_path)
+        monkeypatch.setattr(
+            reconcile, "has_drafts_directory_changed_in_merge", lambda: False
+        )
+        monkeypatch.setattr(reconcile, "git", lambda *args: _make_completed_process(0))
+
+        result = reconcile._reconcile_adr_and_index()
+        assert result is False
+        out = capsys.readouterr().out
+        assert "regeneration failed" in out
+
+
+# -- main: observations changed path and ADR-driven completion --------------------
+
+
+class TestMainObservationsAndAdrChanges:
+    def test_main_reports_complete_when_observations_conflict_resolved(
+        self, tmp_path: Path, capsys, monkeypatch
+    ):
+        """main() prints 'Reconciliation complete' when a conflicted observations file is resolved."""
+        obs = tmp_path / "observations.jsonl"
+        obs.write_text("<<<<<<< HEAD\n{...}\n=======\n{...}\n>>>>>>> branch\n")
+
+        obs_a = json.dumps(
+            {
+                "timestamp": "2026-01-01T00:00:00Z",
+                "session_id": "s1",
+                "event_type": "tool_use",
+                "tool_name": "Bash",
+            }
+        )
+        obs_b = json.dumps(
+            {
+                "timestamp": "2026-02-01T00:00:00Z",
+                "session_id": "s2",
+                "event_type": "session_stop",
+                "tool_name": "",
+            }
+        )
+
+        def fake_git(*args: str) -> subprocess.CompletedProcess[str]:
+            if args[0] == "show" and ":2:" in args[1]:
+                return _make_completed_process(0, stdout=obs_a + "\n")
+            if args[0] == "show" and ":3:" in args[1]:
+                return _make_completed_process(0, stdout=obs_b + "\n")
+            return _make_completed_process(0)
+
+        monkeypatch.setattr(reconcile, "MEMORY_PATH", tmp_path / "memory.json")
+        monkeypatch.setattr(reconcile, "OBSERVATIONS_PATH", obs)
+        monkeypatch.setattr(reconcile, "DECISIONS_DIR", tmp_path / "decisions")
+        monkeypatch.setattr(
+            reconcile, "has_drafts_directory_changed_in_merge", lambda: False
+        )
+        monkeypatch.setattr(reconcile, "git", fake_git)
+        monkeypatch.setattr(sys, "argv", ["reconcile_ai_state.py"])
+        reconcile.main()
+
+        out = capsys.readouterr().out
+        assert "Reconciliation complete" in out
+        # Post-condition: merged file has both entries
+        lines = [ln for ln in obs.read_text().strip().splitlines() if ln.strip()]
+        assert len(lines) == 2
