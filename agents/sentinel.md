@@ -263,6 +263,15 @@ BC checks are unconditional — they run on every sentinel pass because the cont
 
 Conditional activation: skip AC01-AC04 checks when `.ai-state/ARCHITECTURE.md` does not exist and project has fewer than 3 interacting components. Skip AC05-AC09 checks when neither `.ai-state/ARCHITECTURE.md` nor `docs/architecture.md` exists.
 
+**Three additional conditional-activation checks (AC10, AC11, AC12)** extend the AC dimension following the TT idiom: each check has a substrate-presence trigger; absence skips the check with an AC-dimension INFO note ("ACNN skipped — `<substrate>` not present"). Never WARN or FAIL on substrate absence alone.
+
+**Substrate triggers:**
+- **AC10 (fence integrity)**: activates when ≥1 file matches `**/ARCHITECTURE.md` OR `docs/architecture.md` exists.
+- **AC11 (model↔markdown agreement)**: activates when LikeC4 model substrate (MCP `list-projects` returns ≥1 project, OR `find docs/diagrams -name '*.c4'` returns ≥1 file) AND markdown substrate (per AC10) both present.
+- **AC12 (traceability orphans)**: activates when (a) `.ai-state/specs/SPEC_*.md` exists AND (b) LikeC4 model substrate present AND (c) bidirectional convention populated by ≥1 LikeC4 element with `metadata.req_ids` OR ≥1 SPEC with `architectural_elements:` frontmatter.
+
+**Reuse of existing tooling:** AC10 invokes `scripts/aac_fence_validator.py`; AC11 invokes MCP `read-project-summary` (with grep fallback); AC12 invokes MCP `query-by-metadata`. No new validators introduced.
+
 | ID | Tp | Rule | Pass |
 |----|----|------|------|
 | AC01 | L | Architecture doc exists when project has 3+ interacting components | `.ai-state/ARCHITECTURE.md` exists when project has 3+ modules with inter-module dependencies |
@@ -274,6 +283,9 @@ Conditional activation: skip AC01-AC04 checks when `.ai-state/ARCHITECTURE.md` d
 | AC07 | A | File paths in developer guide resolve | Every file path in `docs/architecture.md` component table points to existing file |
 | AC08 | L | No Status column or Planned items in developer guide | `docs/architecture.md` has no Status column and no Planned/Designed items |
 | AC09 | L | Cross-consistency: developer guide is subset of architect doc | Every component in `docs/architecture.md` also appears in `.ai-state/ARCHITECTURE.md` |
+| AC10 | A | Fence integrity in architecture markdown | When ≥1 `**/ARCHITECTURE.md` or `docs/architecture.md` exists, run `python3 scripts/aac_fence_validator.py <file>` per in-scope markdown file; map validator FAIL to AC10 FAIL, validator WARN to AC10 WARN. Skip with AC-dimension INFO note when no architecture markdown is present |
+| AC11 | L | Model↔markdown agreement | When both LikeC4 model substrate AND markdown substrate are present, fetch element id+title set via MCP `read-project-summary` (or fallback `find docs/diagrams -name '*.c4'` + grep, emitting one WARN `validator-unable-to-query-likec4-mcp` on fallback); compute symmetric diff against component names referenced in architecture markdown; emit WARN per orphan on either side. Skip with INFO note when either substrate absent |
+| AC12 | L | Traceability orphans (bidirectional) | When specs (`.ai-state/specs/SPEC_*.md`) AND LikeC4 model AND populated bidirectional convention all present, query MCP `query-by-metadata { key: "req_ids", matchMode: "exists" }` and parse SPEC frontmatter `architectural_elements:`; emit WARN per orphan REQ (REQ in spec with no element claiming it) and per orphan element-citation (LikeC4 element with `req_ids` containing a REQ absent from all archived SPECs); severity Suggested per orphan, escalate to Important when ≥10% of REQs orphaned across all archived specs. Skip with INFO note when convention not yet populated |
 
 ### Self-Verification (V)
 
@@ -348,7 +360,7 @@ Guidelines:
 3. Record PASS/WARN/FAIL for each check with evidence
 4. Target: **~15-20 turns total** for all auto checks (not 50+)
 
-When `.ai-state/specs/` exists with spec files, include SH01-SH02 (auto) in this pass. When `.ai-state/calibration_log.md` exists, include CA01 (auto) in this pass. When `scripts/check_aac_golden_rule.py` exists, include EC07 (auto) in this pass: `python3 scripts/check_aac_golden_rule.py --mode=audit --json`.
+When `.ai-state/specs/` exists with spec files, include SH01-SH02 (auto) in this pass. When `.ai-state/calibration_log.md` exists, include CA01 (auto) in this pass. When `scripts/check_aac_golden_rule.py` exists, include EC07 (auto) in this pass: `python3 scripts/check_aac_golden_rule.py --mode=audit --json`. When ≥1 architecture markdown file exists (AC10 substrate trigger), include AC10 in this pass: `python3 scripts/aac_fence_validator.py <file>` per in-scope architecture markdown; skip with AC-dimension INFO note when substrate absent.
 
 This pass is deterministic and fast. Complete it fully before starting Pass 2.
 
@@ -365,6 +377,8 @@ Execute llm type checks by reading artifact content in batches:
 **Batch 4 — Pipeline Discipline** (conditional): If Task Chronograph MCP tools are available (`get_pipeline_status`, `get_agent_events`), query for pipeline data and apply P01-P05 checks. If unavailable, skip with a note in the report.
 
 **Batch 5 — Spec Health** (conditional): If `.ai-state/specs/` exists with spec files, load `skills/spec-driven-development/references/sentinel-spec-checks.md`. Apply SH03-SH06 checks (SH06 only when a spec has a predecessor). If no specs exist, skip with a note in the report.
+
+**Batch 6 — Architecture Completeness LLM checks** (conditional): Apply AC02, AC08-AC09 always when architecture markdown substrate is present. Apply AC11 (model↔markdown agreement) when LikeC4 substrate (MCP `list-projects` or fallback `find docs/diagrams -name '*.c4'`) AND markdown substrate both present. Apply AC12 (traceability orphans) when specs AND LikeC4 substrate AND populated bidirectional convention all present. Skip each check with an AC-dimension INFO note when its substrate is absent.
 
 For each batch, add findings to the running report. If context fills, write a partial report with `[PARTIAL]` header.
 

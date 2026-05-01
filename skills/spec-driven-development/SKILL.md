@@ -145,6 +145,65 @@ Absent `tests:` list (or empty list) means UNTESTED. Absent `implementation:` li
 
 **Parallel fragments**: `traceability_implementer.yml`, `traceability_test-engineer.yml`. Reconciliation is a per-REQ merge of `tests` and `implementation` arrays — no conflicts by construction because the two agents write to disjoint fields within each REQ key. The implementation-planner performs the merge at batch completion.
 
+### Bidirectional REQ↔Architectural-Element Traceability
+
+Enables the question "which architectural components carry REQ-NN?" without scanning the spec corpus.
+
+#### The two surfaces
+
+- **LikeC4 element metadata** — each element that implements one or more requirements declares them in its metadata block:
+
+  ```c4
+  component AuthService {
+    metadata {
+      code_module = "src/auth/service.py"
+      req_ids     = "REQ-01, REQ-03"
+    }
+  }
+  ```
+
+  `req_ids` is a comma-separated string; downstream tools match with `contains` mode so a single element can claim multiple REQs.
+
+- **SPEC frontmatter** — each archived SPEC declares the architectural elements it involves:
+
+  ```yaml
+  architectural_elements:
+    - auth.service
+    - auth.session_store
+  ```
+
+  This is a YAML list of LikeC4 element IDs, **per-spec** (not per-REQ). One spec may name many elements; per-REQ granularity lives in `traceability.yml`.
+
+- **`traceability.yml` (optional per-REQ)** — extend a REQ entry with the optional `architectural_elements:` key:
+
+  ```yaml
+  requirements:
+    REQ-01:
+      tests:
+        - tests/auth/test_session.py::test_expired_token_returns_401
+      implementation:
+        - src/auth/session.py::validate()
+      architectural_elements:        # OPTIONAL — absence is back-compat
+        - auth.service
+        - auth.session_store
+      status: passed
+  ```
+
+  When absent, the matrix renders three columns (back-compat). When present on at least one REQ, the verifier renders four columns.
+
+#### Lookup patterns
+
+| Question | Tool |
+|----------|------|
+| Which elements implement REQ-X? | MCP `query-by-metadata { key: "req_ids", value: "REQ-X", matchMode: "contains" }` |
+| Which REQs does element `<id>` implement? | Grep `architectural_elements:` in `.ai-state/specs/SPEC_*.md` frontmatter |
+
+#### Drift is detected, not prevented
+
+The two surfaces can drift between sentinel runs; the AC12 audit check (part of the AaC traceability convention) detects orphans periodically rather than blocking writes.
+
+--> See [references/spec-format-guide.md](references/spec-format-guide.md) for the YAML schema and the four-column matrix variant.
+
 ## Convergence via REQ-ID Stability
 
 When multiple pre-implementation design sweeps produce the same REQ set, the design has converged on the *what* (behavior); Phase 7 then decides only the *how* (implementation trade-off). REQ churn across sweeps signals that REQs have leaked implementation details — re-draft the unstable REQs at the behavioral level before proceeding.

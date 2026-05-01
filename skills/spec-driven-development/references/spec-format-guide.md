@@ -87,6 +87,48 @@ The verifier produces this matrix in `VERIFICATION_REPORT.md` by reading `.ai-wo
 - **Implementation**: source file and function/method as recorded in `traceability.yml`
 - **Status**: `PASS` (test exists and passes per `TEST_RESULTS.md`), `FAIL` (test fails or implementation missing), `UNTESTED` (no test recorded for this requirement)
 
+## Bidirectional Traceability — YAML Schema and Four-Column Matrix
+
+### YAML schema extension
+
+`traceability.yml` supports an optional `architectural_elements:` key per REQ. Absence is back-compatible — existing pipelines continue to render the three-column matrix unchanged.
+
+```yaml
+requirements:
+  REQ-01:
+    tests:
+      - tests/auth/test_session.py::test_login_with_valid_credentials
+    implementation:
+      - src/auth/service.py:42-71
+    architectural_elements:    # OPTIONAL — when omitted, matrix renders 3 columns
+      - auth.service
+      - auth.session_store
+    status: passed
+  REQ-02:
+    tests:
+      - tests/auth/test_session.py::test_logout
+    implementation:
+      - src/auth/service.py:120-140
+    status: passed
+```
+
+### Four-column matrix variant
+
+When at least one REQ in `traceability.yml` carries `architectural_elements:`, the verifier renders a four-column matrix in `VERIFICATION_REPORT.md`. REQs that do not carry the field render `—` in the architectural-element column.
+
+```markdown
+| Requirement | Test(s) | Implementation | Architectural Element(s) | Status |
+|-------------|---------|----------------|--------------------------|--------|
+| REQ-01 | tests/auth/test_session.py::test_login_with_valid_credentials | src/auth/service.py:42-71 | auth.service, auth.session_store | ✅ passed |
+| REQ-02 | tests/auth/test_session.py::test_logout | src/auth/service.py:120-140 | — | ✅ passed |
+```
+
+### Three-column back-compat
+
+When **no** REQ in the file carries `architectural_elements:`, the matrix renders the existing three-column format (Requirement, Test(s), Implementation, Status). The fourth column is opt-in per `traceability.yml` — the verifier auto-detects by scanning all REQ entries for the field before choosing a render format.
+
+--> See `SKILL.md`'s Bidirectional Traceability section for the convention's two surfaces (LikeC4 element metadata and SPEC frontmatter).
+
 ## Persistent Spec Template
 
 Archived to `.ai-state/specs/SPEC_<feature-name>_YYYY-MM-DD.md` during the end-of-feature workflow.

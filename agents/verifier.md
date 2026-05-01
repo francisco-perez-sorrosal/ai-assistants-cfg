@@ -87,6 +87,8 @@ When `SYSTEMS_PLAN.md` contains a `## Behavioral Specification` section with REQ
 |-------------|---------|----------------|--------|
 | REQ-01 | tests/auth/test_session.py::test_expired_token_returns_401 | src/auth/session.py::validate() | PASS |
 
+**Four-column matrix when bidirectional traceability is populated.** Before rendering, scan all REQ entries in `traceability.yml` for the `architectural_elements:` key. When at least one REQ carries it, render the matrix with four columns (Requirement, Test(s), Implementation, Architectural Element(s), Status). When no REQ carries that field (back-compat), render the existing three-column format. REQs missing the field in a four-column render show `—` in the architectural-element cell. See [`skills/spec-driven-development/references/spec-format-guide.md`](../skills/spec-driven-development/references/spec-format-guide.md) for the YAML schema and worked example.
+
 4. If `traceability.yml` is missing while the feature is still in-pipeline (no archived SPEC exists yet), emit a FAIL finding tagged `[Spec Conformance: Missing traceability.yml]` — the implementer and test-engineer were expected to populate it per their step protocols.
 
 When `SPEC_DELTA.md` exists alongside the behavioral specification, add a `## Delta Validation` subsection after the traceability matrix. Compare the new traceability matrix against the prior spec's matrix (referenced in the delta's header). Verify: added requirements have new tests, modified requirements have updated tests, removed requirements have no orphaned tests. Classify each delta claim as CONFIRMED (evidence matches) or UNCONFIRMED (evidence missing or contradicts the claim).
