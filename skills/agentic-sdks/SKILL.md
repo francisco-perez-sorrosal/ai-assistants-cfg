@@ -119,8 +119,10 @@ Gate agent actions on human approval.
 **Claude**: `canUseTool` callback, hook-based `PreToolUse` with `permissionDecision: "deny"`.
 
 ## Tool Integration Patterns
+<!-- last-verified: 2026-05-01 -->
 
 ### Function Tools
+<!-- last-verified: 2026-05-01 -->
 
 Both frameworks wrap native functions as agent tools with automatic schema generation.
 
@@ -129,6 +131,7 @@ Both frameworks wrap native functions as agent tools with automatic schema gener
 **Claude**: `@tool` decorator with explicit name, description, and schema. Returns MCP `CallToolResult`.
 
 ### MCP Integration
+<!-- last-verified: 2026-05-01 -->
 
 Both support Model Context Protocol for external tool connectivity.
 

@@ -41,6 +41,7 @@ Managing Python projects with modern package managers and dependency tools. **De
 | Teams already using conda/mamba | |
 
 ## Project Initialization
+<!-- last-verified: 2026-05-01 -->
 
 | | pixi (default) | uv |
 |---|---|---|
@@ -68,6 +69,7 @@ project/
 ```
 
 ## Dependency Management
+<!-- last-verified: 2026-05-01 -->
 
 | | pixi (default) | uv |
 |---|---|---|
@@ -89,6 +91,7 @@ Do not hardcode version constraints from memory — training-data cutoffs make r
 This complements the `external-api-docs` skill (which handles *documentation* staleness) — together they cover both "is my API signature current?" and "is my pinned version current?".
 
 ## Running Commands
+<!-- last-verified: 2026-05-01 -->
 
 | | pixi (default) | uv |
 |---|---|---|
@@ -99,6 +102,7 @@ This complements the `external-api-docs` skill (which handles *documentation* st
 | **Gotcha** | — | Using venv activation instead of `uv run` (slower) |
 
 ## CI/CD Integration
+<!-- last-verified: 2026-05-01 -->
 
 GitHub Actions — pixi (default) and uv side-by-side:
 
@@ -148,6 +152,7 @@ build-backend = "hatchling.build"
 For tool-specific `pyproject.toml` sections (`[tool.pixi.*]`, `[tool.uv]`), see the corresponding reference files: [pixi.md](references/pixi.md) and [uv.md](references/uv.md).
 
 ## Package Manager Comparison
+<!-- last-verified: 2026-05-01 -->
 
 | Feature | pixi | uv |
 |---------|------|-----|
@@ -163,6 +168,7 @@ For tool-specific `pyproject.toml` sections (`[tool.pixi.*]`, `[tool.uv]`), see 
 | **Maturity** | Mature (conda ecosystem) | New but stable |
 
 ## Command Quick Reference
+<!-- last-verified: 2026-05-01 -->
 
 For complete command references, see [pixi.md](references/pixi.md) and [uv.md](references/uv.md). The most common commands:
 

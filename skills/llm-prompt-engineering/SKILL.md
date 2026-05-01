@@ -61,6 +61,7 @@ Systematic prompt design for production LLM calls. Covers few-shot patterns, cha
 | Claude Code subagent configuration (agent files, system prompts) | `agent-crafting` |
 
 ## Gotchas
+<!-- last-verified: 2026-05-01 -->
 
 - **Manual CoT hurts reasoning-native models.** Adding "think step by step" to Claude Opus 4.x with extended thinking, GPT-5 at medium+, o-series, or DeepSeek-R1 often *reduces* accuracy by biasing surface patterns over end-to-end reasoning. Use the model's native effort knob instead.
 - **`budget_tokens` is deprecated on Claude 4.x Opus/Sonnet** in favor of `thinking: {type: "adaptive"}` + effort. Document both only if you must support older tiers; prefer adaptive. See `claude-ecosystem` for the current parameter shape.

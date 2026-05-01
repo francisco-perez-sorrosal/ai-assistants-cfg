@@ -33,6 +33,7 @@ Structured knowledge of the Anthropic/Claude platform -- models, API features, S
 - [references/platform-services.md](references/platform-services.md) -- batch processing, prompt caching, Files API, data residency
 
 ## Gotchas
+<!-- last-verified: 2026-05-01 -->
 
 - **Prompt caching silently ignores small blocks**: Content below 1024 tokens (Opus/Sonnet) or 2048 tokens (Haiku) is never cached regardless of `cache_control` markers -- no error returned, just no cache. See [references/platform-services.md](references/platform-services.md).
 - **1M context requires a beta header**: The default context limit is 200K. Extended context (1M tokens) requires the `interleaved-thinking-2025-05-14` or `extended-context` beta header -- without it, requests exceeding 200K fail.
@@ -41,6 +42,7 @@ Structured knowledge of the Anthropic/Claude platform -- models, API features, S
 - **System prompt is not in the messages array**: Use the top-level `system` parameter. Placing the system prompt as `role: "system"` in `messages` does not work -- it is not a valid role in the Claude Messages API.
 
 ## Current Model Lineup
+<!-- last-verified: 2026-05-01 -->
 
 | Model | Model ID | Context | Max Output | Key Strengths |
 | --- | --- | --- | --- | --- |
@@ -77,6 +79,7 @@ Features organized by category. Status: GA (generally available) or Beta.
 | 1M context window | Beta | Extended context beyond 200K default |
 
 ### Server-Side Tools
+<!-- last-verified: 2026-05-01 -->
 
 | Feature | Status | Description |
 | --- | --- | --- |
@@ -86,6 +89,7 @@ Features organized by category. Status: GA (generally available) or Beta.
 | Memory | Beta | Cross-conversation persistence for user preferences |
 
 ### Client-Side Tools
+<!-- last-verified: 2026-05-01 -->
 
 | Feature | Status | Description |
 | --- | --- | --- |
@@ -94,6 +98,7 @@ Features organized by category. Status: GA (generally available) or Beta.
 | Text editor | GA | File viewing and editing (Claude Code, Agent SDK) |
 
 ### Tool Infrastructure
+<!-- last-verified: 2026-05-01 -->
 
 | Feature | Status | Description |
 | --- | --- | --- |
@@ -103,6 +108,7 @@ Features organized by category. Status: GA (generally available) or Beta.
 | Programmatic tool calling | GA | Tools invoked from code execution sandbox |
 
 ### Context Management
+<!-- last-verified: 2026-05-01 -->
 
 | Feature | Status | Description |
 | --- | --- | --- |
@@ -112,6 +118,7 @@ Features organized by category. Status: GA (generally available) or Beta.
 | Token counting | GA | Pre-flight token estimation endpoint |
 
 ### Files
+<!-- last-verified: 2026-05-01 -->
 
 | Feature | Status | Description |
 | --- | --- | --- |
@@ -120,6 +127,7 @@ Features organized by category. Status: GA (generally available) or Beta.
 See [references/api-features.md](references/api-features.md) for usage details, API shapes, and implementation guidance per feature.
 
 ## SDK Quick Reference
+<!-- last-verified: 2026-05-01 -->
 
 | SDK | Repo | Language | Purpose |
 | --- | --- | --- | --- |
@@ -132,6 +140,7 @@ See [references/api-features.md](references/api-features.md) for usage details, 
 **Additional SDKs:** Java, Go, Ruby, C#, PHP -- listed on the [Client SDKs docs page](https://platform.claude.com/docs/en/api/client-sdks) but less widely promoted.
 
 ### SDK Selection Guidance
+<!-- last-verified: 2026-05-01 -->
 
 - **Building an API integration:** Python SDK or TypeScript SDK -- direct Messages API access with full control
 - **Building an agent:** Agent SDK (Python or TS) -- higher-level abstractions for tool use, MCP, multi-turn

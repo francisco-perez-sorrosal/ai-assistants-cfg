@@ -35,6 +35,7 @@ Protocols for agent-to-agent communication -- enabling agents built with differe
 - [references/a2a-framework-integrations.md](references/a2a-framework-integrations.md) -- Framework integration patterns (ADK, LangGraph, CrewAI, Pydantic AI, etc.)
 
 ## Gotchas
+<!-- last-verified: 2026-05-01 -->
 
 - **`InMemoryTaskStore` is dev-only.** Both Python and TypeScript SDKs default to `InMemoryTaskStore`. This loses all tasks on restart -- production requires a persistent backing store (PostgreSQL, MySQL, or SQLite). The minimal server examples in this skill use `InMemoryTaskStore` for brevity; always swap for production.
 - **Protocol is pre-1.0 -- expect breaking changes.** A2A is at v0.3. The spec, data model, and SDK APIs may change before 1.0. Pin SDK versions and monitor the [changelog](https://a2a-protocol.org/latest/specification/).
@@ -54,10 +55,12 @@ Protocols for agent-to-agent communication -- enabling agents built with differe
 A2A and MCP are complementary: MCP connects agents to tools, A2A connects agents to each other. Build an agent with any framework, expose it via A2A, connect it to tools via MCP.
 
 ## A2A Protocol Summary
+<!-- last-verified: 2026-05-01 -->
 
 A2A (Agent2Agent) is an open protocol for agent-to-agent communication. Donated to the Linux Foundation (June 2025) with 150+ supporting organizations including AWS, Microsoft, Salesforce, SAP, and IBM.
 
 ### Core Concepts
+<!-- last-verified: 2026-05-01 -->
 
 **Actors:**
 
@@ -83,6 +86,7 @@ A2A (Agent2Agent) is an open protocol for agent-to-agent communication. Donated 
 3. **Push Notifications** -- Async webhook notifications for extended operations; client registers a callback URL
 
 ### Agent Discovery
+<!-- last-verified: 2026-05-01 -->
 
 Agents advertise capabilities via an **Agent Card** -- a JSON document describing identity, endpoint, supported skills, and authentication requirements.
 
@@ -94,6 +98,7 @@ Agents advertise capabilities via an **Agent Card** -- a JSON document describin
 4. **Direct Configuration** -- hardcoded URLs, config files, environment variables
 
 ### Authentication
+<!-- last-verified: 2026-05-01 -->
 
 A2A supports multiple authentication schemes declared in the Agent Card:
 
@@ -102,6 +107,7 @@ A2A supports multiple authentication schemes declared in the Agent Card:
 - Credentials passed via HTTP headers
 
 ### Architecture Layers
+<!-- last-verified: 2026-05-01 -->
 
 | Layer | Purpose | Details |
 |-------|---------|---------|
@@ -112,6 +118,7 @@ A2A supports multiple authentication schemes declared in the Agent Card:
 For the complete operation list with parameters and the full data model schema, see [references/a2a-protocol.md](references/a2a-protocol.md).
 
 ## SDK Selection
+<!-- last-verified: 2026-05-01 -->
 
 | | Python (`a2a-sdk`) | TypeScript (`@a2a-js/sdk`) |
 |---|---|---|
@@ -130,6 +137,7 @@ Load the language-specific context for implementation details:
 - TypeScript: [contexts/a2a-typescript.md](contexts/a2a-typescript.md)
 
 ## Minimal Server Pattern
+<!-- last-verified: 2026-05-01 -->
 
 **Python:**
 
@@ -166,6 +174,7 @@ app.listen(8000);
 ```
 
 ## Framework Integrations
+<!-- last-verified: 2026-05-01 -->
 
 Several AI frameworks provide built-in A2A support:
 

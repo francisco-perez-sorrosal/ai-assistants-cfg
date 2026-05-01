@@ -277,6 +277,7 @@ See [local-deployment.md](references/local-deployment.md) for full details on ea
 **Always put gunicorn behind a reverse proxy** (Caddy recommended) for TLS termination, static file serving, and request buffering.
 
 ## Platform Quick Reference
+<!-- last-verified: 2026-05-01 -->
 
 When ready to move beyond local deployment:
 
