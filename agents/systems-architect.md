@@ -352,6 +352,8 @@ Your `SYSTEMS_PLAN.md` is the implementation planner's primary input. Focus on:
 - When the task involves context artifacts, the context-engineer may shadow this stage — running in parallel, reading the research-stage review from `CONTEXT_REVIEW.md`, and appending the architecture-stage section. Read the `## Research Stage Review` section (if present) for context artifact inventory and health assessment to inform your design decisions
 - Scope boundary: you make architectural decisions; the context-engineer provides context engineering domain expertise that informs those decisions
 
+Structural coherence of the architect's outputs (DSL, `ARCHITECTURE.md`, ADR cross-references) is verified downstream by `architect-validator` once the design is committed; the architect does not run this check.
+
 ## Output
 
 After creating `SYSTEMS_PLAN.md` (and `SPEC_DELTA.md` for brownfield features, `ARCHITECTURE.md` + `docs/architecture.md` for Standard/Full pipelines), return a concise summary:

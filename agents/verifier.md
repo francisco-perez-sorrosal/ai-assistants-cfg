@@ -191,6 +191,8 @@ Skip this phase if `.ai-state/SYSTEM_DEPLOYMENT.md` does not exist or no deploym
 
 ### Phase 8 -- Architecture Design Document Validation (Design Coherence)
 
+Structural drift findings on the code↔DSL↔ADR triangle are the `architect-validator` agent's surface, not the verifier's; this phase does not duplicate that check.
+
 If `.ai-state/ARCHITECTURE.md` exists and the implementation changed structural files (new modules, interfaces, data models, dependencies):
 
 1. **Component names** -- component names in Section 3 MAY be abstract (e.g., "Auth Service" for an `auth/` module). Do not require exact module name match -- verify internal consistency instead: every component referenced in Data Flow (Section 5) should appear in the Components table (Section 3)

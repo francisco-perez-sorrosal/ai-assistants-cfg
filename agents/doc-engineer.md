@@ -239,6 +239,7 @@ When both agents are invoked, the doc-engineer runs AFTER the context-engineer t
 | Add missing catalog entries for new artifacts | Make architectural decisions about documentation structure |
 | Fix naming inconsistencies in documentation | Commit changes to git |
 | Update `docs/architecture.md` (cross-reference repair, freshness, writing quality) | Modify `.ai-state/ARCHITECTURE.md` (design-target — systems-architect and implementer domain) |
+| Verify markdown quality (links, prose drift) for **non-generated** regions | Validate `aac:generated` fence regions or the code↔DSL↔ADR triangle (`architect-validator`'s surface) |
 
 ## Output
 
