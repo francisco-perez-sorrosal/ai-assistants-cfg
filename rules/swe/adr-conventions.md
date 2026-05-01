@@ -110,13 +110,14 @@ Finalize promotes drafts in `.ai-state/decisions/drafts/` to finalized `<NNN>-<s
 1. **Draft detection.** Identify drafts added in the merged range (`<merge-base>..HEAD`) under `.ai-state/decisions/drafts/`. A manual-branch mode detects drafts added by a named branch. A dry-run mode prints the planned changes without writing.
 2. **NNN assignment.** For each detected draft, assign the next sequential `<NNN>` by scanning `.ai-state/decisions/` for the highest existing `<NNN>-<slug>.md` value, ignoring the `drafts/` subdirectory entirely. Assignments follow filename-sort order across the batch so the sequence is deterministic.
 3. **File rename and `id` rewrite.** Rename `.ai-state/decisions/drafts/<fragment>.md` to `.ai-state/decisions/<NNN>-<slug>.md` (slug extracted as the trailing `-<slug>.md` component of the fragment filename). Rewrite the frontmatter `id:` field from `dec-draft-<hash>` to `dec-NNN`.
-4. **Cross-reference rewrite.** Rewrite every `dec-draft-<hash>` occurrence (for each promoted draft) to its newly assigned `dec-NNN` across a bounded set of locations:
-   - All ADR files under `.ai-state/decisions/` — both drafts still in flight and finalized records. Frontmatter fields (`supersedes`, `superseded_by`, `re_affirms`, `re_affirmed_by`) and inline body references (`[dec-draft-<hash>]` or bare `dec-draft-<hash>`).
-   - All `.ai-work/*/LEARNINGS.md` files.
-   - All `.ai-work/*/SYSTEMS_PLAN.md` and `.ai-work/*/IMPLEMENTATION_PLAN.md` files.
-   - `.ai-state/specs/SPEC_<name>_YYYY-MM-DD.md` files matching the current pipeline's task slug.
+4. **Cross-reference rewrite.** Rewrite every `dec-draft-<hash>` occurrence (for each promoted draft) to its newly assigned `dec-NNN` across a bounded set of locations (the walk is bounded by design — finalize does not sweep the full repo):
 
-   The walk scope is bounded by design — finalize does not sweep the full repo for text replacement.
+   | Location | Surface to rewrite |
+   |----------|-------------------|
+   | `.ai-state/decisions/**/*.md` | Frontmatter `supersedes` / `superseded_by` / `re_affirms` / `re_affirmed_by`; inline body references (`[dec-draft-<hash>]` or bare). Both drafts and finalized records. |
+   | `.ai-work/*/LEARNINGS.md` | All occurrences |
+   | `.ai-work/*/SYSTEMS_PLAN.md`, `.ai-work/*/IMPLEMENTATION_PLAN.md` | All occurrences |
+   | `.ai-state/specs/SPEC_<name>_YYYY-MM-DD.md` | Files matching the current pipeline's task slug |
 5. **Index regeneration.** After all drafts in the batch promote, `DECISIONS_INDEX.md` regenerates to reflect the new finalized records. Drafts are excluded from the index by construction; the index lists only finalized `<NNN>-<slug>.md` files.
 
 Concurrency safety: finalize acquires an advisory file lock before any writes so concurrent post-merge hook invocations serialize cleanly. Exit codes: `0` for success or no-op; non-zero only when manual intervention is needed (e.g., an unresolvable filename collision). The protocol deliberately avoids rewriting arbitrary repository text; the bounded walk scope is the contract.

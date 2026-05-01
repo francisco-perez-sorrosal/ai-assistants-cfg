@@ -23,11 +23,7 @@ Call `remember()` for:
 - A user correction or preference expressed during the session
 - A debugging insight that took effort to discover
 
-**Examples of memories that should have been created:**
-
-- After discovering that async hooks silently drop `additionalContext` at SubagentStop: `remember("learnings", "async-hooks-drop-context", "...", tags=["gotcha", "hooks"], importance=8, type="gotcha")`
-- After a pipeline run reveals that worktree isolation prevents agent coordination issues: `remember("project", "worktree-isolation-pattern", "...", tags=["pattern", "pipeline"], importance=6, type="pattern")`
-- After the user corrects an approach: `remember("learnings", "user-prefers-X", "...", tags=["preference", "correction"], importance=7, type="correction")`
+The canonical `remember()` signature lives in `### How to Remember` below; treat each item in the trigger list above as warranting a call.
 
 ### When NOT to Remember
 

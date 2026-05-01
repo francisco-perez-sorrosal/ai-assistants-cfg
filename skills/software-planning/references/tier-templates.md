@@ -73,6 +73,12 @@ Done when: <inline acceptance criterion>
 Return findings in your response (no file); cite paths.
 ```
 
+### Lightweight tier specifics
+
+- **No `TEST_RESULTS.md`** — Lightweight test runs use whatever test command the project defines; the canonical handoff artifact is created only when work escalates to Standard.
+- **Architecture-doc update on structural change** — Lightweight respects the same `.ai-state/ARCHITECTURE.md` / `docs/architecture.md` update expectation as Standard when the change is structural; trivial-bug Lightweight work does not trigger doc edits.
+- **Mid-task escalation, not silent scope-creep** — when scope grows past 3 files or starts requiring architect/planner input, stop and re-scope to Standard rather than expanding silently. Escalation is a controlled transition; the new tier inherits the work-in-progress and the calibration log records both the original tier and the escalation.
+
 ## Full-Tier Multi-Instance Fan-Out
 
 Use when one agent role decomposes into N independent instances over disjoint file sets (e.g., three implementer instances for three independent modules in the same step group). All instances run concurrently in a single turn; coordinator merges fragment files after completion.

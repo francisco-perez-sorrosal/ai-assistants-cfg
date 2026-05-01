@@ -14,19 +14,11 @@ Assess the task before starting work. Each tier prescribes what to do — higher
 | **Full** | 9+ files, 5+ behaviors, cross-cutting | Standard plus parallel execution, doc-engineer in groups, context-engineer shadowing, structured decisions, spec archival. |
 | **Spike** | Exploratory, outcome uncertain | Timeboxed researcher. Decision in LEARNINGS.md. No implementation until resolved. |
 
-- The main agent selects the tier at task intake. User override always wins.
-- Default to the lower tier when uncertain — process can be added later, but overhead cannot be reclaimed.
-- Bug fixes: Direct unless 4+ files or structural issue (escalate to Standard).
-- Refactoring: Standard with `[Phase: Refactoring]` delegation to the [refactoring skill](../../skills/refactoring/SKILL.md).
-- The SDD skill's [complexity triage](../../skills/spec-driven-development/SKILL.md#complexity-triage) refines specification depth within Standard and Full tiers.
-- For structured calibration with signal scoring, see the SDD skill's [calibration procedure](../../skills/spec-driven-development/references/calibration-procedure.md).
-- Lightweight acceptance criteria live inline in the user request or in the task-tool description; no scratch file required.
-- Lightweight delegations (researcher) use the minimal scaffold in [tier-templates.md](../../skills/software-planning/references/tier-templates.md#lightweight-snippet).
-- Lightweight test runs use whatever test command the project defines; no `TEST_RESULTS.md` is created unless the work escalates to Standard.
-- Lightweight respects the same architecture-doc update expectation as Standard when structural changes occur (see `.ai-state/ARCHITECTURE.md` / `docs/architecture.md`).
-- Lightweight scope that grows mid-task beyond 3 files or requires architect/planner input must stop and re-scope to Standard rather than silently expanding; escalation is a controlled transition, not creep.
-- Lightweight may still create ADRs in `.ai-state/decisions/` when a decision is worth preserving (`made_by: user`); see [adr-conventions.md](adr-conventions.md).
-- Lightweight appends a row to `.ai-state/calibration_log.md` on task completion like every other tier, so tier-selection accuracy analysis remains unbiased.
+- The main agent selects the tier at task intake. User override always wins. Default to the lower tier when uncertain — process can be added later, but overhead cannot be reclaimed.
+- Bug fixes: Direct unless 4+ files or structural issue (escalate to Standard). Refactoring: Standard with `[Phase: Refactoring]` delegation to the [refactoring skill](../../skills/refactoring/SKILL.md).
+- The SDD skill's [complexity triage](../../skills/spec-driven-development/SKILL.md#complexity-triage) refines specification depth within Standard/Full; [calibration-procedure.md](../../skills/spec-driven-development/references/calibration-procedure.md) handles signal-scored ambiguous cases.
+- All tiers append a row to `.ai-state/calibration_log.md` on task completion (calibration accuracy analysis stays unbiased) and may create ADRs in `.ai-state/decisions/` when a decision is worth preserving — see [adr-conventions.md](adr-conventions.md).
+- **Lightweight specifics** (acceptance criteria inline, researcher scaffold, no `TEST_RESULTS.md`, architecture-doc update on structural change, mid-task escalation to Standard rather than silent scope-creep): see [tier-templates.md#lightweight-snippet](../../skills/software-planning/references/tier-templates.md#lightweight-snippet).
 
 **Tier Selector (fast path).** When the main agent receives a new task, walk top-to-bottom and stop at the first match:
 
@@ -124,27 +116,23 @@ Spawn agents without waiting for the user to ask:
 
 ### Cross-Agent Skill Conventions
 
-Conventions that apply across multiple pipeline agents independent of their phase.
-
-**External API docs are non-optional.** Any agent whose work touches an external API, SDK, or third-party integration (Stripe, OpenAI, Anthropic, AWS, Railway, Supabase, Nango, etc.) must use the `external-api-docs` skill before writing, designing, testing, planning, or CI-configuring against it. The skill is injected into researcher, systems-architect, implementation-planner, implementer, test-engineer, and cicd-engineer for this reason — it is not aspirational prose, it is a pre-loaded capability these agents are expected to exercise. When context-hub has no entry, fall back to WebSearch/WebFetch; when it does, prefer it over web search to avoid training-data hallucination and stale API signatures. Prose mention without frontmatter injection is insufficient — the agent's skill list is the enforcement surface.
-
-**The protocol is bidirectional — consume AND give feedback.** Agents that detect drift, errors, missing sections, or failing examples in a fetched doc must submit `chub_feedback` (with the identity suffix derived from `git config`) per the skill's Step 5 before finishing the phase. Silent consumption of flawed docs is prohibited — it leaves every future agent with the same stale information. The feedback rule applies at both run-time (submit now) and plan-time (the implementation-planner schedules a feedback step when research surfaced doc issues).
-
-**Library version and capability checks are non-optional.** The same staleness principle applies to dependency *libraries* as to their *documentation*: training-data cutoffs make remembered version numbers and feature matrices unreliable. Any agent that commits to, recommends, or schedules use of an external library must verify current availability and capability fit before locking in the choice — researcher when surfacing alternatives in `RESEARCH_FINDINGS.md`, systems-architect before recording a technology pick in `SYSTEMS_PLAN.md` or an ADR, implementation-planner before decomposing a step that assumes a specific library feature (or scheduling a step that adds a dependency), implementer before pinning a version in the project manifest, test-engineer before selecting a test framework or fixture library, cicd-engineer before writing a CI step against a specific tool version. Delegate the concrete version-check command to the appropriate language package-management skill (e.g., `python-prj-mgmt` for pixi/uv); fall back to the package registry's web interface or `WebSearch` when no language skill covers the ecosystem. Prefer letting resolvers pick latest over hardcoding constraints from memory; when an explicit constraint is required, quote the currently-resolved version. Record confirmed versions and any capability gaps in the agent's canonical output so downstream agents inherit verified values rather than re-derived guesses. The feedback principle applies here too: when a library's published behavior diverges from its documented capabilities, note the mismatch in `LEARNINGS.md` so future work is not planned against a documented-but-absent feature.
+Conventions that apply across multiple pipeline agents independent of their phase: external API docs are mandatory (use `external-api-docs` skill before writing/designing/testing against any external API or SDK; submit `chub_feedback` on drift), and library version/capability checks are mandatory (verify before committing to a library; record confirmed versions in canonical outputs). Full text and per-agent obligations live in [`skills/software-planning/references/cross-agent-skill-conventions.md`](../../skills/software-planning/references/cross-agent-skill-conventions.md).
 
 ### Coordination Pipeline
 
 Agents communicate through shared documents, not direct invocation. The pipeline flows promethean → researcher → systems-architect → implementation-planner → (implementer ∥ test-engineer ∥ doc-engineer) → verifier, with context-engineer shadowing research+architecture and sentinel running as an independent audit. See [coordination-details.md#coordination-pipeline-diagram](../../skills/software-planning/references/coordination-details.md#coordination-pipeline-diagram) for the ASCII diagram.
 
-**Pipeline rules:**
+**Pipeline rules** (deep-dive sections live in [coordination-details.md](../../skills/software-planning/references/coordination-details.md)):
 
-- **Do not skip stages.** Research before architecture (unless codebase context suffices). Re-invoke upstream agents when downstream input is incomplete.
-- **BDD/TDD execution.** Planner produces paired implementation and test steps; both execute concurrently on disjoint file sets, tests run until green. See [coordination-details.md#bddtdd-execution](../../skills/software-planning/references/coordination-details.md#bddtdd-execution).
-- **Batched improvement execution.** When a list of improvements is presented, evaluate independence and execute with maximum parallelism. See [coordination-details.md#batched-improvement-execution](../../skills/software-planning/references/coordination-details.md#batched-improvement-execution) for the Classify/Pair-spawn/Sequence/Full-suite-gate procedure.
-- **Context-engineer shadowing.** When work involves context artifacts, context-engineer runs in parallel with researcher and/or systems-architect, appending to a cumulative `CONTEXT_REVIEW.md`; conditional — pure application code does not trigger it. See [coordination-details.md#context-engineer-shadowing](../../skills/software-planning/references/coordination-details.md#context-engineer-shadowing).
-- **Context-engineer scope.** Small-scope (single artifact) --> context-engineer directly at any stage. Large-scope (3+ artifacts) --> full pipeline. Also operates for standalone audits.
-- **Sentinel** is independent. Reports (`SENTINEL_REPORT_*.md`) are public -- any agent or user can consume them.
-- **Doc-engineer parallel execution.** When planner assigns a doc step to a parallel group, doc-engineer runs concurrently with implementer and test-engineer on disjoint file sets; also runs at pipeline checkpoints. See [coordination-details.md#doc-engineer-parallel-execution](../../skills/software-planning/references/coordination-details.md#doc-engineer-parallel-execution).
+| Rule | Behavior |
+|------|----------|
+| Do not skip stages | Research before architecture (unless codebase context suffices); re-invoke upstream when downstream input is incomplete |
+| BDD/TDD execution | Paired implementation + test steps; concurrent on disjoint file sets; tests run until green |
+| Batched improvements | Evaluate independence; execute with maximum parallelism via Classify / Pair-spawn / Sequence / Full-suite-gate procedure |
+| Context-engineer shadowing | Conditional on context artifacts being touched; runs parallel to researcher / systems-architect; appends to cumulative `CONTEXT_REVIEW.md` |
+| Context-engineer scope | Single artifact → direct invocation any stage; 3+ artifacts → full pipeline; also runs for standalone audits |
+| Sentinel | Independent of pipeline; reports (`SENTINEL_REPORT_*.md`) public to any agent or user |
+| Doc-engineer parallel | When planner assigns to parallel group, runs concurrently with implementer / test-engineer on disjoint files; also runs at pipeline checkpoints |
 
 ### Agent Selection Criteria
 
