@@ -25,7 +25,8 @@ Onboard the current (freshly scaffolded) directory. Ask one question first, show
 16. §Compaction Guidance Block — verbatim source (mirror of `/onboard-project`)
 17. §Behavioral Contract Block — verbatim source (mirror of `/onboard-project`)
 18. §Praxion Process Block — verbatim source (mirror of `/onboard-project`)
-19. §Idempotency Predicates — per-Flow-phase contracts
+19. §AaC Scaffolding Sub-flow — five per-project AaC surfaces (default ON; opt-out via `--no-aac` / `PRAXION_NEW_PROJECT_NO_AAC=1`)
+20. §Idempotency Predicates — per-Flow-phase contracts
 
 ## §Guard
 
@@ -67,6 +68,7 @@ When the guard passes, follow these steps in order. Each step is a contract — 
    - **5c.** Fire **GATE 4c**, then delegate to `implementation-planner` — full three-doc model on first invocation. Outputs: `.ai-work/<task-slug>/IMPLEMENTATION_PLAN.md` (3–5 step decomposition; the canonical ordered step list), `.ai-work/<task-slug>/WIP.md` (live step-tracking the implementer updates as it works), `.ai-work/<task-slug>/LEARNINGS.md` (cross-session insights — seed it with at least the planner's decomposition decisions and any gotchas surfaced by the architect so the file is not empty).
    - **5d.** Fire **GATE 4d**, then delegate to `implementer` + `test-engineer` concurrently on disjoint file sets. Output: code under `src/agent/`, `src/web/`, `tests/` (full file inventory in §Default App Spec).
    - **5e.** Fire **GATE 4e**, then delegate to `verifier` — one-paragraph acceptance check against §Default App Spec invariants (skip the formal report for the seed). Output: in-chat pass/fail summary.
+   - **5f.** Apply the AaC scaffolding sub-flow per §AaC Scaffolding Sub-flow. No gate — runs inline after the verifier and before the SDK smoke check. If `# AaC scaffolding: false` appears in the bootstrap context (injected by `new_project.sh --no-aac` or `PRAXION_NEW_PROJECT_NO_AAC=1`), skip the entire sub-flow and print: `AaC scaffolding skipped (--no-aac). Re-enable later via /onboard-project --with-aac.`
    Ephemeral plan docs live in `.ai-work/<task-slug>/`; persistent design docs live in `.ai-state/` (architecture + ADR drafts) and `docs/` (developer-facing architecture guide). The seed writes every canonical artifact so the user's first pipeline observation includes the full document set — the subsequent `/co` will commit them.
 
 6. **Run the SDK smoke check** per §SDK smoke check. First, fire **GATE 5** per §Phase Gates. If the probe fails, follow the recovery path (re-fetch chub, introspect installed package, regenerate the affected file, submit `chub_feedback`).
@@ -95,6 +97,7 @@ Mirror of `/onboard-project`'s §Flow contracts table — what each Phase produc
 | 2 | Print orchestrator preamble | None — read-only chat output |
 | 3 | Branch on answer (default vs custom) + show pipeline-framed prompt | None — per-invocation framing |
 | 4 | Execute Standard-tier pipeline (researcher → architect → planner → implementer ∥ test-engineer → verifier) | None — produces feature artifacts each run |
+| 4f | AaC scaffolding sub-flow (fence seed, `fitness/`, Block D hook append, `architecture.yml`, `docs/diagrams/`) — default ON; skipped if `# AaC scaffolding: false` in bootstrap context | Per §Idempotency Predicates — five independent per-surface predicates; skip entire sub-flow when opt-out signal present |
 | 5 | SDK smoke check + test gate (`uv sync && uv run pytest -q`) + Python `.gitignore` block | Per §Idempotency Predicates: Python block detected by `# Python` header |
 | 6 | `/init` (if `CLAUDE.md` missing) + idempotent append of four blocks | Per §Init idempotency — four independent heading-detection predicates |
 | 7 | Generate the per-run mushi doc | None — file is regenerated each run by design |
@@ -429,12 +432,99 @@ Four non-negotiable behaviors for any agent (including Claude itself) writing, p
 Self-test: did I state assumptions, flag conflicts with reasons, stay inside declared scope, and choose the simplest path?
 ```
 
+## §AaC Scaffolding Sub-flow
+
+Greenfield projects ship with Architecture-as-Code enabled by default (sub-step 5f). This sub-flow installs five per-project AaC surfaces immediately after the seed pipeline produces `ARCHITECTURE.md` and `docs/architecture.md`. It is skipped entirely when the bootstrap context contains `# AaC scaffolding: false` (set by `new_project.sh --no-aac` or `PRAXION_NEW_PROJECT_NO_AAC=1`).
+
+**Opt-out consequence.** When skipped, the project ships without `fitness/`, without `.github/workflows/architecture.yml`, without fence convention seeded into `ARCHITECTURE.md`, and without `docs/diagrams/`. These can be added later via `/onboard-project --with-aac` (Track A's Phase 8b).
+
+**Note — sentinel-only set.** The traceability convention (global SDD skill) and the sentinel AC dimension (global sentinel agent) require NO per-project install. They are inherited from the plugin automatically. This sub-flow installs only the surfaces that must physically reside in the user project.
+
+Each sub-step is idempotent — a predicate gates every write. Partial-run resume reaching sub-step 5f a second time skips every already-installed surface.
+
+### Sub-step 5f.1 — Fence-region template seed
+
+**What it does.** Appends a commented fence-region example stanza to `ARCHITECTURE.md` and/or `docs/architecture.md` (whichever the pipeline produced) so greenfield projects start with the AaC fence convention visible.
+
+**Predicate (skip if true):** `grep -q 'aac:generated\|aac:authored' ARCHITECTURE.md 2>/dev/null` — fence markers already present.
+
+**Action when predicate fails:**
+
+```
+# Append to ARCHITECTURE.md (and docs/architecture.md when present):
+
+<!-- aac:generated — do not edit this block by hand; regenerate via scripts/diagram-regen-hook.sh -->
+<!-- Fence example — see rules/writing/aac-dac-conventions.md for the full convention -->
+<!-- Replace this block with your first LikeC4 .c4 source region when ready -->
+<!-- aac:generated:end -->
+```
+
+If neither `ARCHITECTURE.md` nor `docs/architecture.md` exists yet, skip with notice: `Fence seed skipped — no ARCHITECTURE.md yet; re-run /onboard-project --with-aac after the architecture baseline lands.`
+
+### Sub-step 5f.2 — fitness/ scaffold
+
+**What it does.** Creates `fitness/` and copies five template files from `claude/aac-templates/` so the project ships with a working fitness-function harness.
+
+**Predicate (skip per file if true):** `test -e fitness/<filename>` — existing files are never overwritten.
+
+**Files installed** (from `claude/aac-templates/`):
+
+| Source template | Destination |
+|-----------------|-------------|
+| `fitness-import-linter.cfg.tmpl` | `fitness/import-linter.cfg` |
+| `fitness-conftest.py.tmpl` | `fitness/tests/conftest.py` |
+| `fitness-test-meta-citation.py.tmpl` | `fitness/tests/test_meta_citation.py` |
+| `fitness-test-starter.py.tmpl` | `fitness/tests/test_starter.py` |
+| `fitness-README.md.tmpl` | `fitness/README.md` |
+
+After copying, print: `fitness/ scaffolded — read fitness/README.md and the architectural-fitness-functions skill to author your first invariant.`
+
+### Sub-step 5f.3 — Golden-rule hook Block D append
+
+**What it does.** Appends the Block D fragment from `claude/aac-templates/precommit-block-d.sh.frag` into `.git/hooks/pre-commit` (which Phase 4 of `/onboard-project` will write; at greenfield time the hook may not yet exist — create it with `#!/usr/bin/env bash` header if absent, or append if present).
+
+**Predicate (skip if true):** `grep -q 'check_aac_golden_rule' .git/hooks/pre-commit 2>/dev/null`
+
+**Action when predicate fails:** append the fragment. Block D resolves `PLUGIN_ROOT` from `~/.claude/plugins/installed_plugins.json` at hook-run time and invokes `python3 ${PLUGIN_ROOT}/scripts/check_aac_golden_rule.py --mode=gate`. If the plugin is not installed at hook-run time, the script-not-found guard exits 0 — the hook silently skips AaC enforcement rather than erroring.
+
+### Sub-step 5f.4 — architecture.yml workflow render
+
+**What it does.** Renders `claude/aac-templates/architecture.yml.tmpl` with project-specific placeholder substitution and writes `.github/workflows/architecture.yml`.
+
+**Predicate (skip if true):** `test -e .github/workflows/architecture.yml`
+
+**Placeholder substitution:**
+
+| Placeholder | Value |
+|-------------|-------|
+| `{{PROJECT_PATHS_DIAGRAMS}}` | `docs/diagrams/` |
+| `{{PROJECT_PATHS_ARCHITECTURE_DOCS}}` | `**/ARCHITECTURE.md` |
+| `{{PROJECT_PYTHON_VERSION}}` | lower bound from `pyproject.toml` `requires-python`, or `3.13` |
+| `{{PROJECT_PLUGIN_DIR}}` | `.` |
+
+After rendering, YAML-load the output to validate syntax before writing. If YAML parse fails, abort this sub-step with a clear error and continue with remaining sub-steps.
+
+### Sub-step 5f.5 — docs/diagrams/ scaffold
+
+**What it does.** Creates `docs/diagrams/` and writes `.gitkeep` so the scaffolded path is visible to git immediately. Per the forward-binding diagram convention, this is `<doc-dir>/diagrams/` — never a top-level `architecture/` directory.
+
+**Predicate (skip `.gitkeep` write if true):** `test -e docs/diagrams/.gitkeep` OR `[ -n "$(ls -A docs/diagrams/ 2>/dev/null)" ]` — skip when `.gitkeep` already exists OR directory already has content.
+
+**Action:** `mkdir -p docs/diagrams && touch docs/diagrams/.gitkeep` when predicate fails.
+
+---
+
 ## §Idempotency Predicates — per-Flow-phase contracts
 
 Per-phase predicates that govern §Flow steps. Re-running `/new-project` on a directory mid-flight (e.g., after a partial run) honors these checks so completed phases are not redone.
 
 | Flow step | Predicate (skip if true) |
 |-----------|--------------------------|
+| 5f.1 (fence seed) | `grep -q 'aac:generated\|aac:authored' ARCHITECTURE.md 2>/dev/null` |
+| 5f.2 (fitness/ scaffold — per file) | `test -e fitness/<filename>` for each of the five template destinations |
+| 5f.3 (Block D append) | `grep -q 'check_aac_golden_rule' .git/hooks/pre-commit 2>/dev/null` |
+| 5f.4 (architecture.yml) | `test -e .github/workflows/architecture.yml` |
+| 5f.5 (docs/diagrams/.gitkeep) | `test -e docs/diagrams/.gitkeep` OR directory non-empty |
 | 8 (Python `.gitignore` block) | `grep -q '^# Python$' .gitignore` AND each of the four lines (`__pycache__/`, `.venv/`, `*.egg-info/`, `.pytest_cache/`) already present |
 | 10a (Agent Pipeline append) | `grep -q '^## Agent Pipeline$' CLAUDE.md` |
 | 10b (Compaction Guidance append) | `grep -q '^## Compaction Guidance$' CLAUDE.md` |
@@ -443,10 +533,11 @@ Per-phase predicates that govern §Flow steps. Re-running `/new-project` on a di
 
 Other §Flow steps (1–7, 9, 11–13) are not idempotent in the strict sense because the seed pipeline (researcher → architect → planner → implementer + test-engineer → verifier) produces new artifacts each run. The §Guard at flow-start refuses to run on a non-greenfield directory, so re-invocation is rare; if it does happen, the user gets a Guard abort and is directed to `/onboard-project` instead.
 
-**Smooth integration contract.** When `/new-project` finishes successfully and the user runs `/onboard-project` next (per the exit handoff recommendation), two phases of `/onboard-project` are complete no-ops because the seed pipeline already produced their outputs:
+**Smooth integration contract.** When `/new-project` finishes successfully and the user runs `/onboard-project` next (per the exit handoff recommendation), three phases of `/onboard-project` are complete no-ops because the seed pipeline already produced their outputs:
 
 - **`/onboard-project` Phase 6 (CLAUDE.md blocks)** — all four predicates hit (Agent Pipeline, Compaction Guidance, Behavioral Contract, and Praxion Process are present from this command's Flow step 10).
 - **`/onboard-project` Phase 8 (Architecture Baseline)** — the predicate `test -e .ai-state/ARCHITECTURE.md` hits because the seed pipeline's `systems-architect` (gate 4b) already produced both `.ai-state/ARCHITECTURE.md` and `docs/architecture.md`. Re-running the architect would overwrite a real-content baseline with another real-content baseline; the predicate prevents that.
+- **`/onboard-project` Phase 8b (AaC scaffolding)** — when AaC was not opted out of (the default), all five sub-step predicates hit (`fitness/` exists, Block D is present, `architecture.yml` exists, fence markers are in `ARCHITECTURE.md`, `docs/diagrams/.gitkeep` exists). The `/onboard-project --with-aac` path becomes a clean no-op.
 
 The other phases of `/onboard-project` (1, 2, 3, 4, 5, 7, 9) apply the surfaces this command does not — git hooks, merge drivers, `.ai-state/` skeleton (`DECISIONS_INDEX.md`, `TECH_DEBT_LEDGER.md`, `calibration_log.md`), `.gitattributes`, `.claude/settings.json` toggles, companion CLI advisories, and the verification handoff.
 

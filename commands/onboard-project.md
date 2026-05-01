@@ -18,12 +18,13 @@ Onboard the **current existing** project to work cleanly with the Praxion plugin
 9. §Phase 6 — `CLAUDE.md` Praxion blocks (idempotent append)
 10. §Phase 7 — Companion CLIs (advisory only)
 11. §Phase 8 — Architecture Baseline (opt-in, default-yes — delegates to `systems-architect`)
-12. §Phase 9 — Verification + handoff
-13. §Agent Pipeline Block — canonical source of truth
-14. §Compaction Guidance Block
-15. §Behavioral Contract Block
-16. §Praxion Process Block
-17. §Idempotency Predicates — per-phase contracts
+12. §Phase 8b — AaC Tier Install (opt-in, default-skip — fence seed, fitness scaffold, hook block, workflow, diagrams)
+13. §Phase 9 — Verification + handoff
+14. §Agent Pipeline Block — canonical source of truth
+15. §Compaction Guidance Block
+16. §Behavioral Contract Block
+17. §Praxion Process Block
+18. §Idempotency Predicates — per-phase contracts
 
 ## §Pre-flight
 
@@ -76,11 +77,12 @@ Execute these phases in order. Each phase honors §Idempotency Predicates — re
 | 6 | Append Agent Pipeline + Compaction Guidance + Behavioral Contract + Praxion Process blocks to `CLAUDE.md` | `## Agent Pipeline` heading detection per block |
 | 7 | Print companion-CLI install commands (advisory) | None — purely informational |
 | 8 | Architecture baseline — delegate to `systems-architect` in baseline mode → `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` (+ optional ADR draft) | `test -e .ai-state/ARCHITECTURE.md` OR `test -e docs/architecture.md` (skip if either exists) OR user picks "Skip" at Gate 8 |
+| 8b | AaC tier install — fence seed, `fitness/` scaffold, golden-rule Block D, `architecture.yml` workflow, `docs/diagrams/` scaffold | User picks "Skip AaC" (default) at Gate 8b; or per-sub-step predicates (see §Phase 8b) |
 | 9 | Print summary + stage modified files (no commit) | None — terminal phase |
 
 ## §Phase Gates
 
-The default §Flow runs end-to-end without pause. To let users *learn* the model rather than just *watch* it, fire an `AskUserQuestion` gate before each phase from 1–7. Phase 0 (pre-flight) and Phase 8 (terminal handoff) need no gate.
+The default §Flow runs end-to-end without pause. To let users *learn* the model rather than just *watch* it, fire an `AskUserQuestion` gate before each phase from 1–7. Phase 0 (pre-flight) and Phase 9 (terminal handoff) need no gate.
 
 **Escape hatch (one-way).** Each gate offers `Continue` and `Run all rest`. If the user picks `Run all rest`, set an internal `no-more-gates` flag and skip every subsequent gate. The flag is one-way and persists until command exit.
 
@@ -95,6 +97,7 @@ The default §Flow runs end-to-end without pause. To let users *learn* the model
   - Two-option `Continue` / `Run all rest` — gates 1, 2, 3, 4, 6, 7
   - Multi-select toggles — Gate 5 (see §Phase 5)
   - Three-option `Run baseline now` (default) / `Skip` / `Run all rest` — Gate 8 (see §Phase 8)
+  - Three-option `Skip AaC` (default) / `Install AaC tier` / `Run all rest` — Gate 8b (see §Phase 8b)
 
 **Gate map.** Gate 1 doubles as the entry gate — its headline carries both the high-level orientation and the Phase 1 specifics, so the user is not double-prompted before the first phase. Gates 2–8 fire one-per-phase as expected.
 
@@ -108,6 +111,7 @@ The default §Flow runs end-to-end without pause. To let users *learn* the model
 | 6 | 6 | `Phase 6 of 9: I append four blocks to CLAUDE.md — the Agent Pipeline (how to use Praxion's subagents), Compaction Guidance (what to preserve when the conversation compacts), Behavioral Contract reminder, and Praxion Process (the tier-driven pipeline principle + rule-inheritance obligation). Each block is idempotent via heading detection. Continue?` |
 | 7 | 7 | `Phase 7 of 9: I check whether chub (external API docs), scc (SLOC counter), and uv (Python tooling) are installed. I won't install anything — I'll print one-line install commands you can run later if useful. Continue?` |
 | 8 | 8 | (Three-option pick — see §Phase 8 for the exact AskUserQuestion form. Default is `Run baseline now`. Headline: `Phase 8 of 9: Architecture baseline. I delegate to systems-architect in baseline mode to read your codebase and produce .ai-state/ARCHITECTURE.md (architect-facing, design-target) + docs/architecture.md (developer-facing, navigation guide). These docs become the architectural anchor for every future feature pipeline. Takes ~5–15 minutes for a medium project. Skip if you'd rather wait for your first feature pipeline to produce them. Pick:`) |
+| 8b | 8b | (Three-option pick — see §Phase 8b for the exact AskUserQuestion form. Default is `Skip AaC`. Headline: `Phase 8b: AaC tier install. I can install the Architecture-as-Code surfaces for this project: fence-region examples in your architecture docs, fitness/ scaffold for architectural fitness tests, a golden-rule pre-commit block, a .github/workflows/architecture.yml CI workflow, and a docs/diagrams/ directory stub. All five installs are idempotent — re-running is safe. The AaC convention requires the i-am plugin to be installed for enforcement to fire. Sentinel-only surfaces (traceability convention, sentinel AC dimension) need no per-project install. Pick:`) |
 
 ## §Phase 1 — `.gitignore` hygiene
 
@@ -365,7 +369,123 @@ Delegate to `systems-architect` via the `Task` tool. The delegation prompt MUST 
 
 The architect operates in a fresh context window (`Task` tool spawn) and reports completion when both docs are written. The main agent reads the produced docs at completion to confirm shape, then proceeds to Phase 9.
 
-**If the architect fails or times out**, emit a clear warning: `Phase 8 skipped — systems-architect did not complete the baseline audit. Architecture docs were not produced. Re-run /onboard-project to retry, or run a feature pipeline whose first stage will produce them.` Proceed to Phase 9.
+**If the architect fails or times out**, emit a clear warning: `Phase 8 skipped — systems-architect did not complete the baseline audit. Architecture docs were not produced. Re-run /onboard-project to retry, or run a feature pipeline whose first stage will produce them.` Proceed to Phase 8b.
+
+## §Phase 8b — AaC Tier Install (opt-in, default-skip)
+
+**Why this phase exists.** Phase 8 produces architecture docs. Phase 8b installs the AaC enforcement layer: fence-region examples in those docs, fitness tests for architectural invariants, a golden-rule pre-commit block, CI workflow, and a diagram directory stub. All five surfaces are idempotent and independent — each sub-step is guarded by its own predicate so re-runs produce zero `git diff`. Sentinel-only surfaces (traceability convention, sentinel AC dimension) need no per-project install — the AaC convention and sentinel agent are global.
+
+Note: AaC enforcement via Block D requires the `i-am` plugin to be installed. If the plugin is absent, the golden-rule hook block silently exits 0 — same behavior as Phase 4's id-citation check.
+
+**Gate 8b — three-option AskUserQuestion.** Use `AskUserQuestion` with `header: "Next?"`, `multiSelect: false`, the Gate 8b headline from the gate map, and these three options:
+
+| Option label | Description |
+|---|---|
+| `Skip AaC (recommended for existing projects)` | **Default.** No AaC scaffolding installed. Phase 9 verification handoff runs normally. Re-run `/onboard-project` later when ready — all sub-steps are idempotent. |
+| `Install AaC tier` | Run all five sub-steps (8b.1–8b.5). Each is independently idempotent; already-installed surfaces are silently skipped. |
+| `Run all rest` | Skip remaining gates; default the AaC choice to `Skip AaC` (matches the existing-project principle "extend existing patterns; do not impose"). |
+
+When the `no-more-gates` flag is set (user previously picked `Run all rest`), default to `Skip AaC` without prompting.
+
+**Action when "Install AaC tier" is chosen.** Run sub-steps 8b.1 through 8b.5 in order. Each sub-step prints one line on completion or skip.
+
+### Sub-step 8b.1 — Fence seed
+
+**Predicate.** At least one of `**/ARCHITECTURE.md` or `docs/architecture.md` exists AND does NOT already contain the string `aac:generated` or `aac:authored`.
+
+- If no architecture doc exists: skip silently. Phase 8 (if run) will produce one; a future feature pipeline may produce one. Re-running Phase 8b after an architecture doc exists will complete this sub-step.
+- If an architecture doc exists but already contains `aac:generated` or `aac:authored` markers: skip with notice `8b.1: skipped (fence regions already present)`.
+
+**Action.** For each architecture doc found (prefer `docs/architecture.md`; also process `**/ARCHITECTURE.md` if different from the first), append the following commented example stanza at the end of the file using `Edit`:
+
+```markdown
+<!-- AaC fence example — see rules/writing/aac-dac-conventions.md for the full convention.
+     Replace this comment with real fence regions as you document components.
+
+aac:authored id=example-component
+This is a human-authored rationale paragraph. The agent reads this and preserves it.
+aac:end
+
+aac:generated id=example-component
+<!-- agent-generated content lands here; never edit manually -->
+aac:end
+-->
+```
+
+Print: `8b.1: fence example appended to <filename> — edit the stanza to wrap real prose`.
+
+### Sub-step 8b.2 — Fitness scaffold
+
+**Predicate.** `fitness/` directory does NOT exist. If it exists: skip with notice `8b.2: skipped (fitness/ already present)`. Individual files within the scaffold are also checked — if a target file exists, skip that file and continue with others.
+
+**Action.** Create `fitness/` and `fitness/tests/` directories. Copy from Praxion's AaC templates (in the plugin install path):
+
+| Source template | Destination |
+|---|---|
+| `claude/aac-templates/fitness-import-linter.cfg.tmpl` | `fitness/import-linter.cfg` |
+| `claude/aac-templates/fitness-test-meta-citation.py.tmpl` | `fitness/tests/test_meta_citation.py` |
+| `claude/aac-templates/fitness-test-starter.py.tmpl` | `fitness/tests/test_starter.py` |
+| `claude/aac-templates/fitness-conftest.py.tmpl` | `fitness/tests/conftest.py` |
+| `claude/aac-templates/fitness-README.md.tmpl` | `fitness/README.md` |
+
+Also create an empty `fitness/tests/__init__.py` (skip if exists). Templates are read from the Praxion repo (use `Read` on the template path relative to the plugin install path). Write each destination with `Write`.
+
+Print: `8b.2: fitness/ scaffolded — read fitness/README.md and the architectural-fitness-functions skill to author your first invariant`.
+
+### Sub-step 8b.3 — Block D append (pre-commit hook)
+
+**Predicate.** `.git/hooks/pre-commit` exists AND does NOT contain the string `Block D` or `check_aac_golden_rule`.
+
+- If `.git/hooks/pre-commit` does not exist: skip with notice `8b.3: skipped (no pre-commit hook — run Phase 4 first, then re-run Phase 8b)`.
+- If `Block D` or `check_aac_golden_rule` is already present: skip with notice `8b.3: skipped (Block D already present)`.
+
+**Action.** Read `.git/hooks/pre-commit`. Append the Block D fragment from `claude/aac-templates/precommit-block-d.sh.frag` using `Edit`. The fragment uses `${PLUGIN_ROOT}` resolution (mirrors Phase 4's `check_id_citation_discipline.py` pattern) and invokes `python3 ${PLUGIN_ROOT}/scripts/check_aac_golden_rule.py --mode=gate`. Appending AFTER existing checks ensures AaC failure does not mask id-citation failures.
+
+Print: `8b.3: Block D appended to .git/hooks/pre-commit`.
+
+### Sub-step 8b.4 — Workflow render
+
+**Predicate.** `.github/workflows/architecture.yml` does NOT exist.
+
+- If exists: skip with notice `8b.4: skipped (.github/workflows/architecture.yml already present)`.
+
+**Action.** Create `.github/workflows/` directory if missing. Read `claude/aac-templates/architecture.yml.tmpl`. Perform placeholder substitution:
+
+| Placeholder | Derivation | Default |
+|---|---|---|
+| `{{PROJECT_PATHS_DIAGRAMS}}` | Detected `<doc-dir>/diagrams/` from sub-step 8b.5 or `docs/diagrams/` | `docs/diagrams/` |
+| `{{PROJECT_PATHS_ARCHITECTURE_DOCS}}` | Fixed | `**/ARCHITECTURE.md` |
+| `{{PROJECT_PYTHON_VERSION}}` | `requires-python` lower bound from `pyproject.toml`, or fallback | `3.13` |
+| `{{PROJECT_PLUGIN_DIR}}` | Plugin install scope; `.` works for user-installed plugins | `.` |
+
+After substitution, validate the result parses as valid YAML. If YAML parsing fails, abort this sub-step with: `8b.4: skipped — architecture.yml template substitution produced invalid YAML; check pyproject.toml requires-python value`. Continue with 8b.5.
+
+Write the validated YAML to `.github/workflows/architecture.yml` using `Write`.
+
+Print: `8b.4: .github/workflows/architecture.yml written`.
+
+### Sub-step 8b.5 — Diagrams scaffold
+
+**Predicate.** `docs/diagrams/` does NOT exist (or `<doc-dir>/diagrams/` if pre-flight detected a non-default doc dir). Per the forward-binding constraint on `<doc-dir>/diagrams/`, a top-level `architecture/` directory is NEVER created.
+
+- If `docs/diagrams/` exists: skip with notice `8b.5: skipped (docs/diagrams/ already present)`.
+
+**Action.** Create `docs/` if missing. Create `docs/diagrams/`. If the directory is otherwise empty (no `.c4`, `.d2`, `.svg`, or other files), write `docs/diagrams/.gitkeep` (0-byte placeholder so git commits the directory). If the directory already contains files (user has `.c4` sources), do not write `.gitkeep`.
+
+Print: `8b.5: docs/diagrams/ created` (with `.gitkeep` appended if the placeholder was written).
+
+**Verification handoff.** After all five sub-steps complete, print the final-state checklist:
+
+```
+AaC tier install summary:
+  8b.1 fence seed:      <installed | skipped (reason)>
+  8b.2 fitness/:        <installed | skipped (reason)>
+  8b.3 Block D:         <installed | skipped (reason)>
+  8b.4 architecture.yml:<installed | skipped (reason)>
+  8b.5 docs/diagrams/:  <installed | skipped (reason)>
+```
+
+Phase 9 verification handoff lists every staged file across all phases — Phase 8b's surfaces are included in that enumeration.
 
 ## §Phase 9 — Verification + handoff
 
@@ -384,6 +504,7 @@ The architect operates in a fresh context window (`Task` tool spawn) and reports
      Phase 6: CLAUDE.md (appended Agent Pipeline + Compaction + Behavioral Contract + Praxion Process blocks)
      Phase 7: companion CLIs — chub missing (install: ...), scc missing (install: ...)
      Phase 8: architecture baseline produced — .ai-state/ARCHITECTURE.md + docs/architecture.md (+ N ADR draft(s))
+     Phase 8b: AaC tier — fence seed, fitness/, Block D, architecture.yml, docs/diagrams/ (or skipped per sub-step)
    ```
    For each skipped phase (idempotency hit OR user opt-out), print `Phase N: skipped (<reason>)` instead.
 
@@ -478,6 +599,7 @@ Apply Praxion's tier-driven pipeline for non-trivial work. Use the tier selector
 | 6 | `grep -q '^## Agent Pipeline$' CLAUDE.md` (per block — checked individually for the four blocks; `grep -q '^## Praxion Process$' CLAUDE.md` for the Praxion Process block) |
 | 7 | None — phase 7 is advisory and always runs |
 | 8 | `test -e .ai-state/ARCHITECTURE.md` OR `test -e docs/architecture.md` (skip phase if either doc exists — covers re-runs and greenfield-followed-by-onboard); also skipped if the user picks `Skip` at Gate 8 |
+| 8b | User picks `Skip AaC` (or `Run all rest`) at Gate 8b — skips entire phase. Per-sub-step: 8b.1 — arch doc contains `aac:generated` or `aac:authored`; 8b.2 — `test -d fitness/`; 8b.3 — `grep -q 'check_aac_golden_rule\|Block D' .git/hooks/pre-commit`; 8b.4 — `test -e .github/workflows/architecture.yml`; 8b.5 — `test -d docs/diagrams/` |
 | 9 | None — terminal phase always runs |
 
 **Re-running the command** on an already-onboarded project should print mostly `skipped (already onboarded)` lines in Phase 9's summary. The only writes on a clean re-run come from Phase 7 (which writes nothing — only prints) and Phase 9 (which only stages changed files). Phase 8 is naturally idempotent — once `.ai-state/ARCHITECTURE.md` exists, any subsequent re-run skips. Future *updates* to architecture docs come from feature pipelines (`systems-architect` updates them in Phase 4 of the agent pipeline), not from re-running `/onboard-project`.

@@ -1,0 +1,30 @@
+"""Starter architectural invariant — replace with a real structural contract.
+
+Cites: CLAUDE.md§Structural Beauty (reliable systems are beautiful ones — well-organized
+code with clean boundaries and cohesive modules signals structural soundness; this
+starter rule enforces the first boundary you identify as worth protecting).
+
+TODO: Replace the contract reference in test_starter_invariant_holds with the
+      name of a real contract from your fitness/import-linter.cfg. The example
+      contract shipped in the template is named 'independence-example'; rename
+      it (and update --contracts below) when you define your actual invariant.
+      Also update this module docstring to describe the invariant you are enforcing.
+"""
+
+import subprocess
+from pathlib import Path
+
+
+def test_starter_invariant_holds(project_root: Path, import_linter_cfg: Path) -> None:
+    """The starter contract MUST pass — run import-linter via subprocess."""
+    result = subprocess.run(
+        ["uv", "run", "lint-imports", "--config", str(import_linter_cfg)],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    # exit 0 = all contracts KEPT; non-zero = at least one BROKEN or config error
+    assert result.returncode == 0, (
+        f"Fitness contract failed.\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+    )

@@ -1,0 +1,35 @@
+# import-linter.cfg — architectural boundary contracts for this project.
+#
+# Template rendered by /onboard-project Phase 8b (or /new-project AaC sub-flow).
+# Replace {{YOUR_ROOT_PACKAGE}} with your actual Python package name (e.g. myapp,
+# src, or whatever appears as the top-level importable name in your project).
+# You may list multiple packages, one per line, indented under root_packages.
+#
+# Each [importlinter:contract:*] stanza must carry a `description=` field that
+# cites an ADR id or a CLAUDE.md principle — the meta-citation fitness rule will
+# FAIL the suite if any contract lacks a citation.
+#
+# Citation anchors that satisfy the regex dec-\d{3,}|CLAUDE\.md§[A-Z][A-Za-z ]+:
+#   ADR example:        dec-NNN (e.g. dec-042)
+#   Principle example:  CLAUDE.md§Structural Beauty
+#
+# See fitness/README.md and skills/architectural-fitness-functions/SKILL.md for
+# authoring guidance (decision rubric, contract types, waiver pattern).
+
+[importlinter]
+root_packages =
+    {{YOUR_ROOT_PACKAGE}}
+
+[importlinter:contract:independence-example]
+name = api must not import persistence (example — replace with a real invariant)
+type = independence
+description = Decouple the entry-point layer from storage so each can evolve independently. CLAUDE.md§Structural Beauty: clean boundaries, cohesive modules.
+modules =
+    {{YOUR_ROOT_PACKAGE}}.api
+    {{YOUR_ROOT_PACKAGE}}.persistence
+# TODO: Replace the example modules above with your real package boundaries.
+# Common patterns:
+#   independence — two modules must not import each other at all
+#   forbidden    — source_modules must not import forbidden_modules
+#   layers       — strict top-down ordering (highest → lowest)
+# See https://import-linter.readthedocs.io for contract types.

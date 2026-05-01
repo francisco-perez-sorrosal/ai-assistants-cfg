@@ -1,0 +1,191 @@
+# Architecture CI pipeline — enforces three independent properties on
+# architectural-touch PRs. Rendered into .github/workflows/architecture.yml
+# by /onboard-project Phase 8b (or /new-project AaC sub-flow).
+#
+# Template substitution markers ({{LIKE_THIS}}) are replaced by the install
+# logic at render time. Placeholders and their defaults:
+#
+#   {{PROJECT_PATHS_DIAGRAMS}}        → docs/diagrams  (or detected <doc-dir>/diagrams)
+#   {{PROJECT_PATHS_ARCHITECTURE_DOCS}} → (literal: **/ARCHITECTURE.md + docs/architecture.md)
+#   {{PROJECT_PYTHON_VERSION}}        → 3.13           (or pyproject.toml requires-python lower bound)
+#   {{PROJECT_PLUGIN_DIR}}            → .              (plugin-dir arg; "." works for user-installed plugins)
+#
+# GHA action SHAs are pinned to Praxion's tested versions. Update them as part
+# of normal workflow maintenance — they are intentionally NOT substituted so
+# user projects start with a known-good pinned baseline.
+#
+# Canonical source: rules/writing/aac-dac-conventions.md
+# See also: agents/architect-validator.md (pre-merge mode spec)
+
+name: "Architecture"
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "{{PROJECT_PATHS_DIAGRAMS}}/**"
+      - "**/*.c4"
+      - "**/ARCHITECTURE.md"
+      - "docs/architecture.md"
+      - ".ai-state/decisions/**"
+      - "fitness/**"
+  push:
+    branches: [main]
+    paths:
+      - "{{PROJECT_PATHS_DIAGRAMS}}/**"
+      - "**/*.c4"
+      - "**/ARCHITECTURE.md"
+      - "docs/architecture.md"
+      - ".ai-state/decisions/**"
+      - "fitness/**"
+
+permissions: {}  # least-privilege; jobs below add only what they need
+
+concurrency:
+  group: "architecture-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: regenerate-and-diff
+  #
+  # Verifies that committed diagram renders match what `likec4 gen d2` + `d2`
+  # would produce from the source .c4 files. Fails if any render disagrees.
+  # ---------------------------------------------------------------------------
+  regenerate-and-diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: "Set up uv (manages Python {{PROJECT_PYTHON_VERSION}})"
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57  # v8.0.0
+        with:
+          python-version: "{{PROJECT_PYTHON_VERSION}}"
+
+      - name: Install likec4
+        run: npm install -g @likec4/cli
+
+      - name: Install d2
+        run: |
+          curl -fsSL https://d2lang.com/install.sh | sh -s --
+
+      - name: Regenerate diagrams from source .c4 files
+        run: |
+          find {{PROJECT_PATHS_DIAGRAMS}} -name '*.c4' | while IFS= read -r c4_file; do
+            workspace="${c4_file%/*}"
+            out_dir="${c4_file%.c4}"
+            echo "[ci] Regenerating d2 from ${c4_file} → ${out_dir}/"
+            likec4 gen d2 "${workspace}" -o "${out_dir}/"
+            find "${out_dir}" -maxdepth 1 -name '*.d2' | while IFS= read -r d2_file; do
+              svg_file="${d2_file%.d2}.svg"
+              echo "[ci] Rendering ${d2_file} → ${svg_file}"
+              d2 "${d2_file}" "${svg_file}"
+            done
+          done
+
+      - name: Diff regenerated diagrams against committed
+        run: |
+          git diff --exit-code -- {{PROJECT_PATHS_DIAGRAMS}}/ \
+            || (echo "::error::Generated diagrams disagree with committed renders. Run scripts/diagram-regen-hook.sh locally (after staging the .c4 file) and commit the result." && exit 1)
+
+  # ---------------------------------------------------------------------------
+  # Job 2: fitness-functions
+  #
+  # Runs the architectural fitness suite: pytest tests that enforce structural
+  # invariants (meta-citation rule, starter contract) plus import-linter
+  # boundary checks from fitness/import-linter.cfg.
+  # ---------------------------------------------------------------------------
+  fitness-functions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: "Set up uv (manages Python {{PROJECT_PYTHON_VERSION}})"
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57  # v8.0.0
+        with:
+          python-version: "{{PROJECT_PYTHON_VERSION}}"
+
+      - name: Install dev dependencies
+        run: uv sync --group dev
+
+      - name: Fitness pytest suite
+        run: uv run pytest fitness/tests/ -q
+
+      - name: Import-linter boundary check
+        run: uv run lint-imports --config fitness/import-linter.cfg --no-cache
+
+  # ---------------------------------------------------------------------------
+  # Job 3: dsl-validate
+  #
+  # Two-phase: (a) mechanical AaC fence validator runs first (fast-fail before
+  # API spend), then (b) architect-validator agent in --mode=pre-merge via
+  # claude-code-action for structural reasoning (model↔code drift, ADR↔model
+  # drift, generated-region drift).
+  #
+  # AAC_FENCE_VALIDATOR_LIKEC4=disabled: the fence validator's likec4-dependent
+  # path is skipped in CI where likec4 is not installed; fence balance and
+  # attribute checks still run.
+  # ---------------------------------------------------------------------------
+  dsl-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write  # required by claude-code-action for OIDC authentication
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: "Set up uv (manages Python {{PROJECT_PYTHON_VERSION}})"
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57  # v8.0.0
+        with:
+          python-version: "{{PROJECT_PYTHON_VERSION}}"
+
+      - name: Validate AaC fences (mechanical, fast-fail)
+        env:
+          AAC_FENCE_VALIDATOR_LIKEC4: disabled
+        run: |
+          find . -path ./.git -prune -o \
+            \( -name 'ARCHITECTURE.md' -o -path './docs/architecture.md' \) \
+            -print 2>/dev/null \
+            | xargs -r -I {} python3 scripts/aac_fence_validator.py {}
+
+      - name: Architect-validator pre-merge sweep
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Load the i-am:architect-validator agent. Run in --mode=pre-merge
+            for PR #${{ github.event.pull_request.number }} on ${{ github.repository }}.
+
+            Steps:
+            1. Read agents/architect-validator.md for the full pre-merge protocol
+            2. Identify all architectural files changed in this PR:
+               run `git diff --name-only origin/${{ github.base_ref }}...HEAD`
+            3. For each changed ARCHITECTURE.md or .c4 file, run the pre-merge
+               checks defined in the agent: model↔code drift, ADR↔model drift,
+               generated-region drift, fence validity
+            4. For changes to .ai-state/decisions/**, verify ADR cross-references
+               are consistent with the model
+            5. Report findings as structured output; fail (exit non-zero) only
+               on CRITICAL or HIGH severity issues that indicate structural drift
+
+            SCOPE: Only files changed in this PR. Do not re-audit unchanged files.
+            CONFIDENCE: HIGH findings only. Do not report stylistic issues.
+          claude_args: |
+            --plugin-dir {{PROJECT_PLUGIN_DIR}}
+            --model opus
+            --max-turns 15
+            --allowedTools "Read,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(find:*)"

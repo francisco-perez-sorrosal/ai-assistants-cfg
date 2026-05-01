@@ -4,7 +4,7 @@
 # Validates host prereqs, lays down a minimal scaffold (.git, .gitignore, .claude),
 # then exec's an interactive Claude Code session seeded with /new-project.
 #
-# Usage: new_project.sh <project-name> [target-dir]
+# Usage: new_project.sh <project-name> [target-dir] [--no-aac]
 # Env vars:
 #   PRAXION_NEW_PROJECT_EDITOR  Which editor surface to open the scaffold in.
 #                          Values: auto (default; cursor → code), cursor,
@@ -13,6 +13,10 @@
 #                          path to the clipboard (macOS only) since the
 #                          desktop app has no documented CLI/URL hook to
 #                          open a folder programmatically.
+#   PRAXION_NEW_PROJECT_NO_AAC  Set to 1 to opt out of the AaC scaffolding
+#                          sub-flow (fitness/, architecture.yml, fence seed,
+#                          docs/diagrams/). Equivalent to --no-aac flag.
+#                          Useful for headless / IDE-launch contexts.
 # Exit codes: 0 ok, 2 usage/invalid name, 3 no claude, 4 no plugin, 5 no git,
 #             6 target exists & non-empty.
 # See docs/greenfield-onboarding.md for the full flow and troubleshooting matrix.
@@ -37,13 +41,40 @@ usage() {
     printf 'Usage: new_project.sh <project-name> [target-dir]\n' >&2
 }
 
-# Parse args.
+# Parse args — project-name is required; target-dir and --no-aac are optional.
+# --no-aac may appear anywhere after the project name.
 if [ $# -lt 1 ] || [ -z "${1:-}" ]; then
     usage
     exit "$EXIT_USAGE"
 fi
 project_name="$1"
-target_dir="${2:-$PWD}"
+shift
+
+target_dir="$PWD"
+no_aac_flag=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --no-aac)
+            no_aac_flag="1"
+            ;;
+        -*)
+            printf 'Error: unknown flag %s\n' "$1" >&2
+            usage
+            exit "$EXIT_USAGE"
+            ;;
+        *)
+            target_dir="$1"
+            ;;
+    esac
+    shift
+done
+
+# Resolve AaC opt-out: --no-aac flag OR PRAXION_NEW_PROJECT_NO_AAC=1 env var.
+if [ "${no_aac_flag:-}" = "1" ] || [ "${PRAXION_NEW_PROJECT_NO_AAC:-}" = "1" ]; then
+    AAC_ENABLED="false"
+else
+    AAC_ENABLED="true"
+fi
 
 # Validate project name (security lens; SYSTEMS_PLAN §Stakeholder Review).
 if ! [[ "$project_name" =~ $NAME_REGEX ]]; then
@@ -233,9 +264,13 @@ if [ -n "$cmd_body_file" ] && [ -f "$cmd_body_file" ]; then
 
 ---
 
-The text above is the body of the /new-project slash command. The bash bootstrap embeds it here because Claude Code's CLI does not dispatch slash commands from positional arguments. You are now inside a freshly scaffolded Praxion greenfield project. Execute those instructions in order, starting from the §Guard check. Do not ask me to invoke anything — begin now."
+The text above is the body of the /new-project slash command. The bash bootstrap embeds it here because Claude Code's CLI does not dispatch slash commands from positional arguments. You are now inside a freshly scaffolded Praxion greenfield project. Execute those instructions in order, starting from the §Guard check. Do not ask me to invoke anything — begin now.
+
+# AaC scaffolding: ${AAC_ENABLED}"
 else
-    seed_prompt="You are inside a freshly scaffolded Praxion greenfield project. Invoke the /new-project slash command now to onboard it. If the slash command is not registered, locate its body under ~/.claude/plugins/ (Markdown file named new-project.md) and follow its instructions."
+    seed_prompt="You are inside a freshly scaffolded Praxion greenfield project. Invoke the /new-project slash command now to onboard it. If the slash command is not registered, locate its body under ~/.claude/plugins/ (Markdown file named new-project.md) and follow its instructions.
+
+# AaC scaffolding: ${AAC_ENABLED}"
 fi
 
 # Pre-allow the tools the seed pipeline relies on so the user is not paged
