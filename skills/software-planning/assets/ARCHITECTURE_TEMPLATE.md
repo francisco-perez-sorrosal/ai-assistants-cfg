@@ -120,11 +120,15 @@ views {
 
 </details>
 
+<!-- aac:generated source=docs/diagrams/architecture.c4 view=components last-regen=YYYY-MM-DD -->
+
 | Component | Responsibility | Status | Key Files |
 |-----------|---------------|--------|-----------|
 | [Component A] | [What it does] | Built | `src/component_a/` |
 | [Component B] | [What it does] | Built | `src/component_b/` |
 | [Component C] | [What it does] | Designed | `src/component_c/` |
+
+<!-- aac:end -->
 
 ## 4. Interfaces
 
@@ -191,4 +195,8 @@ sequenceDiagram
      summaries drift, indexes regenerate. Inline `dec-NNN` references in the section bodies
      above (Components, Interfaces, Constraints) are validated by sentinel AC04. -->
 
+<!-- aac:authored owner=systems-architect last-reviewed=YYYY-MM-DD -->
+
 Architectural decisions are recorded as ADRs in [`.ai-state/decisions/`](decisions/). The canonical, auto-generated cross-reference is [`DECISIONS_INDEX.md`](decisions/DECISIONS_INDEX.md). In-flight pipeline ADRs live as fragments under [`decisions/drafts/`](decisions/drafts/) and are promoted to stable `dec-NNN` at merge-to-main by `scripts/finalize_adrs.py`.
+
+<!-- aac:end -->

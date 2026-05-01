@@ -65,6 +65,7 @@
     "./agents/sentinel.md",
     "./agents/skill-genesis.md",
     "./agents/cicd-engineer.md",
-    "./agents/roadmap-cartographer.md"
+    "./agents/roadmap-cartographer.md",
+    "./agents/architect-validator.md"
   ]
 }

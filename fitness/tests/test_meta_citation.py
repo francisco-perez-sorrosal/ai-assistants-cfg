@@ -1,0 +1,97 @@
+"""Meta-fitness rule: every fitness rule cites an ADR or CLAUDE.md principle.
+
+Cites: CLAUDE.md§Pragmatism (every action serves a purpose — every line of code,
+every fitness rule must earn its place; citations make the rationale auditable
+so rules are never silently orphaned from the decisions that motivated them).
+
+Scans:
+- `fitness/tests/test_*.py` module docstrings (excluding self)
+- `fitness/import-linter.cfg` `description=` fields
+
+Citation regex: `dec-\\d{3,}|CLAUDE\\.md§[A-Z][A-Za-z ]+`
+
+A rule without a citation FAILs the suite. A waiver without anchor + reason
+FAILs the suite.
+"""
+
+import ast
+import configparser
+import re
+from pathlib import Path
+
+
+CITATION_REGEX = re.compile(r"dec-\d{3,}|CLAUDE\.md§[A-Z][A-Za-z ]+")
+WAIVER_REGEX = re.compile(r"#\s*fitness-waiver:\s*(\S+)\s+(.+)")
+
+
+def test_every_fitness_test_has_citation(project_root: Path) -> None:
+    """Every fitness/tests/test_*.py module docstring contains a citation."""
+    fitness_tests = sorted((project_root / "fitness" / "tests").glob("test_*.py"))
+    failures: list[str] = []
+    for test_file in fitness_tests:
+        # Skip self
+        if test_file.name == "test_meta_citation.py":
+            continue
+        source = test_file.read_text()
+        try:
+            module = ast.parse(source)
+        except SyntaxError as exc:
+            failures.append(f"{test_file.name}: SyntaxError ({exc})")
+            continue
+        docstring = ast.get_docstring(module)
+        if docstring is None:
+            failures.append(f"{test_file.name}: missing module docstring")
+            continue
+        if not CITATION_REGEX.search(docstring):
+            failures.append(
+                f"{test_file.name}: docstring lacks citation matching {CITATION_REGEX.pattern!r}"
+            )
+    assert not failures, "Citation contract violations:\n  " + "\n  ".join(failures)
+
+
+def test_every_import_linter_contract_has_citation(import_linter_cfg: Path) -> None:
+    """Every [importlinter:contract:*] stanza's description= field contains a citation."""
+    parser = configparser.ConfigParser(strict=False)
+    parser.read(import_linter_cfg)
+    failures: list[str] = []
+    for section in parser.sections():
+        if not section.startswith("importlinter:contract:"):
+            continue
+        description = parser.get(section, "description", fallback="")
+        if not CITATION_REGEX.search(description):
+            failures.append(
+                f"[{section}]: description= lacks citation matching {CITATION_REGEX.pattern!r}"
+            )
+    assert not failures, "Citation contract violations:\n  " + "\n  ".join(failures)
+
+
+def test_every_waiver_has_anchor_and_reason(project_root: Path) -> None:
+    """Every fitness-waiver inline comment has a valid citation anchor and a non-empty reason."""
+    failures: list[str] = []
+    # Search across the repo, but limit to known-relevant trees to keep the scan fast.
+    # Exclude fitness/tests/ itself — test files document the waiver contract but never
+    # express real waivers; scanning them would trigger false positives from docstrings.
+    search_roots = [
+        project_root / "scripts",
+    ]
+    for root in search_roots:
+        if not root.exists():
+            continue
+        for source_file in root.rglob("*.py"):
+            for line_no, line in enumerate(
+                source_file.read_text().splitlines(), start=1
+            ):
+                match = WAIVER_REGEX.search(line)
+                if match is None:
+                    continue
+                anchor, reason = match.group(1), match.group(2).strip()
+                if not CITATION_REGEX.fullmatch(anchor):
+                    failures.append(
+                        f"{source_file.relative_to(project_root)}:{line_no} waiver anchor "
+                        f"{anchor!r} does not match {CITATION_REGEX.pattern!r}"
+                    )
+                if not reason:
+                    failures.append(
+                        f"{source_file.relative_to(project_root)}:{line_no} waiver missing reason"
+                    )
+    assert not failures, "Waiver violations:\n  " + "\n  ".join(failures)

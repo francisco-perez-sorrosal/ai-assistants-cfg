@@ -44,6 +44,7 @@ major_version_zero = true
 dev = [
     "pytest",
     "pytest-cov",
+    "import-linter",
 ]
 
 # --- test-coverage skill: default Python coverage config -------------------

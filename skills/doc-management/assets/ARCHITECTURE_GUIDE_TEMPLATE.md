@@ -116,11 +116,15 @@ views {
 
 </details>
 
+<!-- aac:generated source=docs/diagrams/architecture.c4 view=components last-regen=YYYY-MM-DD -->
+
 | Component | Responsibility | Key Files |
 |-----------|---------------|-----------|
 | [Component A] | [What it does] | `src/component_a/` |
 | [Component B] | [What it does] | `src/component_b/` |
 | [Component C] | [What it does] | `src/component_c/` |
+
+<!-- aac:end -->
 
 ## 4. Interfaces
 
@@ -165,4 +169,8 @@ System constraints (performance, compatibility, technical, behavioral, architect
      The canonical, auto-generated index lives in .ai-state/decisions/DECISIONS_INDEX.md.
      For design-target rationale, the architect doc (.ai-state/ARCHITECTURE.md) is authoritative. -->
 
+<!-- aac:authored owner=systems-architect last-reviewed=YYYY-MM-DD -->
+
 Architectural decisions are recorded as ADRs in [`.ai-state/decisions/`](../.ai-state/decisions/). The canonical, auto-generated cross-reference is [`DECISIONS_INDEX.md`](../.ai-state/decisions/DECISIONS_INDEX.md). For design-target rationale, see [`.ai-state/ARCHITECTURE.md`](../.ai-state/ARCHITECTURE.md) — this developer guide intentionally does not summarize decisions inline.
+
+<!-- aac:end -->
