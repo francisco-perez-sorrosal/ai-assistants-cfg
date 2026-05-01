@@ -22,6 +22,7 @@ Compatible with **Claude Code** (mainly), **Claude Desktop**, and **Cursor**.
 - **29 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding, testing, releases, code review, roadmap generation, metrics
 - **Coding rules** auto-loaded by context -- coding style, git conventions, documentation standards, agent coordination
 - **MCP servers** for persistent memory and agent lifecycle observability
+- **Architecture-as-Code + Documentation-as-Code stack** -- fence convention, fitness functions, golden-rule pre-commit gate, architect-validator agent, architecture CI workflow, REQ↔arch traceability, sentinel periodic audit, Diátaxis-aligned doc taxonomy. See [docs/aac-dac.md](docs/aac-dac.md) for the philosophy and how the mechanisms compose.
 
 ## Core Concepts
 

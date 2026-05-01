@@ -1,3 +1,13 @@
+## Unreleased
+
+### Feat
+
+- **aac-dac**: Ship Idea 8 onboarding-aware tier — `/onboard-project` Phase 8b (existing OFF) + `/new-project` greenfield ON; `claude/aac-templates/` (7 files); plugin-path-resolved scripts (dec-113)
+- **aac-dac**: Ship Bundle X — bidirectional REQ↔architectural-element traceability + sentinel AC dimension extension (AC10 fence integrity, AC11 model↔markdown agreement, AC12 traceability orphans) (dec-111, dec-112)
+- **aac-dac**: Ship v1.1 — golden-rule enforcement hook (Block D + sentinel EC07), architecture CI workflow (3 parallel jobs), likec4-querying skill (8-task rubric + 13-tool recipes), Diátaxis-aligned doc-management companion (4-mode taxonomy) (dec-106..110)
+- **aac-dac**: Wire architect-validator into agent ecosystem boundaries; AaC+DaC ecosystem integration Phase 4 of W2 (dec-105)
+- **aac-dac**: Ship v1 foundation — cornerstone clauses in `~/.claude/CLAUDE.md`, fence convention + validator, fitness functions infrastructure, architect-validator agent (dec-097, dec-098, dec-100, dec-101, dec-102, dec-103, dec-104)
+
 ## v0.2.0 (2026-04-22)
 
 ### Feat

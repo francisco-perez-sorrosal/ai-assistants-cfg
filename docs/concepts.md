@@ -114,3 +114,11 @@ The pipeline scales to task complexity. Not every task needs twelve agents:
 The guiding principle: process overhead cannot be reclaimed. Default to the lighter option when uncertain -- process can always be added later.
 
 For the full spec-driven development methodology, see [Spec-Driven Development](spec-driven-development.md). For the decision audit trail using Architecture Decision Records, see [Decision Tracking](decision-tracking.md).
+
+## Architecture-as-Code and Documentation-as-Code
+
+Praxion treats architecture as a machine-readable artifact that lives alongside the code it describes. The **Architecture-as-Code (AaC)** half encodes the structural model in a versioned, queryable form -- elements, relationships, deployment nodes, and fitness functions that agents can read, reason about, and validate automatically. The **Documentation-as-Code (DaC)** half ensures that authored rationale -- ADRs, architecture guides, concept documents -- evolves in the same commits as the structural model. Neither half degrades silently; they are versioned together and validated together.
+
+This pairing is the cornerstone of Praxion's approach to context engineering. The global philosophy in `~/.claude/CLAUDE.md` names two principles that AaC+DaC directly operationalizes: **Context Engineering** ("architectural context is first-class; structural facts live in machine-readable models while rationale lives in authored narrative, both versioned together") and **Structural Beauty** ("the architecture you describe is the architecture you ship"). AaC+DaC is the mechanism that makes those principles enforceable rather than aspirational -- a fence convention keeps the model in sync with source, fitness functions detect drift, a pre-commit gate blocks golden-rule violations, and the sentinel audits traceability on every pipeline run.
+
+For the full essay -- the two-halves design, the fence convention, the fitness function infrastructure, the architect-validator agent, and how the mechanisms compose -- see [docs/aac-dac.md](docs/aac-dac.md).
