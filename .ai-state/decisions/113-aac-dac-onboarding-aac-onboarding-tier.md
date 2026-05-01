@@ -1,5 +1,5 @@
 ---
-id: dec-draft-2dc3eebc
+id: dec-113
 title: AaC tier integrates into onboarding via plugin-path-resolved scripts and templated artifacts — greenfield default-ON, existing-project default-OFF
 status: proposed
 category: architectural
