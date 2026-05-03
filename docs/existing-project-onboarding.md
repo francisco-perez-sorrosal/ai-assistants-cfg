@@ -15,7 +15,7 @@ Reference for the `/onboard-project` slash command — the entry point that retr
 
 - [Prereqs](#prereqs)
 - [How to run it](#how-to-run-it)
-- [The nine phases](#the-nine-phases)
+- [The phases](#the-phases)
 - [What gets created](#what-gets-created)
 - [Architecture baseline (Phase 8)](#architecture-baseline-phase-8)
 - [Idempotency contract](#idempotency-contract)
@@ -41,7 +41,7 @@ The command runs phased — each phase pauses with an `AskUserQuestion` gate tha
 
 If `AskUserQuestion` is unavailable (headless invocation, tool error), the gates degrade to printed headlines and the command proceeds without blocking.
 
-## The nine phases
+## The phases
 
 | Phase | Action | Files / settings touched | Idempotent |
 |-------|--------|--------------------------|-----------|
@@ -54,6 +54,8 @@ If `AskUserQuestion` is unavailable (headless invocation, tool error), the gates
 | 6 | **`CLAUDE.md` blocks** — idempotently append Agent Pipeline + Compaction Guidance + Behavioral Contract | `CLAUDE.md` | yes (per-block heading detection) |
 | 7 | **Companion CLIs** — print install commands for `chub`, `scc`, `uv` if missing and stack-relevant | none (advisory) | yes (always advisory) |
 | **8** | **Architecture baseline (opt-in, default-yes)** — delegate to `systems-architect` in baseline mode → produces `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` (+ optional ADR draft) | `.ai-state/ARCHITECTURE.md`, `docs/architecture.md` | yes (skip if either doc exists OR user picks Skip at Gate 8) |
+| **8b** | **AaC tier install (opt-in, default-skip)** — fence-region examples in architecture docs, `fitness/` scaffold, golden-rule pre-commit block, `architecture.yml` CI workflow, `docs/diagrams/` stub | architecture docs (fence regions), `fitness/`, `.git/hooks/pre-commit` (block), `.github/workflows/architecture.yml`, `docs/diagrams/` | yes (per-sub-step predicates; user picks `Skip AaC` by default) |
+| **8c** | **ML/AI training scaffold (opt-in; default-yes when ML signals detected)** — `program.md` template, `.ai-state/experiments/`, checkpoint `.gitignore` block, GPU budget declaration | `program.md`, `.ai-state/experiments/`, `.gitignore` (checkpoint block), `.ai-state/gpu_budget.yaml` | yes (skip when no ML signals — `train.py`, `prepare.py`, ML framework dep, or `program.md`; per-sub-step predicates) |
 | 9 | **Verification + handoff** — print summary, stage modified files (no commit) | git index | n/a (terminal) |
 
 The command never auto-commits. After Phase 9, `git status` shows every file modified by the run staged for review. Use `/co` to commit (the [git-conventions rule](../rules/swe/vcs/git-conventions.md) writes a precise message) or unstage and review individually.
@@ -241,7 +243,37 @@ If the architect agent fails or hits a timeout, `/onboard-project` emits a clear
 2. Run a feature pipeline whose first stage produces them (any Standard-tier feature delegates to `systems-architect` which writes both docs).
 3. Run `/sentinel` first to capture an ecosystem health baseline without the architecture docs, then circle back to architecture later.
 
-The key principle: a failed baseline does not block onboarding. The other 8 phases land regardless.
+The key principle: a failed baseline does not block onboarding. The other phases land regardless.
+
+</details>
+
+## ML/AI training scaffold (Phase 8c)
+
+Phase 8c is the third project archetype's onboarding hook. It fires only when the pre-flight scan detects ML signals — `train.py`, `prepare.py`, an ML framework dependency (`torch`, `jax`, `tensorflow`), or a pre-existing `program.md`. The default for ML-positive projects is `Run ML scaffold`; non-ML projects skip Phase 8c silently.
+
+<details>
+<summary>What gets created</summary>
+
+- **`program.md`** at repo root — meta-prompt template for the iterative experiment loop. Sibling artifact to `CLAUDE.md`: where `CLAUDE.md` guides a session, `program.md` guides an autonomous training run. The template is filled in by you over time as the experiment loop matures.
+- **`.ai-state/experiments/`** — directory for experiment-tracking config and per-run metadata. Used by `/run-experiment` and `/check-experiment`.
+- **`.gitignore` checkpoint block** — appends entries that exclude generated artifacts (`checkpoints/`, `wandb/`, `mlruns/`, `runs/<run-tag>/`) which can balloon repo size if accidentally committed.
+- **`.ai-state/gpu_budget.yaml`** — compute-budget declaration. Required by the `gpu-budget-conventions` rule whenever a step dispatches a training run.
+
+</details>
+
+<details>
+<summary>Why this phase exists</summary>
+
+ML/AI training projects need scaffolding that general software projects do not: experiment tracking, checkpoint hygiene, compute-budget discipline, and a `program.md` meta-prompt distinct from `CLAUDE.md`. Phase 8c lets the first `/run-experiment` invocation find the infrastructure already in place — without forcing every Praxion project to carry ML-shaped state. The companion artifacts activated by this scaffold are documented in the [ML/AI Training Onramp](ml-training-onramp.md) guide and the four ML skills (`ml-training`, `llm-training-eval`, `neo-cloud-abstraction`, `experiment-tracking`).
+
+</details>
+
+<details>
+<summary>Detection signals and skip behavior</summary>
+
+The pre-flight scan checks the project root for any of: `train.py`, `prepare.py`, an ML framework in dependencies (`torch`, `jax`, `tensorflow`), or a pre-existing `program.md`. If none are present, Phase 8c is skipped silently with the message `Phase 8c: skipped (no ML training signals detected — train.py, torch/jax/tensorflow dependency, or program.md)`. You can re-run `/onboard-project` later when ML signals appear — the scan re-fires.
+
+The Gate 8c options are three-way: `Skip ML scaffold` (default for non-ML), `Run ML scaffold`, `Run all rest`. Each sub-step inside Phase 8c is independently idempotent; partial scaffolds (e.g., `program.md` already present, others absent) re-run only the missing surfaces.
 
 </details>
 
@@ -258,6 +290,8 @@ Every write phase has a predicate that makes re-runs no-ops. Reference: `command
 | 5 | All four `PRAXION_DISABLE_*` keys present in `.claude/settings.json` |
 | 6 | `## Agent Pipeline` heading present in `CLAUDE.md` (per-block check) |
 | 8 | `test -e .ai-state/ARCHITECTURE.md` OR `test -e docs/architecture.md` (covers re-runs and greenfield-followed-by-onboard); also skipped if user picks `Skip` at Gate 8 |
+| 8b | Per-sub-step predicates (fence-region presence, `fitness/` directory, golden-rule pre-commit block, `architecture.yml` workflow, `docs/diagrams/` directory); also skipped if user picks `Skip AaC` at Gate 8b |
+| 8c | No ML signals detected (`train.py`, `prepare.py`, ML framework dep, `program.md`) → skip silently. When fired: per-sub-step predicates (`program.md` existence, `.ai-state/experiments/` existence, checkpoint `.gitignore` block, `.ai-state/gpu_budget.yaml` existence) |
 
 **Test for idempotency:** run `/onboard-project`, accept all gates, then re-run. The second run should produce zero `git diff` output and zero new `git config` entries. If either runs, the predicate has a bug — file an issue against `commands/onboard-project.md`.
 

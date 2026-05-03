@@ -6,6 +6,10 @@ Rules are **contextual domain knowledge files** that AI assistants load automati
 
 ```
 rules/
+├── ml/
+│   ├── eval-driven-verification.md
+│   ├── experiment-tracking-conventions.md
+│   └── gpu-budget-conventions.md
 ├── swe/
 │   ├── adr-conventions.md
 │   ├── agent-behavioral-contract.md
@@ -26,6 +30,9 @@ rules/
 
 | File | Purpose |
 | ---- | ------- |
+| `ml/eval-driven-verification.md` | ML acceptance criteria as metric thresholds — verifier evaluates `TRAINING_RESULTS.md` recorded metrics against PASS/FAIL/WARN tolerance bands |
+| `ml/experiment-tracking-conventions.md` | Experiment lineage, run-tag mapping, tracker selection (MLflow/W&B/Aim). Path-scoped: loads only when accessing `runs/**`, `experiments/**`, or `program.md` |
+| `ml/gpu-budget-conventions.md` | Compute-budget declaration in WIP.md and step prompts; open-ended training runs prohibited |
 | `swe/agent-behavioral-contract.md` | Four-behavior contract (Surface Assumptions, Register Objection, Stay Surgical, Simplicity First) for every write/plan/review agent. Always-loaded |
 | `swe/agent-intermediate-documents.md` | Agent document locations (`.ai-work/` ephemeral, `.ai-state/` persistent), lifecycle tiers, cleanup |
 | `swe/agent-model-routing.md` | Per-agent Claude model tier table (13 agents → opus/sonnet/haiku), 4-layer override precedence, operator kill switch, quality-cliff guards. Always-loaded |
@@ -215,6 +222,9 @@ Two mechanisms, each serving a different purpose:
 `install.sh` symlinks all rules from this repo to `~/.claude/rules/`. Personal rules load automatically for **every project** when contextually relevant — no per-project setup needed.
 
 ```
+rules/ml/eval-driven-verification.md          →  ~/.claude/rules/ml/eval-driven-verification.md
+rules/ml/experiment-tracking-conventions.md   →  ~/.claude/rules/ml/experiment-tracking-conventions.md
+rules/ml/gpu-budget-conventions.md            →  ~/.claude/rules/ml/gpu-budget-conventions.md
 rules/swe/agent-behavioral-contract.md        →  ~/.claude/rules/swe/agent-behavioral-contract.md
 rules/swe/agent-intermediate-documents.md      →  ~/.claude/rules/swe/agent-intermediate-documents.md
 rules/swe/coding-style.md                     →  ~/.claude/rules/swe/coding-style.md

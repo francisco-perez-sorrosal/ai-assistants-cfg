@@ -115,6 +115,16 @@ The guiding principle: process overhead cannot be reclaimed. Default to the ligh
 
 For the full spec-driven development methodology, see [Spec-Driven Development](spec-driven-development.md). For the decision audit trail using Architecture Decision Records, see [Decision Tracking](decision-tracking.md).
 
+## Project Archetypes
+
+The pipeline is shared, but the artifacts and rules it activates depend on the project's archetype. Three archetypes are recognized:
+
+- **Traditional SWE** — the default. The full skill catalog applies (Python, API design, CI/CD, deployment, testing, refactoring, observability). Most Praxion projects fall here.
+- **Agentic-AI apps** — agents-as-products. Activated when the codebase imports an agent SDK or builds MCP servers. Adds the `agentic-sdks`, `agent-evals`, `mcp-crafting`, and `communicating-agents` skills to the active set.
+- **ML/AI training** — pre-training projects with compute budgets, eval thresholds, and iterative experiment loops. Activated when `train.py`, `prepare.py`, an ML framework dependency, or a `program.md` is detected. Adds the `ml-training`, `llm-training-eval`, `neo-cloud-abstraction`, and `experiment-tracking` skills, the three `rules/ml/` rules, and two slash commands (`/run-experiment`, `/check-experiment`). The `karpathy/autoresearch` project — which sits at the intersection of agentic-AI and ML training — is the canonical proof target. The full guide is [ML/AI Training Onramp](ml-training-onramp.md).
+
+The `/onboard-project` command's Phase 8c detects ML signals and scaffolds the conventions automatically; non-ML projects skip Phase 8c silently. The architecture is open: a fourth archetype with its own skill cluster, rules, and onboarding scaffold is a future-compatible extension, not a special case.
+
 ## Architecture-as-Code and Documentation-as-Code
 
 Praxion treats architecture as a machine-readable artifact that lives alongside the code it describes. The **Architecture-as-Code (AaC)** half encodes the structural model in a versioned, queryable form -- elements, relationships, deployment nodes, and fitness functions that agents can read, reason about, and validate automatically. The **Documentation-as-Code (DaC)** half ensures that authored rationale -- ADRs, architecture guides, concept documents -- evolves in the same commits as the structural model. Neither half degrades silently; they are versioned together and validated together.

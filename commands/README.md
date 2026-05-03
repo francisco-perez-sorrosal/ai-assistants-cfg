@@ -18,6 +18,7 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | `/full-security-scan` | Run a full-project security audit against all security-critical paths |
 | `/manage-readme` | Create or refine README.md files |
 | `/cajalogic` | Manage persistent memory (user prefs, assistant learnings, project conventions, observations) |
+| `/check-experiment` | Poll an in-flight or report a completed ML training experiment |
 | `/merge-worktree` | Merge a worktree branch back into current branch |
 | `/new-project` | Scaffold a greenfield Claude-ready Python project and onboard it to Praxion |
 | `/onboard-project` | Onboard the current project for the Praxion plugin ecosystem |
@@ -27,6 +28,7 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | `/report-upstream` | File a well-formed bug report on an upstream open-source project |
 | `/review-pr` | Code review a pull request |
 | `/roadmap` | Produce a project-audited `ROADMAP.md` via a project-derived evaluation lens set (SPIRIT, DORA, SPACE, FAIR, CNCF Platform Maturity, or Custom) through the roadmap-cartographer agent; covers strengths, weaknesses, **opportunities (forward lines of work)**, phased improvements, and deprecations |
+| `/run-experiment` | Dispatch an ML training experiment, validate compute budget, stream metrics, write `TRAINING_RESULTS.md` |
 | `/save-changes` | Save current working changes to project memory with secret filtering |
 | `/sdd-coverage` | Report spec-to-test and spec-to-code coverage for REQ IDs |
 | `/star-repo` | Star the Praxion repo on GitHub |

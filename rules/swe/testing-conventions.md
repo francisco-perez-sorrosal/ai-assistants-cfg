@@ -39,6 +39,20 @@ Tests produce the same result on every run, regardless of time, timezone, or env
 
 - No `sleep()`, `time.time()`, or wall-clock dependencies -- use time-freezing libraries (e.g., `freezegun` in Python, `jest.useFakeTimers()` in JS) or injected clocks
 - No random values without fixed seeds -- use explicit seeds or deterministic generators
+
+**ML training-loop exception:** The determinism requirement above does NOT apply to stochastic
+operations inside ML training-loop code — data shuffles, dropout, `torch.cuda` non-determinism
+(e.g., `cudnn.benchmark = True`), and parameter initialization are intentionally stochastic and
+must not be flagged as violations. This exception applies only to:
+
+- The training loop itself (the per-step `optimizer.step()`-bearing function)
+- Inference/eval code where dropout is disabled but other stochasticity may persist
+
+The determinism requirement is RETAINED for data-pipeline code (loading, preprocessing,
+augmentation), model-architecture code (layer definitions, weight initialization shapes), and
+evaluation/metric-computation code. For ML training stochasticity, apply the metric-threshold
+model in `rules/ml/eval-driven-verification.md` instead.
+
 - No reliance on dictionary ordering, filesystem sort order, or other platform-variant behavior
 - No tests that pass "most of the time" -- flaky tests are broken tests
 

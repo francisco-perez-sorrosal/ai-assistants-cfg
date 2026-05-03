@@ -17,9 +17,9 @@ Compatible with **Claude Code** (mainly), **Claude Desktop**, and **Cursor**.
 
 ## What You Get
 
-- **36 skills** covering Python, API design, CI/CD, deployment, observability, refactoring, spec-driven development, external API docs, security review, testing strategy, test coverage, roadmap synthesis, and more -- loaded automatically when the task matches
+- **42 skills** covering Python, API design, CI/CD, deployment, observability, refactoring, spec-driven development, external API docs, security review, testing strategy, test coverage, roadmap synthesis, ML/AI training, and more -- loaded automatically when the task matches
 - **13 specialized agents** that collaborate on complex features (research, architecture, planning, implementation, testing, verification, roadmap cartography)
-- **29 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding, testing, releases, code review, roadmap generation, metrics
+- **32 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding, testing, releases, code review, roadmap generation, metrics, ML experiment dispatch
 - **Coding rules** auto-loaded by context -- coding style, git conventions, documentation standards, agent coordination
 - **MCP servers** for persistent memory and agent lifecycle observability
 - **Architecture-as-Code + Documentation-as-Code stack** -- fence convention, fitness functions, golden-rule pre-commit gate, architect-validator agent, architecture CI workflow, REQ↔arch traceability, sentinel periodic audit, Diátaxis-aligned doc taxonomy. See [docs/aac-dac.md](docs/aac-dac.md) for the philosophy and how the mechanisms compose.
@@ -35,6 +35,14 @@ The ecosystem has five building blocks that layer from always-on background know
 - **MCP Servers** -- External tool servers for capabilities like persistent memory and task observability.
 
 For a full explanation of how these compose -- including the layered architecture, rules-vs-skills decision model, and agent pipeline flow -- see [Core Concepts](docs/concepts.md).
+
+### Project Archetypes
+
+Praxion manages three project archetypes through one shared pipeline:
+
+- **Traditional SWE** — the default; covered by the full skill catalog (Python, API design, CI/CD, deployment, etc.)
+- **Agentic-AI apps** — agents-as-products; activated by `agentic-sdks`, `agent-evals`, `mcp-crafting`, `communicating-agents`
+- **ML/AI training** — pre-training projects with compute budgets, eval thresholds, and experiment loops; activated by `ml-training`, `llm-training-eval`, `neo-cloud-abstraction`, `experiment-tracking`. The canonical proof target is `karpathy/autoresearch`, which sits at the intersection of agentic-AI and ML training. Run `/run-experiment` to dispatch a training run; `/check-experiment` to poll an in-flight run; `/onboard-project` Phase 8c scaffolds the ML conventions. **Full guide: [ML/AI Training Onramp](docs/ml-training-onramp.md)**.
 
 ## Guiding Principles
 
@@ -91,7 +99,7 @@ Two distinct paths, picked by what's already in the directory. Both converge on 
 | **Existing project** (has code)  | `/onboard-project` inside an active Claude Code session at the project root | [Existing-Project Onboarding](docs/existing-project-onboarding.md) |
 
 
-The greenfield flow ends by chaining to `/onboard-project` so there is one source of truth for what "Praxion-onboarded" means. `/onboard-project` runs nine phases with `AskUserQuestion` gates between them — including an opt-in **Phase 8 architecture baseline** that delegates to `systems-architect` to produce `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` from the existing codebase (high leverage: every later sentinel audit, feature pipeline, and Memory MCP recall benefits from those docs landing on day one).
+The greenfield flow ends by chaining to `/onboard-project` so there is one source of truth for what "Praxion-onboarded" means. `/onboard-project` runs ten phases with `AskUserQuestion` gates between them — including an opt-in **Phase 8 architecture baseline** that delegates to `systems-architect` to produce `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` from the existing codebase (high leverage: every later sentinel audit, feature pipeline, and Memory MCP recall benefits from those docs landing on day one), an opt-in **Phase 8b architecture-as-code seeding** that lays the AaC fence convention and fitness functions, and an opt-in **Phase 8c ML conventions** that scaffolds `program.md` + ML rules + experiment-tracking config when the project is detected as an ML/AI training archetype.
 
 For a pipeline walkthrough -- from ideation through implementation and verification -- see [Getting Started](docs/getting-started.md).
 
@@ -109,6 +117,7 @@ Reusable knowledge modules loaded automatically based on context. See `[skills/R
 | Platform Knowledge       | claude-ecosystem, agentic-sdks, communicating-agents, llm-prompt-engineering                                                                                                                   |
 | Planning & Communication | roadmap-planning, roadmap-synthesis, stakeholder-communications                                                                                                                                |
 | Design & Architecture    | api-design, data-modeling, deployment, observability, performance-architecture                                                                                                                 |
+| ML/AI Training           | ml-training, llm-training-eval, neo-cloud-abstraction, experiment-tracking                                                                                                                     |
 | Documentation            | doc-management                                                                                                                                                                                 |
 | Software Development     | python-development, python-prj-mgmt, project-exploration, refactoring, code-review, software-planning, spec-driven-development, agent-evals, cicd, testing-strategy, test-coverage, versioning |
 | Security                 | context-security-review                                                                                                                                                                        |
@@ -148,6 +157,8 @@ Slash commands invoked with `/<name>`. In Claude Code plugin mode, use `/i-am:<n
 | `/project-metrics`            | Compute project complexity/health metrics (churn, complexity, coupling, hot-spots, trends) and write a timestamped report triple to `.ai-state/`                                         |
 | `/project-coverage`           | Run the project's canonical coverage target and render a terminal summary via the `test-coverage` skill                                                                                  |
 | `/eval`                       | Run out-of-band quality evals (Tier 1 behavioral + regression) — opt-in, never hook-driven                                                                                               |
+| `/run-experiment`             | Dispatch an ML training experiment, validate compute budget, stream metrics, write `TRAINING_RESULTS.md`                                                                                 |
+| `/check-experiment`           | Poll an in-flight or report a completed ML training experiment                                                                                                                           |
 | `/new-project`                | Scaffold a greenfield Claude-ready Python project and onboard it to Praxion                                                                                                              |
 | `/refresh-skill`              | Refresh version-sensitive sections of a skill against current upstream documentation                                                                                                     |
 | `/praxion-complete-install`   | Finish a marketplace-only Praxion install — symlink rules, CLI scripts, and optional context-hub MCP                                                                                     |
@@ -189,14 +200,16 @@ Phased, idempotent retrofit for a repo that already has code. Each phase pauses 
 | 6     | Append three blocks to `CLAUDE.md`: Agent Pipeline + Compaction Guidance + Behavioral Contract                                                                                         |
 | 7     | Print install commands for missing companion CLIs (`chub`, `scc`, `uv`) — advisory only                                                                                                |
 | 8     | **Architecture baseline (opt-in, default-yes)** — delegate to `systems-architect` in baseline-audit mode → `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` (+ optional ADR draft) |
+| 8b    | **AaC tier install (opt-in, default-skip)** — fence-region examples, `fitness/` scaffold, golden-rule pre-commit block, `architecture.yml` CI workflow, `docs/diagrams/` stub        |
+| 8c    | **ML/AI training scaffold (opt-in; default-yes when ML signals detected)** — `program.md` template, `.ai-state/experiments/`, checkpoint `.gitignore` entries, GPU budget declaration |
 | 9     | Print summary, stage modified files (no commit)                                                                                                                                        |
 
 
-Every phase has an idempotency predicate — re-runs on an already-onboarded project are no-ops. The command never auto-commits. Phase 4 is skipped if the `i-am` plugin is not installed (the hooks need its `scripts/` directory). Phase 8 is skipped if either architecture doc already exists (e.g., produced by a prior seed pipeline or onboard run).
+Every phase has an idempotency predicate — re-runs on an already-onboarded project are no-ops. The command never auto-commits. Phase 4 is skipped if the `i-am` plugin is not installed (the hooks need its `scripts/` directory). Phase 8 is skipped if either architecture doc already exists (e.g., produced by a prior seed pipeline or onboard run). Phase 8c is skipped when no ML signals are detected (`train.py`, `prepare.py`, ML framework dependency, or pre-existing `program.md`).
 
 If the directory looks like a freshly-scaffolded greenfield project (`.git/` + AI-assistants `.gitignore` + empty `.claude/` + no source tree), the command aborts with a redirect to `/new-project`.
 
-See [Existing-Project Onboarding](docs/existing-project-onboarding.md) for the full nine-phase contract, the architecture-baseline rationale, and troubleshooting.
+See [Existing-Project Onboarding](docs/existing-project-onboarding.md) for the full phase contract, the architecture-baseline rationale, the AaC tier install, the ML scaffold, and troubleshooting.
 
 
 

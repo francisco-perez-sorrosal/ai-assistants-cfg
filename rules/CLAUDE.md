@@ -4,7 +4,7 @@ Contextual domain knowledge files loaded automatically based on relevance. Rules
 
 ## Conventions
 
-- Organized hierarchically by domain: `swe/` for software engineering, `writing/` for documentation
+- Organized hierarchically by domain: `swe/` for software engineering, `writing/` for documentation, `ml/` for ML/AI training
 - Further nesting for related rules (e.g., `swe/vcs/` for version control)
 - Each rule is a `.md` file — rules without frontmatter load unconditionally at session start
 - Add `paths:` YAML frontmatter to scope a rule to specific file patterns (loaded only when matching files are accessed)

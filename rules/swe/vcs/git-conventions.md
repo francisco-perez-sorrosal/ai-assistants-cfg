@@ -8,6 +8,24 @@ See also: [`pr-conventions.md`](pr-conventions.md) for PR workflow, merge policy
 - Prefer small, focused commits over large sweeping ones
 - Separate refactoring from behavior changes into distinct commits
 
+#### Experiment-mode branches
+
+Branches matching `experiment/<run-tag>` (or `exp/<run-tag>`), or branches the project's
+`program.md` declares as experiment branches, operate with extended commit semantics. The
+"one logical change" rule still applies, but a "kept" training run is the logical unit:
+
+- Each kept run gets its own commit; message format: `exp(<run-tag>): <primary-metric>=<value> gpu_h=<hours>`
+  (e.g., `exp(run-001-lr3e4): val_bpb=1.72 gpu_h=2.0`)
+- `TRAINING_RESULTS.md` and any `program.md` update are committed together with the kept run
+- `git reset --hard` to a prior checkpoint commit is the canonical discard mechanism — NOT a
+  violation of the one-commit principle; this is the documented workflow for experiment branches
+- Checkpoint files (`.pt`, `.bin`, `.safetensors`) are gitignored by default; commit only
+  `TRAINING_RESULTS.md` and `program.md` updates, not binary weights
+
+These semantics are scoped to experiment branches and do not affect feature branches or `main`.
+Karpathy's `autoresearch` is one example project that uses this pattern with a project-specific
+branch namespace; see `skills/ml-training/SKILL.md` for the case study and operational modes.
+
 ### Staging Discipline
 
 - Stage specific files by name — avoid `git add -A` or `git add .`
