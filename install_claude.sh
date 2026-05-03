@@ -307,6 +307,36 @@ relink_all() {
 # Git merge drivers and hooks for .ai-state/ reconciliation
 # =============================================================================
 
+# Install one finalize git hook as a symlink to the multiplexed dispatcher.
+# Idempotent: a correctly-pointing symlink is a no-op. Legacy Praxion copies
+# (pre-refactor cp-installed hooks containing finalize_adrs / reconcile_ai_state)
+# are replaced silently. Non-Praxion hooks are backed up to <name>.pre-praxion.
+#
+# Args: <repo-root> <dispatcher-target> <hook-name>
+install_finalize_hook() {
+    local repo_root="$1"
+    local target="$2"
+    local hook_name="$3"
+    local dst="${repo_root}/.git/hooks/${hook_name}"
+
+    if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$target" ]; then
+        info "${hook_name} hook: already linked"
+        return 0
+    fi
+
+    if [ -e "$dst" ] && [ ! -L "$dst" ]; then
+        if grep -qE "finalize_adrs|reconcile_ai_state|finalize_chain" "$dst" 2>/dev/null; then
+            : # Legacy Praxion-managed hook — safe to replace.
+        else
+            warn "Existing ${hook_name} hook is non-Praxion — backing up to ${hook_name}.pre-praxion"
+            mv "$dst" "${dst}.pre-praxion"
+        fi
+    fi
+
+    ln -sf "$target" "$dst"
+    info "${hook_name} hook → scripts/git-finalize-hook.sh"
+}
+
 install_git_merge_infra() {
     # Custom merge drivers for structured .ai-state/ files.
     # These are invoked by git during merge when .gitattributes routes files
@@ -331,22 +361,18 @@ install_git_merge_infra() {
 
     info "Merge drivers: memory-json, observations-jsonl"
 
-    # Install post-merge hook for ADR renumbering + index regeneration.
-    # The hook only fires when .ai-state/ files were involved in the merge.
-    local hook_src="${SCRIPT_DIR}/scripts/git-post-merge-hook.sh"
-    local hook_dst="${repo_root}/.git/hooks/post-merge"
+    # Install three git hooks (post-merge, post-commit, post-checkout) as
+    # symlinks pointing at the multiplexed dispatcher scripts/git-finalize-hook.sh.
+    # State-driven finalization: any path landing drafts on main (ff merge,
+    # direct commit, rebase, fresh clone, branch reset) eventually triggers
+    # one of these and finalizes. The dispatcher reads basename($0) to
+    # determine which trigger fired; gate logic lives in finalize_chain.sh.
+    local finalize_hook_target="${SCRIPT_DIR}/scripts/git-finalize-hook.sh"
 
-    if [ -f "$hook_src" ]; then
-        # Preserve existing post-merge hook if present
-        if [ -f "$hook_dst" ] && ! grep -q "reconcile_ai_state" "$hook_dst" 2>/dev/null; then
-            warn "Existing post-merge hook found — appending reconciliation"
-            printf '\n# Praxion .ai-state/ reconciliation\n' >> "$hook_dst"
-            cat "$hook_src" >> "$hook_dst"
-        else
-            cp "$hook_src" "$hook_dst"
-        fi
-        chmod +x "$hook_dst"
-        info "Post-merge hook: ADR renumbering + index regeneration"
+    if [ -f "$finalize_hook_target" ]; then
+        install_finalize_hook "$repo_root" "$finalize_hook_target" post-merge
+        install_finalize_hook "$repo_root" "$finalize_hook_target" post-commit
+        install_finalize_hook "$repo_root" "$finalize_hook_target" post-checkout
     fi
 
     # Install pre-commit hook for shipped-artifact isolation check.

@@ -13,7 +13,7 @@ Onboard the **current existing** project to work cleanly with the Praxion plugin
 4. §Phase 1 — `.gitignore` hygiene (canonical AI-assistants block)
 5. §Phase 2 — `.ai-state/` skeleton
 6. §Phase 3 — `.gitattributes` + merge driver registration
-7. §Phase 4 — Git hooks (pre-commit + post-merge)
+7. §Phase 4 — Git hooks (pre-commit + post-merge + post-commit + post-checkout)
 8. §Phase 5 — `.claude/settings.json` toggles
 9. §Phase 6 — `CLAUDE.md` Praxion blocks (idempotent append)
 10. §Phase 7 — Companion CLIs (advisory only)
@@ -54,7 +54,7 @@ Before any phase runs, gather facts. Pre-flight writes nothing — it produces a
 5. **Prior-onboarding signals.** Check for any of:
    - `## Agent Pipeline` heading in `CLAUDE.md` (re-onboard scenario — Phase 6 will skip the append)
    - `.ai-state/` directory exists with non-empty contents (re-onboard or pipeline-active)
-   - `.git/hooks/post-merge` symlink pointing at `*/i-am/*/scripts/git-post-merge-hook.sh` (Phase 4 already done)
+   - `.git/hooks/post-merge`, `.git/hooks/post-commit`, and `.git/hooks/post-checkout` symlinks all pointing at `*/i-am/*/scripts/git-finalize-hook.sh` (Phase 4 already done)
 6. **Plugin-source-repo guard.** Detect whether the user has invoked `/onboard-project` on a Claude Code plugin source repo (Praxion itself, or any plugin in development that ships skills/agents/rules/commands). The signal is the existence of `.claude-plugin/plugin.json` at the project root. Plugin source repos curate their own `CLAUDE.md`, `.ai-state/` skeleton, and onboarding artifacts as the **canonical** sources of those patterns; running `/onboard-project` against them would either duplicate content under conflicting headings (the repo's bespoke sections plus newly-injected blocks like `## Agent Pipeline` / `## Praxion Process`) or skew bespoke sections from their downstream-injected counterparts as edits land in only one of the two locations. If `test -e .claude-plugin/plugin.json` succeeds AND the environment variable `PRAXION_ALLOW_SELF_ONBOARD` is not set to `1`, abort with: `This project root contains .claude-plugin/plugin.json — it looks like a Claude Code plugin source repo, not a consumer project. Plugin source repos curate their own CLAUDE.md and .ai-state/ as canonical sources of the onboarding patterns; running /onboard-project would either duplicate content under conflicting headings or skew bespoke sections from their downstream-injected counterparts. If you genuinely want to onboard this repo (rare — only useful for divergent forks), set PRAXION_ALLOW_SELF_ONBOARD=1 in the environment and re-run.` Exit without writing. **Override:** if `PRAXION_ALLOW_SELF_ONBOARD=1` is set, print a single-line warning to chat (`Self-onboard override active — proceeding on plugin source repo at <project-root>.`) and continue.
 7. **Greenfield-shape check.** Detect whether the user has accidentally invoked `/onboard-project` on a freshly-scaffolded greenfield project that should run `/new-project` instead. The greenfield signature: `.git/` exists, `.gitignore` contains the AI-assistants header, `.claude/` is empty, AND there is no `src/`, `pyproject.toml`, `package.json`, `Cargo.toml`, or `go.mod` (no source code yet). If all conditions hold, abort with: `This directory looks like a freshly-scaffolded greenfield project (.git/ + AI-assistants .gitignore + empty .claude/ + no source tree). Run /new-project instead — it scaffolds the codebase via the agent pipeline AND applies the existing-project onboarding surfaces at end. /onboard-project is for projects that already have code.` Exit without writing.
 8. **Print the pre-flight report** to chat. Format:
@@ -79,7 +79,7 @@ Execute these phases in order. Each phase honors §Idempotency Predicates — re
 | 1 | Append AI-assistants block to `.gitignore` | Block detected by `# AI assistants` header line |
 | 2 | Create `.ai-state/` skeleton (4 files) | Each file's existence checked individually |
 | 3 | Append `.gitattributes` entries + register merge drivers via `git config` | Entries detected by exact-line match; drivers detected via `git config --get` |
-| 4 | Symlink pre-commit + post-merge hooks (skip if `skip-phase-4` flag) | Symlinks detected via `readlink` resolving to the plugin path |
+| 4 | Symlink pre-commit + the three finalize hooks (post-merge, post-commit, post-checkout) (skip if `skip-phase-4` flag) | Symlinks detected via `readlink` resolving to the plugin path |
 | 5 | Write `.claude/settings.json` with chosen `PRAXION_DISABLE_*` flags | Existing keys preserved unless user explicitly chooses to override |
 | 6 | Append Agent Pipeline + Compaction Guidance + Behavioral Contract + Praxion Process blocks to `CLAUDE.md` | `## Agent Pipeline` heading detection per block |
 | 7 | Print companion-CLI install commands (advisory) | None — purely informational |
@@ -115,7 +115,7 @@ The default §Flow runs end-to-end without pause. To let users *learn* the model
 | 1 | 1 (entry + phase 1) | `I'll walk you through 9 phases that turn this project into a Praxion-aware repo: gitignore hygiene, .ai-state/ skeleton, merge drivers, git hooks, .claude/settings.json toggles, CLAUDE.md blocks, optional CLI tools, an opt-in architecture baseline, and a verification handoff. First up — Phase 1 of 9: I append a Praxion AI-assistants block to your .gitignore. Without these entries, advisory locks, memory backups, per-machine settings, and worktrees can leak into commits. Idempotent — re-runs are no-ops. Continue?` |
 | 2 | 2 | `Phase 2 of 9: I create the .ai-state/ skeleton — decisions/drafts/, DECISIONS_INDEX.md, TECH_DEBT_LEDGER.md, calibration_log.md. Each is created only if missing; existing files are never overwritten. Continue?` |
 | 3 | 3 | `Phase 3 of 9: I add merge-driver entries to .gitattributes and run 'git config' to register Python-based semantic merge drivers for .ai-state/memory.json and .ai-state/observations.jsonl. Without these, concurrent edits get corrupted by line-based merge. Continue?` |
-| 4 | 4 | `Phase 4 of 9: I install two git hooks — pre-commit (id-citation discipline) and post-merge (ADR finalize + tech-debt dedupe + squash-safety check). Without the post-merge hook, draft ADRs never promote to stable dec-NNN. Symlinks resolve to the plugin scripts so updates flow automatically. Continue?` |
+| 4 | 4 | `Phase 4 of 9: I install four git hooks — pre-commit (id-citation discipline) and three finalize hooks (post-merge, post-commit, post-checkout) all sharing one multiplexed dispatcher. The trio guarantees that draft ADRs landing on main via any path — ff merge, direct commit, rebase, fresh clone, branch reset — eventually promote to stable dec-NNN. Symlinks resolve to the plugin scripts so updates flow automatically. Continue?` |
 | 5 | 5 | (Multi-select on PRAXION_DISABLE_* toggles — see §Phase 5 for option text) |
 | 6 | 6 | `Phase 6 of 9: I append four blocks to CLAUDE.md — the Agent Pipeline (how to use Praxion's subagents), Compaction Guidance (what to preserve when the conversation compacts), Behavioral Contract reminder, and Praxion Process (the tier-driven pipeline principle + rule-inheritance obligation). Each block is idempotent via heading detection. Continue?` |
 | 7 | 7 | `Phase 7 of 9: I check whether chub (external API docs), scc (SLOC counter), and uv (Python tooling) are installed. I won't install anything — I'll print one-line install commands you can run later if useful. Continue?` |
@@ -226,11 +226,15 @@ Do NOT create `.ai-state/memory.json` or `.ai-state/observations.jsonl` — thos
 
 ## §Phase 4 — Git hooks
 
-**Why these hooks.** The pre-commit hook enforces id-citation discipline — committed code must not reference ephemeral pipeline ids (`REQ-NN`, `AC-NN`, `Step N`, draft ADR hashes). Rationale, exempt paths, and escape hatch live in `rules/swe/id-citation-discipline.md`. The post-merge hook chains four operations that keep `.ai-state/` consistent across local merges: `reconcile_ai_state.py` (memory.json + observations.jsonl reconciliation), `finalize_adrs.py` (promote draft ADRs to stable `dec-NNN`), `finalize_tech_debt_ledger.py` (dedupe rows by `dedup_key`), `check_squash_safety.py` (warn if squash erased `.ai-state/`). Without the post-merge hook, draft ADRs never promote.
+**Why these hooks.** The pre-commit hook enforces id-citation discipline — committed code must not reference ephemeral pipeline ids (`REQ-NN`, `AC-NN`, `Step N`, draft ADR hashes). Rationale, exempt paths, and escape hatch live in `rules/swe/id-citation-discipline.md`.
+
+Three finalize hooks (post-merge, post-commit, post-checkout) all symlink to a single multiplexed dispatcher (`scripts/git-finalize-hook.sh`) that reads `basename($0)` and dispatches to the matching entry point in `scripts/finalize_chain.sh`. The trio is state-driven: each entry point gates on "are we on main with drafts present?" so draft ADRs landing on main via any path eventually promote — fast-forward merges (post-merge), direct commits / non-ff merges / rebases / cherry-picks (post-commit), branch switch / fresh clone / reset (post-checkout). Single-trigger coverage misses real cases (a branch reset to main, a fresh clone with drafts on main, a fast-forward pull) where drafts otherwise sit in `decisions/drafts/` indefinitely.
+
+Composition per trigger: `post-merge` runs `reconcile_ai_state.py` (when `.ai-state/` was touched), `finalize_adrs.py --all` and `finalize_tech_debt_ledger.py --all` (when on main with drafts), then `check_squash_safety.py` (always, as a non-blocking diagnostic). `post-commit` and `post-checkout` run only the on-main finalize subset. All steps are non-blocking — a hook cannot abort a completed git operation.
 
 **Skip condition.** If §Pre-flight set the `skip-phase-4` flag (plugin not installed), skip this phase entirely and emit: `Skipping Phase 4 — install the plugin and re-run /onboard-project to install hooks.`
 
-**Predicate.** Detect existing symlinks via `readlink .git/hooks/<name>` and check whether the target contains `/i-am/` and ends in `git-pre-commit-hook.sh` or `git-post-merge-hook.sh` respectively. If either is already a Praxion symlink, skip that hook.
+**Predicate.** Detect existing symlinks via `readlink .git/hooks/<name>` and check whether the target contains `/i-am/`. The pre-commit hook target ends in `git-pre-commit-hook.sh`; the three finalize hooks (`post-merge`, `post-commit`, `post-checkout`) all share `git-finalize-hook.sh` as their target. Each individual hook that is already a correct Praxion symlink is skipped; the others install. Legacy targets (`git-post-merge-hook.sh` from older versions) count as Praxion-managed and are upgraded to the new symlink target without prompting.
 
 **Action.**
 
@@ -255,11 +259,17 @@ Do NOT create `.ai-state/memory.json` or `.ai-state/observations.jsonl` — thos
 
    **If `.git/hooks/pre-commit` already exists and is NOT a Praxion hook**, back it up to `.git/hooks/pre-commit.pre-praxion` and warn the user. Do not silently overwrite a non-Praxion hook.
 
-2. **Post-merge hook** — symlink `.git/hooks/post-merge` to the plugin's universally-useful post-merge script:
+2. **Finalize hooks (post-merge, post-commit, post-checkout)** — symlink all three `.git/hooks/<name>` entries to the plugin's multiplexed dispatcher:
    ```bash
-   ln -sf "${PLUGIN_INSTALL_PATH}/scripts/git-post-merge-hook.sh" .git/hooks/post-merge
+   for hook in post-merge post-commit post-checkout; do
+     ln -sf "${PLUGIN_INSTALL_PATH}/scripts/git-finalize-hook.sh" ".git/hooks/${hook}"
+   done
    ```
-   The script chains `reconcile_ai_state.py` → `finalize_adrs.py` → `finalize_tech_debt_ledger.py` → `check_squash_safety.py`. All four are universally useful: ADR draft promotion, tech-debt row dedupe, post-merge memory/observations reconciliation, squash-erasure warning. Same conflict-handling rule as pre-commit: if a non-Praxion hook is in place, back it up to `.git/hooks/post-merge.pre-praxion`.
+   The dispatcher reads `basename($0)` to determine which trigger fired and dispatches to the matching entry point in `finalize_chain.sh`. Together the three hooks cover every path that lands draft ADRs on `main` — fast-forward merges (post-merge), direct commits / non-ff merges / rebases / cherry-picks (post-commit), branch switch / fresh clone (post-checkout). Without all three, draft ADRs that arrive on main via paths that don't fire `post-merge` (or that landed without a textbook merge event) silently sit in `decisions/drafts/` indefinitely.
+
+   The dispatcher is state-driven: each entry point gates on `on_main && drafts_present` before invoking `finalize_adrs.py --all` and `finalize_tech_debt_ledger.py --all`. `post-merge` additionally runs `reconcile_ai_state.py` (when `.ai-state/` was touched) and `check_squash_safety.py` (always, as a diagnostic). All steps are non-blocking — a hook cannot abort a completed git operation.
+
+   Same conflict-handling rule as pre-commit: if any of the three hooks already exists and is NOT a Praxion-managed file, back it up to `.git/hooks/<name>.pre-praxion`. Detect Praxion-managed files by symlink target (canonical) or by grepping for `finalize_chain` / `finalize_adrs` / `reconcile_ai_state` (legacy copies from older versions).
 
    `chmod +x` is implicit on a symlink target that is already executable.
 
@@ -674,7 +684,7 @@ Phase 9 verification handoff lists every staged file across all phases — Phase
      Phase 1: .gitignore (appended 10 lines, AI-assistants block)
      Phase 2: .ai-state/ skeleton (4 new entries)
      Phase 3: .gitattributes (appended 2 lines), git config (2 merge drivers registered)
-     Phase 4: .git/hooks/pre-commit (new), .git/hooks/post-merge (symlink)
+     Phase 4: .git/hooks/pre-commit (new), .git/hooks/{post-merge,post-commit,post-checkout} (symlinks)
      Phase 5: .claude/settings.json (4 PRAXION_DISABLE_* env vars)
      Phase 6: CLAUDE.md (appended Agent Pipeline + Compaction + Behavioral Contract + Praxion Process blocks)
      Phase 7: companion CLIs — chub missing (install: ...), scc missing (install: ...)
@@ -708,7 +718,7 @@ Phase 9 verification handoff lists every staged file across all phases — Phase
 Follow the **Understand, Plan, Verify** methodology. For multi-step work (Standard/Full tier), delegate to specialized agents in pipeline order. Each pipeline operates in an ephemeral `.ai-work/<task-slug>/` directory (deleted after use); permanent artifacts go to `.ai-state/` (committed to git).
 
 1. **researcher** → `.ai-work/<slug>/RESEARCH_FINDINGS.md` — codebase exploration, external docs
-2. **systems-architect** → `.ai-work/<slug>/SYSTEMS_PLAN.md` + ADR drafts under `.ai-state/decisions/drafts/` (promoted to stable `<NNN>-<slug>.md` at merge-to-main by the post-merge hook) + `.ai-state/ARCHITECTURE.md` (architect-facing) + `docs/architecture.md` (developer-facing)
+2. **systems-architect** → `.ai-work/<slug>/SYSTEMS_PLAN.md` + ADR drafts under `.ai-state/decisions/drafts/` (promoted to stable `<NNN>-<slug>.md` once on `main` by the finalize hook chain — post-merge / post-commit / post-checkout, all sharing one dispatcher) + `.ai-state/ARCHITECTURE.md` (architect-facing) + `docs/architecture.md` (developer-facing)
 3. **implementation-planner** → `.ai-work/<slug>/IMPLEMENTATION_PLAN.md` + `WIP.md` — step decomposition
 4. **implementer** + **test-engineer** (concurrent, on disjoint file sets) → code + tests — execute steps from the plan
 5. **verifier** → `.ai-work/<slug>/VERIFICATION_REPORT.md` — post-implementation review
@@ -770,7 +780,7 @@ Apply Praxion's tier-driven pipeline for non-trivial work. Use the tier selector
 | 1 | `grep -q '^# AI assistants$' .gitignore` |
 | 2 | Per-file: `test -e .ai-state/<file>` for each of the four targets — skip files individually |
 | 3 | `grep -qF '.ai-state/memory.json merge=memory-json' .gitattributes` AND `git config --get merge.memory-json.driver` returns a value containing `i-am` AND same for `observations-jsonl` |
-| 4 | `readlink .git/hooks/pre-commit` resolves to a Praxion-shipped file (or the file is a script containing `check_id_citation_discipline`) AND `readlink .git/hooks/post-merge` resolves to a path containing `/i-am/` |
+| 4 | `readlink .git/hooks/pre-commit` resolves to a Praxion-shipped file (or the file is a script containing `check_id_citation_discipline`) AND each of `readlink .git/hooks/{post-merge,post-commit,post-checkout}` resolves to a path containing `/i-am/` (target ending in `git-finalize-hook.sh`, or the legacy `git-post-merge-hook.sh` for the post-merge slot only) |
 | 5 | All four `PRAXION_DISABLE_*` keys present under `.env` in `.claude/settings.json` (any value) |
 | 6 | `grep -q '^## Agent Pipeline$' CLAUDE.md` (per block — checked individually for the four blocks; `grep -q '^## Praxion Process$' CLAUDE.md` for the Praxion Process block) |
 | 7 | None — phase 7 is advisory and always runs |
