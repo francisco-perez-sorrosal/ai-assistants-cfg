@@ -169,3 +169,21 @@ For package management commands, see the [Python Project Management](../python-p
 <tool> run pytest -x                # Stop on first failure
 <tool> run pytest --lf              # Run last failed
 ```
+
+### Pipeline-Agent Compact Mode
+
+When invoked from a pipeline agent (`implementer`, `test-engineer`, or any subagent operating under a `maxTurns` budget), prefer compact tool output. Verbose output compounds in cumulative agent context — every passing-test line written on turn N rides along inside turn N+1's input, making every later round-trip more expensive and pulling the agent closer to runtime-level token thresholds.
+
+```bash
+# Compact defaults — use these in pipeline runs
+<tool> run pytest --tb=short -q                              # Tests: short tracebacks, suppress per-test dots/passes
+<tool> run ruff check --fix --output-format concise .         # Lint: one line per finding, no source preview
+<tool> run ruff format .                                      # Format: already terse — no flag change needed
+<tool> run mypy src/                                          # Type check: terse by default — no flag change needed
+
+# Escalate only when investigating a specific failure
+<tool> run pytest --tb=long path/to/test_module.py::test_name  # Single failure deep-dive
+<tool> run pytest -v path/to/test_module.py                    # Verbose for one targeted file
+```
+
+**Cost-of-verbosity reference**: a 50-test suite with `pytest -v` emits roughly 3–5k tokens; the same suite with `--tb=short -q` emits roughly 300–800 tokens for the same outcome. The savings compound on every subsequent agent turn that carries the test-run history. `ruff check --output-format concise` typically halves lint output relative to the default `full` format on codebases with many findings.
