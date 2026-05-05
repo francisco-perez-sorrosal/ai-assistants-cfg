@@ -1,0 +1,42 @@
+# .sentrux/rules.toml — structural quality contracts for this project.
+#
+# Template rendered by /onboard-project Phase 8b sub-step 8b.6 (or
+# /new-project AaC sub-flow when greenfield onboarding picks the AaC tier).
+# Edit the constraints, define your layers, and declare boundaries to
+# match this project's architecture.
+#
+# Sentrux rules engine reference: https://github.com/sentrux/sentrux
+#
+# IMPORTANT — metadata drift caveat (verified in upstream commit 28e644d,
+# March 2026): the sentrux plugin manifest currently advertises "14 health
+# dimensions graded A-F" while the v0.5.7+ binary README advertises "5
+# root-cause structural metrics" (modularity, acyclicity, depth, equality,
+# redundancy). Pin to a known-good sentrux version if your CI gates on
+# either count being stable.
+
+[constraints]
+# Maximum dependency cycles allowed in the codebase. 0 = no cycles permitted.
+max_cycles = 0
+
+# Forbid "god files" — files concentrating disproportionate responsibility.
+no_god_files = true
+
+# Maximum coupling per module (numeric heuristic — tune after the first
+# `sentrux scan` produces a baseline; the default may be too strict or too
+# permissive depending on your codebase shape).
+# max_coupling = 50
+
+# Maximum cyclomatic complexity per function.
+# max_cc = 20
+
+[layers]
+# Named regions of the codebase, identified by path patterns. Uncomment and
+# replace with your project's layering. Example:
+#   domain    = ["src/domain/**"]
+#   adapters  = ["src/adapters/**"]
+#   api       = ["src/api/**"]
+
+[boundaries]
+# Directional dependency restrictions between layers. Uncomment and replace:
+#   "domain"   = { forbidden = ["adapters", "api"] }
+#   "adapters" = { forbidden = ["api"] }

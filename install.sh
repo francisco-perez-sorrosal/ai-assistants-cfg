@@ -294,6 +294,94 @@ uninstall_python_tooling() {
 }
 
 # =============================================================================
+# Shared — Sentrux Structural Quality Sensor (opt-in, default-skip)
+# =============================================================================
+#
+# Sentrux is an external Rust-native architectural quality sensor with a
+# Claude Code marketplace plugin. Unlike chub/scc/uv (tightly bound to
+# Praxion's core workflows and recommended-by-default), sentrux is a
+# discretionary external tool — defaulting to skip preserves existing
+# behavior for everyone re-running install.sh and matches the
+# /onboard-project Phase 8b.6 opt-in posture.
+#
+# The plugin (Claude-Code-session-level) is NOT installed here — the
+# binary alone is. Per-project rules and plugin install land in the
+# /onboard-project Phase 8b.6 sub-step inside Claude Code.
+
+install_sentrux_cli() {
+    header "Shared — Sentrux Structural Quality Sensor (optional)"
+
+    if command -v sentrux &>/dev/null; then
+        info "sentrux already installed ($(sentrux --version 2>/dev/null | head -1 || echo '?'))"
+        return
+    fi
+
+    cat <<EOF
+
+  ${B}[1] Install sentrux${R}
+      ${D}Sentrux is a Rust-native structural quality sensor for AI-agent${R}
+      ${D}coding sessions. Per-project enablement happens later via${R}
+      ${D}/onboard-project Phase 8b.6 (also opt-in).${R}
+      ${D}  macOS:  brew install sentrux/tap/sentrux${R}
+      ${D}  Linux:  curl -sSf https://sentrux.dev/install.sh | sh${R}
+
+  ${B}[2] Skip (default — recommended unless you've decided to adopt sentrux)${R}
+      ${D}No sentrux binary. /onboard-project Phase 8b.6 will still write${R}
+      ${D}.sentrux/rules.toml when chosen but cannot save a baseline.${R}
+      ${D}Install later by re-running: ./install.sh${R}
+EOF
+    ask 2 2
+
+    if [ "$REPLY" -eq 2 ]; then
+        step "sentrux skipped"
+        return
+    fi
+
+    if [[ "$(uname -s)" == "Darwin" ]] && command -v brew &>/dev/null; then
+        step "Installing sentrux via Homebrew tap (sentrux/tap/sentrux)..."
+        if brew install sentrux/tap/sentrux 2>&1 | tail -1; then
+            info "sentrux installed ($(sentrux --version 2>/dev/null | head -1 || echo '?'))"
+            return
+        fi
+        warn "brew install sentrux failed; falling back to the upstream curl installer"
+    fi
+
+    step "Installing sentrux via upstream installer (https://sentrux.dev/install.sh)..."
+    if curl -sSf https://sentrux.dev/install.sh | sh 2>&1 | tail -3; then
+        if command -v sentrux &>/dev/null; then
+            info "sentrux installed ($(sentrux --version 2>/dev/null | head -1 || echo '?'))"
+        else
+            warn "sentrux installed but not yet on PATH — restart your shell and re-run install.sh"
+        fi
+    else
+        warn "sentrux install failed; install manually: https://github.com/sentrux/sentrux"
+    fi
+}
+
+check_sentrux_cli() {
+    printf "\n  ${B}Sentrux Structural Quality Sensor:${R}\n"
+    if command -v sentrux &>/dev/null; then
+        info "sentrux installed ($(sentrux --version 2>/dev/null | head -1 || echo '?'))"
+    else
+        warn "sentrux not installed (optional — /onboard-project Phase 8b.6 still works without it)"
+    fi
+}
+
+uninstall_sentrux_cli() {
+    if ! command -v sentrux &>/dev/null; then
+        return
+    fi
+    step "Removing sentrux..."
+    if command -v brew &>/dev/null && brew list sentrux &>/dev/null; then
+        brew uninstall sentrux 2>/dev/null \
+            && info "sentrux removed (brew)" \
+            || warn "sentrux removal via brew failed"
+    else
+        warn "sentrux was likely installed via the upstream curl installer; remove manually per https://github.com/sentrux/sentrux"
+    fi
+}
+
+# =============================================================================
 # Overview banner
 # =============================================================================
 
@@ -307,6 +395,8 @@ show_overview() {
     • External API docs (chub CLI — curated docs for 600+ libraries)
     • Optional metrics tool (scc — SLOC counter used by /project-metrics)
     • Python tooling (uv + pytest/pytest-cov for Praxion's own tests and coverage)
+    • Sentrux structural quality sensor (optional, default-skip — per-project
+      enablement happens via /onboard-project Phase 8b.6)
 EOF
 
     case "$mode" in
@@ -472,21 +562,25 @@ elif $CHECK; then
     check_chub_cli
     check_scc_cli
     check_python_tooling
+    check_sentrux_cli
     exit $delegate_rc
 elif $UNINSTALL; then
     delegate
     uninstall_chub_cli
     uninstall_scc_cli
     uninstall_python_tooling
+    uninstall_sentrux_cli
 elif $DRY_RUN; then
     check_chub_cli
     check_scc_cli
     check_python_tooling
+    check_sentrux_cli
     delegate
 else
     # Install: shared CLIs first, then tool-specific
     install_chub_cli
     install_scc_cli
     install_python_tooling
+    install_sentrux_cli
     delegate
 fi

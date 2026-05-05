@@ -402,12 +402,12 @@ Note: AaC enforcement via Block D requires the `i-am` plugin to be installed. If
 | Option label | Description |
 |---|---|
 | `Skip AaC (recommended for existing projects)` | **Default.** No AaC scaffolding installed. Phase 9 verification handoff runs normally. Re-run `/onboard-project` later when ready — all sub-steps are idempotent. |
-| `Install AaC tier` | Run all five sub-steps (8b.1–8b.5). Each is independently idempotent; already-installed surfaces are silently skipped. |
+| `Install AaC tier` | Run all six sub-steps (8b.1–8b.6). Each is independently idempotent; already-installed surfaces are silently skipped. Sub-step 8b.6 (sentrux structural quality sensor) is itself opt-in within the AaC tier — the user is prompted before any sentrux artifact is written. |
 | `Run all rest` | Skip remaining gates; default the AaC choice to `Skip AaC` (matches the existing-project principle "extend existing patterns; do not impose"). |
 
 When the `no-more-gates` flag is set (user previously picked `Run all rest`), default to `Skip AaC` without prompting.
 
-**Action when "Install AaC tier" is chosen.** Run sub-steps 8b.1 through 8b.5 in order. Each sub-step prints one line on completion or skip.
+**Action when "Install AaC tier" is chosen.** Run sub-steps 8b.1 through 8b.6 in order. Each sub-step prints one line on completion or skip. Sub-step 8b.6 prompts before doing any work (opt-in within the opt-in tier — sentrux is an external tool with policy decisions still in flight).
 
 ### Sub-step 8b.1 — Fence seed
 
@@ -494,15 +494,63 @@ Print: `8b.4: .github/workflows/architecture.yml written`.
 
 Print: `8b.5: docs/diagrams/ created` (with `.gitkeep` appended if the placeholder was written).
 
-**Verification handoff.** After all five sub-steps complete, print the final-state checklist:
+### Sub-step 8b.6 — Sentrux structural quality sensor (opt-in within opt-in)
+
+**Predicate.** `.sentrux/rules.toml` does NOT exist.
+
+- If `.sentrux/rules.toml` exists: skip with notice `8b.6: skipped (.sentrux/rules.toml already present)`.
+
+**Gate prompt (always — even when "Install AaC tier" was chosen).** Use `AskUserQuestion` with `header: "Install sentrux quality sensor?"`, `multiSelect: false`, and these two options:
+
+| Option label | Description |
+|---|---|
+| `Skip sentrux (default)` | **Default.** No sentrux artifact written. Other AaC sub-steps (8b.1–8b.5) are unaffected. Re-run later by re-invoking `/onboard-project` and choosing this option. |
+| `Install sentrux` | Write `.sentrux/rules.toml` from the Praxion AaC template, save a quality baseline if the binary is on PATH, and emit Claude Code marketplace install instructions. |
+
+**Why a second gate inside the AaC tier.** Sentrux is an external tool. The Praxion sentinel/verifier/architect-validator/import-linter stack already covers most quality-signal needs; sentrux fills a real but narrow gap (real-time, language-agnostic structural quality during agent coding sessions). Several policy decisions remain open at the time this sub-step ships (version-pinning, vendor-skill coexistence with Praxion's skill ecosystem, baseline-degradation enforcement). A separate gate keeps the smallest install footprint default-skip until those decisions are made.
+
+**Action when "Install sentrux" is chosen.**
+
+1. Detect the binary: shell out to `command -v sentrux`. If absent, print and continue without aborting other sub-steps:
+   ```
+   sentrux binary not found on PATH. To install on this machine:
+     macOS: brew install sentrux/tap/sentrux
+     Linux: curl -sSf https://sentrux.dev/install.sh | sh
+   Re-run /onboard-project after installing to save a baseline.
+   ```
+2. Create `.sentrux/` directory if missing.
+3. Read `claude/aac-templates/sentrux-rules.toml.tmpl` from the Praxion repo (use the same plugin-install-path resolution pattern used by sub-step 8b.2 for fitness templates).
+4. Write the template content verbatim to `.sentrux/rules.toml` using `Write`. The template is self-documenting — no placeholder substitution is performed here; users edit `[layers]` and `[boundaries]` to reflect their architecture.
+5. If the binary was detected in step 1, run `sentrux gate --save` (Bash) and capture the exit code. On success, print `8b.6: sentrux baseline saved (.sentrux/rules.toml + initial quality snapshot)`. On non-zero exit, print `8b.6: rules.toml written; baseline save failed (re-run 'sentrux gate --save' after editing layers/boundaries)`.
+6. If the binary was absent, print `8b.6: rules.toml written; install the sentrux binary and re-run 'sentrux gate --save' to capture a baseline`.
+7. Always emit the Claude Code marketplace install instructions (these are the same regardless of binary state — the user runs them inside their next Claude Code session):
+   ```
+   To enable live sentrux signals during agent coding sessions in Claude Code:
+     /plugin marketplace add sentrux/sentrux
+     /plugin install sentrux@sentrux-marketplace
+   The plugin's MCP server connects to the local sentrux binary you installed above.
+   ```
+
+**Open policy decisions deferred to systems-architect.** The smallest viable next step ships with these explicitly unresolved (none block 8b.6 from working as a default-skip opt-in):
+
+- Version-pinning policy (latest vs. pinned `sentrux@<x.y.z>`).
+- Cursor/Windsurf install path (current 8b.6 emits Claude Code marketplace instructions only).
+- Vendor-skill coexistence (sentrux ships its own `scan` skill via the marketplace plugin; sentinel/skill-genesis treatment of vendor skills is unspecified).
+- Verifier elevation of `sentrux check .` to a standard verification phase.
+- Baseline-degradation policy when `sentrux gate .` regresses mid-pipeline.
+
+These are tracked in the integration-evaluation findings produced during the research that motivated this sub-step. When resolved, this sub-step's action steps and the template comment block update accordingly.
+
+**Verification handoff.** After all six sub-steps complete, print the final-state checklist:
 
 ```
 AaC tier install summary:
-  8b.1 fence seed:      <installed | skipped (reason)>
-  8b.2 fitness/:        <installed | skipped (reason)>
-  8b.3 Block D:         <installed | skipped (reason)>
-  8b.4 architecture.yml:<installed | skipped (reason)>
-  8b.5 docs/diagrams/:  <installed | skipped (reason)>
+  8b.1 fence seed:        <installed | skipped (reason)>
+  8b.2 fitness/:          <installed | skipped (reason)>
+  8b.3 Block D:           <installed | skipped (reason)>
+  8b.4 architecture.yml:  <installed | skipped (reason)>
+  8b.5 docs/diagrams/:    <installed | skipped (reason)>
+  8b.6 .sentrux/rules.toml:<installed | skipped (reason)>
 ```
 
 Phase 9 verification handoff lists every staged file across all phases — Phase 8b's surfaces are included in that enumeration.
@@ -785,7 +833,7 @@ Apply Praxion's tier-driven pipeline for non-trivial work. Use the tier selector
 | 6 | `grep -q '^## Agent Pipeline$' CLAUDE.md` (per block — checked individually for the four blocks; `grep -q '^## Praxion Process$' CLAUDE.md` for the Praxion Process block) |
 | 7 | None — phase 7 is advisory and always runs |
 | 8 | `test -e .ai-state/ARCHITECTURE.md` OR `test -e docs/architecture.md` (skip phase if either doc exists — covers re-runs and greenfield-followed-by-onboard); also skipped if the user picks `Skip` at Gate 8 |
-| 8b | User picks `Skip AaC` (or `Run all rest`) at Gate 8b — skips entire phase. Per-sub-step: 8b.1 — arch doc contains `aac:generated` or `aac:authored`; 8b.2 — `test -d fitness/`; 8b.3 — `grep -q 'check_aac_golden_rule\|Block D' .git/hooks/pre-commit`; 8b.4 — `test -e .github/workflows/architecture.yml`; 8b.5 — `test -d docs/diagrams/` |
+| 8b | User picks `Skip AaC` (or `Run all rest`) at Gate 8b — skips entire phase. Per-sub-step: 8b.1 — arch doc contains `aac:generated` or `aac:authored`; 8b.2 — `test -d fitness/`; 8b.3 — `grep -q 'check_aac_golden_rule\|Block D' .git/hooks/pre-commit`; 8b.4 — `test -e .github/workflows/architecture.yml`; 8b.5 — `test -d docs/diagrams/`; 8b.6 — `test -e .sentrux/rules.toml` (and within 8b.6, the user picks `Skip sentrux` at the inner gate) |
 | 8c | No ML signals detected (skip entire phase). User picks `Skip ML scaffold` at Gate 8c — skips entire phase. Per-sub-step: 8c.1 — `test -d .ai-state/experiments/`; 8c.2 — `grep -q '# ML training checkpoints' .gitignore`; 8c.3 — `test -e .ai-state/gpu_budget.yaml`; 8c.4 — `test -e program.md`; 8c.5 — none (always prints) |
 | 9 | None — terminal phase always runs |
 

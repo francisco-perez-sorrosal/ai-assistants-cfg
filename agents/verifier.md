@@ -261,6 +261,32 @@ Classify each as `PASS` / `WARN` / `FAIL` with `[Architecture:guide]` tag.
 
 Skip this sub-phase if `docs/architecture.md` does not exist.
 
+### Phase 9b -- Architecture Quality Sensor (advisory, opt-in)
+
+This phase consumes signals from the external sentrux structural quality sensor when the project has opted in via `/onboard-project` Phase 8b.6.
+
+**Prerequisite gate (silent skip when not met).** Both must hold:
+
+- `.sentrux/rules.toml` exists at the project root
+- `command -v sentrux` returns a path
+
+If either fails, skip this phase silently. No skip notice — projects that have not opted into sentrux should not see verifier output mentioning it.
+
+**Action when prerequisites are met.**
+
+1. Run `sentrux check .` via Bash and capture the exit code and stdout (truncate stdout to ~2 KB if longer; the goal is a citable excerpt, not the full report).
+2. Classify the result:
+   - exit 0 → record a single `PASS` finding: `[Architecture:quality] sentrux check . — all .sentrux/rules.toml constraints satisfied`
+   - exit 1 → record a single `WARN` finding (NEVER FAIL): `[Architecture:quality] sentrux check . reported one or more rule violations. Treat as advisory; sentrux integration is opt-in and elevation policy (skills/sentrux/SKILL.md § 7 Q4) is unresolved. Excerpt: <truncated stdout>`
+   - non-zero exit other than 1 → record a single `WARN` finding tagged `[Architecture:quality]` with the exit code and stderr excerpt; the binary's contract is exit 0 for pass and exit 1 for fail, so other codes signal an environmental issue rather than a rule violation
+3. Add the finding to the Architecture Quality section of `VERIFICATION_REPORT.md` (create the section if it does not exist).
+
+**Authority.** This phase is **advisory only** — never `FAIL`, even on rule violation. The verifier's authoritative gates remain acceptance criteria (Phase 3), spec conformance (Phase 4), convention compliance (Phase 5), and security review (Phase 6). Sentrux signals enter as supplementary evidence for the human reviewer, not as automated gates.
+
+**Tool-use guidance.** For sentrux output interpretation, the 0-10000 quality score, the metric-model drift caveat, and the deferred policy decisions, consult the `sentrux` skill on demand (it is not auto-injected — load it when this phase actually fires).
+
+**Future evolution.** When the systems-architect resolves Open Q4 (verifier elevation policy) toward gating, the `WARN`-only classification above moves to FAIL, and this advisory note is removed. Until then, the smallest viable integration stays advisory.
+
 ### Phase 10 -- Test Coverage Assessment
 
 When tests exist or are expected:
