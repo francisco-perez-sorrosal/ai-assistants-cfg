@@ -346,7 +346,11 @@ Three candidate UI implementations, ordered from simplest to richest. All three 
 
 ### Path A — Zero-install static HTML
 
-One file, no build step, no framework. Drop it next to the JSON directory, serve with `python -m http.server`, point a browser at it. The `file://` protocol blocks `fetch()` for cross-origin reads, so a simple HTTP server is required.
+One file, no build step, no framework. The viewer ships at `.ai-state/metrics_reports/index.html` — co-located with the data so all fetch paths are same-directory. Serve with `python -m http.server` from inside `.ai-state/metrics_reports/` and point a browser at `index.html`. The `file://` protocol blocks `fetch()` for cross-origin reads, so a simple HTTP server is required.
+
+The bundled viewer reads two log files when present: `METRICS_LOG.md` (the canonical aggregate) and `SENTRUX_HISTORY.md` (the sentrux side-car written by `scripts/sentrux_history.py`). Sentrux per-run reports also land in this directory as `SENTRUX_REPORT_<timestamp>.{md,json}` triples — same naming convention as the canonical metrics reports.
+
+The minimal example below shows the same-directory fetch shape — the actual viewer is more elaborate (KPI tiles, multiple panels, sentrux side-car):
 
 ```html
 <!DOCTYPE html>
@@ -356,11 +360,13 @@ One file, no build step, no framework. Drop it next to the JSON directory, serve
 <canvas id="chart" width="800" height="400"></canvas>
 <script>
 async function loadAll() {
-  // Hardcoded index: in practice, generate `index.json` listing every
-  // METRICS_REPORT_*.json at write time, or let the server return a directory listing.
-  const index = await fetch('index.json').then(r => r.json());
+  // Same-directory fetch: viewer and METRICS_REPORT_*.json files live together
+  // in .ai-state/metrics_reports/. In practice, generate `index.json` listing
+  // every METRICS_REPORT_*.json at write time, or let the server return a
+  // directory listing.
+  const index = await fetch('./index.json').then(r => r.json());
   const reports = await Promise.all(
-    index.files.map(f => fetch(f).then(r => r.json()))
+    index.files.map(f => fetch('./' + f).then(r => r.json()))
   );
   reports.sort((a, b) => a.aggregate.timestamp.localeCompare(b.aggregate.timestamp));
   const labels = reports.map(r => r.aggregate.timestamp);

@@ -13,6 +13,15 @@
 # root-cause structural metrics" (modularity, acyclicity, depth, equality,
 # redundancy). Pin to a known-good sentrux version if your CI gates on
 # either count being stable.
+#
+# Schema (verified against sentrux v0.5.7 binary on 2026-05-04):
+#   [constraints]      — table of scalar caps (max_cycles, no_god_files, ...)
+#   [[layers]]         — array-of-tables; each entry has `name` + `paths` (list of glob strings)
+#   [[boundaries]]     — array-of-tables; each entry has `from`, `to`, `reason` (strings)
+#
+# Verify after rendering: run `sentrux check .` from the project root.
+# Exit 0 = file parses and rules pass; exit 1 + parse-error message = the
+# schema in this file diverged from the installed binary's expectation.
 
 [constraints]
 # Maximum dependency cycles allowed in the codebase. 0 = no cycles permitted.
@@ -22,21 +31,45 @@ max_cycles = 0
 no_god_files = true
 
 # Maximum coupling per module (numeric heuristic — tune after the first
-# `sentrux scan` produces a baseline; the default may be too strict or too
+# `sentrux check .` produces a baseline; the default may be too strict or too
 # permissive depending on your codebase shape).
 # max_coupling = 50
 
 # Maximum cyclomatic complexity per function.
 # max_cc = 20
 
-[layers]
 # Named regions of the codebase, identified by path patterns. Uncomment and
-# replace with your project's layering. Example:
-#   domain    = ["src/domain/**"]
-#   adapters  = ["src/adapters/**"]
-#   api       = ["src/api/**"]
+# replace with your project's layering. Add one [[layers]] block per layer.
+# Example:
+#
+# [[layers]]
+# name  = "domain"
+# paths = ["src/domain/**"]
+#
+# [[layers]]
+# name  = "adapters"
+# paths = ["src/adapters/**"]
+#
+# [[layers]]
+# name  = "api"
+# paths = ["src/api/**"]
 
-[boundaries]
-# Directional dependency restrictions between layers. Uncomment and replace:
-#   "domain"   = { forbidden = ["adapters", "api"] }
-#   "adapters" = { forbidden = ["api"] }
+# Directional dependency restrictions between layers. Uncomment and replace.
+# Each [[boundaries]] block declares one forbidden edge: code in `from` may
+# not import code in `to`. Boundaries are directional — declare the reverse
+# edge as a separate block if you want symmetry. Example:
+#
+# [[boundaries]]
+# from   = "domain"
+# to     = "adapters"
+# reason = "Domain must not depend on adapters (Hexagonal Architecture)"
+#
+# [[boundaries]]
+# from   = "domain"
+# to     = "api"
+# reason = "Domain must not depend on the API surface"
+#
+# [[boundaries]]
+# from   = "adapters"
+# to     = "api"
+# reason = "Adapters must not depend on the API surface"

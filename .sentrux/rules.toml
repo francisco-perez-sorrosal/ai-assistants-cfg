@@ -1,0 +1,108 @@
+# .sentrux/rules.toml — structural quality contracts for praxion itself.
+#
+# Praxion-specific rendering of claude/aac-templates/sentrux-rules.toml.tmpl.
+# Schema verified against sentrux v0.5.7 binary on 2026-05-04: [[layers]]
+# and [[boundaries]] are arrays-of-tables (LayerDef = {name, paths};
+# BoundaryRule = {from, to, reason}).
+#
+# Praxion's shape from sentrux's perspective:
+#   - Three independent Python packages: memory-mcp, task-chronograph-mcp, eval
+#   - scripts/ has a lifecycle split: check_* (pre-commit) vs finalize_*
+#     (post-merge); already enforced by fitness/import-linter.cfg
+#   - hooks/ is independent Claude Code hook code
+#   - The markdown ecosystem (skills/, agents/, rules/, commands/, claude/,
+#     cursor/, docs/) is invisible to sentrux
+
+[constraints]
+max_cycles = 0
+no_god_files = true
+# Coupling and complexity caps deferred until first baseline. Enable after
+# `sentrux check .` produces a clean run on this file.
+# max_coupling = 50
+# max_cc = 20
+
+[[layers]]
+name  = "memory_mcp"
+paths = ["memory-mcp/src/**"]
+
+[[layers]]
+name  = "task_chronograph_mcp"
+paths = ["task-chronograph-mcp/src/**"]
+
+[[layers]]
+name  = "eval_harness"
+paths = ["eval/src/**"]
+
+[[layers]]
+name  = "hooks"
+paths = ["hooks/**"]
+
+[[layers]]
+name  = "scripts_precommit"
+paths = ["scripts/check_*.py"]
+
+[[layers]]
+name  = "scripts_postmerge"
+paths = ["scripts/finalize_*.py"]
+
+# Sibling MCP servers and the eval harness must stay independent — they
+# share zero runtime, only the repo. Cross-import would be accidental
+# coupling.
+[[boundaries]]
+from   = "memory_mcp"
+to     = "task_chronograph_mcp"
+reason = "Independent MCP servers share zero runtime; cross-import is accidental coupling"
+
+[[boundaries]]
+from   = "memory_mcp"
+to     = "eval_harness"
+reason = "Independent products; eval harness must not depend on a server it might evaluate"
+
+[[boundaries]]
+from   = "task_chronograph_mcp"
+to     = "memory_mcp"
+reason = "Independent MCP servers share zero runtime; cross-import is accidental coupling"
+
+[[boundaries]]
+from   = "task_chronograph_mcp"
+to     = "eval_harness"
+reason = "Independent products; eval harness must not depend on a server it might evaluate"
+
+[[boundaries]]
+from   = "eval_harness"
+to     = "memory_mcp"
+reason = "Eval harness must not depend on a server it might evaluate"
+
+[[boundaries]]
+from   = "eval_harness"
+to     = "task_chronograph_mcp"
+reason = "Eval harness must not depend on a server it might evaluate"
+
+# Pre-commit and post-merge scripts run in disjoint execution phases;
+# mirrors fitness/import-linter.cfg::check-scripts-precondition-boundary.
+[[boundaries]]
+from   = "scripts_precommit"
+to     = "scripts_postmerge"
+reason = "Pre-commit-time and post-merge-time scripts run in disjoint phases; one importing the other would couple gates"
+
+[[boundaries]]
+from   = "scripts_postmerge"
+to     = "scripts_precommit"
+reason = "Symmetric: post-merge scripts must not pull pre-commit gate logic"
+
+# Hooks should not depend on the MCP server packages — those run in their
+# own processes, not in-hook.
+[[boundaries]]
+from   = "hooks"
+to     = "memory_mcp"
+reason = "Hooks run as Claude Code subprocesses; MCP servers run as separate processes — no in-hook import"
+
+[[boundaries]]
+from   = "hooks"
+to     = "task_chronograph_mcp"
+reason = "Hooks run as Claude Code subprocesses; MCP servers run as separate processes — no in-hook import"
+
+[[boundaries]]
+from   = "hooks"
+to     = "eval_harness"
+reason = "Hooks must not depend on the eval harness"

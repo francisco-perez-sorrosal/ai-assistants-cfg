@@ -113,7 +113,7 @@ The default §Flow runs end-to-end without pause. To let users *learn* the model
 | Gate | Fires before phase | Headline |
 |------|-------------------|----------|
 | 1 | 1 (entry + phase 1) | `I'll walk you through 9 phases that turn this project into a Praxion-aware repo: gitignore hygiene, .ai-state/ skeleton, merge drivers, git hooks, .claude/settings.json toggles, CLAUDE.md blocks, optional CLI tools, an opt-in architecture baseline, and a verification handoff. First up — Phase 1 of 9: I append a Praxion AI-assistants block to your .gitignore. Without these entries, advisory locks, memory backups, per-machine settings, and worktrees can leak into commits. Idempotent — re-runs are no-ops. Continue?` |
-| 2 | 2 | `Phase 2 of 9: I create the .ai-state/ skeleton — decisions/drafts/, DECISIONS_INDEX.md, TECH_DEBT_LEDGER.md, calibration_log.md. Each is created only if missing; existing files are never overwritten. Continue?` |
+| 2 | 2 | `Phase 2 of 9: I create the .ai-state/ skeleton — decisions/drafts/, DECISIONS_INDEX.md, TECH_DEBT_LEDGER.md, calibration_log.md, plus a static-HTML metrics viewer at .ai-state/metrics_reports/index.html (renders /project-metrics + sentrux data with same-directory fetch). Each is created only if missing; existing files are never overwritten. Continue?` |
 | 3 | 3 | `Phase 3 of 9: I add merge-driver entries to .gitattributes and run 'git config' to register Python-based semantic merge drivers for .ai-state/memory.json and .ai-state/observations.jsonl. Without these, concurrent edits get corrupted by line-based merge. Continue?` |
 | 4 | 4 | `Phase 4 of 9: I install four git hooks — pre-commit (id-citation discipline) and three finalize hooks (post-merge, post-commit, post-checkout) all sharing one multiplexed dispatcher. The trio guarantees that draft ADRs landing on main via any path — ff merge, direct commit, rebase, fresh clone, branch reset — eventually promote to stable dec-NNN. Symlinks resolve to the plugin scripts so updates flow automatically. Continue?` |
 | 5 | 5 | (Multi-select on PRAXION_DISABLE_* toggles — see §Phase 5 for option text) |
@@ -197,6 +197,11 @@ If the user agrees, remove that line. If they decline, proceed without changing 
   | timestamp | task | signals | recommended-tier | actual-tier | source | retrospective |
   |-----------|------|---------|------------------|-------------|--------|---------------|
   ```
+- `.ai-state/metrics_reports/index.html` — copy from `${PLUGIN_INSTALL_PATH}/claude/aac-templates/metrics-viewer.html.tmpl`. This is the static-HTML viewer that renders `METRICS_LOG.md` (written by `/project-metrics`) and `SENTRUX_HISTORY.md` (written by `sentrux_history.py`) using same-directory fetch paths. Co-locating the viewer with the data means the user can `python -m http.server` from inside `.ai-state/metrics_reports/` and open `index.html` with no path arithmetic.
+
+  **Predicate (skip if present).** If `.ai-state/metrics_reports/index.html` already exists in the user project, skip — never overwrite a customized viewer. Re-pulling the latest is a deliberate user action (delete the file, re-run).
+
+  **Action.** Create `.ai-state/metrics_reports/` if missing, then `cp ${PLUGIN_INSTALL_PATH}/claude/aac-templates/metrics-viewer.html.tmpl .ai-state/metrics_reports/index.html`. If the plugin install path was not detected at pre-flight (skip-phase-4 flag set), also skip this sub-step and emit: `Skipping metrics viewer copy — install the plugin and re-run /onboard-project. Without it, .ai-state/metrics_reports/ has data but no UI.`
 
 Do NOT create `.ai-state/memory.json` or `.ai-state/observations.jsonl` — those are written on first use by the memory MCP and the observability hook respectively. Pre-creating them confuses semantic merge drivers.
 

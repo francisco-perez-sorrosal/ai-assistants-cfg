@@ -1,0 +1,17 @@
+{
+  "commit_sha": "96a041d8c0ed4dd627cb099771c8414dee5f38f0",
+  "exit_code": 0,
+  "graph": {
+    "call_edges": 2631,
+    "files_kept": 799,
+    "import_edges": 195,
+    "inherit_edges": 15
+  },
+  "quality_signal": 7195,
+  "raw_output": "sentrux check \u2014 14 rules checked\n\nQuality: 7195\n\n\u2713 All rules pass\nScanning /Users/fperez/dev/praxion...\n[scan] git ls-files: 807 total, 799 kept, 8 dropped (ext:7, meta:0, big:1)\n[build_project_map] 799 files, 178 unique dirs, 166 cache misses, 6.7ms\n[resolve] 195 resolved, 700 unresolved (of 895 total specs)\n[resolve_imports] project_map 6.9ms, suffix_idx 1.6ms, suffix_resolve 7.5ms, total 16.0ms\n[build_graphs] 799 files | maps 0.5ms, imports 16.1ms, calls+inherit 4.1ms, total 20.7ms | 195 import, 2631 call, 15 inherit edges\n",
+  "rules": {
+    "checked": 14,
+    "passed": true
+  },
+  "timestamp": "2026-05-05T03:43:48Z"
+}

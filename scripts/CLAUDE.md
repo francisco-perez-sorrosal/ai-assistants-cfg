@@ -19,6 +19,7 @@ Utility and operational scripts for the Praxion ecosystem.
 - `check_shipped_artifact_isolation.py` — Outbound shipped-artifact isolation check: scans shipped artifact surfaces for references to specific pipeline/state entries. Wired into `hooks/commit_gate.sh`. See `rules/swe/shipped-artifact-isolation.md`
 - `check_aac_golden_rule.py` — AaC golden-rule enforcement: detects staged generated-artifact edits (`docs/diagrams/<name>/<view>.{d2,svg}` or content inside `<!-- aac:generated -->` fences) without a co-staged source change. Gate mode (`--mode=gate`, default) wired into `git-pre-commit-hook.sh` Block D; audit mode (`--mode=audit --json`) consumed by sentinel EC07. Stdlib-only; side-effect-free. See `rules/writing/aac-dac-conventions.md`
 - `migrate_worktree_home.sh` — Print copy-paste-ready `git worktree move` commands to migrate legacy `.trees/<name>/` worktrees to `.claude/worktrees/<name>/`. Performs no automatic move
+- `sentrux_history.py` — Run `sentrux check .` and write a per-run report triple under `.ai-state/metrics_reports/`: `SENTRUX_REPORT_<timestamp>.json` + `.md` (per-run pair) and one appended row in `SENTRUX_HISTORY.md` (aggregate log mirroring `METRICS_LOG.md`'s shape so the bundled viewer at `.ai-state/metrics_reports/index.html` can render it as a side-car panel). Stdlib-only; defensive parsing of sentrux's text output (no `--json` flag in v0.5.7); returns the sentrux exit code so callers can fail-fast on rule violations while still landing the triple
 
 ## Conventions
 
