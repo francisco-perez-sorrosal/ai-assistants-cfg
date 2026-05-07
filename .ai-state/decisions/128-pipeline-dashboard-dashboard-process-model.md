@@ -1,5 +1,5 @@
 ---
-id: dec-draft-bcaea27e
+id: dec-128
 title: Pipeline Dashboard process model — bash ctl + macOS launchd, not MCP-bound
 status: proposed
 category: architectural

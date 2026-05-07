@@ -1,5 +1,5 @@
 ---
-id: dec-draft-dd356bb0
+id: dec-127
 title: Pipeline Dashboard port allocation — sha256 per-project derivation
 status: proposed
 category: architectural

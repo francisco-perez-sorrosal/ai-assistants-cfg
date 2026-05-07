@@ -1,5 +1,5 @@
 ---
-id: dec-draft-d57dc712
+id: dec-125
 title: Pipeline Dashboard Mermaid rendering — defer to v2
 status: proposed
 category: architectural

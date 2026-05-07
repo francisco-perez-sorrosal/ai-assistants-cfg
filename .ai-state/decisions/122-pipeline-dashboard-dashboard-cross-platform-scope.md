@@ -1,5 +1,5 @@
 ---
-id: dec-draft-df080384
+id: dec-122
 title: Pipeline Dashboard cross-platform scope — macOS-only v1, Linux deferred
 status: proposed
 category: architectural

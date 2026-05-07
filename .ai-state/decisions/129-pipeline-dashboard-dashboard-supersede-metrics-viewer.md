@@ -1,5 +1,5 @@
 ---
-id: dec-draft-4b63cccd
+id: dec-129
 title: Pipeline Dashboard supersedes metrics-viewer.html.tmpl — soft deprecation
 status: proposed
 category: architectural

@@ -1,5 +1,5 @@
 ---
-id: dec-draft-dd136ca6
+id: dec-131
 title: Pipeline Dashboard — sequential data layer before parallel page steps
 status: proposed
 category: implementation

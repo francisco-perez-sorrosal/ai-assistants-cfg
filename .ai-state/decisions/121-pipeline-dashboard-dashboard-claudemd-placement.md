@@ -1,5 +1,5 @@
 ---
-id: dec-draft-0c81225f
+id: dec-121
 title: Pipeline Dashboard CLAUDE.md placement — Working Here mention, no philosophical block
 status: proposed
 category: architectural

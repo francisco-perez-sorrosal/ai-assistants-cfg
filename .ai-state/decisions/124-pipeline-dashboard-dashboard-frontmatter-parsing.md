@@ -1,5 +1,5 @@
 ---
-id: dec-draft-1c4350fd
+id: dec-124
 title: Pipeline Dashboard frontmatter parsing — stdlib re + pyyaml, no python-frontmatter
 status: proposed
 category: implementation

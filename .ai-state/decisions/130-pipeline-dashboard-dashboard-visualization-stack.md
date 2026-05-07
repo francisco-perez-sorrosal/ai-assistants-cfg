@@ -1,5 +1,5 @@
 ---
-id: dec-draft-f96cdeec
+id: dec-130
 title: Pipeline Dashboard visualization stack — graphviz + plotly + pyvis (lazy)
 status: proposed
 category: architectural

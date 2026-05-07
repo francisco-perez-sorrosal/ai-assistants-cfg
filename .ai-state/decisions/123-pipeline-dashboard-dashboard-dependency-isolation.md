@@ -1,5 +1,5 @@
 ---
-id: dec-draft-78f800c9
+id: dec-123
 title: Pipeline Dashboard dependency isolation — dedicated ~/.praxion-dashboard/venv/
 status: proposed
 category: architectural

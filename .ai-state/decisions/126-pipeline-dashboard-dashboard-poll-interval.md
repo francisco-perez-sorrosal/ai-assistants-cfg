@@ -1,5 +1,5 @@
 ---
-id: dec-draft-273788b7
+id: dec-126
 title: Pipeline Dashboard auto-refresh interval — 15s default, env-overridable
 status: proposed
 category: implementation
