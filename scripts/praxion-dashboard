@@ -1,0 +1,298 @@
+#!/usr/bin/env bash
+# praxion-dashboard — Manage the Praxion Pipeline Dashboard Streamlit app.
+#
+# One dashboard venv (~/.praxion-dashboard/venv/) is installed once per user.
+# Each project gets its own port (sha256-derived, range 8501–9500) and its
+# own pidfile / logfile keyed by that port.
+#
+# Usage: praxion-dashboard {install|start [path]|stop [path]|restart [path]|status [path]|uninstall [--yes]}
+#
+# Cross-platform scope: macOS only (v1 per ADR dashboard-cross-platform-scope).
+# Linux/Windows users: set PRAXION_PROJECT_ROOT and run manually:
+#   PRAXION_PROJECT_ROOT=$(pwd) ~/.praxion-dashboard/venv/bin/streamlit \
+#     run <praxion-root>/streamlit_app/app.py --server.port <port>
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PRAXION_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+HOME_DIR="$HOME/.praxion-dashboard"
+VENV_DIR="$HOME_DIR/venv"
+
+B='\033[1m'
+R='\033[0m'
+info()  { printf "  \xE2\x9C\x93 %s\n" "$*"; }
+warn()  { printf "  \xE2\x9A\xA0 %s\n" "$*"; }
+fail()  { printf "  \xE2\x9C\x97 %s\n" "$*" >&2; exit 1; }
+
+# ── Platform guard ─────────────────────────────────────────────────────────────
+
+_require_macos() {
+    if [[ "$(uname -s)" != "Darwin" ]]; then
+        fail "praxion-dashboard v1 requires macOS. Linux/Windows users: see header for manual-launch instructions."
+    fi
+}
+
+# ── Port derivation ────────────────────────────────────────────────────────────
+
+_derive_port() {
+    local dir="$1"
+    python3 -c "
+import hashlib, sys
+abs_path = '$dir'.encode('utf-8')
+digest = hashlib.sha256(abs_path).digest()
+print(8501 + int.from_bytes(digest[:2], 'big') % 1000)
+"
+}
+
+# ── Process helpers ────────────────────────────────────────────────────────────
+
+_pidfile() { echo "$HOME_DIR/$1.pid"; }
+_logfile() { echo "$HOME_DIR/$1.log"; }
+
+_is_running() {
+    local port="$1"
+    local pidfile
+    pidfile="$(_pidfile "$port")"
+    if [[ -f "$pidfile" ]]; then
+        local pid
+        pid=$(cat "$pidfile")
+        if kill -0 "$pid" 2>/dev/null; then
+            return 0
+        fi
+        rm -f "$pidfile"
+    fi
+    return 1
+}
+
+_get_pid() {
+    local port="$1"
+    local pidfile
+    pidfile="$(_pidfile "$port")"
+    if [[ -f "$pidfile" ]]; then
+        local pid
+        pid=$(cat "$pidfile")
+        if kill -0 "$pid" 2>/dev/null; then
+            echo "$pid"
+            return
+        fi
+    fi
+}
+
+# ── Resolve project root + port ────────────────────────────────────────────────
+
+_resolve_root_and_port() {
+    local path_arg="${1:-$(pwd)}"
+    local root
+    root="$(python3 -c "import os, sys; print(os.path.realpath('$path_arg'))" 2>/dev/null || cd "$path_arg" && pwd)"
+    local port
+    port="${PRAXION_DASHBOARD_PORT:-$(_derive_port "$root")}"
+    echo "$root $port"
+}
+
+# ── Subcommands ────────────────────────────────────────────────────────────────
+
+cmd_install() {
+    _require_macos
+    printf "\n${B}Installing Praxion Dashboard${R}\n"
+
+    mkdir -p "$HOME_DIR"
+    info "Home directory: $HOME_DIR"
+
+    if [[ -d "$VENV_DIR" ]]; then
+        info "Venv already exists at $VENV_DIR"
+    else
+        printf "  Creating venv at %s ...\n" "$VENV_DIR"
+        python3 -m venv "$VENV_DIR"
+        info "Venv created"
+    fi
+
+    local req="$PRAXION_ROOT/streamlit_app/requirements.txt"
+    if [[ ! -f "$req" ]]; then
+        fail "requirements.txt not found at $req"
+    fi
+
+    printf "  Installing dependencies (this may take a minute) ...\n"
+    "$VENV_DIR/bin/pip" install -q -r "$req"
+    info "Dependencies installed"
+
+    info "Installation complete — run: praxion-dashboard start [project-path]"
+    printf "\n"
+}
+
+cmd_start() {
+    _require_macos
+    local path_arg="${1:-$(pwd)}"
+    read -r ROOT PORT <<< "$(_resolve_root_and_port "$path_arg")"
+
+    local pidfile logfile
+    pidfile="$(_pidfile "$PORT")"
+    logfile="$(_logfile "$PORT")"
+    local url="http://127.0.0.1:${PORT}"
+
+    if _is_running "$PORT"; then
+        local pid
+        pid="$(_get_pid "$PORT")"
+        info "Already running (PID: $pid)"
+        info "Dashboard: $url"
+        exit 0
+    fi
+
+    if [[ ! -d "$VENV_DIR" ]]; then
+        fail "Not installed. Run: praxion-dashboard install"
+    fi
+
+    if [[ ! -f "$VENV_DIR/bin/streamlit" ]]; then
+        fail "streamlit not found in venv. Re-run: praxion-dashboard install"
+    fi
+
+    local app_py="$PRAXION_ROOT/streamlit_app/app.py"
+    if [[ ! -f "$app_py" ]]; then
+        fail "app.py not found at $app_py"
+    fi
+
+    printf "\n${B}Starting Praxion Dashboard${R}\n"
+    printf "  Project: %s\n" "$ROOT"
+    printf "  Port:    %s\n" "$PORT"
+
+    PRAXION_PROJECT_ROOT="$ROOT" \
+        "$VENV_DIR/bin/streamlit" run "$app_py" \
+        --server.port "$PORT" \
+        --server.address "127.0.0.1" \
+        --browser.gatherUsageStats false \
+        >> "$logfile" 2>&1 &
+    local pid=$!
+    echo "$pid" > "$pidfile"
+
+    info "Dashboard starting (PID: $pid)"
+    info "Log: $logfile"
+    info "URL: $url"
+
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        open "$url" 2>/dev/null || true
+    fi
+    printf "\n"
+}
+
+cmd_stop() {
+    _require_macos
+    local path_arg="${1:-$(pwd)}"
+    read -r ROOT PORT <<< "$(_resolve_root_and_port "$path_arg")"
+
+    local pid
+    pid="$(_get_pid "$PORT")"
+    if [[ -z "$pid" ]]; then
+        info "Not running (port $PORT)"
+        return 0
+    fi
+
+    kill "$pid" 2>/dev/null || true
+    rm -f "$(_pidfile "$PORT")"
+    info "Stopped (was PID: $pid, port: $PORT)"
+}
+
+cmd_restart() {
+    local path_arg="${1:-$(pwd)}"
+    cmd_stop "$path_arg"
+    sleep 1
+    cmd_start "$path_arg"
+}
+
+cmd_status() {
+    _require_macos
+    local path_arg="${1:-$(pwd)}"
+    read -r ROOT PORT <<< "$(_resolve_root_and_port "$path_arg")"
+
+    printf "\n${B}Praxion Dashboard Status${R}\n"
+    printf "  Project: %s\n" "$ROOT"
+    printf "  Port:    %s\n" "$PORT"
+    printf "  URL:     http://127.0.0.1:%s\n" "$PORT"
+    printf "  Venv:    %s\n" "$VENV_DIR"
+    printf "  Log:     %s\n" "$(_logfile "$PORT")"
+
+    if _is_running "$PORT"; then
+        local pid
+        pid="$(_get_pid "$PORT")"
+        info "Running (PID: $pid)"
+        local mem
+        mem=$(ps -o rss= -p "$pid" 2>/dev/null | awk '{printf "%.0f", $1/1024}') || true
+        [[ -n "$mem" ]] && info "Memory: ${mem} MB"
+        printf "\n"
+        return 0
+    else
+        warn "Not running"
+        printf "\n"
+        return 1
+    fi
+}
+
+cmd_uninstall() {
+    _require_macos
+    local yes_flag="${1:-}"
+
+    if [[ "$yes_flag" != "--yes" ]]; then
+        printf "This will remove %s and stop all running dashboards.\n" "$HOME_DIR"
+        printf "Continue? [y/N] "
+        read -r answer
+        if [[ "$answer" != "y" && "$answer" != "Y" ]]; then
+            info "Aborted"
+            return 0
+        fi
+    fi
+
+    printf "\n${B}Uninstalling Praxion Dashboard${R}\n"
+
+    # Stop all running dashboards by killing all known pidfiles
+    local pidfile pid
+    for pidfile in "$HOME_DIR"/*.pid; do
+        [[ -f "$pidfile" ]] || continue
+        pid=$(cat "$pidfile" 2>/dev/null) || continue
+        kill "$pid" 2>/dev/null || true
+        rm -f "$pidfile"
+        info "Stopped PID $pid"
+    done
+
+    rm -rf "$HOME_DIR"
+    info "Removed $HOME_DIR"
+    printf "\n"
+}
+
+# ── Main ───────────────────────────────────────────────────────────────────────
+
+case "${1:-}" in
+    install)
+        cmd_install
+        ;;
+    start)
+        cmd_start "${2:-}"
+        ;;
+    stop)
+        cmd_stop "${2:-}"
+        ;;
+    restart)
+        cmd_restart "${2:-}"
+        ;;
+    status)
+        cmd_status "${2:-}"
+        ;;
+    uninstall)
+        cmd_uninstall "${2:-}"
+        ;;
+    --help|-h)
+        printf "Usage: praxion-dashboard {install|start [path]|stop [path]|restart [path]|status [path]|uninstall [--yes]}\n"
+        printf "\nManage the Praxion Pipeline Dashboard Streamlit application.\n\n"
+        printf "Commands:\n"
+        printf "  install            Install the dashboard venv (once per machine)\n"
+        printf "  start  [path]      Start dashboard for project at path (default: pwd)\n"
+        printf "  stop   [path]      Stop dashboard for project at path\n"
+        printf "  restart [path]     Stop + start\n"
+        printf "  status  [path]     Show running status and URL\n"
+        printf "  uninstall [--yes]  Stop all dashboards and remove the venv\n\n"
+        printf "Port derivation: sha256(abs_project_path) → 8501–9500\n"
+        printf "Override:        PRAXION_DASHBOARD_PORT=<port> praxion-dashboard start\n"
+        printf "\nmacOS only (v1). Linux/Windows: see script header for manual launch.\n"
+        ;;
+    *)
+        printf "Usage: praxion-dashboard {install|start [path]|stop [path]|restart [path]|status [path]|uninstall [--yes]}\n" >&2
+        exit 1
+        ;;
+esac

@@ -203,6 +203,8 @@ If the user agrees, remove that line. If they decline, proceed without changing 
 
   **Action.** Create `.ai-state/metrics_reports/` if missing, then `cp ${PLUGIN_INSTALL_PATH}/claude/aac-templates/metrics-viewer.html.tmpl .ai-state/metrics_reports/index.html`. If the plugin install path was not detected at pre-flight (skip-phase-4 flag set), also skip this sub-step and emit: `Skipping metrics viewer copy — install the plugin and re-run /onboard-project. Without it, .ai-state/metrics_reports/ has data but no UI.`
 
+  **Note:** A richer Streamlit-based dashboard supersedes this static viewer; install via `praxion-dashboard install` and launch with `/dashboard`. The static template is preserved for one release cycle for backward compatibility.
+
 Do NOT create `.ai-state/memory.json` or `.ai-state/observations.jsonl` — those are written on first use by the memory MCP and the observability hook respectively. Pre-creating them confuses semantic merge drivers.
 
 ## §Phase 3 — `.gitattributes` + merge driver registration

@@ -144,9 +144,23 @@
       padding: 1rem 1.25rem; border-radius: 6px; margin-bottom: 1rem;
       font-family: ui-monospace, monospace; font-size: 0.85rem;
     }
+
+    .deprecation-banner {
+      background: #3d3000; border-bottom: 1px solid #665200; color: #f0c674;
+      padding: 0.6rem 2.5rem; font-size: 0.85rem;
+    }
+    .deprecation-banner code {
+      background: #4a3c00; padding: 0.1rem 0.3rem; border-radius: 3px;
+      font-family: ui-monospace, monospace;
+    }
   </style>
 </head>
 <body>
+  <div class="deprecation-banner">
+    <strong>Deprecated:</strong> This static viewer is superseded by the Streamlit dashboard
+    (<code>praxion-dashboard start</code>). It is preserved for one release cycle and will be
+    removed in a future release.
+  </div>
   <header>
     <h1>/project-metrics — trends</h1>
     <div class="subtitle" id="subtitle">Loading…</div>

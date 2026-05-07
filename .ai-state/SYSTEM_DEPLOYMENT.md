@@ -107,8 +107,9 @@ graph TD
 |---|---|---|---|---|
 | memory-mcp | local Python via `uv run` | none (stdio only) | n/a (per-session lifecycle) | n/a |
 | task-chronograph-mcp | local Python via `uv run` | `8765:8765` (HTTP daemon) | HTTP `GET /health` (informational) | n/a (per-session lifecycle) |
+| pipeline-dashboard (Designed) | local Python via `streamlit run`; venv at `~/.praxion-dashboard/venv/` | `8501–9500:8501–9500` (per-project sha256-derived: `8501 + sha256(project_abs_path) % 1000`); override `PRAXION_DASHBOARD_PORT` | HTTP `GET /` returns 200 when up | macOS launchd `KeepAlive=true`; ctl `restart` for manual cycle |
 
-Praxion does not run as a long-lived service. MCP processes start when Claude Code spawns them and exit when the session ends.
+Praxion has two long-lived service classes: (1) MCP processes (memory-mcp, task-chronograph-mcp) start when Claude Code spawns them and exit when the session ends; (2) the **pipeline-dashboard daemon** (Designed; not yet Built) outlives Claude Code sessions, managed by `scripts/praxion-dashboard` ctl + macOS launchd plist (`com.praxion.dashboard`). The dashboard reads `.ai-state/` and `.ai-work/<task-slug>/` strictly read-only — no writes to project state. macOS-only daemon v1; Linux/Windows manual-launch fallback. See dec-draft-bcaea27e (process model), dec-draft-dd356bb0 (port allocation), dec-draft-78f800c9 (dependency isolation).
 
 ## 4. Configuration
 
@@ -168,6 +169,11 @@ GitHub Actions for Praxion's own repo handle skill linting, hook tests, MCP serv
 | ML compute backend (taught) — local | Wall-clock budget exceeded; runaway training process | Medium | `wall_clock_seconds_max` enforced via `signal.alarm` or equivalent in `/run-experiment` local backend | Per-experiment |
 | ML compute backend (taught) — SkyPilot | SkyPilot YAML schema drift between v0.12 and a future major | Medium | Pin SkyPilot to `~=0.12` in skill body; sentinel staleness check on the skill | Skill-content currency |
 | ML compute backend (taught) — RunPod direct | `@runpod/mcp-server` upstream maintenance lapse | Low | Reference is reference-only; abstraction's contract is what matters; v2 specializations are alternatives | Reference rotation |
+| pipeline-dashboard daemon (Designed) | Streamlit process crash | Low | macOS launchd `KeepAlive=true` restarts daemon; `~/.praxion-dashboard/dashboard.log` captures crash trace; user re-runs `praxion-dashboard restart` if KeepAlive loops | Per-developer-machine |
+| pipeline-dashboard daemon (Designed) | sha256 port collision across concurrent projects (~25% at 24 projects) | Low | Override via `PRAXION_DASHBOARD_PORT`; widen mod 1000 → mod 2000 if telemetry shows real collisions; `praxion-dashboard status` reports the active port | Per-project (one project unreachable until override) |
+| pipeline-dashboard daemon (Designed) | Streamlit 1.55 → future major API drift | Medium | Pin `streamlit>=1.55,<1.60` in `streamlit_app/requirements.txt`; API version drift detection via `external-api-docs` skill at upgrade time | Dashboard launch fails until pin updated |
+| pipeline-dashboard daemon (Designed) | `.ai-work/<task-slug>/` cleaned up while Workshops page is open | Medium | Page reads use mtime-keyed `@st.cache_data` with `FileNotFoundError → empty state` fallback; user-facing message: "Workshop ended" | Page-level UX only; daemon healthy |
+| pipeline-dashboard daemon (Designed) | Linux/Windows user attempts `praxion-dashboard install` | Medium | ctl detects platform and prints manual-launch fallback recipe; v2 will add systemd support; `commands/dashboard.md` documents the fallback | Daemon unavailable on non-macOS; manual launch works |
 
 ### Dependency Classification
 
@@ -215,8 +221,12 @@ Deployment-relevant decisions are recorded as ADRs in [`.ai-state/decisions/`](d
 |---|---|---|
 | [dec-118](decisions/118-ai-training-tiered-backend-strategy.md) | Tiered backend strategy for ML compute | Praxion teaches three backends; ships SkyPilot + local as defaults; RunPod direct as v1 reference specialization |
 | [dec-116](decisions/116-ai-training-results-schema-owner.md) | `TRAINING_RESULTS.md` schema ownership | Skill-defined schema means deployment-doc fields above (compute backend env vars, FMA rows) reference the skill, not duplicated here |
+| dec-draft-bcaea27e | Pipeline Dashboard process model — bash ctl + macOS launchd, not MCP-bound | Adds the first long-lived Praxion daemon; mirrors phoenix-ctl |
+| dec-draft-dd356bb0 | Pipeline Dashboard port allocation — sha256 per-project derivation | Per-project port 8501–9500 in service topology table |
+| dec-draft-df080384 | Pipeline Dashboard cross-platform scope — macOS-only v1 | macOS launchd v1; Linux/Windows manual fallback documented in runbook |
+| dec-draft-78f800c9 | Pipeline Dashboard dependency isolation — dedicated venv | `~/.praxion-dashboard/venv/` keeps Streamlit deps off project and Praxion-root environments |
 
-Pre-existing dec-NNN entries continue to live in `DECISIONS_INDEX.md`; this section names only the deployment-relevant ai-training-onramp ADRs (dec-115..120 cover the full set).
+Pre-existing dec-NNN entries continue to live in `DECISIONS_INDEX.md`; this section names only the deployment-relevant ai-training-onramp ADRs (dec-115..120 cover the full set) and the pipeline-dashboard fragment ADRs (finalize to stable `dec-NNN` at merge-to-main).
 
 ## 10. Runbook Quick Reference
 
