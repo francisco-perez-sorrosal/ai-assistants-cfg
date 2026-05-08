@@ -50,6 +50,14 @@ FRONTMATTER_ID_PATTERN = re.compile(
 FRONTMATTER_STATUS_PROPOSED_PATTERN = re.compile(
     r"^(status:\s*)proposed\s*$", re.MULTILINE
 )
+# Optional `branch:` field in fragment frontmatter — when present, the value
+# is the authoritative branch name written by the creating agent, immune to
+# the single-fragment hyphenated-branch ambiguity the filename heuristic
+# stumbles on (td-017). The value matches the same `[a-z0-9-]+` sanitize
+# alphabet used to build the filename's branch slug.
+FRONTMATTER_BRANCH_PATTERN = re.compile(
+    r"""^branch:\s*["']?([a-z0-9-]+)["']?\s*$""", re.MULTILINE
+)
 TIMESTAMP_FORMAT = "%Y%m%d-%H%M"
 
 logger = logging.getLogger("finalize_adrs")
@@ -85,14 +93,19 @@ def parse_fragment_filename(path: Path) -> tuple[datetime, str, str, str]:
     contain hyphens, pure-filename parsing is ambiguous. The parser resolves
     the user/branch/slug boundaries in order of decreasing confidence:
 
-    1. Exact match against `git config user.*` + `git rev-parse HEAD`. The
+    1. **Frontmatter `branch:` field (td-017 fix)**: when the fragment
+       carries an explicit `branch:` value in frontmatter, use it as the
+       authoritative branch name and split the filename around it. Eliminates
+       the single-fragment hyphenated-branch ambiguity. Backward compatible:
+       fragments without the field fall through to the heuristics below.
+    2. Exact match against `git config user.*` + `git rev-parse HEAD`. The
        happy path when `finalize` runs on the branch that created the draft.
-    2. Sibling-prefix discovery: scan fragments sharing `path.parent` for a
+    3. Sibling-prefix discovery: scan fragments sharing `path.parent` for a
        common `<user>-<branch>-` prefix. Pipeline-authored drafts arrive in
        batches sharing user+branch, so the longest common dash-aligned
        prefix is the branch. Handles the post-merge case where git hints
        are stale (branch is `main`, not the authoring branch).
-    3. Heuristic fallback: user = first token, branch = second token, slug
+    4. Heuristic fallback: user = first token, branch = second token, slug
        = remainder. Ambiguous when user or branch themselves contain
        hyphens; logs a warning so the caller knows the parse is best-effort.
 
@@ -110,8 +123,15 @@ def parse_fragment_filename(path: Path) -> tuple[datetime, str, str, str]:
             f"fragment filename too short (need user-branch-slug): {path.name}"
         )
 
+    # Tier 1: authoritative branch from frontmatter, if present. Takes
+    # precedence over the current-git-branch hint because it is the value
+    # the creating agent recorded at fragment-write time, immune to drift
+    # when finalize runs post-merge on `main`.
+    branch_from_frontmatter = _read_draft_branch(path)
+
     user_slug_hint = _current_git_user_slug()
-    branch_slug_hint = _current_git_branch_slug()
+    branch_slug_hint = branch_from_frontmatter or _current_git_branch_slug()
+
     user, branch, slug = _split_user_branch_slug(
         rest,
         user_slug_hint,
@@ -120,6 +140,24 @@ def parse_fragment_filename(path: Path) -> tuple[datetime, str, str, str]:
         self_name=path.name,
     )
     return timestamp, user, branch, slug
+
+
+def _read_draft_branch(path: Path) -> str | None:
+    """Return the optional `branch:` value from a fragment's frontmatter.
+
+    Returns None if the field is absent (older fragments predating td-017),
+    if the file is unreadable, or if the value does not match the sanitize
+    alphabet. The fall-through to filename-heuristic parsing preserves the
+    pre-td-017 behavior for those cases.
+    """
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = FRONTMATTER_BRANCH_PATTERN.search(content)
+    if match is None:
+        return None
+    return match.group(1)
 
 
 def _split_user_branch_slug(

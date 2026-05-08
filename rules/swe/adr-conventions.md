@@ -47,6 +47,7 @@ The frontmatter schema is shared between draft and finalized ADRs. Only the `id`
 | `tags` | list | Yes | Lowercase topic tags for filtering |
 | `made_by` | string | Yes | `agent` / `user` |
 | `agent_type` | string | When agent | Which agent (e.g., `systems-architect`) |
+| `branch` | string | Recommended on drafts | Sanitized authoring branch (`[a-z0-9-]+`). Lets `finalize_adrs.py` disambiguate hyphenated branches from slugs without sibling-prefix discovery — eliminates the single-fragment parsing ambiguity (td-017). Optional for backward compat; pre-existing fragments without it still parse via filename heuristics |
 | `pipeline_tier` | string | No | `direct` / `lightweight` / `standard` / `full` / `spike` |
 | `affected_files` | list | No | Paths impacted by the decision |
 | `affected_reqs` | list | No | REQ IDs linked to the decision |

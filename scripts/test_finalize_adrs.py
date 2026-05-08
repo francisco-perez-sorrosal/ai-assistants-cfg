@@ -258,6 +258,205 @@ class TestFinalizeSlugExtraction:
         assert slug == expected_slug
 
 
+# -- Frontmatter branch override (td-017 fix) ---------------------------------
+
+
+class TestParseFragmentBranchFromFrontmatter:
+    """Verify the td-017 fix: `branch:` in frontmatter disambiguates the
+    filename split unambiguously, even for hyphenated branches with no
+    sibling fragments to share a common prefix.
+    """
+
+    def _write_fragment(
+        self,
+        tmp_path: Path,
+        filename: str,
+        frontmatter_extra: dict[str, str] | None = None,
+    ) -> Path:
+        """Write a fragment file with the given filename and optional extra
+        frontmatter fields. Returns the file path."""
+        drafts_dir = tmp_path / ".ai-state" / "decisions" / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        path = drafts_dir / filename
+        extra_lines = ""
+        if frontmatter_extra:
+            extra_lines = "".join(f"{k}: {v}\n" for k, v in frontmatter_extra.items())
+        path.write_text(
+            "---\n"
+            f"id: dec-draft-{_draft_hash(filename)}\n"
+            "title: Test Draft\n"
+            "status: proposed\n"
+            "category: architectural\n"
+            "date: 2026-05-08\n"
+            "summary: Test draft for td-017 regression\n"
+            "tags: [test]\n"
+            "made_by: agent\n"
+            f"{extra_lines}"
+            "---\n\n## Context\n\nTest.\n",
+            encoding="utf-8",
+        )
+        return path
+
+    def test_frontmatter_branch_disambiguates_hyphenated_branch_no_siblings(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """With `branch: feat-x-step` in frontmatter and no sibling fragments,
+        the parser splits cleanly: user=alice, branch=feat-x-step, slug=auth.
+
+        Without the frontmatter field, the heuristic fallback would pick
+        branch=feat (first token after user) and slug=x-step-auth — wrong.
+        This is the canonical td-017 reproduction case.
+        """
+
+        def _fake_run(args, **_kwargs):
+            # Simulate finalize running post-merge on `main`: git would say
+            # branch=main, which does NOT match the fragment's authoring
+            # branch and would force the heuristic without the frontmatter fix.
+            if args[:3] == ["git", "rev-parse", "--abbrev-ref"]:
+                return subprocess.CompletedProcess(
+                    args=args, returncode=0, stdout="main\n", stderr=""
+                )
+            if args[:3] == ["git", "config", "--get"]:
+                if "user.email" in args:
+                    return subprocess.CompletedProcess(
+                        args=args,
+                        returncode=0,
+                        stdout="alice@example.com\n",
+                        stderr="",
+                    )
+            return subprocess.CompletedProcess(
+                args=args, returncode=0, stdout="", stderr=""
+            )
+
+        monkeypatch.setattr(finalize.subprocess, "run", _fake_run)
+
+        path = self._write_fragment(
+            tmp_path,
+            "20260508-1010-alice-feat-x-step-auth.md",
+            frontmatter_extra={"branch": "feat-x-step"},
+        )
+
+        _, user, branch, slug = finalize.parse_fragment_filename(path)
+        assert user == "alice"
+        assert branch == "feat-x-step"
+        assert slug == "auth"
+
+    def test_no_frontmatter_branch_falls_back_to_heuristic(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Fragments without `branch:` frontmatter parse via the existing
+        heuristic — preserving backward compatibility with pre-td-017 fragments.
+        """
+
+        def _fake_run(args, **_kwargs):
+            if args[:3] == ["git", "rev-parse", "--abbrev-ref"]:
+                return subprocess.CompletedProcess(
+                    args=args, returncode=0, stdout="main\n", stderr=""
+                )
+            if args[:3] == ["git", "config", "--get"]:
+                if "user.email" in args:
+                    return subprocess.CompletedProcess(
+                        args=args,
+                        returncode=0,
+                        stdout="alice@example.com\n",
+                        stderr="",
+                    )
+            return subprocess.CompletedProcess(
+                args=args, returncode=0, stdout="", stderr=""
+            )
+
+        monkeypatch.setattr(finalize.subprocess, "run", _fake_run)
+
+        # Single-token branch — no ambiguity even with the heuristic.
+        path = self._write_fragment(
+            tmp_path,
+            "20260508-1010-alice-feat-auth.md",
+            frontmatter_extra=None,  # no branch field
+        )
+
+        _, user, branch, slug = finalize.parse_fragment_filename(path)
+        assert user == "alice"
+        assert branch == "feat"
+        assert slug == "auth"
+
+    def test_frontmatter_branch_overrides_current_git_branch(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """When finalize runs post-merge on `main`, the current git branch
+        no longer matches the fragment's authoring branch. Frontmatter
+        wins because it's the value recorded at write time, not at finalize
+        time.
+        """
+
+        def _fake_run(args, **_kwargs):
+            if args[:3] == ["git", "rev-parse", "--abbrev-ref"]:
+                return subprocess.CompletedProcess(
+                    args=args, returncode=0, stdout="main\n", stderr=""
+                )
+            if args[:3] == ["git", "config", "--get"]:
+                if "user.email" in args:
+                    return subprocess.CompletedProcess(
+                        args=args,
+                        returncode=0,
+                        stdout="alice@example.com\n",
+                        stderr="",
+                    )
+            return subprocess.CompletedProcess(
+                args=args, returncode=0, stdout="", stderr=""
+            )
+
+        monkeypatch.setattr(finalize.subprocess, "run", _fake_run)
+
+        path = self._write_fragment(
+            tmp_path,
+            "20260508-1010-alice-feat-experiments-auth.md",
+            frontmatter_extra={"branch": "feat-experiments"},
+        )
+
+        _, user, branch, slug = finalize.parse_fragment_filename(path)
+        assert branch == "feat-experiments"
+        assert slug == "auth"
+
+    def test_quoted_frontmatter_branch_is_accepted(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """YAML allows the value to be quoted — `branch: "feat-x"`. The
+        parser tolerates either form so agents writing PyYAML-style
+        frontmatter are not rejected.
+        """
+
+        def _fake_run(args, **_kwargs):
+            if args[:3] == ["git", "config", "--get"]:
+                if "user.email" in args:
+                    return subprocess.CompletedProcess(
+                        args=args,
+                        returncode=0,
+                        stdout="alice@example.com\n",
+                        stderr="",
+                    )
+            return subprocess.CompletedProcess(
+                args=args, returncode=0, stdout="", stderr=""
+            )
+
+        monkeypatch.setattr(finalize.subprocess, "run", _fake_run)
+
+        path = self._write_fragment(
+            tmp_path,
+            "20260508-1010-alice-feat-x-auth.md",
+            frontmatter_extra={"branch": '"feat-x"'},
+        )
+
+        _, _, branch, slug = finalize.parse_fragment_filename(path)
+        assert branch == "feat-x"
+        assert slug == "auth"
+
+    def test_unreadable_file_falls_back_gracefully(self, tmp_path: Path) -> None:
+        """`_read_draft_branch` on a non-existent path returns None, never
+        raises — the caller falls through to filename-based heuristics."""
+        result = finalize._read_draft_branch(tmp_path / "does-not-exist.md")
+        assert result is None
+
+
 # -- Next-NNN assignment ------------------------------------------------------
 
 
