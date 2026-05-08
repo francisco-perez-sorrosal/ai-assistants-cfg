@@ -118,6 +118,8 @@ Agents communicate through shared documents, not direct invocation. The pipeline
 
 Use an agent when the task benefits from a separate context window (large scope, multiple phases, structured output). Work directly for quick lookups, single changes, one-step edits. Per-agent Claude model tier is governed by [`agent-model-routing.md`](agent-model-routing.md).
 
+**Shipped-Explore fallback.** If `Agent(subagent_type="Explore", ...)` fails before producing output (harness-level error, orphaned-tool-start, no agent-start event in observability), do not retry the same input — input tokens are spent and a second attempt re-spends them. Fall back to `i-am:researcher` for substantive code surveys (returns a structured `RESEARCH_FINDINGS.md`) or to direct `find`/`grep` via Bash for narrow lookups. Many-skill / many-MCP environments are particularly prone to this failure mode.
+
 ### Delegation Depth
 
 - **Depth 0-1:** Standard. **Depth 2:** Main agent decides. **Depth 3+:** Requires explicit user confirmation.
