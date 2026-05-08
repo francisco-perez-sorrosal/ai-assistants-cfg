@@ -70,31 +70,11 @@ Outputs use path prefixes to signal lifecycle: `.ai-work/<slug>/` = ephemeral (d
 
 ### Delegation Checklists
 
-When delegating to an agent, the main agent **must** include these deliverables in the prompt. The subagent's system prompt contains full instructions, but the main agent's prompt determines priority and scope.
+<!-- Anchor preserved for cross-rule links; canonical content lives in coordination-details.md -->
 
-**systems-architect** — always include in prompt:
-- "Produce `SYSTEMS_PLAN.md` at `.ai-work/<task-slug>/`"
-- "Create ADRs in `.ai-state/decisions/` for significant trade-offs"
-- "Create or update `.ai-state/ARCHITECTURE.md` (architect-facing design target)"
-- "Create or update `docs/architecture.md` (developer-facing navigation guide, Built components only)"
-- If deployment is in scope: "Create or update `.ai-state/SYSTEM_DEPLOYMENT.md`"
+When delegating to an agent, the main agent **must** include the per-agent deliverables in the prompt. The subagent's system prompt contains full instructions, but the main agent's prompt determines priority and scope.
 
-**implementation-planner** — always include in prompt:
-- "Produce `IMPLEMENTATION_PLAN.md`, `WIP.md`, and `LEARNINGS.md` at `.ai-work/<task-slug>/`"
-- "Read the `SYSTEMS_PLAN.md` at `.ai-work/<task-slug>/` for input"
-- "If step decomposition reveals structural gaps not captured in the systems plan: update `.ai-state/ARCHITECTURE.md` and `docs/architecture.md` before implementation begins"
-
-**implementer** — always include in prompt:
-- "Execute step N from `WIP.md` at `.ai-work/<task-slug>/`"
-- "Update `WIP.md` with completion status"
-- "If structural changes: update `.ai-state/ARCHITECTURE.md` (step 7.6) and `docs/architecture.md` (step 7.7)"
-- "If the step runs tests: write `TEST_RESULTS.md` at `.ai-work/<task-slug>/` per the canonical schema in `skills/software-planning/references/agent-pipeline-details.md`"
-
-**verifier** — always include in prompt:
-- "Produce `VERIFICATION_REPORT.md` at `.ai-work/<task-slug>/`"
-- "Verify against acceptance criteria in the `SYSTEMS_PLAN.md`"
-- "Check `.ai-state/ARCHITECTURE.md` design coherence (Phase 8) and `docs/architecture.md` code accuracy (Phase 9)"
-- "Read `TEST_RESULTS.md` at `.ai-work/<task-slug>/` for test outcomes (missing file → WARN, not FAIL)"
+The full per-agent checklists for systems-architect, implementation-planner, implementer, and verifier — including conditional clauses (`if deployment in scope`, `if structural`, `if tests`) — are the authoritative source at [`coordination-details.md § Delegation Checklists`](../../skills/software-planning/references/coordination-details.md#delegation-checklists). Sentinel `EC06` validates that the condensed block in `claude/config/CLAUDE.md` stays byte-equivalent with that section.
 
 ### Proactive Agent Usage
 

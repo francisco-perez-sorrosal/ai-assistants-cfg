@@ -1,6 +1,6 @@
 # Tier-Prompt Scaffolds
 
-Parametric scaffolds for the main agent to construct **delegation prompts** at Standard, Full, and Lightweight tiers. The scaffolds are a **shell**; per-agent deliverables live in the authoritative [Delegation Checklists](../../../rules/swe/swe-agent-coordination-protocol.md#delegation-checklists). The main agent substitutes placeholders and pastes the checklist payload — no content is duplicated here.
+Parametric scaffolds for the main agent to construct **delegation prompts** at Standard, Full, and Lightweight tiers. The scaffolds are a **shell**; per-agent deliverables live in the authoritative [Delegation Checklists](coordination-details.md#delegation-checklists). The main agent substitutes placeholders and pastes the checklist payload — no content is duplicated here.
 
 **Placeholder convention:** angle-bracket tokens (inherited from `[Phase: <Name>]` in [SKILL.md](../SKILL.md)). The main agent substitutes each token before sending the prompt; subagents never see angle-bracket forms.
 
@@ -32,7 +32,7 @@ Phase: <phase-name>
 Input: .ai-work/<task-slug>/<input-artifact>
 Deliverable: .ai-work/<task-slug>/<deliverable>
 
-<!-- Paste the per-agent checklist from rules/swe/swe-agent-coordination-protocol.md#delegation-checklists -->
+<!-- Paste the per-agent checklist from coordination-details.md#delegation-checklists -->
 
 Report back: path of <deliverable>, acceptance-criteria pass/fail table, open questions.
 ```
@@ -52,7 +52,7 @@ Parallel peer: <parallel-peer-agent> (disjoint file set)
 Input: .ai-work/<task-slug>/WIP.md (your step only)
 Deliverable: <deliverable> + .ai-work/<task-slug>/WIP_<agent-role>.md fragment
 
-<!-- Paste the per-agent checklist from rules/swe/swe-agent-coordination-protocol.md#delegation-checklists -->
+<!-- Paste the per-agent checklist from coordination-details.md#delegation-checklists -->
 
 Do NOT edit files outside your declared Files set; report [CONFLICT] if you must.
 ```
@@ -68,7 +68,7 @@ Goal: <one-sentence question>
 Scope: <files or APIs in bounds>
 Done when: <inline acceptance criterion>
 
-<!-- Paste the researcher checklist from rules/swe/swe-agent-coordination-protocol.md#delegation-checklists -->
+<!-- Paste the researcher checklist from coordination-details.md#delegation-checklists -->
 
 Return findings in your response (no file); cite paths.
 ```
@@ -94,7 +94,7 @@ Peers: instances <other-k> of <instance-total> operating on different file sets
 Input: .ai-work/<task-slug>/WIP.md (your step only)
 Deliverable: <deliverable> + .ai-work/<task-slug>/WIP_<agent-role>_<instance-k>.md fragment
 
-<!-- Paste the per-agent checklist from rules/swe/swe-agent-coordination-protocol.md#delegation-checklists -->
+<!-- Paste the per-agent checklist from coordination-details.md#delegation-checklists -->
 
 Do NOT edit files outside your declared Files set; report [CONFLICT] if you must. Coordinator merges all <instance-total> fragment files into the canonical WIP.md after every instance completes.
 ```
@@ -113,7 +113,7 @@ Variant: <variant-label>
 Peer variants: <other-variant-labels>
 Deliverable: .ai-work/<task-slug>/<deliverable>__<variant-label>.md
 
-<!-- Paste the per-agent checklist from rules/swe/swe-agent-coordination-protocol.md#delegation-checklists -->
+<!-- Paste the per-agent checklist from coordination-details.md#delegation-checklists -->
 
 Report: trade-offs in your approach, strong/weak points, explicit selection criteria you'd propose. Do NOT declare a winner — the coordinator compares variants and decides. Do NOT read peers' variant files; independent reasoning is the point of speculative execution.
 ```
@@ -122,4 +122,4 @@ Coordinator responsibility: after all variants complete, compare the per-variant
 
 ## DRY Boundary
 
-This reference defines **prompt structure only**. Every `<!-- Paste ... -->` marker points the main agent at the rule's Delegation Checklists as the single source of truth for per-agent deliverables. Copying the checklists here would duplicate them across two files — the rule is authoritative. Add new placeholders here only when a new delegation pattern emerges; add new deliverables to the rule, not here.
+This reference defines **prompt structure only**. Every `<!-- Paste ... -->` marker points the main agent at [coordination-details.md § Delegation Checklists](coordination-details.md#delegation-checklists) as the single source of truth for per-agent deliverables. Copying the checklists here would duplicate them across two files — coordination-details is authoritative. Add new placeholders here only when a new delegation pattern emerges; add new deliverables to coordination-details, not here.

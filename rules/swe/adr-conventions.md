@@ -14,28 +14,11 @@ Pipeline-authored ADRs (systems-architect, implementation-planner, or any agent 
 .ai-state/decisions/drafts/<YYYYMMDD-HHMM>-<user>-<branch>-<slug>.md
 ```
 
-**Identity derivation** (pseudocode — agents implement this before creating the file):
-
-```
-timestamp   = now_utc_formatted("YYYYMMDD-HHMM")   # filename-safe, no colons
-user_raw    = git_config("user.email") or git_config("user.name") or "anon"
-user_slug   = sanitize(user_raw.split("@")[0])     # username prefix from email, if email set
-branch_raw  = git_rev_parse("--abbrev-ref", "HEAD") or "detached"
-branch_slug = sanitize(branch_raw)
-slug        = kebab_case(decision_title)
-filename    = f"{timestamp}-{user_slug}-{branch_slug}-{slug}.md"
-id          = f"dec-draft-{sha1(filename)[:8]}"
-```
-
-`sanitize(s)` lowercases and strips to `[a-z0-9-]` (replacing any run of other characters with a single `-`) and caps length at 40 characters. When both `user.email` and `user.name` are unset, use `anon` — never fabricate identity.
-
 **Frontmatter at creation**: `id: dec-draft-<8-char-hash>`, `status: proposed`. All other fields (see the [Frontmatter](#frontmatter) table) are populated as usual.
 
 **Cross-reference convention within drafts**: draft-to-draft `supersedes`, `superseded_by`, `re_affirms`, and `re_affirmed_by` values use `dec-draft-<hash>` — never a speculative `dec-NNN`. The [Finalize Protocol](#finalize-protocol) rewrites these to `dec-NNN` atomically at merge-to-main.
 
-**PII note**: the fragment filename contains a sanitized email-username prefix. This is acceptable for internal project state but is not a secret — treat fragment filenames the same way as commit-author metadata, not as redacted data. Teams with stricter privacy requirements can substitute a short hash of the email address for the username prefix.
-
-**Collision avoidance**: minute-precision timestamp + user + branch makes collisions effectively impossible in normal use. If two drafts with the same minute, user, branch, and slug do land, append `-2`, `-3`, ... to the slug at write time.
+For the identity-derivation pseudocode (`timestamp` / `user_slug` / `branch_slug` / `slug` / hash), the `sanitize` helper rules, the PII note, and the collision-avoidance fallback, see [`adr-authoring-protocols.md § Identity Derivation and Filename Construction`](../../skills/software-planning/references/adr-authoring-protocols.md#identity-derivation-and-filename-construction).
 
 #### Finalized ADRs (post-merge)
 
@@ -105,22 +88,9 @@ Re-affirmation is intentionally stronger than silent concurrence (it forces a pu
 
 ### Finalize Protocol
 
-Finalize promotes drafts in `.ai-state/decisions/drafts/` to finalized `<NNN>-<slug>.md` records at merge-to-main. It is invoked automatically by the post-merge git hook and by `/merge-worktree`; operators may also trigger it manually via a finalize script. The protocol is **idempotent** — running twice on the same state is a no-op — so duplicated invocations from hook + command are safe.
+Finalize promotes drafts in `.ai-state/decisions/drafts/` to finalized `<NNN>-<slug>.md` records at merge-to-main. Invoked by the post-merge git hook and `/merge-worktree`; the protocol is **idempotent**, advisory-locked, and rewrites `dec-draft-<hash>` cross-references across a **bounded** walk scope (sibling ADR files, in-flight `.ai-work/*/LEARNINGS.md` / `SYSTEMS_PLAN.md` / `IMPLEMENTATION_PLAN.md`, and `.ai-state/specs/SPEC_*` matching the current task slug — never an arbitrary repo sweep). The bounded scope is the contract; finalize never rewrites unrelated text. `DECISIONS_INDEX.md` regenerates as the last step.
 
-1. **Draft detection.** Identify drafts added in the merged range (`<merge-base>..HEAD`) under `.ai-state/decisions/drafts/`. A manual-branch mode detects drafts added by a named branch. A dry-run mode prints the planned changes without writing.
-2. **NNN assignment.** For each detected draft, assign the next sequential `<NNN>` by scanning `.ai-state/decisions/` for the highest existing `<NNN>-<slug>.md` value, ignoring the `drafts/` subdirectory entirely. Assignments follow filename-sort order across the batch so the sequence is deterministic.
-3. **File rename and `id` rewrite.** Rename `.ai-state/decisions/drafts/<fragment>.md` to `.ai-state/decisions/<NNN>-<slug>.md` (slug extracted as the trailing `-<slug>.md` component of the fragment filename). Rewrite the frontmatter `id:` field from `dec-draft-<hash>` to `dec-NNN`.
-4. **Cross-reference rewrite.** Rewrite every `dec-draft-<hash>` occurrence (for each promoted draft) to its newly assigned `dec-NNN` across a bounded set of locations (the walk is bounded by design — finalize does not sweep the full repo):
-
-   | Location | Surface to rewrite |
-   |----------|-------------------|
-   | `.ai-state/decisions/**/*.md` | Frontmatter `supersedes` / `superseded_by` / `re_affirms` / `re_affirmed_by`; inline body references (`[dec-draft-<hash>]` or bare). Both drafts and finalized records. |
-   | `.ai-work/*/LEARNINGS.md` | All occurrences |
-   | `.ai-work/*/SYSTEMS_PLAN.md`, `.ai-work/*/IMPLEMENTATION_PLAN.md` | All occurrences |
-   | `.ai-state/specs/SPEC_<name>_YYYY-MM-DD.md` | Files matching the current pipeline's task slug |
-5. **Index regeneration.** After all drafts in the batch promote, `DECISIONS_INDEX.md` regenerates to reflect the new finalized records. Drafts are excluded from the index by construction; the index lists only finalized `<NNN>-<slug>.md` files.
-
-Concurrency safety: finalize acquires an advisory file lock before any writes so concurrent post-merge hook invocations serialize cleanly. Exit codes: `0` for success or no-op; non-zero only when manual intervention is needed (e.g., an unresolvable filename collision). The protocol deliberately avoids rewriting arbitrary repository text; the bounded walk scope is the contract.
+For the full step sequence (draft detection, NNN assignment, file rename + frontmatter `id:`/`status:` rewrites, the cross-reference-rewrite location table, concurrency safety, and exit codes), see [`adr-authoring-protocols.md § Finalize at Merge-to-Main`](../../skills/software-planning/references/adr-authoring-protocols.md#finalize-at-merge-to-main).
 
 ### Who Writes ADRs
 
@@ -134,13 +104,7 @@ All ADR authors also record decisions in `LEARNINGS.md ### Decisions Made` using
 
 ### Agent Writing Protocol
 
-1. Derive author identity from `git config` (see the [Fragment Filename Schema](#fragment-filename-schema) for the full pseudocode): prefer the username prefix of `user.email`, fall back to `user.name`, then `anon`; sanitize to `[a-z0-9-]` and cap at 40 chars.
-2. Build the fragment filename `<YYYYMMDD-HHMM>-<user>-<branch>-<slug>.md` using the current UTC timestamp, sanitized branch (`git rev-parse --abbrev-ref HEAD`), and kebab-case slug of the decision title.
-3. Compute `id: dec-draft-<sha1(filename)[:8]>`.
-4. Create `.ai-state/decisions/drafts/<fragment-filename>.md` using the Write tool with frontmatter `id: dec-draft-<hash>` and `status: proposed` (plus the rest of the schema from the [Frontmatter](#frontmatter) table).
-5. Cross-references between drafts use `dec-draft-<hash>` values — the [Finalize Protocol](#finalize-protocol) rewrites them to `dec-NNN` at merge-to-main.
-6. Record the decision compactly in `LEARNINGS.md ### Decisions Made`, citing the draft id (`(dec-draft-<hash>)`). Finalize rewrites these references too.
-7. Do **not** manually invoke the index-regeneration script — `DECISIONS_INDEX.md` regenerates automatically at finalize.
+The 7-step procedure agents follow when creating a fragment ADR (identity derivation, filename construction, fragment-id computation, frontmatter, cross-reference convention, LEARNINGS.md entry, no-manual-index-regen) lives in [`adr-authoring-protocols.md § ADR Creation Protocol`](../../skills/software-planning/references/adr-authoring-protocols.md#adr-creation-protocol-fragment-name-at-create) — the canonical procedural reference for ADR-creating agents (systems-architect, implementation-planner).
 
 ### Discovery Protocol
 
