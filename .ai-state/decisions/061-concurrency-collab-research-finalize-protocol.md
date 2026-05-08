@@ -1,7 +1,7 @@
 ---
 id: dec-061
 title: ADR Finalize Protocol -- draft to NNN at merge-to-main
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-19
 summary: A new `scripts/finalize_adrs.py` promotes draft ADRs under `.ai-state/decisions/drafts/` to `<NNN>-<slug>.md` at merge-to-main, rewrites cross-references in sibling ADRs/LEARNINGS/PLAN docs, regenerates the index, and is idempotent; invoked by post-merge hook and `/merge-worktree`.

@@ -1,7 +1,7 @@
 ---
 id: dec-113
 title: AaC tier integrates into onboarding via plugin-path-resolved scripts and templated artifacts — greenfield default-ON, existing-project default-OFF
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-01
 summary: 'Idea 8 wires the v1+v1.1+W4 AaC stack into /onboard-project Phase 8b (default-OFF, opt-in gate) and /new-project + new_project.sh (default-ON, --no-aac opt-out). Per-project surfaces are minimal: fence-region template seed, fitness/ scaffold, golden-rule pre-commit Block D resolved to plugin-installed scripts, architecture.yml workflow with placeholder substitution, and <doc-dir>/diagrams/ directory scaffold per dec-099. No per-project script copies; AaC enforcement scripts stay canonical in the i-am plugin install path and are invoked via the same Phase 4 plugin-path-resolution pattern.'

@@ -1,7 +1,7 @@
 ---
 id: dec-085
 title: Test-topology protocol does not activate at Lightweight tier; escalation path is the sole exit
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-28
 summary: The test-topology protocol activates at Standard and Full tiers only. Lightweight tier (2-3 files, single behavior, clear scope) does not derive groups, does not consult TEST_TOPOLOGY.md, does not emit per-group results. If a Lightweight task touches more than one group's worth of behavior, the existing escalation-to-Standard rule (no scope creep) is the only exit; the protocol does not silently activate mid-Lightweight.

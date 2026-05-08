@@ -1,7 +1,7 @@
 ---
 id: dec-066
 title: /project-metrics planning conventions — Full-tier escalation, test placement, committed fixture repo
-status: proposed
+status: accepted
 category: implementation
 date: 2026-04-23
 summary: Implementation-planner decisions for /project-metrics decomposition — escalate from Standard to Full tier on step-count grounds, place tests at scripts/project_metrics/tests/ rather than tests/scripts/, commit fixture git repo for byte-deterministic collector tests rather than synthesize per-test

@@ -1,7 +1,7 @@
 ---
 id: dec-058
 title: PR-Conventions Rule -- path-scoped, no always-loaded budget impact
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-19
 summary: A new `rules/swe/vcs/pr-conventions.md` rule covers branch naming, `.ai-state/` safety at PR time, merge policy (reject squash on `.ai-state/` PRs), review expectations, and forward path for multi-user mode; path-scoped via YAML frontmatter so zero always-loaded budget consumption.

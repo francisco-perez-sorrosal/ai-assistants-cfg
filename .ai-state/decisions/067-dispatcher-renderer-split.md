@@ -1,7 +1,7 @@
 ---
 id: dec-067
 title: test-coverage skill as dispatcher + renderer, not tool installer
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-24
 summary: The test-coverage skill locates, invokes, and renders project coverage, but never installs coverage tooling. Projects own their tools as real dependencies.

@@ -1,7 +1,7 @@
 ---
 id: dec-074
 title: Install-path completeness via first-session auto-completion + retain /praxion-complete-install
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-27
 summary: Marketplace plugin install becomes self-sufficient via a SessionStart auto-completion hook that converges all install paths on the same end state; /praxion-complete-install is retained as an explicit re-invocation path.

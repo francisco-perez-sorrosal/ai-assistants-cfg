@@ -1,7 +1,7 @@
 ---
 id: dec-122
 title: Pipeline Dashboard cross-platform scope — macOS-only v1, Linux deferred
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-07
 summary: v1 ships macOS-only via launchd; Linux/systemd support and Windows are deferred to v2 with explicit risk acknowledgment and a documented manual-launch fallback.

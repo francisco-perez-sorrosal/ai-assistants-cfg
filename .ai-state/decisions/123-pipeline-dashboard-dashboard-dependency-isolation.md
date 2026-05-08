@@ -1,7 +1,7 @@
 ---
 id: dec-123
 title: Pipeline Dashboard dependency isolation — dedicated ~/.praxion-dashboard/venv/
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-07
 summary: Dashboard installs into its own dedicated venv at ~/.praxion-dashboard/venv/, mirroring phoenix-ctl, so that Streamlit and visualization deps never interfere with user project deps.

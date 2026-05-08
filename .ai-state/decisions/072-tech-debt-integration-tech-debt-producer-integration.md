@@ -1,7 +1,7 @@
 ---
 id: dec-072
 title: Tech-debt producers — verifier migration + sentinel TD dimension
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-24
 summary: Verifier migrates per-change debt entries off `LEARNINGS.md ## Technical Debt` and onto the new tech-debt ledger; sentinel gains a dedicated TD dimension (TD01–TD05) that LLM-judges metric breaches into ledger entries; both producers share a single owner-role heuristic anchored in `agent-intermediate-documents.md`.

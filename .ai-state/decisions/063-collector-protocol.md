@@ -1,7 +1,7 @@
 ---
 id: dec-063
 title: Collector protocol as extension seam for /project-metrics
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-23
 summary: Define a pluggable collector protocol (resolve/collect/describe) for /project-metrics so v1 Tier 0+Python collectors and deferred v2 TS/Go/Rust collectors share a stable interface and runner can orchestrate them with uniform error isolation

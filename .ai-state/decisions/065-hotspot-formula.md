@@ -1,7 +1,7 @@
 ---
 id: dec-065
 title: Hot-spot composition formula — churn_lines × max CCN, cross-language default
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-23
 summary: Define the default hot-spot formula for /project-metrics as churn_lines_90d × per-file max cyclomatic CCN (lizard preferred, scc branch-count fallback) and explicitly reject alternatives that break cross-language comparability or are gameable

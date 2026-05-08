@@ -1,7 +1,7 @@
 ---
 id: dec-104
 title: AaC+DaC Worktree 1 decomposition — fitness tests in separate invocation, import-linter in dev group
-status: proposed
+status: accepted
 category: implementation
 date: 2026-04-30
 summary: 'fitness/tests/ runs via separate pytest invocation (not added to testpaths); import-linter added to dev dependency group (not a separate fitness group); both decisions operationalize dec-101 within Praxion pyproject.toml constraints.'

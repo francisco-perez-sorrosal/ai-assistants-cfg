@@ -1,7 +1,7 @@
 ---
 id: dec-108
 title: Golden-rule enforcement at commit time via standalone script invoked from pre-commit hook
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-01
 summary: 'Ship scripts/check_aac_golden_rule.py (stdlib, idempotent, side-effect-free) invoked from git-pre-commit-hook.sh Block D to detect generated-output edits without source changes; line-adjacent # aac-override: <reason> escape hatch; sentinel EC dimension reuses the same script in audit mode.'

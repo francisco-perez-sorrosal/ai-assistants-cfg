@@ -1,7 +1,7 @@
 ---
 id: dec-102
 title: AaC+DaC v1 implementation decomposition — two-worktree split at Phase 3/4 boundary
-status: proposed
+status: accepted
 category: implementation
 date: 2026-04-30
 summary: 'Decompose 20-step AaC+DaC v1 plan (Ideas 1, 2, 4, 5) into two follow-up worktrees: Worktree 1 for Phases 0–3 (foundation through architect-validator agent), Worktree 2 for Phases 4–5 (agent boundary updates + verification). Split at the dependency cut where Phase 4 requires the agent file to exist on main before boundary-table references can be reviewed.'

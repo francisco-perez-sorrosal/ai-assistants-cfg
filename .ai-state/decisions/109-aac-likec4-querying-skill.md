@@ -1,7 +1,7 @@
 ---
 id: dec-109
 title: likec4-querying skill — path-scoped progressive-disclosure rubric for MCP-vs-direct-read decisions
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-01
 summary: 'Ship skills/likec4-querying/SKILL.md (≤200 lines, path-scoped to .c4 / ARCHITECTURE.md / docs/architecture.md / docs/diagrams) with a one-table decision rubric covering eight common architecture-authoring tasks, plus a references/mcp-tool-recipes.md catalog with one worked example per likec4 MCP tool.'

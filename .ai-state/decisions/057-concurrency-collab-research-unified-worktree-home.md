@@ -1,7 +1,7 @@
 ---
 id: dec-057
 title: Unified Worktree Home on `.claude/worktrees/`
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-19
 summary: `/create-worktree` and `/merge-worktree` migrate from `.trees/<name>/` to `.claude/worktrees/<name>/`, matching `EnterWorktree` built-in behavior; `.gitignore` adds the new path; `.trees/` retained through a two-release deprecation window.

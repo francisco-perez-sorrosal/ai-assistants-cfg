@@ -1,7 +1,7 @@
 ---
 id: dec-081
 title: Self-host guard for /onboard-project and /new-project
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-27
 summary: Both onboarding commands abort when invoked on a Claude Code plugin source repo (`.claude-plugin/plugin.json` present) unless `PRAXION_ALLOW_SELF_ONBOARD=1` is set, protecting the canonical source-of-truth chain from accidental self-injection.

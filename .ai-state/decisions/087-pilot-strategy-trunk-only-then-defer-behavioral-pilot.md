@@ -1,7 +1,7 @@
 ---
 id: dec-087
 title: Pilot strategy — trunk-only at this pipeline; defer behavioral pilot to first consumer project
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-28
 summary: Land the test-topology trunk artifacts (schema, sentinel dimension, ledger class, document conventions) without activating any behavioral pilot in Praxion; the first behavioral pilot occurs in the first consumer project that adopts the protocol.

@@ -1,7 +1,7 @@
 ---
 id: dec-096
 title: Step ordering constraint — rule update must commit before any .c4/.d2 file
-status: proposed
+status: accepted
 category: implementation
 date: 2026-04-30
 summary: 'Rule update (rules/writing/diagram-conventions.md) must land in its own commit before any .c4, .d2, or .svg file is committed; hook script must land before live-file migrations.'

@@ -1,7 +1,7 @@
 ---
 id: dec-059
 title: Squash-Merge Safety -- post-merge warning + `/merge-worktree` refuse-or-rebase
-status: proposed
+status: accepted
 category: implementation
 date: 2026-04-19
 summary: A new `scripts/check_squash_safety.py` invoked by the post-merge hook detects squash-merges that erase `.ai-state/` entries and emits a loud warning with recovery steps; `/merge-worktree` refuses to invoke `git merge --squash` on `.ai-state/`-touching branches.

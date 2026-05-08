@@ -1,7 +1,7 @@
 ---
 id: dec-084
 title: Integration checkpoint runs the full pipeline-tier suite
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-28
 summary: The final integration-checkpoint step in a Standard/Full-tier pipeline runs the full pipeline-tier suite (every pocket, every group), not the more aggressive "touched-pockets-pipeline-tier" optimization. CI minutes are not the binding constraint at Praxion's scale; the full-suite backstop is the protocol's only hard guarantee against false negatives.

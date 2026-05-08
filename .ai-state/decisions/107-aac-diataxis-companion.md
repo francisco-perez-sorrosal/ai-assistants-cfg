@@ -1,7 +1,7 @@
 ---
 id: dec-107
 title: Diátaxis-aligned DaC companion as reference under doc-management with per-mode fence-regenerability rules
-status: proposed
+status: accepted
 category: configuration
 date: 2026-05-01
 summary: 'Ship skills/doc-management/references/diataxis-modes.md as a single on-demand reference that maps the four Diátaxis modes (Tutorial / How-to / Reference / Explanation) to explicit aac:generated vs aac:authored fence regenerability rules; light-touch updates to skills/doc-management/SKILL.md and agents/doc-engineer.md Phase 1; no new skill, no always-loaded cost.'

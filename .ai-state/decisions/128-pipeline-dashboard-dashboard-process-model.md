@@ -1,7 +1,7 @@
 ---
 id: dec-128
 title: Pipeline Dashboard process model — bash ctl + macOS launchd, not MCP-bound
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-07
 summary: Streamlit dashboard runs as a standalone bash-managed daemon mirroring phoenix-ctl, not as an MCP server tied to Claude Code session lifecycle.

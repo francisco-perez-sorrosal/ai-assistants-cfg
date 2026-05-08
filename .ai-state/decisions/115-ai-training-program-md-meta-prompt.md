@@ -1,7 +1,7 @@
 ---
 id: dec-115
 title: program.md is a project-local meta-prompt — sibling artifact category to CLAUDE.md
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-03
 summary: program.md is recognized as a new Praxion artifact category — a project-local meta-prompt that guides an autonomous experiment loop. It lives at the project root (sibling of CLAUDE.md), is discovered by file presence, and is consumed by implementation-planner and verifier alongside CLAUDE.md.

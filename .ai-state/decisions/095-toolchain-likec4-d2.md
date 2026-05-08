@@ -1,7 +1,7 @@
 ---
 id: dec-095
 title: LikeC4 + D2 chosen as C4-architectural diagramming toolchain
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-30
 summary: 'Adopt LikeC4 DSL + native D2 codegen + D2-rendered SVG for C4-architectural diagrams; reject Structurizr CLI (archived) and Structurizr vNext (D2 export bundling unconfirmed) and Mermaid C4 (no SSOT/multi-view).'

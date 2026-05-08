@@ -1,3 +1,16 @@
+---
+paths:
+  - "program.md"
+  - "runs/**"
+  - "experiments/**"
+  - "train.py"
+  - "prepare.py"
+  - "TRAINING_RESULTS.md"
+  - ".ai-work/**/SYSTEMS_PLAN.md"
+  - ".ai-work/**/WIP.md"
+  - ".ai-work/**/VERIFICATION_REPORT.md"
+---
+
 ## Eval-Driven Verification
 
 ML training acceptance criteria use metric thresholds, not binary assertions. When

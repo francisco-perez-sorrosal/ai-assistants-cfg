@@ -1,7 +1,7 @@
 ---
 id: dec-071
 title: Tech-debt ledger as a living artifact in `.ai-state/`
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-24
 summary: Introduce `.ai-state/TECH_DEBT_LEDGER.md` as a single living, append-only ledger for grounded debt findings — one artifact, status updates in place, dedup-key for worktree merge — following the SYSTEM_DEPLOYMENT/ARCHITECTURE living-document precedent.

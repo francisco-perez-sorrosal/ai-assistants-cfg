@@ -1,7 +1,7 @@
 ---
 id: dec-097
 title: AaC+DaC cornerstone framed as clauses under existing principles, not a new top-level principle
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-30
 summary: 'Engrave Architecture-as-Code + Documentation-as-Code as cornerstone via two ≤2-sentence clauses — one under Context Engineering, one under Structural Beauty — rather than introducing a seventh top-level principle.'

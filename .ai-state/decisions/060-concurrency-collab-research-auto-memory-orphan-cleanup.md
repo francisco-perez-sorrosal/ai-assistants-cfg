@@ -1,7 +1,7 @@
 ---
 id: dec-060
 title: Auto-Memory Orphan Cleanup -- `/clean-auto-memory` opt-in command
-status: proposed
+status: accepted
 category: implementation
 date: 2026-04-19
 summary: New `commands/clean-auto-memory.md` enumerates `~/.claude/projects/-<hash>-worktrees-*` directories, compares against `git worktree list`, surfaces orphans, and deletes only on user confirmation; never hook-driven.

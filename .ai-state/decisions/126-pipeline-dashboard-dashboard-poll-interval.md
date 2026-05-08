@@ -1,7 +1,7 @@
 ---
 id: dec-126
 title: Pipeline Dashboard auto-refresh interval — 15s default, env-overridable
-status: proposed
+status: accepted
 category: implementation
 date: 2026-05-07
 summary: Hardcoded 15-second default auto-refresh on Workshops page, override via PRAXION_DASHBOARD_POLL_SECONDS env var; per-page configurability deferred to v2.

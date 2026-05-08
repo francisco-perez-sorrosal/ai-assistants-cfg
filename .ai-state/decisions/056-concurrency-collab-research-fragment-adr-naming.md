@@ -1,7 +1,7 @@
 ---
 id: dec-056
 title: Fragment-ADR Naming Scheme (Timestamp + User + Branch + Slug)
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-19
 summary: ADRs created during a pipeline land as fragment files under `.ai-state/decisions/drafts/` with collision-safe timestamp+user+branch+slug filenames and `dec-draft-<hash>` ids; stable NNN assigned only at merge-to-main via finalize.

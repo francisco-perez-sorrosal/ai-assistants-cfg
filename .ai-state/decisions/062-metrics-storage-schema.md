@@ -1,7 +1,7 @@
 ---
 id: dec-062
 title: Metrics storage schema — JSON canonical + MD derived + append-only METRICS_LOG.md
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-23
 summary: Freeze a dual-artifact storage shape for /project-metrics (JSON canonical + MD derived rendering + append-only METRICS_LOG.md) with an explicit frozen-on-first-release aggregate block and a schema-mismatch policy for trend computation

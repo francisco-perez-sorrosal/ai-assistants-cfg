@@ -1,7 +1,7 @@
 ---
 id: dec-090
 title: Topology regeneration is human-initiated or sentinel-triggered, never automatic per-pipeline
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-28
 summary: TEST_TOPOLOGY.md is not regenerated automatically at any pipeline boundary. Refresh is initiated by the user via a future /refresh-topology command, or triggered by the sentinel when 3+ topology-drift ledger rows accumulate. Per-pipeline regeneration would obliterate section ownership and produce a topology diff on every PR.

@@ -1,7 +1,7 @@
 ---
 id: dec-069
 title: Verifier loads test-coverage skill at its own discretion (not hard trigger)
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-24
 summary: The verifier receives test-coverage in its skills list plus narrow prose guidance on when it's worth invoking; no hard/automatic coverage trigger is added.

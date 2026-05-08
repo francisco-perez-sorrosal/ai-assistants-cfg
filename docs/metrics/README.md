@@ -348,9 +348,9 @@ Three candidate UI implementations, ordered from simplest to richest. All three 
 
 One file, no build step, no framework. The viewer ships at `.ai-state/metrics_reports/index.html` — co-located with the data so all fetch paths are same-directory. Serve with `python -m http.server` from inside `.ai-state/metrics_reports/` and point a browser at `index.html`. The `file://` protocol blocks `fetch()` for cross-origin reads, so a simple HTTP server is required.
 
-The bundled viewer reads two log files when present: `METRICS_LOG.md` (the canonical aggregate) and `SENTRUX_HISTORY.md` (the sentrux side-car written by `scripts/sentrux_history.py`). Sentrux per-run reports also land in this directory as `SENTRUX_REPORT_<timestamp>.{md,json}` triples — same naming convention as the canonical metrics reports.
+The bundled viewer reads `METRICS_LOG.md` (the canonical aggregate).
 
-The minimal example below shows the same-directory fetch shape — the actual viewer is more elaborate (KPI tiles, multiple panels, sentrux side-car):
+The minimal example below shows the same-directory fetch shape — the actual viewer is more elaborate (KPI tiles, multiple panels):
 
 ```html
 <!DOCTYPE html>

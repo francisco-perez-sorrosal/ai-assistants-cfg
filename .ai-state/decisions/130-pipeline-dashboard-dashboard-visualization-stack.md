@@ -1,7 +1,7 @@
 ---
 id: dec-130
 title: Pipeline Dashboard visualization stack — graphviz + plotly + pyvis (lazy)
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-07
 summary: Use st.graphviz_chart (bundled) for DAGs, plotly (transitive Streamlit dep) for heatmaps and bipartite, pyvis as optional interactive fallback; LikeC4 SVGs embedded directly via st.components.v1.html.

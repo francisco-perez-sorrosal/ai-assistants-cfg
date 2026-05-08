@@ -1,7 +1,7 @@
 ---
 id: dec-120
 title: ML training onramp step ordering — skills-first, no test-engineer pairing
-status: proposed
+status: accepted
 category: implementation
 date: 2026-05-03
 summary: 13-step plan ordered skills → reference extensions → rules → rule edits → agent extensions → commands → onboarding → architecture docs. No test-engineer pairing (all deliverables are Markdown; verifier is the quality gate).

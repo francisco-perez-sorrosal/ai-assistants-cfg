@@ -1,7 +1,7 @@
 ---
 id: dec-118
 title: Neo-cloud abstraction uses tiered backend strategy (local default + SkyPilot default-remote + opt-in direct adapters)
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-03
 summary: Praxion ships a generic training_job_descriptor with three backend tiers — local subprocess (modes A/B), SkyPilot for default-remote (mode C; covers 20+ providers), and opt-in direct adapters when users commit to a provider (RunPod via @runpod/mcp-server is the v1 reference).

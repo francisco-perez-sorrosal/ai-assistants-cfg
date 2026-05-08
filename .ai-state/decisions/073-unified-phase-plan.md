@@ -1,7 +1,7 @@
 ---
 id: dec-073
 title: Praxion-first-class — unified four-phase implementation plan
-status: proposed
+status: accepted
 category: implementation
 date: 2026-04-26
 summary: Unified IMPLEMENTATION_PLAN.md covering both workstreams in four named phases; hygiene sequential, hook infrastructure with paired BDD/TDD, canonical block plus docs parallel, wiring and budget measurement sequential.

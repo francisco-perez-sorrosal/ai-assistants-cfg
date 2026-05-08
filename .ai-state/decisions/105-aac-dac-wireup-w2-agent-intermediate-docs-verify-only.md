@@ -1,7 +1,7 @@
 ---
 id: dec-105
 title: W2 agent-intermediate-documents — verify-only; no further edit needed
-status: proposed
+status: accepted
 category: implementation
 date: 2026-05-01
 summary: The agent-intermediate-documents.md Writers(four) and source-enum edits already landed in W1 Step 0.3. W2's obligation is a read-verify with no further edit; this ADR records the rationale for the verify-only decision.

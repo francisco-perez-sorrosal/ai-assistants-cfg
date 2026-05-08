@@ -1,7 +1,7 @@
 ---
 id: dec-116
 title: TRAINING_RESULTS.md schema is owned by llm-training-eval skill; verifier reads it; /run-experiment writes it
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-03
 summary: The schema for TRAINING_RESULTS.md is defined and versioned by the llm-training-eval skill. /run-experiment (and any future training dispatcher) writes the artifact at run completion; verifier's eval-aware Phase 3 reads it. The artifact lives ephemerally in .ai-work/<slug>/ and may be archived to .ai-state/training_runs/<run-tag>.md when the run is "kept" per the autoresearch experiment loop.

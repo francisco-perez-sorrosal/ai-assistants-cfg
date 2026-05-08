@@ -1,7 +1,7 @@
 ---
 id: dec-131
 title: Pipeline Dashboard — sequential data layer before parallel page steps
-status: proposed
+status: accepted
 category: implementation
 date: 2026-05-07
 summary: Data layer (discovery, parsers, cache) must complete before any page step begins; pages themselves are fully parallel.

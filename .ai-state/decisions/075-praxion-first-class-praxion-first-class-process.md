@@ -1,7 +1,7 @@
 ---
 id: dec-075
 title: Praxion-as-First-Class — process-driven development with universal rule-inheritance
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-27
 summary: Three-layer enforcement (canonical L2 block + L3 hooks + existing L1 rules) makes Praxion's process the default mode and propagates the behavioral contract to every subagent including host-native ones.

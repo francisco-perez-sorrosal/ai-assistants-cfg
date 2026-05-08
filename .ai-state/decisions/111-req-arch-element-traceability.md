@@ -1,7 +1,7 @@
 ---
 id: dec-111
 title: Bidirectional REQ↔architectural-element traceability convention
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-05-01
 summary: Establish a bidirectional cross-reference convention between SDD specs and LikeC4 elements — `architectural_elements: [...]` in SPEC frontmatter, `metadata.req_ids: [...]` on LikeC4 elements — and extend the traceability YAML/matrix with a fourth column. No new tooling; the LikeC4 MCP `query-by-metadata` already supports the lookup.

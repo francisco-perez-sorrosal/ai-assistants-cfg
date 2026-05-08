@@ -1,7 +1,7 @@
 ---
 id: dec-125
 title: Pipeline Dashboard Mermaid rendering — defer to v2
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-07
 summary: v1 ships without Mermaid rendering; LikeC4-generated SVGs cover all current architecture diagram needs; v2 reassesses based on demand and on streamlit-mermaid-interactive's maintenance trajectory.

@@ -1,7 +1,7 @@
 ---
 id: dec-103
 title: TECH_DEBT_LEDGER source enum widened to include orchestrator
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-30
 summary: 'Widen the TECH_DEBT_LEDGER source enum from verifier|sentinel to verifier|sentinel|orchestrator so explicit-user-directed writes from the main agent carry honest provenance instead of misattributing to sentinel/verifier.'

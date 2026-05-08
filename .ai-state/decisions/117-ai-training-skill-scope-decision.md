@@ -1,7 +1,7 @@
 ---
 id: dec-117
 title: ML training onramp uses four new skills + extensions to deployment/cicd, not one mega-skill
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-03
 summary: Four new skills (ml-training, llm-training-eval, neo-cloud-abstraction, experiment-tracking) plus two reference-file extensions (gpu-compute-budgeting under deployment, ml-experiment-ci under cicd). Pre-training is a coherent skill-granular domain; eval and neo-cloud abstraction are independently reusable; experiment tracking has its own conceptual frame distinct from app observability (per user adjudication 2026-05-02 — Q3 override).

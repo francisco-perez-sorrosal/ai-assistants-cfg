@@ -1,7 +1,7 @@
 ---
 id: dec-101
 title: Architectural fitness functions infrastructure — fitness/ at project root, import-linter + pytest, citation contract, waiver mechanism
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-30
 summary: 'Introduce a fitness/ directory at project root holding import-linter contracts and pytest fitness rules; every rule cites an ADR id or CLAUDE.md principle in module docstring (pytest) or description= field (import-linter); a meta-fitness rule self-polices the citation contract; waivers carry the same anchor+reason discipline.'

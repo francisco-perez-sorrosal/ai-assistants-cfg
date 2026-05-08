@@ -1,7 +1,7 @@
 ---
 id: dec-083
 title: Separate test scopes for canonical-blocks refactor — integration vs. unit
-status: proposed
+status: accepted
 category: implementation
 date: 2026-04-27
 summary: Use two distinct test files for the canonical-blocks extraction — hooks/test_onboard_praxion_block.py (behavioral integration) and scripts/test_sync_canonical_blocks.py (sync engine unit tests).

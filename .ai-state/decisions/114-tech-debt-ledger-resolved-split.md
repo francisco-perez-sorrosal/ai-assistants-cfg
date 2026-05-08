@@ -1,7 +1,7 @@
 ---
 id: dec-114
 title: Split TECH_DEBT_LEDGER into active + resolved file pair
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-01
 summary: Split the single TECH_DEBT_LEDGER.md into an active ledger (open/in-flight) and a sibling TECH_DEBT_RESOLVED.md (resolved/wontfix); the pair forms one logical namespace.

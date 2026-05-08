@@ -1,7 +1,7 @@
 ---
 id: dec-094
 title: Commit both diagram source DSL and rendered SVG; regenerate via repo hook
-status: proposed
+status: accepted
 category: configuration
 date: 2026-04-30
 summary: 'For C4-architectural diagrams, commit the LikeC4 source `.c4`, the generated `.d2`, and the rendered `.svg` together; a pre-commit hook regenerates derived artifacts when source changes; CI validates freshness as a backstop.'

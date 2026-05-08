@@ -1,7 +1,7 @@
 ---
 id: dec-106
 title: Architecture CI pipeline — three parallel jobs invoking architect-validator on architectural-touch PRs
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-01
 summary: 'Ship .github/workflows/architecture.yml with three parallel jobs (regenerate-and-diff, fitness-functions, dsl-validate); dsl-validate invokes the architect-validator agent via anthropics/claude-code-action; path-filter triggers prevent non-architectural PRs from running; mechanical fence check runs first to fail fast and avoid agent API spend.'

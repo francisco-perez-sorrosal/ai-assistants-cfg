@@ -1,7 +1,7 @@
 ---
 id: dec-110
 title: golden-rule hook placement in Block D, not Block C
-status: proposed
+status: accepted
 category: implementation
 date: 2026-05-01
 summary: "Block C in git-pre-commit-hook.sh is already occupied by diagram regeneration; the golden-rule enforcement check lands in Block D. SYSTEMS_PLAN.md's 'Block C' reference was a codebase-drift error corrected at planning time."

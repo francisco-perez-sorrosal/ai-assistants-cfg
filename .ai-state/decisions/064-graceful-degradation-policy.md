@@ -1,7 +1,7 @@
 ---
 id: dec-064
 title: Graceful degradation policy — git+stdlib hard floor, everything else optional
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-23
 summary: /project-metrics treats only git + Python 3.11+ stdlib as required; every other tool is optional with per-collector skip markers so the command runs end-to-end on any Praxion-onboarded repository regardless of installed tooling

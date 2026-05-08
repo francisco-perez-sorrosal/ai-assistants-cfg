@@ -1,7 +1,7 @@
 ---
 id: dec-119
 title: Extend verifier with eval-aware mode rather than introducing a peer ml-verifier
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-03
 summary: Verifier gains an eval-aware Phase 3 sub-branch that reads TRAINING_RESULTS.md and evaluates metric thresholds instead of branching into a separate agent.

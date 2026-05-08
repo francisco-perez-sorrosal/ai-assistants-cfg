@@ -1,7 +1,7 @@
 ---
 id: dec-070
 title: Tech-debt ledger consumer contract — single-line input on five agents (permission, not obligation)
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-24
 summary: Five existing consumer agents (systems-architect, implementation-planner, implementer, test-engineer, doc-engineer) gain a single prose line directing them to read the tech-debt ledger, filter by their owner-role, address in-scope items, and update status. Promethean, roadmap-cartographer, /project-metrics, and /project-coverage are explicitly excluded. The contract is framed as permission, not obligation, per dec-069.

@@ -1,7 +1,7 @@
 ---
 id: dec-124
 title: Pipeline Dashboard frontmatter parsing — stdlib re + pyyaml, no python-frontmatter
-status: proposed
+status: accepted
 category: implementation
 date: 2026-05-07
 summary: Use stdlib re + pyyaml (already a Streamlit transitive dep) for YAML frontmatter; rejecting the python-frontmatter library to match existing in-repo style and avoid a new external dep on a hot codepath.

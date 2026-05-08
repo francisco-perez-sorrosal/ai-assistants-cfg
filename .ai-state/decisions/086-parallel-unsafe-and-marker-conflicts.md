@@ -1,7 +1,7 @@
 ---
 id: dec-086
 title: Parallel-unsafe groups isolate at runner level; kebab-id → snake_case marker form; reserved-name set
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-28
 summary: Two coupled decisions on the marker/runner mechanics axis. First, parallel-unsafe groups (parallel_safe=false) run via a separate runner invocation rather than sharing a single invocation with the safe groups — this is the trunk decision. The Python leaf concretization is "two separate pytest invocations chained sequentially." Second, group ids are kebab-case for trunk identity and snake_case for the runtime marker form (so memory-store-core → memory_store_core), with a reserved-name set the schema enforces; sentinel TT05 validates both halves.

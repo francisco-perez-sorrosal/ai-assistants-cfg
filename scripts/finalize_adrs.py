@@ -47,6 +47,9 @@ FRAGMENT_ADR_PATTERN = re.compile(r"^(?P<ts>\d{8}-\d{4})-(?P<rest>[a-z0-9-]+)\.m
 FRONTMATTER_ID_PATTERN = re.compile(
     r"^(id:\s*)(dec-draft-[0-9a-f]{8})\s*$", re.MULTILINE
 )
+FRONTMATTER_STATUS_PROPOSED_PATTERN = re.compile(
+    r"^(status:\s*)proposed\s*$", re.MULTILINE
+)
 TIMESTAMP_FORMAT = "%Y%m%d-%H%M"
 
 logger = logging.getLogger("finalize_adrs")
@@ -538,9 +541,15 @@ def promote_draft(draft_path: Path, nnn: int, repo_root: Path) -> tuple[Path, st
 
     old_id = _read_draft_id(draft_path)
 
-    # Rewrite frontmatter `id:` in-place, then rename.
+    # Rewrite frontmatter `id:` and `status:` in-place, then rename. The
+    # status flip from `proposed` to `accepted` matches the lifecycle
+    # transition that finalize represents; without it, finalized ADRs
+    # stay flagged as proposals indefinitely.
     content = draft_path.read_text(encoding="utf-8")
     rewritten = FRONTMATTER_ID_PATTERN.sub(rf"\g<1>{new_id}", content, count=1)
+    rewritten = FRONTMATTER_STATUS_PROPOSED_PATTERN.sub(
+        r"\g<1>accepted", rewritten, count=1
+    )
     draft_path.write_text(rewritten, encoding="utf-8")
 
     _rename(draft_path, new_path, repo_root)

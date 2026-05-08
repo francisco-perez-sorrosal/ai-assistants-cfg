@@ -1,7 +1,7 @@
 ---
 id: dec-088
 title: expected_runtime_envelope is opt-in at M1 and M2; required from M3 (sentinel TT04 activation)
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-28
 summary: The per-group expected_runtime_envelope (p50/p95 wall-clock seconds) is optional at M1 and M2; sentinel TT04 (runtime drift) self-deactivates when fewer than 7 metrics reports with per-group data exist; the field becomes required at M3 when TT04 is the load-bearing refactor trigger.

@@ -1,7 +1,7 @@
 ---
 id: dec-127
 title: Pipeline Dashboard port allocation — sha256 per-project derivation
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-07
 summary: Per-project port derived from sha256(abs_path) % 1000 + 8501 to enable concurrent multi-project use; mirrors chronograph-ctl pattern.

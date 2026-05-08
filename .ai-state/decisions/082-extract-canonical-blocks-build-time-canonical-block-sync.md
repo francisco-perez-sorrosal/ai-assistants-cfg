@@ -1,7 +1,7 @@
 ---
 id: dec-082
 title: Build-time canonical-block sync over runtime bash injection
-status: proposed
+status: accepted
 category: architectural
 date: 2026-04-27
 summary: Eliminate four-block byte-identical duplication between onboard-project.md and new-project.md via canonical files + sync script + pre-commit enforcement; reject runtime !-injection because ${CLAUDE_PLUGIN_ROOT} expansion in command bodies is unverified and policy-fragile.

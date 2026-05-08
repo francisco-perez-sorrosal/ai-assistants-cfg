@@ -1,7 +1,7 @@
 ---
 id: dec-068
 title: test-coverage presentation model — pp-deltas, threshold bands, per-file column order
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-04-24
 summary: The skill's rendering API enforces pp-format deltas, red/yellow/green bands at 60/80, and a fixed per-file column order across terminal and Markdown surfaces.
