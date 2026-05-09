@@ -64,10 +64,10 @@ _REGISTRY: dict[str, _RegisterT] = {
     "default_markdown": _lazy("default_markdown"),
     "tutorial_shell": _lazy("tutorial_shell"),
     "plan_view": _lazy("plan_view"),
-    # Tier 2 — adr_card shipped; rest fall back to default_markdown until shipped
+    # Tier 2 — adr_card + reference_shell shipped; rest fall back to default_markdown
     "adr_card": _lazy("adr_card"),
+    "reference_shell": _lazy("reference_shell"),
     "how_to_shell": _lazy("default_markdown"),
-    "reference_shell": _lazy("default_markdown"),
     "explanation_shell": _lazy("default_markdown"),
     "verification_report": _lazy("default_markdown"),
     "architecture_explorer": _lazy("default_markdown"),
