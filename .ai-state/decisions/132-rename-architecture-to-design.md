@@ -1,7 +1,7 @@
 ---
-id: dec-draft-4f04cd97
+id: dec-132
 title: Rename .ai-state/ARCHITECTURE.md to .ai-state/DESIGN.md for Diátaxis clarity
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-08
 summary: Rename the architect-facing design-target document from ARCHITECTURE.md to DESIGN.md to make audience and Diátaxis quadrant unambiguous from filename alone
