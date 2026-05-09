@@ -68,6 +68,12 @@ _PAGE_SPECS = [
         "icon": "📊",
         "url_path": "metrics",
     },
+    {
+        "module": "streamlit_app.pages.documentation",
+        "title": "Documentation",
+        "icon": "📚",
+        "url_path": "documentation",
+    },
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

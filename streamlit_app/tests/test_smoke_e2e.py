@@ -75,18 +75,27 @@ class TestAppImports:
         assert hasattr(mod, "main"), "app.main must be defined"
         assert callable(mod.main), "app.main must be callable"
 
-    def test_page_registry_has_six_entries(self) -> None:
-        """The _PAGE_SPECS registry must contain exactly six entries.
+    def test_page_registry_lists_expected_pages(self) -> None:
+        """The _PAGE_SPECS registry must contain the expected page modules.
 
-        This mirrors the navigation router: six pages selectable from the
-        sidebar navigation.
+        Asserting against the named module list (rather than a count) makes
+        the test stable against future additions while still catching
+        accidental removal of an existing page.
         """
         from streamlit_app.app import _PAGE_SPECS  # noqa: PLC0415
 
-        assert len(_PAGE_SPECS) == 6, (
-            f"Expected 6 page specs, got {len(_PAGE_SPECS)}: "
-            f"{[s['module'] for s in _PAGE_SPECS]}"
-        )
+        expected = {
+            "streamlit_app.pages.architecture",
+            "streamlit_app.pages.workshops",
+            "streamlit_app.pages.adrs",
+            "streamlit_app.pages.sentinel",
+            "streamlit_app.pages.roadmap",
+            "streamlit_app.pages.metrics",
+            "streamlit_app.pages.documentation",
+        }
+        actual = {s["module"] for s in _PAGE_SPECS}
+        missing = expected - actual
+        assert not missing, f"Missing expected page modules: {missing}"
 
     def test_all_page_modules_importable(self) -> None:
         """Every module listed in _PAGE_SPECS must be importable."""
