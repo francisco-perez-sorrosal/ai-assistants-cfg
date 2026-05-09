@@ -234,7 +234,7 @@ Skip this phase if `.ai-state/SYSTEM_DEPLOYMENT.md` does not exist or no deploym
 
 Structural drift findings on the code↔DSL↔ADR triangle are the `architect-validator` agent's surface, not the verifier's; this phase does not duplicate that check.
 
-If `.ai-state/ARCHITECTURE.md` exists and the implementation changed structural files (new modules, interfaces, data models, dependencies):
+If `.ai-state/DESIGN.md` exists and the implementation changed structural files (new modules, interfaces, data models, dependencies):
 
 1. **Component names** -- component names in Section 3 MAY be abstract (e.g., "Auth Service" for an `auth/` module). Do not require exact module name match -- verify internal consistency instead: every component referenced in Data Flow (Section 5) should appear in the Components table (Section 3)
 2. **File paths** -- file paths in the component table are advisory. WARN if more than 50% of listed paths do not resolve to existing files; PASS otherwise
@@ -245,7 +245,7 @@ If `.ai-state/ARCHITECTURE.md` exists and the implementation changed structural 
 
 Classify each as `PASS` / `WARN` / `FAIL` with `[Architecture:design]` tag. A stale or missing architecture doc when structural files were changed is a `WARN`, not a `FAIL` -- the doc is advisory, not a gate.
 
-Skip this sub-phase if `.ai-state/ARCHITECTURE.md` does not exist or no structural files were changed.
+Skip this sub-phase if `.ai-state/DESIGN.md` does not exist or no structural files were changed.
 
 ### Phase 9 -- Developer Architecture Guide Validation (Code Verification)
 
@@ -255,7 +255,7 @@ If `docs/architecture.md` exists:
 2. **File paths** -- every file path in the component table MUST resolve to an existing file on disk
 3. **No planned items** -- the developer guide must not contain any `Planned`, `Designed`, or `Status` column entries. Only Built components belong here
 4. **Last verified date** -- verify the "Last verified against code" metadata field exists and falls within the current pipeline timeframe
-5. **Cross-consistency** -- every component listed in the developer guide must also appear in `.ai-state/ARCHITECTURE.md` (the developer guide is a subset of the architect doc)
+5. **Cross-consistency** -- every component listed in the developer guide must also appear in `.ai-state/DESIGN.md` (the developer guide is a subset of the architect doc)
 
 Classify each as `PASS` / `WARN` / `FAIL` with `[Architecture:guide]` tag.
 

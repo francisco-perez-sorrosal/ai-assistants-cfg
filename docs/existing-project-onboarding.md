@@ -53,7 +53,7 @@ If `AskUserQuestion` is unavailable (headless invocation, tool error), the gates
 | 5 | **`.claude/settings.json` toggles** — multi-select: enable memory MCP injection, memory gate, memory MCP, observability | `.claude/settings.json` | yes (key presence check) |
 | 6 | **`CLAUDE.md` blocks** — idempotently append Agent Pipeline + Compaction Guidance + Behavioral Contract | `CLAUDE.md` | yes (per-block heading detection) |
 | 7 | **Companion CLIs** — print install commands for `chub`, `scc`, `uv` if missing and stack-relevant | none (advisory) | yes (always advisory) |
-| **8** | **Architecture baseline (opt-in, default-yes)** — delegate to `systems-architect` in baseline mode → produces `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` (+ optional ADR draft) | `.ai-state/ARCHITECTURE.md`, `docs/architecture.md` | yes (skip if either doc exists OR user picks Skip at Gate 8) |
+| **8** | **Architecture baseline (opt-in, default-yes)** — delegate to `systems-architect` in baseline mode → produces `.ai-state/DESIGN.md` + `docs/architecture.md` (+ optional ADR draft) | `.ai-state/DESIGN.md`, `docs/architecture.md` | yes (skip if either doc exists OR user picks Skip at Gate 8) |
 | **8b** | **AaC tier install (opt-in, default-skip)** — fence-region examples in architecture docs, `fitness/` scaffold, golden-rule pre-commit block, `architecture.yml` CI workflow, `docs/diagrams/` stub | architecture docs (fence regions), `fitness/`, `.git/hooks/pre-commit` (block), `.github/workflows/architecture.yml`, `docs/diagrams/` | yes (per-sub-step predicates; user picks `Skip AaC` by default) |
 | **8c** | **ML/AI training scaffold (opt-in; default-yes when ML signals detected)** — `program.md` template, `.ai-state/experiments/`, checkpoint `.gitignore` block, GPU budget declaration | `program.md`, `.ai-state/experiments/`, `.gitignore` (checkpoint block), `.ai-state/gpu_budget.yaml` | yes (skip when no ML signals — `train.py`, `prepare.py`, ML framework dep, or `program.md`; per-sub-step predicates) |
 | 9 | **Verification + handoff** — print summary, stage modified files (no commit) | git index | n/a (terminal) |
@@ -177,20 +177,20 @@ This is the slowest and most consequential phase. See [Architecture baseline (Ph
 
 **Outputs (when "Run baseline now" is chosen):**
 
-- `.ai-state/ARCHITECTURE.md` — architect-facing design-target document. Holds the architectural intent: System Overview, System Context (L0 Mermaid), Components (L1 Mermaid + table), Data Flow, Quality Attributes, Open Questions. Future feature pipelines update this incrementally — `systems-architect` re-reads it in Phase 4 of every Standard-tier feature.
+- `.ai-state/DESIGN.md` — architect-facing design-target document. Holds the architectural intent: System Overview, System Context (L0 Mermaid), Components (L1 Mermaid + table), Data Flow, Quality Attributes, Open Questions. Future feature pipelines update this incrementally — `systems-architect` re-reads it in Phase 4 of every Standard-tier feature.
 - `docs/architecture.md` — developer-facing navigation guide. Filtered to **Built** components only (every name and path code-verified via `Glob`/`ls`). New developers read this first to orient on the codebase.
 - *Optional* — one ADR draft under `.ai-state/decisions/drafts/` if the baseline reading surfaces a non-obvious load-bearing invariant (e.g., a one-way module dependency, a layer boundary). The architect is instructed NOT to write ceremonial ADRs — only invariant-pinning ones.
 
 ### Phase 9 — Verification + handoff
 
-Prints a per-phase summary listing every file touched and every `git config` entry written. Stages those files only — never `git add -A`. Tells you to run `/sentinel` for an ecosystem health baseline (now meaningful since `.ai-state/ARCHITECTURE.md` exists for sentinel's coherence dimension to read), then `/co` to commit.
+Prints a per-phase summary listing every file touched and every `git config` entry written. Stages those files only — never `git add -A`. Tells you to run `/sentinel` for an ecosystem health baseline (now meaningful since `.ai-state/DESIGN.md` exists for sentinel's coherence dimension to read), then `/co` to commit.
 
 ## Architecture baseline (Phase 8)
 
 <details>
 <summary>Why this phase exists, and when to skip it</summary>
 
-`.ai-state/ARCHITECTURE.md` and `docs/architecture.md` are first-class artifacts in the Praxion ecosystem — sentinel's coherence audit reads them, future feature pipelines update them, Memory MCP context recall benefits from them. **Without them, every future agent runs context-poor on the codebase shape.** The greenfield path (`/new-project`) gets these for free via the seed pipeline; existing-project onboarding needs the same treatment, which is the whole point of Phase 8.
+`.ai-state/DESIGN.md` and `docs/architecture.md` are first-class artifacts in the Praxion ecosystem — sentinel's coherence audit reads them, future feature pipelines update them, Memory MCP context recall benefits from them. **Without them, every future agent runs context-poor on the codebase shape.** The greenfield path (`/new-project`) gets these for free via the seed pipeline; existing-project onboarding needs the same treatment, which is the whole point of Phase 8.
 
 **Skipping is acceptable when:**
 
@@ -213,7 +213,7 @@ The `/onboard-project` command delegates to `systems-architect` via the `Task` t
 
 - **Mode**: baseline-audit, no specific feature scope. Read the codebase, describe the as-built state. Do *not* produce a `SYSTEMS_PLAN.md` (no feature in scope).
 - **Inputs**: project root + the language/framework signals detected in pre-flight.
-- **Required outputs**: `.ai-state/ARCHITECTURE.md` + `docs/architecture.md`. Both code-verified — every Mermaid node and table row resolves on disk.
+- **Required outputs**: `.ai-state/DESIGN.md` + `docs/architecture.md`. Both code-verified — every Mermaid node and table row resolves on disk.
 - **Optional output**: at most one ADR draft, only when a load-bearing invariant is detected in the code. No ceremonial ADRs.
 - **Anti-instructions**: no `SYSTEMS_PLAN.md`, no L2 internals (≤10 nodes per Mermaid per `rules/writing/diagram-conventions.md`), no source-code edits, no test edits, no doc edits outside the two architecture files.
 
@@ -289,7 +289,7 @@ Every write phase has a predicate that makes re-runs no-ops. Reference: `command
 | 4 | `readlink .git/hooks/post-merge` resolves to a Praxion path AND pre-commit content contains `check_id_citation_discipline` |
 | 5 | All four `PRAXION_DISABLE_*` keys present in `.claude/settings.json` |
 | 6 | `## Agent Pipeline` heading present in `CLAUDE.md` (per-block check) |
-| 8 | `test -e .ai-state/ARCHITECTURE.md` OR `test -e docs/architecture.md` (covers re-runs and greenfield-followed-by-onboard); also skipped if user picks `Skip` at Gate 8 |
+| 8 | `test -e .ai-state/DESIGN.md` OR `test -e docs/architecture.md` (covers re-runs and greenfield-followed-by-onboard); also skipped if user picks `Skip` at Gate 8 |
 | 8b | Per-sub-step predicates (fence-region presence, `fitness/` directory, golden-rule pre-commit block, `architecture.yml` workflow, `docs/diagrams/` directory); also skipped if user picks `Skip AaC` at Gate 8b |
 | 8c | No ML signals detected (`train.py`, `prepare.py`, ML framework dep, `program.md`) → skip silently. When fired: per-sub-step predicates (`program.md` existence, `.ai-state/experiments/` existence, checkpoint `.gitignore` block, `.ai-state/gpu_budget.yaml` existence) |
 

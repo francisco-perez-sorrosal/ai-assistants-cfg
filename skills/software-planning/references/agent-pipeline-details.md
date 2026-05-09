@@ -301,7 +301,7 @@ These lines are **optional and backward-compatible**. Existing `TEST_RESULTS.md`
 | `SYSTEM_DEPLOYMENT.md` | Low — single evolving file, section ownership prevents concurrent edits | Standard git merge. If conflict, later worktree's version wins for architect-owned sections; review implementer/cicd-owned sections manually |
 | `ARCHITECTURE.md` | Low — single evolving file, section ownership prevents concurrent edits | Standard git merge. If conflict, later worktree's version wins for architect-owned sections; review implementer-owned sections manually |
 | `TEST_TOPOLOGY.md` | Low — section ownership (architect / test-engineer / planner) prevents concurrent edits | Standard git merge. If conflict, later worktree's version wins per section; section ownership rules apply. Group splits and merges require an ADR; group-level additions are append-only. |
-| `docs/architecture.md` | Low — developer-facing, derived from `.ai-state/ARCHITECTURE.md` | Standard git merge. Developer doc is regenerable from architect doc + filesystem verification. If conflict, prefer later version (freshest data) and re-verify paths against disk |
+| `docs/architecture.md` | Low — developer-facing, derived from `.ai-state/DESIGN.md` | Standard git merge. Developer doc is regenerable from architect doc + filesystem verification. If conflict, prefer later version (freshest data) and re-verify paths against disk |
 
 **Automated reconciliation:** Three layers of protection:
 1. **Git merge drivers** (`.gitattributes`) — handle `memory.json` and `observations.jsonl` automatically during `git merge`. Registered by `install.sh code` Step 2.

@@ -1,3 +1,8 @@
+---
+diataxis: explanation
+audience: architect
+---
+
 # Architecture
 
 <!-- Design-target architecture document. Abstracts above concrete code to define the space of valid

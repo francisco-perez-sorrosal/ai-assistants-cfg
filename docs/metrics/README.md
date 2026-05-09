@@ -16,7 +16,7 @@ Authoritative reference for the `/project-metrics` artifact format. This documen
 
 **Related design documents.**
 
-- `.ai-state/ARCHITECTURE.md` — where this feature fits in the Praxion architecture (row: "Project metrics command" in §3 Components).
+- `.ai-state/DESIGN.md` — where this feature fits in the Praxion architecture (row: "Project metrics command" in §3 Components).
 - Architectural decision records (reference by slug; the concrete IDs are assigned at merge-to-main):
   - `storage-schema-for-project-metrics` — freezes the three-file artifact triple, the 16 aggregate columns, and the schema-mismatch policy.
   - `collector-protocol` — defines the `resolve()` / `collect()` / `describe()` extension seam used by every tool wrapper.

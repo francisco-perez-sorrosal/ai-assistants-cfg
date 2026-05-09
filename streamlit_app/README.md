@@ -47,7 +47,7 @@ praxion-dashboard uninstall  # remove plist and venv
 
 | Page           | Source artifacts                                  | REQ   |
 |----------------|---------------------------------------------------|-------|
-| Architecture   | `.ai-state/ARCHITECTURE.md` + LikeC4 SVG         | REQ-03 |
+| Architecture   | `.ai-state/DESIGN.md` + LikeC4 SVG         | REQ-03 |
 | Workshops      | `.ai-work/<slug>/WIP.md` + `PROGRESS.md`          | REQ-04, REQ-05 |
 | ADRs           | `.ai-state/decisions/` (finalized + drafts)       | REQ-06 |
 | Sentinel       | `.ai-state/sentinel_reports/`                     | REQ-07 |

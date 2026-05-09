@@ -56,7 +56,7 @@ _STANDARD_REQUIRED: tuple[ArtifactSpec, ...] = (
 
 _FULL_EXTRA: tuple[ArtifactSpec, ...] = (
     ArtifactSpec(
-        path=".ai-state/ARCHITECTURE.md",
+        path=".ai-state/DESIGN.md",
         required=False,
         check_recency=True,
         description="Architect-facing design target; should be touched for structural changes.",
@@ -65,7 +65,7 @@ _FULL_EXTRA: tuple[ArtifactSpec, ...] = (
         path="docs/architecture.md",
         required=False,
         check_recency=True,
-        description="Developer-facing navigation guide derived from ARCHITECTURE.md.",
+        description="Developer-facing navigation guide derived from DESIGN.md.",
     ),
 )
 

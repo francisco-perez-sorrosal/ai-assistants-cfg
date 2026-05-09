@@ -6,7 +6,7 @@ Dual-audience living document methodology for architecture documentation. Back t
 
 Architecture documentation serves two distinct audiences with different needs. Rather than compromising with a single document, the pipeline maintains two purpose-built documents that share the same 8-section structure but differ in framing, content policy, and validation:
 
-- **`.ai-state/ARCHITECTURE.md`** — the architect-facing **design target**. Abstracts above concrete code to define the space of valid implementations. Answers: "What should X look like? Why?"
+- **`.ai-state/DESIGN.md`** — the architect-facing **design target**. Abstracts above concrete code to define the space of valid implementations. Answers: "What should X look like? Why?"
 - **`docs/architecture.md`** — the developer-facing **navigation guide**. Every name and path is verified against the codebase. Answers: "What is X? Where is it?"
 
 The developer guide is derived from the architect doc — it is a code-verified subset of the architect doc's Built components. The architect doc defines the design space; the developer guide captures what actually exists on disk.
@@ -15,7 +15,7 @@ The developer guide is derived from the architect doc — it is a code-verified 
 
 Both documents use the same 8 sections (Overview, System Context, Components, Interfaces, Data Flow, Dependencies, Constraints, Decisions). The differences are in framing and content policy:
 
-| Dimension | `.ai-state/ARCHITECTURE.md` | `docs/architecture.md` |
+| Dimension | `.ai-state/DESIGN.md` | `docs/architecture.md` |
 |-----------|----------------------------|------------------------|
 | **Primary audience** | Architects designing/extending the system | Developers navigating the codebase |
 | **Core question** | "What should X look like? Why?" | "What is X? Where is it?" |
@@ -30,7 +30,7 @@ Both documents use the same 8 sections (Overview, System Context, Components, In
 
 ## Document Lifecycle
 
-### Architect Doc (`.ai-state/ARCHITECTURE.md`)
+### Architect Doc (`.ai-state/DESIGN.md`)
 
 **Creation:** The **systems-architect** creates the document from the template (`skills/software-planning/assets/ARCHITECTURE_TEMPLATE.md`) during Phase 5 when the pipeline is Standard or Full tier. It fills in:
 - Section 1 (Overview): quick-facts table with Source stage, summary
@@ -54,7 +54,7 @@ Skip creation for trivially simple projects (single module, no external dependen
 | New dependency added/removed | 6 (Dependencies: update table) |
 | ADR created | None — Section 8 is a stable pointer to `DECISIONS_INDEX.md` (auto-regenerated). When a new ADR materially shapes a component/interface/constraint, cite `dec-NNN` inline in the affected row instead. |
 
-If `.ai-state/ARCHITECTURE.md` does not exist, the implementer skips — the systems-architect creates it.
+If `.ai-state/DESIGN.md` does not exist, the implementer skips — the systems-architect creates it.
 
 **Validation:** The **verifier** checks design coherence during Phase 8:
 - Components referenced in Data Flow (Section 5) appear in Components (Section 3)
@@ -103,17 +103,17 @@ If `docs/architecture.md` does not exist, the implementer skips — the systems-
 Skip Phase 9 if `docs/architecture.md` does not exist.
 
 **Auditing:** The **sentinel** checks code accuracy with five checks:
-- **AC05**: `docs/architecture.md` exists when `.ai-state/ARCHITECTURE.md` exists
+- **AC05**: `docs/architecture.md` exists when `.ai-state/DESIGN.md` exists
 - **AC06**: Every component name in Section 3 matches an actual module/directory name on disk
 - **AC07**: Every file path in the component table resolves to an existing file
 - **AC08**: No Status column or Planned/Designed items present
-- **AC09**: Cross-consistency — every component in `docs/architecture.md` also appears in `.ai-state/ARCHITECTURE.md` (subset relationship)
+- **AC09**: Cross-consistency — every component in `docs/architecture.md` also appears in `.ai-state/DESIGN.md` (subset relationship)
 
 ## Section Ownership Model
 
 Each agent owns specific sections to prevent conflicts:
 
-| Section | `.ai-state/ARCHITECTURE.md` Owner(s) | `docs/architecture.md` Owner(s) | Update Trigger |
+| Section | `.ai-state/DESIGN.md` Owner(s) | `docs/architecture.md` Owner(s) | Update Trigger |
 |---------|--------------------------------------|----------------------------------|----------------|
 | 1. Overview | systems-architect | systems-architect, doc-engineer | Architecture changes |
 | 2. System Context | systems-architect | systems-architect, doc-engineer | New external dependencies |
@@ -136,7 +136,7 @@ Five layers of defense:
 4. **Sentinel audit** — checks both docs independently (reactive, periodic)
 5. **Doc-engineer periodic verification** — verifies `docs/architecture.md` against the filesystem at pipeline checkpoints (reactive, per-pipeline)
 
-Finding routing for architect doc (`.ai-state/ARCHITECTURE.md`):
+Finding routing for architect doc (`.ai-state/DESIGN.md`):
 
 | Check | Finding | Recommended Owner | Fix Action |
 |-------|---------|-------------------|------------|
@@ -181,8 +181,8 @@ Architecture is upstream; deployment is downstream. Cross-reference when SYSTEM_
 
 For Direct/Lightweight tier work (no pipeline agents), the main agent should be aware of both architecture documents:
 
-- **Discovery**: Target projects should add to their CLAUDE.md: "Architecture: design target at `.ai-state/ARCHITECTURE.md`, developer guide at `docs/architecture.md`"
-- **When to read**: Before making structural decisions (adding modules, changing interfaces, introducing dependencies). Read `docs/architecture.md` for current state, `.ai-state/ARCHITECTURE.md` for design intent.
+- **Discovery**: Target projects should add to their CLAUDE.md: "Architecture: design target at `.ai-state/DESIGN.md`, developer guide at `docs/architecture.md`"
+- **When to read**: Before making structural decisions (adding modules, changing interfaces, introducing dependencies). Read `docs/architecture.md` for current state, `.ai-state/DESIGN.md` for design intent.
 - **When to update**: After structural changes — new modules, interface changes, dependency additions/removals. Update both documents.
 - **When NOT to update**: Bug fixes, refactoring within existing modules, test changes, documentation updates
 

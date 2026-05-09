@@ -677,11 +677,11 @@ class TestFinalizeCrossReferences:
         assert draft_id not in content
 
     def test_architecture_docs_refs_rewritten(self, repo_root: Path) -> None:
-        """Expanded scope: .ai-state/ARCHITECTURE.md + docs/architecture.md rewrites."""
+        """Expanded scope: .ai-state/DESIGN.md + docs/architecture.md rewrites."""
         draft = make_draft(repo_root, "20260419-1810", "alice", "main", "arch-decision")
         draft_id = f"dec-draft-{_draft_hash(draft.name)}"
 
-        architect_doc = repo_root / ".ai-state" / "ARCHITECTURE.md"
+        architect_doc = repo_root / ".ai-state" / "DESIGN.md"
         architect_doc.write_text(
             f"# Architecture\n\n| {draft_id} (drafts/) | arch decision | ... |\n",
             encoding="utf-8",

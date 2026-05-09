@@ -4,7 +4,7 @@ description: >
   System design architect that evaluates trade-offs, assesses codebase readiness,
   and produces architectural decisions. Outputs: SYSTEMS_PLAN.md, ADRs in
   .ai-state/decisions/, and for Standard/Full pipelines also creates
-  .ai-state/ARCHITECTURE.md (design-target) and docs/architecture.md
+  .ai-state/DESIGN.md (design-target) and docs/architecture.md
   (code-verified developer guide). Use proactively when the user needs
   architecture design, system design, trade-off analysis, technology selection,
   or structural assessment of a codebase before implementation.
@@ -144,9 +144,9 @@ Skip this phase for projects with no deployable components (pure libraries, CLI 
 
 If this is a Standard or Full tier pipeline:
 
-**Architect document (`.ai-state/ARCHITECTURE.md`):**
+**Architect document (`.ai-state/DESIGN.md`):**
 
-1. **Check** if `.ai-state/ARCHITECTURE.md` exists
+1. **Check** if `.ai-state/DESIGN.md` exists
 2. **If not**: create it from the template at `skills/software-planning/assets/ARCHITECTURE_TEMPLATE.md`. Fill in sections 1 (Overview), 2 (System Context), 3 (Components skeleton), 5 (Data Flow), 7 (Constraints), and 8 (Decisions with relevant ADR references). Leave sections 4 (Interfaces) and 6 (Dependencies) with template guidance for the implementer.
 3. **If yes**: read the existing document and update sections you own (1, 2, 3 skeleton, 5, 7, 8) if the current architecture changes the structural picture. Do not overwrite sections owned by other agents (3 as-built details, 4 Interfaces, 6 Dependencies).
 
@@ -155,11 +155,11 @@ If this is a Standard or Full tier pipeline:
 4. **Check** if `docs/architecture.md` exists
 5. **If not**: create it from the template at `skills/doc-management/assets/ARCHITECTURE_GUIDE_TEMPLATE.md`. Fill only components with Status `Built` from the architect document. Verify each file path and component name against disk before including. Use present-tense framing throughout. Set "Last verified against code" to the current date.
 6. **If yes**: read the existing document and update sections you own (1, 2, 3 skeleton, 5, 7, 8) filtering to Built components only. Do not overwrite sections owned by other agents (3 as-built details, 4 Interfaces, 6 Dependencies).
-7. **Cross-consistency**: verify that every component in `docs/architecture.md` appears in `.ai-state/ARCHITECTURE.md` with Status `Built`. The developer guide must be a strict subset of the architect document's Built components.
+7. **Cross-consistency**: verify that every component in `docs/architecture.md` appears in `.ai-state/DESIGN.md` with Status `Built`. The developer guide must be a strict subset of the architect document's Built components.
 
 **Diagram toolchain convention:** C4-architectural diagrams (System Context L0, Container/Component L1) use LikeC4 DSL + D2 rendering per `rules/writing/diagram-conventions.md`. Author the model in `docs/diagrams/<name>.c4`; generated `.d2` and rendered `.svg` are committed alongside. Sequence diagrams and non-C4 architectural diagrams remain Mermaid. See `docs/architecture-diagrams.md` for install and hook behavior.
 
-The software-planning skill provides the methodology; `.ai-state/ARCHITECTURE.md` captures THIS project's architecture as a design target; `docs/architecture.md` provides developer-facing navigation verified against the codebase. Reference ADR IDs for architectural decisions rather than duplicating rationale. Follow diagram conventions from `rules/writing/diagram-conventions.md` for all diagrams. Cross-reference `SYSTEM_DEPLOYMENT.md` in sections 2 and 6 if it exists.
+The software-planning skill provides the methodology; `.ai-state/DESIGN.md` captures THIS project's architecture as a design target; `docs/architecture.md` provides developer-facing navigation verified against the codebase. Reference ADR IDs for architectural decisions rather than duplicating rationale. Follow diagram conventions from `rules/writing/diagram-conventions.md` for all diagrams. Cross-reference `SYSTEM_DEPLOYMENT.md` in sections 2 and 6 if it exists.
 
 Skip this phase for trivially simple projects (single module, no external dependencies).
 

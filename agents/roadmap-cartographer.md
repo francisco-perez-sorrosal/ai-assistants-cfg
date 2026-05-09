@@ -83,7 +83,7 @@ The **task slug** (provided in your prompt as `Task slug: <slug>`) scopes all `.
 - Project root: `CLAUDE.md`, `AGENTS.md`, `README.md`, primary manifest (`pyproject.toml`, `package.json`, `Cargo.toml`, `go.mod`)
 - Ecosystem: `Glob skills/*/SKILL.md`, `Glob agents/*.md`, `Glob rules/**/*.md`, `Glob commands/*`, `Glob hooks/*`, `.claude-plugin/plugin.json`
 - CI/tests: `.github/workflows/*`, `tests/**`
-- State: `.ai-state/ARCHITECTURE.md`, `.ai-state/decisions/DECISIONS_INDEX.md`, latest `.ai-state/sentinel_reports/SENTINEL_REPORT_*.md` (via `.ai-state/sentinel_reports/SENTINEL_LOG.md`)
+- State: `.ai-state/DESIGN.md`, `.ai-state/decisions/DECISIONS_INDEX.md`, latest `.ai-state/sentinel_reports/SENTINEL_REPORT_*.md` (via `.ai-state/sentinel_reports/SENTINEL_LOG.md`)
 - Existing roadmap (for `diff` mode): `ROADMAP.md` at project root
 
 Mode is passed from the command as a single token:
@@ -119,7 +119,7 @@ Write a phase marker to `.ai-work/<task-slug>/PROGRESS.md` including the derived
 
 ### Phase 2 — Ecosystem Inventory
 
-Run a silent filesystem scan: skills, agents, rules, commands, hooks, tests, CI workflows, `AGENTS.md`/`CLAUDE.md`, `.ai-state/ARCHITECTURE.md`, `.ai-state/decisions/`, memory index. Read the latest `.ai-state/sentinel_reports/SENTINEL_REPORT_*.md` if present (do not treat its recommendations as roadmap items — they are maintenance). **Read `.ai-state/LANDSCAPE_WATCHLIST.md` if present** — it follows the [llms.txt convention](https://llmstxt.org) and indexes external sources (peer projects, blogs, standards bodies, reference repos) curated for ideation grounding. Extract 3–6 high-relevance entries — typically peer projects and standards bodies that anchor evolution-class opportunities, plus 1–2 reputable blogs for emergent-pattern signal — and record them in `ROADMAP_DRAFT.md` under a *Landscape* stub for downstream Phase 3 researchers. Detect an existing `ROADMAP.md` for `diff` mode. Record counts and any structural gaps to `.ai-work/<task-slug>/ROADMAP_DRAFT.md` under an *Inventory* stub.
+Run a silent filesystem scan: skills, agents, rules, commands, hooks, tests, CI workflows, `AGENTS.md`/`CLAUDE.md`, `.ai-state/DESIGN.md`, `.ai-state/decisions/`, memory index. Read the latest `.ai-state/sentinel_reports/SENTINEL_REPORT_*.md` if present (do not treat its recommendations as roadmap items — they are maintenance). **Read `.ai-state/LANDSCAPE_WATCHLIST.md` if present** — it follows the [llms.txt convention](https://llmstxt.org) and indexes external sources (peer projects, blogs, standards bodies, reference repos) curated for ideation grounding. Extract 3–6 high-relevance entries — typically peer projects and standards bodies that anchor evolution-class opportunities, plus 1–2 reputable blogs for emergent-pattern signal — and record them in `ROADMAP_DRAFT.md` under a *Landscape* stub for downstream Phase 3 researchers. Detect an existing `ROADMAP.md` for `diff` mode. Record counts and any structural gaps to `.ai-work/<task-slug>/ROADMAP_DRAFT.md` under an *Inventory* stub.
 
 ### Phase 3 — Parallel Audit Fan-out
 

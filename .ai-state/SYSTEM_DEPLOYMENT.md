@@ -75,7 +75,7 @@ This subsection documents the **compute backend story Praxion teaches** projects
 | Specialization | RunPod direct via `@runpod/mcp-server` 1.1.0 (npm) | Mode C committed to RunPod | Yes — v1 reference recipe | `skills/neo-cloud-abstraction/references/runpod-direct-adapter.md` (designed) |
 | Specialization (v2) | Lambda direct (REST), Crusoe direct (REST), CoreWeave direct (K8s) | Mode C committed to those providers | No — deferred | (v2 references) |
 
-The contract — `training_job_descriptor` schema and 8 lifecycle operations — is invariant across modes. See `dec-118` for the full rationale and `.ai-state/ARCHITECTURE.md` Components/Interfaces sections for the schema.
+The contract — `training_job_descriptor` schema and 8 lifecycle operations — is invariant across modes. See `dec-118` for the full rationale and `.ai-state/DESIGN.md` Components/Interfaces sections for the schema.
 
 ## 3. Service Topology
 

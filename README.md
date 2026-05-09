@@ -99,7 +99,7 @@ Two distinct paths, picked by what's already in the directory. Both converge on 
 | **Existing project** (has code)  | `/onboard-project` inside an active Claude Code session at the project root | [Existing-Project Onboarding](docs/existing-project-onboarding.md) |
 
 
-The greenfield flow ends by chaining to `/onboard-project` so there is one source of truth for what "Praxion-onboarded" means. `/onboard-project` runs ten phases with `AskUserQuestion` gates between them — including an opt-in **Phase 8 architecture baseline** that delegates to `systems-architect` to produce `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` from the existing codebase (high leverage: every later sentinel audit, feature pipeline, and Memory MCP recall benefits from those docs landing on day one), an opt-in **Phase 8b architecture-as-code seeding** that lays the AaC fence convention and fitness functions, and an opt-in **Phase 8c ML conventions** that scaffolds `program.md` + ML rules + experiment-tracking config when the project is detected as an ML/AI training archetype.
+The greenfield flow ends by chaining to `/onboard-project` so there is one source of truth for what "Praxion-onboarded" means. `/onboard-project` runs ten phases with `AskUserQuestion` gates between them — including an opt-in **Phase 8 architecture baseline** that delegates to `systems-architect` to produce `.ai-state/DESIGN.md` + `docs/architecture.md` from the existing codebase (high leverage: every later sentinel audit, feature pipeline, and Memory MCP recall benefits from those docs landing on day one), an opt-in **Phase 8b architecture-as-code seeding** that lays the AaC fence convention and fitness functions, and an opt-in **Phase 8c ML conventions** that scaffolds `program.md` + ML rules + experiment-tracking config when the project is detected as an ML/AI training archetype.
 
 For a pipeline walkthrough -- from ideation through implementation and verification -- see [Getting Started](docs/getting-started.md).
 
@@ -176,7 +176,7 @@ The bash wrapper `new_project.sh <name> [target-dir]` lays a pre-Claude scaffold
 5. Generates a per-run `onboarding_for_mushi_busy_ppl.md` trail map with file inventory + lesson ladder
 6. Recommends `/onboard-project` for the remaining surfaces (git hooks, merge drivers, `.ai-state/` skeleton, `.claude/settings.json` toggles), then `/co` to commit
 
-Smooth-integration contract: the seed pipeline writes `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` as part of the systems-architect's full delegation checklist, so `/onboard-project`'s Phase 8 (Architecture Baseline) becomes a no-op when chained — no double-architect overhead.
+Smooth-integration contract: the seed pipeline writes `.ai-state/DESIGN.md` + `docs/architecture.md` as part of the systems-architect's full delegation checklist, so `/onboard-project`'s Phase 8 (Architecture Baseline) becomes a no-op when chained — no double-architect overhead.
 
 Optional `PRAXION_NEW_PROJECT_EDITOR=cursor|code|claude-desktop|none` picks the editor surface the scaffold opens in so you can watch `.ai-work/` and `.ai-state/` populate as the pipeline runs.
 
@@ -199,7 +199,7 @@ Phased, idempotent retrofit for a repo that already has code. Each phase pauses 
 | 5     | Multi-select `.claude/settings.json` toggles for memory MCP injection / memory gate / memory MCP / observability                                                                       |
 | 6     | Append three blocks to `CLAUDE.md`: Agent Pipeline + Compaction Guidance + Behavioral Contract                                                                                         |
 | 7     | Print install commands for missing companion CLIs (`chub`, `scc`, `uv`) — advisory only                                                                                                |
-| 8     | **Architecture baseline (opt-in, default-yes)** — delegate to `systems-architect` in baseline-audit mode → `.ai-state/ARCHITECTURE.md` + `docs/architecture.md` (+ optional ADR draft) |
+| 8     | **Architecture baseline (opt-in, default-yes)** — delegate to `systems-architect` in baseline-audit mode → `.ai-state/DESIGN.md` + `docs/architecture.md` (+ optional ADR draft) |
 | 8b    | **AaC tier install (opt-in, default-skip)** — fence-region examples, `fitness/` scaffold, golden-rule pre-commit block, `architecture.yml` CI workflow, `docs/diagrams/` stub        |
 | 8c    | **ML/AI training scaffold (opt-in; default-yes when ML signals detected)** — `program.md` template, `.ai-state/experiments/`, checkpoint `.gitignore` entries, GPU budget declaration |
 | 9     | Print summary, stage modified files (no commit)                                                                                                                                        |

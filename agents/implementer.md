@@ -77,15 +77,15 @@ For your assigned step:
    - `.env.example` changes → update Section 4 (Configuration: environment variables table)
    - `systemd` unit changes → update Section 5 (Deployment Process)
    If `.ai-state/SYSTEM_DEPLOYMENT.md` does not exist, skip this step — the systems-architect creates it.
-7.6. **Update architecture doc** — if the step is annotated with `[Architecture]` or its `Files` field includes structural changes (new modules/packages, interface changes, dependency additions/removals), update the corresponding section of `.ai-state/ARCHITECTURE.md`:
+7.6. **Update architecture doc** — if the step is annotated with `[Architecture]` or its `Files` field includes structural changes (new modules/packages, interface changes, dependency additions/removals), update the corresponding section of `.ai-state/DESIGN.md`:
    - New module/package created → update Section 3 (Components: add to component table and L1 diagram)
    - Interface/API changes → update Section 4 (Interfaces: update contract table)
    - Data model changes → update Section 5 (Data Flow: update flow descriptions)
    - New dependency added/removed → update Section 6 (Dependencies: update dependencies table)
    - ADR created → update Section 8 (Decisions: add cross-reference row)
    - **Diagram regen:** if the structural change touches a C4 view (System Context or Components), update the relevant `.c4` source in `docs/diagrams/` and run `scripts/diagram-regen-hook.sh` (or stage the `.c4` file so the pre-commit hook auto-regenerates) so the committed `.d2` and `.svg` stay in sync with the model.
-   If `.ai-state/ARCHITECTURE.md` does not exist, skip this step — the systems-architect creates it.
-7.7. **Update developer architecture guide** — if `.ai-state/ARCHITECTURE.md` was updated in step 7.6 AND `docs/architecture.md` exists, propagate the change to `docs/architecture.md` with developer framing:
+   If `.ai-state/DESIGN.md` does not exist, skip this step — the systems-architect creates it.
+7.7. **Update developer architecture guide** — if `.ai-state/DESIGN.md` was updated in step 7.6 AND `docs/architecture.md` exists, propagate the change to `docs/architecture.md` with developer framing:
    - Only include components that exist on disk (verify with Glob/ls)
    - Use present tense ("handles" not "will handle")
    - Include actual file paths verified against filesystem

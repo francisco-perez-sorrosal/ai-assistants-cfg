@@ -62,7 +62,7 @@ Discover all documentation files in the project:
 
 1. **Project README** -- `Glob README.md` at the project root
 2. **Catalog READMEs** -- `Glob **/README.md` in artifact directories (skills, agents, commands, rules)
-3. **Architecture docs** -- `Glob **/ARCHITECTURE.md` and `Glob docs/architecture.md`. Note: `docs/architecture.md` is a distinct document type -- a developer navigation guide where every component name and file path must be verified against the filesystem. It is derived from `.ai-state/ARCHITECTURE.md` but contains only Built components with present-tense framing.
+3. **Architecture docs** -- `Glob **/ARCHITECTURE.md` and `Glob docs/architecture.md`. Note: `docs/architecture.md` is a distinct document type -- a developer navigation guide where every component name and file path must be verified against the filesystem. It is derived from `.ai-state/DESIGN.md` but contains only Built components with present-tense framing.
 4. **Changelogs** -- `Glob **/CHANGELOG.md`
 5. **Contributing guides** -- `Glob **/CONTRIBUTING.md`
 6. **Other documentation** -- `Glob **/*.md` filtered to documentation files (exclude context artifacts: CLAUDE.md, SKILL.md, agent definitions, rule files, command files)
@@ -240,7 +240,7 @@ When both agents are invoked, the doc-engineer runs AFTER the context-engineer t
 | Update catalog READMEs (structure, completeness) | Assess artifact content accuracy (context-engineer's job) |
 | Add missing catalog entries for new artifacts | Make architectural decisions about documentation structure |
 | Fix naming inconsistencies in documentation | Commit changes to git |
-| Update `docs/architecture.md` (cross-reference repair, freshness, writing quality) | Modify `.ai-state/ARCHITECTURE.md` (design-target — systems-architect and implementer domain) |
+| Update `docs/architecture.md` (cross-reference repair, freshness, writing quality) | Modify `.ai-state/DESIGN.md` (design-target — systems-architect and implementer domain) |
 | Verify markdown quality (links, prose drift) for **non-generated** regions | Validate `aac:generated` fence regions or the code↔DSL↔ADR triangle (`architect-validator`'s surface) |
 
 ## Output

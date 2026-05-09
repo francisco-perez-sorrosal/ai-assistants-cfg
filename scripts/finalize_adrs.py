@@ -641,7 +641,7 @@ def rewrite_cross_references(repo_root: Path, old_id: str, new_id: str) -> int:
 
     Bounded scope:
     - All files under `.ai-state/decisions/` (both drafts/ and finalized).
-    - `.ai-state/ARCHITECTURE.md` and `docs/architecture.md` (Section 8 ADR
+    - `.ai-state/DESIGN.md` and `docs/architecture.md` (Section 8 ADR
       references land here during pipelines).
     - All `.ai-work/*/LEARNINGS.md`.
     - All `.ai-work/*/SYSTEMS_PLAN.md` and `.ai-work/*/IMPLEMENTATION_PLAN.md`.
@@ -667,7 +667,7 @@ def _cross_reference_targets(repo_root: Path) -> Iterator[Path]:
                 yield entry
 
     for architecture_doc in (
-        repo_root / ".ai-state" / "ARCHITECTURE.md",
+        repo_root / ".ai-state" / "DESIGN.md",
         repo_root / "docs" / "architecture.md",
     ):
         if architecture_doc.is_file():

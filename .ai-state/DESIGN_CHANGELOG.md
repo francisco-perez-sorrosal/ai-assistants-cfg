@@ -1,8 +1,8 @@
 # Architecture Changelog
 
-Append-only history of `ARCHITECTURE.md` verification milestones. Each entry summarizes a feature pipeline that updated the architect-facing design-target document. Owned by systems-architect; appended by the implementer/verifier of each feature.
+Append-only history of `DESIGN.md` verification milestones. Each entry summarizes a feature pipeline that updated the architect-facing design-target document. Owned by systems-architect; appended by the implementer/verifier of each feature.
 
-The current "Last verified" pointer in `.ai-state/ARCHITECTURE.md` § 1 is a one-liner referencing the most recent entry below; deep history lives here so the architecture doc stays scannable.
+The current "Last verified" pointer in `.ai-state/DESIGN.md` § 1 is a one-liner referencing the most recent entry below; deep history lives here so the architecture doc stays scannable.
 
 ---
 

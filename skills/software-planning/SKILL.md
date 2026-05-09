@@ -20,7 +20,7 @@ Create and maintain planning documents (IMPLEMENTATION_PLAN.md, WIP.md, LEARNING
 - [references/adr-authoring-protocols.md](references/adr-authoring-protocols.md) -- ADR file creation, index regeneration, supersession protocol
 - [phases/refactoring.md](phases/refactoring.md) -- refactoring phase integration
 - [contexts/python.md](contexts/python.md) -- Python-specific quality gates and step templates
-- [assets/ARCHITECTURE_TEMPLATE.md](assets/ARCHITECTURE_TEMPLATE.md) -- 8-section template for `.ai-state/ARCHITECTURE.md` architect-facing design target
+- [assets/ARCHITECTURE_TEMPLATE.md](assets/ARCHITECTURE_TEMPLATE.md) -- 8-section template for `.ai-state/DESIGN.md` architect-facing design target
 - [references/architecture-documentation.md](references/architecture-documentation.md) -- dual-audience architecture documentation methodology: lifecycle, section ownership, validation models for both architect and developer documents
 - [references/behavioral-contract.md](references/behavioral-contract.md) -- four-behavior contract deep dive: definitions, per-agent application, objection templates, DRY relationship
 - [references/design-synthesis.md](references/design-synthesis.md) -- activation-gated pre-implementation synthesis: lens catalog, activation formula, convergence signals; composed from existing skills (security / performance / simplicity / testability)

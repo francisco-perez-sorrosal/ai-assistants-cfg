@@ -177,7 +177,7 @@ def render() -> None:
     """
     config = get_config()
 
-    arch_md = discovery.find_architecture_md(config.project_root)
+    arch_md = discovery.find_design_md(config.project_root)
     dev_arch = discovery.find_developer_architecture(config.project_root)
     svgs = discovery.list_likec4_svgs(config.project_root)
 
@@ -191,11 +191,11 @@ def render() -> None:
 
     if not arch_md and not dev_arch and not svgs:
         empty_state.empty_state(
-            artifact_name="ARCHITECTURE.md",
+            artifact_name="DESIGN.md",
             producer_path=skill_path,
             explanation=(
                 "No architecture artifacts found. Run a pipeline with the"
-                " `systems-architect` agent to generate `ARCHITECTURE.md`"
+                " `systems-architect` agent to generate `DESIGN.md`"
                 " and `docs/architecture.md`."
             ),
         )

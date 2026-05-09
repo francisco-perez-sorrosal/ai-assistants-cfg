@@ -51,7 +51,7 @@ Enforcement is layered:
 - **Reviewers verify ADR drafts have the required frontmatter shape** per `adr-conventions.md` — fragment filename, `id: dec-draft-<hash>`, `status: proposed`. The finalize step at merge rewrites `id` and cross-references; review the draft in its draft form, not against what it will become.
 - **Do not review `DECISIONS_INDEX.md` changes.** The index is regenerated automatically at finalize from the on-disk ADR set; hand-edited index changes on a PR are a signal of drift.
 - **Treat `.ai-state/observations.jsonl` and `.ai-state/memory.json` as mergeable data.** The semantic merge drivers reconcile concurrent writes. Reviewers confirm the delta looks structurally sensible (new keys / appended events), not line-by-line.
-- **Architecture docs (`.ai-state/ARCHITECTURE.md` and `docs/architecture.md`) respect section ownership.** Systems architect owns design-target sections; implementer owns as-built sections; doc-engineer validates dev-facing wording. Conflicting edits to the same section are a review concern; edits to different sections are expected to compose.
+- **Architecture docs (`.ai-state/DESIGN.md` and `docs/architecture.md`) respect section ownership.** Systems architect owns design-target sections; implementer owns as-built sections; doc-engineer validates dev-facing wording. Conflicting edits to the same section are a review concern; edits to different sections are expected to compose.
 
 ### Stacked PRs and Multi-PR Feature Work
 

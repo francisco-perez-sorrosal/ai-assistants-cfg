@@ -22,11 +22,11 @@ def test_standard_tier_required_files():
 def test_full_tier_includes_architecture_docs():
     specs = expected_artifacts(PipelineTier.FULL)
     paths = [spec.path for spec in specs]
-    assert ".ai-state/ARCHITECTURE.md" in paths
+    assert ".ai-state/DESIGN.md" in paths
     assert "docs/architecture.md" in paths
     # Recency checks fire for full-tier architecture docs.
     recency_paths = {spec.path for spec in specs if spec.check_recency}
-    assert ".ai-state/ARCHITECTURE.md" in recency_paths
+    assert ".ai-state/DESIGN.md" in recency_paths
 
 
 def test_lightweight_tier_is_minimal():

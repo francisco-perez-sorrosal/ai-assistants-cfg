@@ -26,7 +26,7 @@ class TestIsExcludedPath:
     @pytest.mark.parametrize(
         "path",
         [
-            ".ai-state/ARCHITECTURE.md",
+            ".ai-state/DESIGN.md",
             ".ai-state/decisions/000-foo.md",
             "foo/.ai-state/bar",
             ".ai-work/task/SYSTEMS_PLAN.md",

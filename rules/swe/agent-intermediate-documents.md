@@ -110,7 +110,7 @@ This scoping prevents collisions when multiple pipelines or multiple instances o
 
 Agents that update `.ai-state/`: promethean (idea ledger), sentinel (report, log, tech-debt ledger), implementation-planner (spec archival), main agent (calibration log), systems-architect and implementation-planner (ADR files in `decisions/`), systems-architect, implementer, and cicd-engineer (deployment doc), systems-architect, implementation-planner, and implementer (both architecture docs), systems-architect, test-engineer, and implementation-planner (TEST_TOPOLOGY.md — topology population and per-pipeline integration_boundaries), verifier and sentinel (tech-debt ledger writes — verifier per-change, sentinel repo-wide). Artifact inventory is not stored here — it is derivable from the filesystem.
 
-**`docs/architecture.md`** — developer-facing architecture navigation guide. Every component name and file path is verified against the codebase. Derived from `.ai-state/ARCHITECTURE.md` by filtering to Built components. Created by systems-architect alongside the architect doc, updated by implementation-planner (planning-stage structural gaps) and implementer (step 7.7), maintained by doc-engineer at pipeline checkpoints. Template at `skills/doc-management/assets/ARCHITECTURE_GUIDE_TEMPLATE.md`. Lives in `docs/`, not `.ai-state/`, because it is developer-facing project documentation.
+**`docs/architecture.md`** — developer-facing architecture navigation guide. Every component name and file path is verified against the codebase. Derived from `.ai-state/DESIGN.md` by filtering to Built components. Created by systems-architect alongside the architect doc, updated by implementation-planner (planning-stage structural gaps) and implementer (step 7.7), maintained by doc-engineer at pipeline checkpoints. Template at `skills/doc-management/assets/ARCHITECTURE_GUIDE_TEMPLATE.md`. Lives in `docs/`, not `.ai-state/`, because it is developer-facing project documentation.
 
 #### `TECH_DEBT_LEDGER.md` + `TECH_DEBT_RESOLVED.md` — living tech-debt ledger pair
 
@@ -187,7 +187,7 @@ Both producers reference this single table when assigning `owner-role` to a new 
 | Ephemeral | `.ai-work/<task-slug>/` | `traceability.yml` — REQ-to-test/implementation mapping (canonical source of truth during the pipeline; rendered into the archived SPEC's matrix at feature end per [`id-citation-discipline.md`](id-citation-discipline.md)) | Single pipeline run — rendered into archived SPEC matrix, then deleted with `.ai-work/` |
 | Session-persistent | `.ai-work/<task-slug>/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions — merge learnings into permanent locations at feature end |
 | Permanent | `.ai-state/` | `idea_ledgers/IDEA_LEDGER_*.md`, `sentinel_reports/{SENTINEL_REPORT_*.md, SENTINEL_LOG.md}`, `metrics_reports/{METRICS_REPORT_*.{md,json}, METRICS_LOG.md}`, `specs/SPEC_*.md`, `calibration_log.md`, `decisions/<NNN>-<slug>.md`, `SYSTEM_DEPLOYMENT.md`, `ARCHITECTURE.md`, `TEST_TOPOLOGY.md`, `TECH_DEBT_LEDGER.md` (active) + `TECH_DEBT_RESOLVED.md` (terminal) | Project lifetime — committed to git, timestamped per run or living document |
-| Permanent | `docs/` | `architecture.md` | Project lifetime — committed to git, derived from `.ai-state/ARCHITECTURE.md`, maintained by pipeline agents |
+| Permanent | `docs/` | `architecture.md` | Project lifetime — committed to git, derived from `.ai-state/DESIGN.md`, maintained by pipeline agents |
 
 ### Version Control and Cleanup
 

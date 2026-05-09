@@ -44,7 +44,7 @@ subsystems:
   - <subsystem-name>
 # required, 1 or more entries
 # Each entry must resolve to a component with "Status: Built" in
-# .ai-state/ARCHITECTURE.md §3 (Components). The binding is checked by
+# .ai-state/DESIGN.md §3 (Components). The binding is checked by
 # sentinel TT01. Use the component's canonical name from that table exactly.
 
 tier: <unit | integration | contract | e2e>
@@ -117,7 +117,7 @@ notes: <free-form short prose>
 |-------|-------|-------|
 | `id` | Trunk | Kebab-case. Leaf may derive an additional form (e.g., snake_case for markers). |
 | `title` | Trunk | Human label; no tooling concepts. |
-| `subsystems` | Trunk | Forward reference into `.ai-state/ARCHITECTURE.md` §3 — language-neutral. |
+| `subsystems` | Trunk | Forward reference into `.ai-state/DESIGN.md` §3 — language-neutral. |
 | `tier` | Trunk | Unit / integration / contract / e2e vocabulary is universal. |
 | `selectors` — structure | Trunk | The list shape and the `{strategy, arg}` envelope are trunk-owned. |
 | `selectors` — strategy values | Leaf | The set of valid `strategy` identifiers is per-language via Registry 1. |

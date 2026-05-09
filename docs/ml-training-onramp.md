@@ -8,7 +8,7 @@ Companion doc for Praxion's third project archetype: ML/AI training. Where the S
 - **Skill references:** [`gpu-compute-budgeting`](../skills/deployment/references/gpu-compute-budgeting.md) (under `deployment`), [`ml-experiment-ci`](../skills/cicd/references/ml-experiment-ci.md) (under `cicd`)
 - **Rules:** [`ml/eval-driven-verification`](../rules/ml/eval-driven-verification.md), [`ml/gpu-budget-conventions`](../rules/ml/gpu-budget-conventions.md), [`ml/experiment-tracking-conventions`](../rules/ml/experiment-tracking-conventions.md)
 - **Commands:** [`/run-experiment`](../commands/run-experiment.md), [`/check-experiment`](../commands/check-experiment.md), [`/onboard-project`](../commands/onboard-project.md) Phase 8c
-- **Architecture:** [`docs/architecture.md`](architecture.md), `.ai-state/ARCHITECTURE.md`
+- **Architecture:** [`docs/architecture.md`](architecture.md), `.ai-state/DESIGN.md`
 
 ## The third archetype in context
 
@@ -121,7 +121,7 @@ Three-tier backend strategy:
 | Skill references | [`operational-modes`](../skills/ml-training/references/operational-modes.md), [`training-results-schema`](../skills/llm-training-eval/references/training-results-schema.md), [`local-backend`](../skills/neo-cloud-abstraction/references/local-backend.md), [`skypilot-backend`](../skills/neo-cloud-abstraction/references/skypilot-backend.md), [`runpod-direct-adapter`](../skills/neo-cloud-abstraction/references/runpod-direct-adapter.md), [`gpu-compute-budgeting`](../skills/deployment/references/gpu-compute-budgeting.md), [`ml-experiment-ci`](../skills/cicd/references/ml-experiment-ci.md) |
 | Rules | [`ml/eval-driven-verification`](../rules/ml/eval-driven-verification.md), [`ml/gpu-budget-conventions`](../rules/ml/gpu-budget-conventions.md), [`ml/experiment-tracking-conventions`](../rules/ml/experiment-tracking-conventions.md) |
 | Commands | [`/run-experiment`](../commands/run-experiment.md), [`/check-experiment`](../commands/check-experiment.md), [`/onboard-project`](../commands/onboard-project.md) Phase 8c |
-| Architecture | [`docs/architecture.md`](architecture.md), `.ai-state/ARCHITECTURE.md` |
+| Architecture | [`docs/architecture.md`](architecture.md), `.ai-state/DESIGN.md` |
 | Verifier extension | [`agents/verifier.md`](../agents/verifier.md) Phase 3a |
 
 The pipeline that produced these artifacts also generated `RESEARCH_FINDINGS`, `SYSTEMS_PLAN`, and ADR drafts in `.ai-work/<task-slug>/` and `.ai-state/decisions/drafts/`. Drafts are promoted to stable `dec-NNN` records at merge-to-main; the `RESEARCH_FINDINGS` and `SYSTEMS_PLAN` are pipeline-internal and deleted with `.ai-work/`.

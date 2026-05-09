@@ -2,7 +2,7 @@
 
 The Architecture page is the design-target and diagram browser.  It:
 
-  1. Reads ARCHITECTURE.md via discovery.find_architecture_md.
+  1. Reads DESIGN.md via discovery.find_design_md.
   2. Renders parsed sections via artifact_card (parsers.parse_md_sections).
   3. Visually distinguishes aac:generated vs aac:authored fence regions.
   4. Embeds LikeC4 SVGs discovered via discovery.list_likec4_svgs.
@@ -186,7 +186,7 @@ class TestRendersArchitectureMd:
             tmp_path,
             {
                 ".ai-state": {
-                    "ARCHITECTURE.md": _MINIMAL_ARCHITECTURE_MD,
+                    "DESIGN.md": _MINIMAL_ARCHITECTURE_MD,
                 }
             },
         )
@@ -229,7 +229,7 @@ class TestRendersComponentsSection:
             tmp_path,
             {
                 ".ai-state": {
-                    "ARCHITECTURE.md": _MINIMAL_ARCHITECTURE_MD,
+                    "DESIGN.md": _MINIMAL_ARCHITECTURE_MD,
                 }
             },
         )
@@ -283,7 +283,7 @@ class TestDistinguishesAacRegions:
             tmp_path,
             {
                 ".ai-state": {
-                    "ARCHITECTURE.md": _ARCHITECTURE_WITH_AAC_FENCES,
+                    "DESIGN.md": _ARCHITECTURE_WITH_AAC_FENCES,
                 }
             },
         )
@@ -373,7 +373,7 @@ class TestEmbedsSvgWhenPresent:
             tmp_path,
             {
                 ".ai-state": {
-                    "ARCHITECTURE.md": _MINIMAL_ARCHITECTURE_MD,
+                    "DESIGN.md": _MINIMAL_ARCHITECTURE_MD,
                 }
             },
         )
@@ -423,7 +423,7 @@ class TestRendersDeveloperArchitecture:
             tmp_path,
             {
                 ".ai-state": {
-                    "ARCHITECTURE.md": _MINIMAL_ARCHITECTURE_MD,
+                    "DESIGN.md": _MINIMAL_ARCHITECTURE_MD,
                 },
                 "docs": {
                     "architecture.md": (

@@ -11,7 +11,7 @@ documents embed directly. Source, generated D2, and rendered SVG are all committ
 - **Generated**: `docs/diagrams/<name>/<view>.d2` — produced by `likec4 gen d2`.
 - **Rendered**: `docs/diagrams/<name>/<view>.svg` — produced by `d2`; embedded in docs via `<img>`.
 
-Architecture documents (`docs/architecture.md`, `.ai-state/ARCHITECTURE.md`) reference the
+Architecture documents (`docs/architecture.md`, `.ai-state/DESIGN.md`) reference the
 rendered SVG and quote the source DSL in a fenced `c4` block so reviewers see both in one
 place. Non-C4 diagrams (sequence, state, ER, flowchart) stay in Mermaid — see
 `rules/writing/diagram-conventions.md` for the coexistence policy.

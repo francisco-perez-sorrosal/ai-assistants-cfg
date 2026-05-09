@@ -25,7 +25,7 @@ Load explicitly with `software-planning` or reference the three-document model. 
 | `references/coordination-details.md` | Pipeline worktree lifecycle, BDD/TDD execution, batched improvement, context-engineer shadowing, doc-engineer parallel execution, fragment files |
 | `references/adr-authoring-protocols.md` | ADR file creation, index regeneration, supersession protocol |
 | `references/architecture-documentation.md` | Dual-audience architecture documentation methodology: lifecycle, section ownership, validation for architect and developer documents |
-| `assets/ARCHITECTURE_TEMPLATE.md` | 8-section template for `.ai-state/ARCHITECTURE.md` architect-facing design target |
+| `assets/ARCHITECTURE_TEMPLATE.md` | 8-section template for `.ai-state/DESIGN.md` architect-facing design target |
 | `contexts/python.md` | Python-specific quality gates and step templates |
 | `phases/refactoring.md` | Refactoring phase methodology |
 | `README.md` | This file — overview and usage guide |

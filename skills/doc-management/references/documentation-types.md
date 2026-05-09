@@ -125,7 +125,7 @@ System design documentation for complex projects. Not every project needs this.
 
 For projects using the Praxion agent pipeline (Standard/Full tier), architecture documentation is maintained as two purpose-built documents with distinct audiences and validation models:
 
-**`.ai-state/ARCHITECTURE.md`** -- architect-facing design target. Abstracts above concrete code to define the space of valid implementations. Includes a Status column (Designed/Built/Planned/Deprecated) and Source stage metadata. Validated via design coherence (internal consistency, not strict code matching). Template at `skills/software-planning/assets/ARCHITECTURE_TEMPLATE.md`.
+**`.ai-state/DESIGN.md`** -- architect-facing design target. Abstracts above concrete code to define the space of valid implementations. Includes a Status column (Designed/Built/Planned/Deprecated) and Source stage metadata. Validated via design coherence (internal consistency, not strict code matching). Template at `skills/software-planning/assets/ARCHITECTURE_TEMPLATE.md`.
 
 **`docs/architecture.md`** -- developer-facing navigation guide. Every component name and file path is verified against the codebase. Present-tense only, no planned items. Validated via code verification (every name and path resolves on disk). Template at `skills/doc-management/assets/ARCHITECTURE_GUIDE_TEMPLATE.md`.
 

@@ -190,7 +190,7 @@ Schema definitions, identifier registries, and closure semantics referenced by T
 
 | ID | Tp | Rule | Pass |
 |----|----|------|------|
-| TT01 | A | Every group's `subsystems` values resolve to a `Status: Built` component in `.ai-state/ARCHITECTURE.md` §3 | For each group in `TEST_TOPOLOGY.md`, each `subsystems` entry appears in the Built-components table of §3; FAIL for each missing cross-ref |
+| TT01 | A | Every group's `subsystems` values resolve to a `Status: Built` component in `.ai-state/DESIGN.md` §3 | For each group in `TEST_TOPOLOGY.md`, each `subsystems` entry appears in the Built-components table of §3; FAIL for each missing cross-ref |
 | TT02 | A | Every `selectors` entry has a registered `strategy` identifier | For each group's `selectors` list, the `strategy` value appears as an identifier in Registry 1 of `skills/testing-strategy/references/test-topology.md`; FAIL for unregistered values; WARN for optional identifiers documented as such in the leaf |
 | TT03 | L | Accumulated `topology-drift` ledger rows signal a topology refresh need | Read `.ai-state/TECH_DEBT_LEDGER.md`; count open rows with `class = topology-drift`; if count ≥ 3, emit WARN with "Run `/refresh-topology` — 3+ topology-drift items accumulated." TT03 reads ledger rows but does not write them |
 | TT04 | L | Per-group runtime does not chronically exceed declared envelope | Skip when fewer than 7 `metrics_reports/METRICS_REPORT_*.json` files contain per-group data. Skip per-group when `expected_runtime_envelope` is absent. Otherwise: for each group, compare actual P95 over available reports vs declared `p95_seconds`; FAIL when actual > 1.5× declared for ≥ 3 consecutive reports; file a `class = topology-drift`, `owner-role = implementation-planner` ledger row |
@@ -261,7 +261,7 @@ BC checks are unconditional — they run on every sentinel pass because the cont
 
 ### Architecture Completeness (AC)
 
-Conditional activation: skip AC01-AC04 checks when `.ai-state/ARCHITECTURE.md` does not exist and project has fewer than 3 interacting components. Skip AC05-AC09 checks when neither `.ai-state/ARCHITECTURE.md` nor `docs/architecture.md` exists.
+Conditional activation: skip AC01-AC04 checks when `.ai-state/DESIGN.md` does not exist and project has fewer than 3 interacting components. Skip AC05-AC09 checks when neither `.ai-state/DESIGN.md` nor `docs/architecture.md` exists.
 
 **Three additional conditional-activation checks (AC10, AC11, AC12)** extend the AC dimension following the TT idiom: each check has a substrate-presence trigger; absence skips the check with an AC-dimension INFO note ("ACNN skipped — `<substrate>` not present"). Never WARN or FAIL on substrate absence alone.
 
@@ -274,15 +274,15 @@ Conditional activation: skip AC01-AC04 checks when `.ai-state/ARCHITECTURE.md` d
 
 | ID | Tp | Rule | Pass |
 |----|----|------|------|
-| AC01 | L | Architecture doc exists when project has 3+ interacting components | `.ai-state/ARCHITECTURE.md` exists when project has 3+ modules with inter-module dependencies |
-| AC02 | L | Component names in `.ai-state/ARCHITECTURE.md` are internally consistent and account for existing modules | Component names in Section 3 are internally consistent (every component in Data Flow appears in Components table); abstract names are allowed |
-| AC03 | A | File paths in `.ai-state/ARCHITECTURE.md` are illustrative | WARN if >50% of file paths in component table do not resolve to existing files; PASS otherwise |
-| AC04 | A | Inline `dec-NNN` references in `.ai-state/ARCHITECTURE.md` and `docs/architecture.md` resolve | Every `dec-NNN` mentioned anywhere in either document resolves to a finalized `.ai-state/decisions/<NNN>-*.md` file. Section 8 is a stable pointer to `DECISIONS_INDEX.md`, not an inline table — pointer presence is sufficient |
-| AC05 | A | `docs/architecture.md` exists when `.ai-state/ARCHITECTURE.md` exists | `docs/architecture.md` exists |
+| AC01 | L | Architecture doc exists when project has 3+ interacting components | `.ai-state/DESIGN.md` exists when project has 3+ modules with inter-module dependencies |
+| AC02 | L | Component names in `.ai-state/DESIGN.md` are internally consistent and account for existing modules | Component names in Section 3 are internally consistent (every component in Data Flow appears in Components table); abstract names are allowed |
+| AC03 | A | File paths in `.ai-state/DESIGN.md` are illustrative | WARN if >50% of file paths in component table do not resolve to existing files; PASS otherwise |
+| AC04 | A | Inline `dec-NNN` references in `.ai-state/DESIGN.md` and `docs/architecture.md` resolve | Every `dec-NNN` mentioned anywhere in either document resolves to a finalized `.ai-state/decisions/<NNN>-*.md` file. Section 8 is a stable pointer to `DECISIONS_INDEX.md`, not an inline table — pointer presence is sufficient |
+| AC05 | A | `docs/architecture.md` exists when `.ai-state/DESIGN.md` exists | `docs/architecture.md` exists |
 | AC06 | A | Every component name in developer guide matches actual module | Component names in `docs/architecture.md` Section 3 match `Glob` of module names |
 | AC07 | A | File paths in developer guide resolve | Every file path in `docs/architecture.md` component table points to existing file |
 | AC08 | L | No Status column or Planned items in developer guide | `docs/architecture.md` has no Status column and no Planned/Designed items |
-| AC09 | L | Cross-consistency: developer guide is subset of architect doc | Every component in `docs/architecture.md` also appears in `.ai-state/ARCHITECTURE.md` |
+| AC09 | L | Cross-consistency: developer guide is subset of architect doc | Every component in `docs/architecture.md` also appears in `.ai-state/DESIGN.md` |
 | AC10 | A | Fence integrity in architecture markdown | When ≥1 `**/ARCHITECTURE.md` or `docs/architecture.md` exists, run `python3 scripts/aac_fence_validator.py <file>` per in-scope markdown file; map validator FAIL to AC10 FAIL, validator WARN to AC10 WARN. Skip with AC-dimension INFO note when no architecture markdown is present |
 | AC11 | L | Model↔markdown agreement | When both LikeC4 model substrate AND markdown substrate are present, fetch element id+title set via MCP `read-project-summary` (or fallback `find docs/diagrams -name '*.c4'` + grep, emitting one WARN `validator-unable-to-query-likec4-mcp` on fallback); compute symmetric diff against component names referenced in architecture markdown; emit WARN per orphan on either side. Skip with INFO note when either substrate absent |
 | AC12 | L | Traceability orphans (bidirectional) | When specs (`.ai-state/specs/SPEC_*.md`) AND LikeC4 model AND populated bidirectional convention all present, query MCP `query-by-metadata { key: "req_ids", matchMode: "exists" }` and parse SPEC frontmatter `architectural_elements:`; emit WARN per orphan REQ (REQ in spec with no element claiming it) and per orphan element-citation (LikeC4 element with `req_ids` containing a REQ absent from all archived SPECs); severity Suggested per orphan, escalate to Important when ≥10% of REQs orphaned across all archived specs. Skip with INFO note when convention not yet populated |

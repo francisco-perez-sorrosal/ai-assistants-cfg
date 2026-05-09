@@ -93,10 +93,10 @@ def _glob_sorted_asc(directory: Path, pattern: str) -> list[Path]:
 # ---------------------------------------------------------------------------
 
 
-def find_architecture_md(root: Path) -> Optional[Path]:
-    """Return path to ``.ai-state/ARCHITECTURE.md``, or None if absent."""
+def find_design_md(root: Path) -> Optional[Path]:
+    """Return path to ``.ai-state/DESIGN.md``, or None if absent."""
     _require_root(root)
-    candidate = root / ".ai-state" / "ARCHITECTURE.md"
+    candidate = root / ".ai-state" / "DESIGN.md"
     return candidate if candidate.is_file() else None
 
 

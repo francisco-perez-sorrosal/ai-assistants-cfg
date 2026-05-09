@@ -1,8 +1,13 @@
+---
+diataxis: reference
+audience: developer
+---
+
 # Architecture Guide
 
 <!-- Developer navigation guide. Every component name and file path in this document has been
      verified against the codebase. Only components that exist on disk are included.
-     For design rationale, planned components, and architectural evolution, see .ai-state/ARCHITECTURE.md.
+     For design rationale, planned components, and architectural evolution, see .ai-state/DESIGN.md.
      Maintained by pipeline agents: created by systems-architect, updated by implementer,
      verified by doc-engineer at pipeline checkpoints.
      See skills/software-planning/references/architecture-documentation.md for the full methodology. -->
@@ -16,13 +21,13 @@
 | **System** | Praxion |
 | **Last verified against code** | 2026-05-03 (ai-training-onramp feature landed: four new ML/AI skills — `ml-training`, `llm-training-eval`, `neo-cloud-abstraction`, `experiment-tracking` — plus two reference extensions, three ML rules, and two new commands — `/run-experiment`, `/check-experiment`) |
 
-This document is the **developer-facing** navigation guide: every component, file path, and interface listed here exists on disk and resolves at the cited path. It is the code-verified subset of [`.ai-state/ARCHITECTURE.md`](../.ai-state/ARCHITECTURE.md), which is the design-target architect-facing document. Use this guide to navigate the codebase; consult the architect doc for system attributes (type, language, pattern), design rationale, planned components, and architectural evolution.
+This document is the **developer-facing** navigation guide: every component, file path, and interface listed here exists on disk and resolves at the cited path. It is the code-verified subset of [`.ai-state/DESIGN.md`](../.ai-state/DESIGN.md), which is the design-target architect-facing document. Use this guide to navigate the codebase; consult the architect doc for system attributes (type, language, pattern), design rationale, planned components, and architectural evolution.
 
 ## 2. System Context
 
 <!-- OWNER: doc-engineer (verification) | LAST UPDATED: 2026-04-28 (deduplicated — L0 diagram is byte-identical to architect doc) -->
 
-The system-boundary L0 diagram is rendered in [`.ai-state/ARCHITECTURE.md` §2](../.ai-state/ARCHITECTURE.md#2-system-context). External actors: Developer, Claude Code, Claude Desktop, Cursor, Arize Phoenix, GitHub.
+The system-boundary L0 diagram is rendered in [`.ai-state/DESIGN.md` §2](../.ai-state/DESIGN.md#2-system-context). External actors: Developer, Claude Code, Claude Desktop, Cursor, Arize Phoenix, GitHub.
 
 > **Component detail:** [Components](#3-components)
 
@@ -85,7 +90,7 @@ The system-boundary L0 diagram is rendered in [`.ai-state/ARCHITECTURE.md` §2](
 
 <!-- OWNER: doc-engineer (verification) | LAST UPDATED: 2026-04-28 (deduplicated — diagrams are byte-identical to architect doc) -->
 
-The agent-pipeline execution sequence, the memory + observability flow, and the tech-debt ledger flow are diagrammed in [`.ai-state/ARCHITECTURE.md` §5](../.ai-state/ARCHITECTURE.md#5-data-flow). The architect doc additionally diagrams the ADR finalize flow.
+The agent-pipeline execution sequence, the memory + observability flow, and the tech-debt ledger flow are diagrammed in [`.ai-state/DESIGN.md` §5](../.ai-state/DESIGN.md#5-data-flow). The architect doc additionally diagrams the ADR finalize flow.
 
 For developers: the entry point for tracing a pipeline run is `EnterWorktree` (main agent) → researcher → systems-architect → implementation-planner → (implementer ∥ test-engineer) → verifier, with all artifacts under `.ai-work/<task-slug>/`. Memory and observation correlation goes through the OpenInference `session.id` attribute and W3C trace-context (`traceparent`) — see [`task-chronograph-mcp/src/task_chronograph_mcp/otel_relay.py`](../task-chronograph-mcp/src/task_chronograph_mcp/otel_relay.py) and [`memory-mcp/src/memory_mcp/correlation.py`](../memory-mcp/src/memory_mcp/correlation.py).
 
@@ -93,26 +98,26 @@ For developers: the entry point for tracing a pipeline run is `EnterWorktree` (m
 
 <!-- OWNER: doc-engineer (verification) | LAST UPDATED: 2026-04-28 (deduplicated — single source of truth is the architect doc) -->
 
-External dependencies, versions, and criticality classifications are listed in [`.ai-state/ARCHITECTURE.md` §6](../.ai-state/ARCHITECTURE.md#6-dependencies). Verified against `pyproject.toml` and project config.
+External dependencies, versions, and criticality classifications are listed in [`.ai-state/DESIGN.md` §6](../.ai-state/DESIGN.md#6-dependencies). Verified against `pyproject.toml` and project config.
 
 ## 7. Constraints
 
 <!-- OWNER: doc-engineer (verification) | LAST UPDATED: 2026-04-28 (deduplicated — developer-relevant constraints were a strict subset of the architect doc's; the architect doc is the single source) -->
 
-System constraints (performance, compatibility, technical, behavioral, architectural) are listed in [`.ai-state/ARCHITECTURE.md` §7](../.ai-state/ARCHITECTURE.md#7-constraints). Three additional architect-only rows live there: the four-behavior agent contract, git as the sole synchronization substrate, and ADR fragment-naming.
+System constraints (performance, compatibility, technical, behavioral, architectural) are listed in [`.ai-state/DESIGN.md` §7](../.ai-state/DESIGN.md#7-constraints). Three additional architect-only rows live there: the four-behavior agent contract, git as the sole synchronization substrate, and ADR fragment-naming.
 
 ## 8. Decisions
 
 <!-- OWNER: doc-engineer (verification) | LAST UPDATED: 2026-04-28 (deduplicated per dec-021's "never duplicate ADR rationale" intent) -->
 
-Architectural decisions are recorded as ADRs in [`.ai-state/decisions/`](../.ai-state/decisions/). The canonical, auto-generated cross-reference is [`DECISIONS_INDEX.md`](../.ai-state/decisions/DECISIONS_INDEX.md). For design-target rationale, see [`.ai-state/ARCHITECTURE.md`](../.ai-state/ARCHITECTURE.md) — this developer guide intentionally does not summarize decisions inline.
+Architectural decisions are recorded as ADRs in [`.ai-state/decisions/`](../.ai-state/decisions/). The canonical, auto-generated cross-reference is [`DECISIONS_INDEX.md`](../.ai-state/decisions/DECISIONS_INDEX.md). For design-target rationale, see [`.ai-state/DESIGN.md`](../.ai-state/DESIGN.md) — this developer guide intentionally does not summarize decisions inline.
 
 ## 9. Test Topology
 
 <!-- Developer-facing navigation guide. Components named in this section have been verified
      against the codebase. Items marked Designed are not on disk yet (they ship in this pipeline);
      items marked Planned are not on disk and will be created by future projects.
-     For design rationale and ADR cross-references, see .ai-state/ARCHITECTURE.md §9. -->
+     For design rationale and ADR cross-references, see .ai-state/DESIGN.md §9. -->
 
 ### 9.1 Where to find what
 
@@ -157,4 +162,4 @@ No edits to the trunk schema, the sentinel TT01–TT05 wording, the closure sema
 - **`integration_boundaries` are one-hop**: a `phase`-tier selection runs the named groups plus their direct boundary neighbors, not the transitive closure. The `pipeline`-tier (full suite) covers the transitive case.
 - **Lightweight tier**: the protocol does NOT activate at Lightweight tier. Lightweight tasks run today's default test command. If a Lightweight task grows beyond 3 files, escalate to Standard rather than half-engaging the topology.
 
-For the design rationale behind any of the above, see [`.ai-state/ARCHITECTURE.md` §9](../.ai-state/ARCHITECTURE.md#9-test-topology).
+For the design rationale behind any of the above, see [`.ai-state/DESIGN.md` §9](../.ai-state/DESIGN.md#9-test-topology).
