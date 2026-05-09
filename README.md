@@ -13,7 +13,8 @@ Every non-trivial feature starts from a behavioral spec with traceable requireme
 
 The name comes from *praxis* (knowledge into action) combined with *axon* (signal transmission), representing the bridge between cognition and implementation.
 
-Compatible with **Claude Code** (mainly), **Claude Desktop**, and **Cursor**.
+Compatible with **Claude Code** (mainly), **Claude Desktop**, **Cursor**, and
+AGENTS.md-aware agents such as **Codex**.
 
 ## What You Get
 
@@ -86,7 +87,7 @@ cd Praxion
 ./install.sh --check    # Verify installation
 ```
 
-For other targets: `./install.sh desktop` (Claude Desktop), `./install.sh cursor` (Cursor). See [Installation](#installation) for details.
+For other targets: `./install.sh desktop` (Claude Desktop), `./install.sh cursor` (Cursor), or `./install.sh codex /path/repo` (Codex / AGENTS.md-aware agents). See [Installation](#installation) for details.
 
 ### Onboard a project
 
@@ -290,13 +291,14 @@ See [Memory Architecture](docs/memory-architecture.md) for the full guide: dual-
 
 ## Installation
 
-The main entry point is `install.sh`, which routes to `install_claude.sh` (Claude Code/Desktop) or `install_cursor.sh` (Cursor). The interactive installer walks through each choice, defaulting to the recommended option at each step.
+The main entry point is `install.sh`, which routes to `install_claude.sh` (Claude Code/Desktop), `install_cursor.sh` (Cursor), or `install_codex.sh` (Codex / AGENTS.md-aware agents). The interactive installer walks through each choice, defaulting to the recommended option at each step.
 
 ```bash
 ./install.sh                    # Claude Code (default)
 ./install.sh desktop            # Claude Desktop
 ./install.sh cursor             # Cursor (user profile ~/.cursor/)
 ./install.sh cursor /path/repo  # Cursor (per-project at /path/repo/.cursor/)
+./install.sh codex /path/repo   # Codex / AGENTS.md-aware agents (project AGENTS.md)
 ./install.sh --check            # Verify installation health
 ./install.sh --uninstall        # Remove installation
 ./install.sh code --dry-run     # Dry-run: show what would be installed
@@ -379,6 +381,32 @@ Installs skills, rules, commands, and MCP into Cursor's discovery paths. Two tar
 ```
 
 For **Claude Code vs Cursor** format differences (discovery paths, command export, MCP config), see [docs/cursor-compat.md](docs/cursor-compat.md).
+
+### Codex / AGENTS.md-aware agents (`./install.sh codex /path/repo`)
+
+Installs a small Praxion adapter block into the target project's `AGENTS.md`.
+This is intentionally lighter than the Claude Code and Cursor installers: it
+does not copy Praxion rules, skills, commands, or agents, and it does not
+configure hooks or MCP. The generated block points AGENTS.md-aware agents back
+to this Praxion checkout as the canonical source.
+
+```bash
+./install.sh codex /path/to/repo --dry-run
+./install.sh codex /path/to/repo
+./install.sh codex /path/to/repo --check
+```
+
+**What is directly reusable:** the target agent can read Praxion's `AGENTS.md`,
+`CLAUDE.md`, `rules/`, `skills/`, docs, source, tests, scripts, MCP server
+source, and `.ai-state/` data by reference.
+
+**What still needs adapters for native behavior:** slash commands from
+`commands/*.md`, runnable subagents from `agents/*.md`, automatic rule
+frontmatter matching, automatic skill activation, MCP registration, and hook
+lifecycle integration.
+
+Start a fresh Codex or AGENTS.md-aware agent session inside the target project
+after installation so the new `AGENTS.md` is loaded at startup.
 
 ### User Preferences (Claude Desktop / iOS)
 

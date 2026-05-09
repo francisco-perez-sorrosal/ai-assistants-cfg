@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Praxion Installer — Entry point
 #
-# Routes to install_claude.sh (Claude Code / Claude Desktop) or
-# install_cursor.sh (Cursor). See --help for usage.
+# Routes to install_claude.sh (Claude Code / Claude Desktop),
+# install_cursor.sh (Cursor), or install_codex.sh (AGENTS.md-aware agents).
+# See --help for usage.
 #
-#   ./install.sh [code|desktop|cursor [path]] [--check] [--dry-run] [--uninstall] [--help]
+#   ./install.sh [code|desktop|cursor [path]|codex path] [--check] [--dry-run] [--uninstall] [--help]
 
 set -eo pipefail
 
@@ -301,13 +302,15 @@ show_overview() {
     local mode=$1
     printf "\n${B}Praxion Installer${R}\n"
 
-    cat <<EOF
+    if [ "$mode" != "codex" ]; then
+        cat <<EOF
 
   Shared:
     • External API docs (chub CLI — curated docs for 600+ libraries)
     • Optional metrics tool (scc — SLOC counter used by /project-metrics)
     • Python tooling (uv + pytest/pytest-cov for Praxion's own tests and coverage)
 EOF
+    fi
 
     case "$mode" in
         code)
@@ -348,6 +351,17 @@ EOF
     • mcp.json  (task-chronograph, memory, sub-agents)
 EOF
             ;;
+        codex)
+            cat <<EOF
+
+  Target: ${B}AGENTS.md-aware agents${R}
+
+  Components:
+    • Project-local AGENTS.md adapter block
+    • Pointers to Praxion source artifacts (no copied rules/skills/agents)
+    • Compatibility map for direct reuse vs adapter-required surfaces
+EOF
+            ;;
     esac
 }
 
@@ -357,12 +371,14 @@ EOF
 
 show_usage() {
     cat <<EOF
-Usage: $(basename "$0") [code|desktop|cursor [path]] [--check] [--dry-run] [--uninstall] [--help]
+Usage: $(basename "$0") [code|desktop|cursor [path]|codex path] [--check] [--dry-run] [--uninstall] [--help]
 
   code         Install for Claude Code (default)
   desktop      Install for Claude Desktop
   cursor       Install for Cursor: user profile ~/.cursor/ (default)
   cursor PATH  Install for Cursor: per-project at PATH/.cursor/
+  codex PATH   Install project-local AGENTS.md adapter for Codex and other
+               AGENTS.md-aware coding agents
   --check      Verify installation health
   --dry-run    Show what would be installed (no writes)
   --uninstall  Remove installation
@@ -397,12 +413,15 @@ RELINK=false
 COMPLETE_INSTALL=false
 COMPLETE_UNINSTALL=false
 CURSOR_TARGET=""
+CODEX_TARGET=""
 
 while [ $# -gt 0 ]; do
     case "$1" in
         code|desktop) MODE="$1" ;;
         cursor)       MODE="cursor"
                       if [ -n "$2" ] && [[ "$2" != --* ]]; then CURSOR_TARGET="$2"; shift; fi ;;
+        codex)        MODE="codex"
+                      if [ -n "$2" ] && [[ "$2" != --* ]]; then CODEX_TARGET="$2"; shift; fi ;;
         --check)      CHECK=true ;;
         --dry-run)    DRY_RUN=true ;;
         --uninstall)  UNINSTALL=true ;;
@@ -452,6 +471,12 @@ case "$MODE" in
         $UNINSTALL && delegate_args+=(--uninstall)
         $RELINK    && delegate_args+=(--relink)
         ;;
+    codex)
+        [ -n "$CODEX_TARGET" ] && delegate_args+=("$CODEX_TARGET")
+        $CHECK     && delegate_args+=(--check)
+        $DRY_RUN   && delegate_args+=(--dry-run)
+        $UNINSTALL && delegate_args+=(--uninstall)
+        ;;
 esac
 
 # Dispatch to tool-specific script (capture exit code — don't let set -e kill shared steps)
@@ -460,11 +485,17 @@ delegate() {
     case "$MODE" in
         code|desktop) "$SCRIPT_DIR/install_claude.sh" "${delegate_args[@]}" || rc=$? ;;
         cursor)       "$SCRIPT_DIR/install_cursor.sh" "${delegate_args[@]}" || rc=$? ;;
+        codex)        "$SCRIPT_DIR/install_codex.sh" "${delegate_args[@]}" || rc=$? ;;
     esac
     return $rc
 }
 
-if $RELINK; then
+if [ "$MODE" = "codex" ]; then
+    if $RELINK; then
+        warn "--relink does not apply to codex; using regular install/check/dry-run flags."
+    fi
+    delegate
+elif $RELINK; then
     delegate
 elif $CHECK; then
     delegate_rc=0

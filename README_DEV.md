@@ -5,7 +5,8 @@ Contributor and developer documentation for Praxion. For installation and usage,
 ## Project Structure
 
 ```
-CLAUDE.md                            # Project-level instructions (always loaded)
+CLAUDE.md                            # Project-level instructions (always loaded by Claude)
+AGENTS.md                            # Thin adapter for AGENTS.md-aware agents
 skills/                              # Shared skill modules (assistant-agnostic)
 ├── CLAUDE.md                        # Skill conventions (lazy loaded)
 ├── agent-crafting/
@@ -192,6 +193,7 @@ eval/                                # Out-of-band quality evals (praxion-evals 
 install.sh                           # Installer router
 install_claude.sh                    # Claude Code / Desktop installer
 install_cursor.sh                    # Cursor installer
+install_codex.sh                     # Project-local AGENTS.md adapter installer
 Makefile                             # Development targets
 ```
 
@@ -236,13 +238,53 @@ The flags are read by each hook via `is_disabled()` in `hooks/_hook_utils.py`. T
 
 ## Design Intent
 
-- **Assistant-agnostic shared assets**: `skills/`, `commands/`, `agents/` live at the repo root, reusable across any AI assistant
-- **Assistant-specific config**: Personal settings live in config directories (`claude/config/` for Claude, `cursor/config/` for Cursor)
+- **Assistant-agnostic shared assets**: `skills/`, `commands/`, `agents/`, and `rules/` live at the repo root, reusable across any AI assistant
+- **AGENTS.md compatibility shim**: root `AGENTS.md` points AGENTS.md-aware tools to Praxion's canonical artifacts without copying their bodies
+- **Assistant-specific config**: Personal settings live in config directories (`claude/config/` for Claude, `cursor/config/` for Cursor, future tool directories as needed)
 - **Plugin distribution**: Skills, commands, and agents are installed via Claude Code's plugin system (`.claude-plugin/plugin.json`)
 - **Symlink for personal config**: `install_claude.sh` symlinks Claude config to `~/.claude/`; `install_cursor.sh` symlinks skills and rules into `.cursor/` or `~/.cursor/`
 - **Progressive disclosure**: Skills load metadata at startup, full content on activation, reference files on demand
 - **CLAUDE.md stays lean**: Skills, commands, agents, and rules are auto-discovered by Claude via filesystem scanning -- listing them in `CLAUDE.md` wastes always-loaded tokens and creates a sync burden. `README.md` and per-directory READMEs serve as the human-facing catalogs
 - **Nested CLAUDE.md for progressive disclosure**: Each artifact directory has its own `CLAUDE.md` with conventions specific to that directory. These are lazily loaded -- Claude reads them only when it accesses files in that directory, adding zero cost to sessions that don't touch the directory
+
+## AGENTS.md and Codex Interop
+
+`AGENTS.md` support is intentionally adapter-shaped. Praxion should not maintain
+a second copy of Claude-facing guidance for Codex, Cursor, or any future
+AGENTS.md-aware coding agent. The root `AGENTS.md` names the compatibility
+contract and points agents back to canonical source artifacts.
+
+`install_codex.sh` installs a marked Praxion block into a target project's
+`AGENTS.md`. The block is safe to update or remove because it is delimited by:
+
+```md
+<!-- PRAXION:AGENTS_ADAPTER:START -->
+<!-- PRAXION:AGENTS_ADAPTER:END -->
+```
+
+The Codex installer v1 only writes that project-local adapter block. It does
+not install hooks, configure MCP, create `.ai-state/`, export slash commands,
+or register subagents. Those surfaces require explicit tool-specific adapters:
+
+| Surface | Native adapter needed |
+|---|---|
+| `commands/*.md` | Slash-command exporter or installer |
+| `agents/*.md` | Framework-specific subagent registration |
+| `rules/**/*.md` frontmatter | Path matcher and rule loader |
+| `skills/*/SKILL.md` metadata | Skill discovery and activation bridge |
+| MCP servers | Target framework MCP config writer |
+| hooks | Target framework lifecycle hook integration |
+
+Use this flow to test a pet project from a Praxion checkout:
+
+```bash
+./install.sh codex /path/to/pet-project --dry-run
+./install.sh codex /path/to/pet-project
+./install.sh codex /path/to/pet-project --check
+```
+
+Start a fresh Codex or AGENTS.md-aware agent session in the target project after
+installing so startup discovery sees the generated `AGENTS.md`.
 
 ## Progressive Disclosure and Satellite Files
 
