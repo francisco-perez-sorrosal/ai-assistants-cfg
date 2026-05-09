@@ -1,3 +1,8 @@
+---
+codex:
+  portability: claude_only
+---
+
 ## Memory Protocol
 
 This protocol applies only when the memory MCP server is available AND the project has not disabled it. Skip all memory operations when either of these is true:

@@ -49,6 +49,103 @@ Guide for creating effective, contextual rules.
 
 Project rules take precedence over personal rules with the same name.
 
+## Codex Interop
+
+Do **not** assume Codex native rules have the same semantics as Claude rules.
+They do not.
+
+| Surface | Claude / Praxion rule model | Codex native model |
+|---|---|---|
+| Primary artifact | Markdown rule in `.claude/rules/*.md` | Policy rule in `.codex/rules/*.rules` |
+| Purpose | Semantic guidance and constraints | Command approval / sandbox policy |
+| Loading | Relevance-based, optional `paths:` frontmatter | Evaluated against command prefixes in the active config layers |
+| Scope | Task, active files, semantic matching | Command execution decisions |
+| Best content | Conventions, constraints, domain knowledge | Outside-sandbox approval policy for known-safe commands |
+
+For Praxion interop, treat Codex `.rules` as a **different primitive**, not as a
+drop-in export target for `rules/**/*.md`.
+
+### Translation Rubric
+
+When adapting Praxion rules to Codex, map by semantics:
+
+| Praxion rule content | Codex target |
+|---|---|
+| Command-prefix approval policy | `.codex/rules/*.rules` |
+| Always-on semantic guidance | root `AGENTS.md` |
+| Directory- or file-family-specific semantic guidance | nested `AGENTS.md` files near the matching paths |
+| Prompt-time context injection or validation | hooks such as `SessionStart` and `UserPromptSubmit` |
+| Tool/action guardrails | hooks such as `PreToolUse`, `PostToolUse`, and `PermissionRequest` |
+
+### Automatic Codex Classification
+
+Praxion's Codex bridge should pick up new canonical rules automatically on each
+`install.sh codex ...` run. Do not maintain a separate Python allowlist for new
+rules.
+
+Default behavior:
+
+- Rules with `paths:` become path-scoped Codex candidates.
+- Rules without `paths:` become always-on Codex candidates.
+- Clearly Claude-specific rules are excluded automatically.
+
+When automatic classification needs an exception, annotate the canonical rule
+with optional `codex:` frontmatter:
+
+```yaml
+---
+codex:
+  portability: portable     # or claude_only, auto
+  load: always_on           # or path_scoped, exclude, auto
+---
+```
+
+Use explicit Codex metadata sparingly:
+
+- `portability: portable` when a rule should remain Codex-visible despite
+  assistant-specific examples or references
+- `portability: claude_only` when the rule is intentionally tied to Claude
+  runtime semantics
+- `load: exclude` when the rule is portable in principle but should stay out of
+  Codex automatic loading
+
+### What Not To Do
+
+- Do not rewrite a declarative Markdown rule into a `.codex/rules/*.rules` file
+  unless the rule is truly about command approval semantics.
+- Do not treat Codex hooks as a perfect substitute for Claude `paths:`
+  frontmatter. Hooks can add or validate context, but they are event-driven,
+  not native semantic rule files.
+- Do not fork Praxion rule bodies into Codex-specific copies unless a hard
+  platform boundary forces it. Keep `rules/**/*.md` canonical and generate or
+  install Codex surfaces from that source.
+- Do not add new hardcoded exporter allowlists just to make a rule visible to
+  Codex. Prefer automatic classification, with canonical `codex:` metadata only
+  when needed.
+
+### Path-Scoped Rule Translation
+
+Claude `paths:` frontmatter has no direct Codex-native equivalent for semantic
+rules. The least-lossy Codex adaptation is:
+
+1. Keep the canonical rule in `rules/**/*.md`.
+2. Translate directory-scoped guidance into nested `AGENTS.md` files where the
+   directory boundary matches the rule boundary.
+3. Use hooks only when directory-local project docs are insufficient.
+
+Examples:
+
+- `tests/**` conventions -> `tests/AGENTS.md`
+- `docs/**` writing conventions -> `docs/AGENTS.md`
+- `streamlit_app/**` UI/dashboard conventions -> `streamlit_app/AGENTS.md`
+- `skills/**` maintenance rules -> `skills/AGENTS.md`
+
+### Design Principle
+
+For Codex interop, preserve Praxion rule meaning before optimizing for native
+surface area. A smaller number of faithful translations beats a broad but lossy
+export.
+
 ## Memory Hierarchy
 
 | Priority | Source | Loading |

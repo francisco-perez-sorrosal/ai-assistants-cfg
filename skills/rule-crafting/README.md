@@ -9,6 +9,7 @@ Skill for creating and managing rules — contextual domain knowledge files that
 - Deciding whether content belongs in a rule, skill, or `CLAUDE.md`
 - Debugging rule loading and relevance matching
 - Migrating content between `CLAUDE.md`, rules, and skills
+- Translating Praxion semantic rules to Codex-native surfaces without losing meaning
 
 ## Activation
 
@@ -26,7 +27,7 @@ You can also trigger it explicitly by asking about rules or referencing it by na
 | File | Purpose |
 |------|---------|
 | `SKILL.md` | Core reference: structure, locations, naming, content guidelines, decision model |
-| `REFERENCE.md` | Extended examples: complete rules, path-specific patterns, layered directories, migrations |
+| `REFERENCE.md` | Extended examples: complete rules, path-specific patterns, layered directories, migrations, Codex adaptation patterns |
 | `README.md` | This file — overview and testing guide |
 
 ## Existing Rules in This Repository

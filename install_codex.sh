@@ -79,6 +79,8 @@ TARGET_ROOT="$(cd "$TARGET_PATH" && pwd)"
 AGENTS_FILE="$TARGET_ROOT/AGENTS.md"
 CODEX_DIR="$TARGET_ROOT/.codex"
 CODEX_AGENTS_DIR="$CODEX_DIR/agents"
+CODEX_HOOKS_DIR="$CODEX_DIR/hooks"
+CODEX_PRAXION_DIR="$CODEX_DIR/praxion"
 AGENT_SKILLS_DIR="$TARGET_ROOT/.agents/skills"
 PRAXION_ROOT="$SCRIPT_DIR"
 
@@ -245,6 +247,7 @@ install_native_codex() {
     python3 "$PRAXION_ROOT/codex/config/export-codex-skills.py" \
         --repo-root "$PRAXION_ROOT" \
         --out-dir "$AGENT_SKILLS_DIR" >/dev/null
+    install_codex_rules_bridge
 }
 
 is_generated_agent_wrapper() {
@@ -265,10 +268,28 @@ export_expected_native_codex() {
         --out-dir "$expected_root/skills" >/dev/null
 }
 
+export_expected_rules_bridge() {
+    local expected_root="$1"
+    python3 "$PRAXION_ROOT/codex/config/export-codex-rules-bridge.py" \
+        --repo-root "$PRAXION_ROOT" \
+        --out-dir "$expected_root" >/dev/null
+}
+
+install_codex_rules_bridge() {
+    python3 "$PRAXION_ROOT/codex/config/export-codex-rules-bridge.py" \
+        --repo-root "$PRAXION_ROOT" \
+        --out-dir "$CODEX_DIR" >/dev/null
+    python3 "$PRAXION_ROOT/codex/config/manage-codex-rules-bridge.py" \
+        --repo-root "$PRAXION_ROOT" \
+        --project-root "$TARGET_ROOT" \
+        --mode install >/dev/null
+}
+
 prune_stale_native_codex() {
     local expected_root existing_file rel_path
     expected_root="$(mktemp -d)"
     export_expected_native_codex "$expected_root"
+    export_expected_rules_bridge "$expected_root/rules_bridge"
 
     if [ -d "$CODEX_AGENTS_DIR" ]; then
         while IFS= read -r existing_file; do
@@ -293,8 +314,38 @@ prune_stale_native_codex() {
         done < <(find "$AGENT_SKILLS_DIR" -mindepth 2 -maxdepth 2 -path '*/SKILL.md' -type f | sort)
     fi
 
+    if [ -d "$CODEX_HOOKS_DIR" ]; then
+        while IFS= read -r existing_file; do
+            [ -n "$existing_file" ] || continue
+            rel_path="${existing_file#"$CODEX_DIR"/}"
+            rel_path="${rel_path#/}"
+            if [[ "$(basename "$existing_file")" == praxion-* ]] &&
+               [ ! -f "$expected_root/rules_bridge/$rel_path" ]; then
+                rm -f "$existing_file"
+            fi
+        done < <(find "$CODEX_HOOKS_DIR" -maxdepth 1 -name 'praxion-*' -type f | sort)
+    fi
+
+    if [ -d "$CODEX_PRAXION_DIR" ]; then
+        while IFS= read -r existing_file; do
+            [ -n "$existing_file" ] || continue
+            rel_path="${existing_file#"$CODEX_DIR"/}"
+            rel_path="${rel_path#/}"
+            case "$(basename "$existing_file")" in
+                rules_manifest.json|rules_lookup.py|hook_registrations.json|config_state.json)
+                    if [ ! -f "$expected_root/rules_bridge/$rel_path" ] &&
+                       [ "$(basename "$existing_file")" != "config_state.json" ]; then
+                        rm -f "$existing_file"
+                    fi
+                    ;;
+            esac
+        done < <(find "$CODEX_PRAXION_DIR" -maxdepth 1 -type f | sort)
+    fi
+
     rmdir "$CODEX_AGENTS_DIR" 2>/dev/null || true
     rmdir "$AGENT_SKILLS_DIR" 2>/dev/null || true
+    rmdir "$CODEX_HOOKS_DIR" 2>/dev/null || true
+    rmdir "$CODEX_PRAXION_DIR" 2>/dev/null || true
     rm -rf "$expected_root"
 }
 
@@ -308,8 +359,9 @@ uninstall_native_codex() {
         done < <(find "$CODEX_AGENTS_DIR" -maxdepth 1 -name '*.toml' -type f | sort)
     fi
     rmdir "$CODEX_AGENTS_DIR" 2>/dev/null || true
-    rmdir "$CODEX_DIR" 2>/dev/null || true
+    uninstall_codex_rules_bridge
     uninstall_codex_skills
+    rmdir "$CODEX_DIR" 2>/dev/null || true
     rmdir "$TARGET_ROOT/.agents" 2>/dev/null || true
 }
 
@@ -326,10 +378,25 @@ uninstall_codex_skills() {
     rmdir "$AGENT_SKILLS_DIR" 2>/dev/null || true
 }
 
+uninstall_codex_rules_bridge() {
+    python3 "$PRAXION_ROOT/codex/config/manage-codex-rules-bridge.py" \
+        --repo-root "$PRAXION_ROOT" \
+        --project-root "$TARGET_ROOT" \
+        --mode uninstall >/dev/null
+
+    rm -f "$CODEX_HOOKS_DIR"/praxion-*.py 2>/dev/null || true
+    rm -f "$CODEX_PRAXION_DIR"/rules_manifest.json 2>/dev/null || true
+    rm -f "$CODEX_PRAXION_DIR"/rules_lookup.py 2>/dev/null || true
+    rm -f "$CODEX_PRAXION_DIR"/hook_registrations.json 2>/dev/null || true
+    rmdir "$CODEX_HOOKS_DIR" 2>/dev/null || true
+    rmdir "$CODEX_PRAXION_DIR" 2>/dev/null || true
+}
+
 check_native_codex() {
     local expected_root expected_file actual_file rel_path check_rc=0
     expected_root="$(mktemp -d)"
     export_expected_native_codex "$expected_root"
+    export_expected_rules_bridge "$expected_root/rules_bridge"
 
     while IFS= read -r expected_file; do
         [ -n "$expected_file" ] || continue
@@ -387,11 +454,41 @@ check_native_codex() {
         done < <(find "$AGENT_SKILLS_DIR" -mindepth 2 -maxdepth 2 -path '*/SKILL.md' -type f | sort)
     fi
 
+    while IFS= read -r expected_file; do
+        [ -n "$expected_file" ] || continue
+        rel_path="${expected_file#"$expected_root/rules_bridge"/}"
+        rel_path="${rel_path#/}"
+        actual_file="$CODEX_DIR/$rel_path"
+        if [ ! -f "$actual_file" ]; then
+            warn "Codex rules bridge file missing: $actual_file"
+            check_rc=1
+            continue
+        fi
+        if ! cmp -s "$expected_file" "$actual_file"; then
+            warn "Codex rules bridge file is stale: $actual_file"
+            check_rc=1
+        fi
+    done < <(find "$expected_root/rules_bridge" -type f ! -name 'config_state.json' | sort)
+
+    local rules_bridge_check_output
+    rules_bridge_check_output="$(mktemp)"
+    python3 "$PRAXION_ROOT/codex/config/manage-codex-rules-bridge.py" \
+        --repo-root "$PRAXION_ROOT" \
+        --project-root "$TARGET_ROOT" \
+        --mode check >"$rules_bridge_check_output" 2>&1 || {
+            cat "$rules_bridge_check_output" | while IFS= read -r line; do
+                [ -n "$line" ] && warn "$line"
+            done
+            check_rc=1
+        }
+    rm -f "$rules_bridge_check_output" 2>/dev/null || true
+
     rm -rf "$expected_root"
 
     if [ "$check_rc" -eq 0 ]; then
         info "Codex native agents present in $CODEX_AGENTS_DIR"
         info "Codex skill wrappers present in $AGENT_SKILLS_DIR"
+        info "Codex rules bridge present in $CODEX_DIR"
     fi
     return "$check_rc"
 }
@@ -413,6 +510,7 @@ if $DO_DRY_RUN; then
     if $DO_NATIVE; then
         step "Would export Praxion agents to $CODEX_AGENTS_DIR"
         step "Would export Praxion skill wrappers to $AGENT_SKILLS_DIR"
+        step "Would export Praxion rules bridge to $CODEX_DIR"
     fi
     exit 0
 fi
@@ -447,5 +545,6 @@ if $DO_NATIVE; then
     install_native_codex
     info "Codex native agents exported to $CODEX_AGENTS_DIR"
     info "Codex skill wrappers exported to $AGENT_SKILLS_DIR"
+    info "Codex rules bridge exported to $CODEX_DIR"
 fi
 step "Start a fresh AGENTS.md-aware agent session in the target project to auto-load it."

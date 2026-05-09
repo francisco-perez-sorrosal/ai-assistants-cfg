@@ -1,3 +1,8 @@
+---
+codex:
+  portability: claude_only
+---
+
 ## Agent Model Routing
 
 Tier table for Praxion subagents. Resolution order at spawn:

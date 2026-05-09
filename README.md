@@ -387,8 +387,8 @@ For **Claude Code vs Cursor** format differences (discovery paths, command expor
 Installs a small Praxion adapter block into the target project's `AGENTS.md`.
 This is intentionally lighter than the Claude Code and Cursor installers: it
 does not copy Praxion rules, skills, commands, or agents, and it does not
-configure hooks or MCP. The generated block points AGENTS.md-aware agents back
-to this Praxion checkout as the canonical source.
+copy rule bodies into native Codex `.rules/` files. The generated block points
+AGENTS.md-aware agents back to this Praxion checkout as the canonical source.
 
 ```bash
 ./install.sh codex /path/to/repo --dry-run
@@ -401,8 +401,7 @@ to this Praxion checkout as the canonical source.
 source, and `.ai-state/` data by reference.
 
 **What still needs adapters for native behavior:** slash commands from
-`commands/*.md`, automatic rule frontmatter matching, MCP registration, and
-hook lifecycle integration.
+`commands/*.md` and MCP registration.
 
 By default, the Codex install generates Codex custom-agent wrappers under the
 target project's `.codex/agents/`. These wrappers are intentionally thin: each
@@ -412,6 +411,25 @@ It also generates Codex skill wrappers under the project `.agents/skills/`
 directory, which is Codex's native project skill discovery path. The wrappers
 preserve the canonical skill description in their metadata and point back to
 canonical Praxion skills on activation.
+
+For rules, the Codex install now generates a Praxion-managed rules bridge under
+the target project's `.codex/` directory:
+
+- `.codex/praxion/rules_manifest.json` indexes canonical Praxion rules
+- `.codex/hooks/praxion-*.py` inject always-on, prompt-scoped, and file-scoped
+  Praxion rule routing
+- `.codex/hooks.json` registers those Praxion-managed hooks
+- `.codex/config.toml` is updated surgically to enable Codex hooks
+
+This preserves the original semantics of Praxion's Claude-style semantic rules
+without repurposing native Codex `.rules`, which remain reserved for approval
+policy and sandbox semantics.
+
+The rules bridge rescans canonical `rules/**/*.md` on every Codex install/check
+run, so new rules are picked up automatically. When a rule needs an explicit
+Codex portability or load override, that metadata lives in the rule's own
+frontmatter rather than in a separate Python allowlist.
+
 Use `--compat-only` only for non-Codex AGENTS.md-aware tools or when debugging
 the bootstrap pointer without native Codex surfaces.
 

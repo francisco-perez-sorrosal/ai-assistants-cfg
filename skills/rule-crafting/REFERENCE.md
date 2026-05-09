@@ -9,6 +9,7 @@ Extended examples and migration patterns. Loaded on-demand from `SKILL.md`.
 - [Customization Section Examples](#customization-section-examples) -- `[CUSTOMIZE]` marker patterns for project-specific content
 - [Layered Directory Examples](#layered-directory-examples) -- common/ + language/ structure
 - [Migration Patterns](#migration-patterns) -- moving content between layers
+- [Codex Adaptation Patterns](#codex-adaptation-patterns) -- translating Praxion rules to Codex-native surfaces without losing semantics
 
 ## Complete Rule Examples
 
@@ -278,3 +279,27 @@ After — merge into `.claude/rules/sql.md` with sections:
 ### Migrations
 ...
 ```
+
+## Codex Metadata Overrides
+
+When a rule needs an explicit Codex override, put it in the rule's own
+frontmatter instead of adapter code:
+
+```yaml
+---
+codex:
+  portability: claude_only
+---
+```
+
+```yaml
+---
+paths:
+  - "tests/**"
+codex:
+  load: path_scoped
+---
+```
+
+This keeps the canonical rule as the source of truth and lets each future
+Codex install pick up the latest classification automatically.

@@ -270,18 +270,38 @@ under the target project's `.agents/skills/` directory, pointing back to
 canonical `skills/*/SKILL.md` files while preserving the full skill
 description in the wrapper metadata. Adapter fidelity matters here: preserve
 canonical Praxion wording for agent and skill metadata unless a hard platform
-constraint forces a lossless transformation. It does not yet install hooks, configure
-MCP, create `.ai-state/`, or export slash commands. Those surfaces require
-explicit tool-specific adapters:
+constraint forces a lossless transformation.
+
+For rules, the installer now generates a **Codex rules bridge** rather than a
+lossy direct export to native `.codex/rules/`:
+
+- `.codex/praxion/rules_manifest.json` indexes canonical Praxion rules
+- `.codex/hooks/praxion-*.py` route always-on, prompt-scoped, and file-scoped
+  rule matches back to canonical `rules/**/*.md`
+- `.codex/hooks.json` registers those Praxion-managed hooks
+- `.codex/config.toml` is updated surgically to enable `codex_hooks = true`
+
+This is intentionally different from native Codex `.rules`, which remain the
+surface for command approval / sandbox policy semantics. The Praxion rule
+bridge preserves Claude-style semantic rule meaning without repurposing that
+native Codex policy surface. The installer still does not configure MCP,
+create `.ai-state/`, or export slash commands. Those surfaces require explicit
+tool-specific adapters:
+
+Rule pickup is automatic on every Codex install/check run: the bridge rescans
+`rules/**/*.md` and rebuilds the manifest from source. New rules do not require
+Python-side allowlist edits. When a rule needs an explicit Codex portability or
+load override, add optional `codex:` frontmatter to the canonical rule file
+instead of extending adapter code.
 
 | Surface | Native adapter needed |
 |---|---|
 | `commands/*.md` | Slash-command exporter or installer |
 | `agents/*.md` | `install_codex.sh` generates thin `.codex/agents/*.toml` wrappers by default |
-| `rules/**/*.md` frontmatter | Path matcher and rule loader |
+| `rules/**/*.md` frontmatter | `install_codex.sh` now generates a hook-backed rules bridge under `.codex/praxion/` plus `.codex/hooks.json`; native `.codex/rules` stays reserved for approval policy |
 | `skills/*/SKILL.md` metadata | `install_codex.sh` generates project `.agents/skills/*` wrappers by default; user-global `$HOME/.agents/skills` is later work |
 | MCP servers | Target framework MCP config writer |
-| hooks | Target framework lifecycle hook integration |
+| hooks | `install_codex.sh` now installs the Praxion rule-routing hooks only; broader hook surfaces remain later work |
 
 Use this flow to test a pet project from a Praxion checkout:
 
