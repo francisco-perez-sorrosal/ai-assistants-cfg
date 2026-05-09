@@ -73,8 +73,8 @@ _REGISTRY: dict[str, _RegisterT] = {
     "idea_grid": _lazy("idea_grid"),
     "architecture_explorer": _lazy("architecture_explorer"),
     "traceability_matrix": _lazy("default_markdown"),
-    # Existing (predates HTML-B); not re-implemented here
-    "metrics_view": _lazy("default_markdown"),  # use existing metrics page directly
+    # metrics_view — aggregate snapshot + pointer to the dedicated Metrics page
+    "metrics_view": _lazy("metrics_view"),
 }
 
 
