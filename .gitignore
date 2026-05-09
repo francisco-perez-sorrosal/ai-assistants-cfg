@@ -10,6 +10,8 @@ claude/config/CLAUDE.md
 claude/config/.personal_info.env
 
 .cursor/
+.agents/
+.codex/
 
 # The following skills belong to another project.
 skills/ticker
