@@ -35,7 +35,7 @@ def _seed(root: Path, structure: dict[str, Any]) -> None:
     Example::
         _seed(tmp_path, {
             ".ai-state": {
-                "ARCHITECTURE.md": "# arch",
+                "DESIGN.md": "# design",
                 "decisions": {"001-a.md": "---\\nid: dec-001\\n---"},
             },
             "ROADMAP.md": None,
@@ -66,7 +66,7 @@ class TestSparseAndEmptyProjects:
         from streamlit_app.data import discovery
 
         # All Optional[Path] singletons must return None
-        assert discovery.find_architecture_md(tmp_path) is None
+        assert discovery.find_design_md(tmp_path) is None
         assert discovery.find_system_deployment(tmp_path) is None
         assert discovery.find_test_topology(tmp_path) is None
         assert discovery.find_calibration_log(tmp_path) is None
@@ -117,7 +117,7 @@ class TestSparseAndEmptyProjects:
         absent = tmp_path / "does-not-exist"
 
         with pytest.raises(FileNotFoundError):
-            discovery.find_architecture_md(absent)
+            discovery.find_design_md(absent)
 
         with pytest.raises(FileNotFoundError):
             discovery.list_adrs_finalized(absent)
@@ -135,21 +135,21 @@ class TestSparseAndEmptyProjects:
 
 
 class TestAiStateDiscovery:
-    def test_find_architecture_md_present(self, tmp_path: Path) -> None:
-        """find_architecture_md returns the path when ARCHITECTURE.md exists."""
+    def test_find_design_md_present(self, tmp_path: Path) -> None:
+        """find_design_md returns the path when DESIGN.md exists."""
         from streamlit_app.data import discovery
 
-        _seed(tmp_path, {".ai-state": {"ARCHITECTURE.md": "# arch"}})
-        result = discovery.find_architecture_md(tmp_path)
+        _seed(tmp_path, {".ai-state": {"DESIGN.md": "# design"}})
+        result = discovery.find_design_md(tmp_path)
         assert result is not None
-        assert result == tmp_path / ".ai-state" / "ARCHITECTURE.md"
+        assert result == tmp_path / ".ai-state" / "DESIGN.md"
 
-    def test_find_architecture_md_absent(self, tmp_path: Path) -> None:
-        """find_architecture_md returns None when ARCHITECTURE.md is missing."""
+    def test_find_design_md_absent(self, tmp_path: Path) -> None:
+        """find_design_md returns None when DESIGN.md is missing."""
         from streamlit_app.data import discovery
 
         _seed(tmp_path, {".ai-state": {}})
-        assert discovery.find_architecture_md(tmp_path) is None
+        assert discovery.find_design_md(tmp_path) is None
 
     def test_find_system_deployment_present_and_absent(self, tmp_path: Path) -> None:
         """find_system_deployment returns path when SYSTEM_DEPLOYMENT.md exists."""
