@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant User
+    participant A as Component A
+    participant B as Component B
+    participant DB as Database
+    User->>A: Request
+    A->>B: Process
+    B->>DB: Store
+    DB-->>B: Confirm
+    B-->>A: Result
+    A-->>User: Response

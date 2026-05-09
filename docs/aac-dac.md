@@ -192,28 +192,7 @@ The loop:
 The Mermaid diagram below represents this loop. It is authored prose today and could become an
 `aac:generated` region once a corresponding LikeC4 view (`docs/diagrams/aac-dac-loop.c4`) is created.
 
-```mermaid
-graph TD
-    Author([Author]) --> ADR[ADR<br/>rationale]
-    Author --> DSL[LikeC4<br/>model]
-    Author --> Doc[ARCHITECTURE.md<br/>+ fences]
-
-    Doc --> Hook[pre-commit<br/>golden-rule gate]
-    Hook -->|gate FAIL| Author
-
-    Doc --> CI[CI<br/>3 parallel jobs]
-    DSL --> CI
-    ADR --> CI
-    CI --> Validator[architect-validator<br/>pre-merge]
-    Validator -->|FAIL| Ledger[TECH_DEBT_LEDGER]
-
-    DSL --> Sentinel[sentinel<br/>AC dimension]
-    Doc --> Sentinel
-    SPEC([SPEC files]) --> Sentinel
-    Sentinel -->|periodic| Ledger
-
-    Ledger --> Author
-```
+![AaC+DaC Feedback Loop — author writes ADR + DSL + ARCHITECTURE.md; pre-commit gate, CI, architect-validator, and sentinel close the loop via TECH_DEBT_LEDGER](diagrams/aac-dac-feedback-loop/rendered/aac-dac-feedback-loop.svg)
 
 ## Adopting It
 

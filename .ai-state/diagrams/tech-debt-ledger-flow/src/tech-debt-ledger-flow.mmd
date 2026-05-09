@@ -1,0 +1,28 @@
+graph LR
+    subgraph Producers
+        VER[Verifier<br/>per-change Phase 5/5.5]
+        SEN[Sentinel<br/>repo-wide TD dimension]
+    end
+    subgraph Artifact
+        LED[(.ai-state/<br/>TECH_DEBT_LEDGER.md)]
+    end
+    subgraph Consumers["5 Consumers<br/>permission-not-obligation per dec-069"]
+        SA[systems-architect]
+        IP[implementation-planner]
+        IM[implementer]
+        TE[test-engineer]
+        DE[doc-engineer]
+    end
+    subgraph Excluded["Explicitly excluded"]
+        PR[promethean]
+        RC[roadmap-cartographer]
+    end
+    VER -->|append rows| LED
+    SEN -->|append rows| LED
+    LED -->|filter by owner-role| SA
+    LED -->|filter by owner-role| IP
+    LED -->|filter by owner-role| IM
+    LED -->|filter by owner-role| TE
+    LED -->|filter by owner-role| DE
+    PR -. excluded .- LED
+    RC -. excluded .- LED

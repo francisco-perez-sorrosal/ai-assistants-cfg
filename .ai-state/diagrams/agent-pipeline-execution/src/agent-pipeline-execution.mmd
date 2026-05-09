@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant Dev as Developer
+    participant Main as Main Agent
+    participant Res as Researcher
+    participant Arch as Systems Architect
+    participant Plan as Impl. Planner
+    participant Impl as Implementer
+    participant Test as Test Engineer
+    participant Ver as Verifier
+
+    Dev->>Main: Task request
+    Main->>Main: Calibrate tier (Standard/Full)
+    Main->>Main: EnterWorktree
+    Main->>Res: Explore codebase + external docs
+    Res-->>Main: RESEARCH_FINDINGS.md
+    Main->>Arch: Design system
+    Arch-->>Main: SYSTEMS_PLAN.md + ADRs
+    Main->>Plan: Decompose into steps
+    Plan-->>Main: IMPLEMENTATION_PLAN.md + WIP.md
+    par Parallel execution (disjoint files)
+        Main->>Impl: Execute step N (production code)
+        Main->>Test: Execute step N (test code)
+    end
+    Impl-->>Main: Code + WIP update
+    Test-->>Main: Tests + WIP update
+    Main->>Main: Run tests, fix cycle
+    Main->>Ver: Verify against acceptance criteria
+    Ver-->>Main: VERIFICATION_REPORT.md
+    Main->>Main: ExitWorktree (keep branch)
+    Main-->>Dev: Branch name + summary

@@ -36,12 +36,12 @@ The system-boundary L0 diagram is rendered in [`.ai-state/DESIGN.md` §2](../.ai
 <!-- OWNER: implementer (as-built), doc-engineer (verification) | LAST UPDATED: 2026-04-28 by implementer (migrated L1 Mermaid block to LikeC4-sourced SVG — structurizr-d2-diagrams pipeline) -->
 <!-- L1 diagram: major building blocks and their relationships.
      Every component listed here MUST exist on disk — verify with ls/Glob before including.
-     Source: docs/diagrams/architecture.c4 | Generated: docs/diagrams/architecture/components.d2
-     Regen: likec4 gen d2 docs/diagrams/ -o docs/diagrams/architecture/ && d2 docs/diagrams/architecture/components.d2 docs/diagrams/architecture/components.svg -->
+     Source: docs/diagrams/architecture/src/architecture.c4 | Generated: docs/diagrams/architecture/rendered/components.d2
+     Regen: likec4 gen d2 docs/diagrams/ -o docs/diagrams/architecture/ && d2 docs/diagrams/architecture/rendered/components.d2 docs/diagrams/architecture/rendered/components.svg -->
 
-<img src="diagrams/architecture/components.svg" alt="Praxion Components (L1)" />
+<img src="diagrams/architecture/rendered/components.svg" alt="Praxion Components (L1)" />
 
-*LikeC4 source: [`docs/diagrams/architecture.c4`](diagrams/architecture.c4). The pre-commit hook (`scripts/diagram-regen-hook.sh`) regenerates the SVG above when the source changes.*
+*LikeC4 source: [`docs/diagrams/architecture/src/architecture.c4`](diagrams/architecture/src/architecture.c4). The pre-commit hook (`scripts/diagram-regen-hook.sh`) regenerates the SVG above when the source changes.*
 
 | Component | Responsibility | Key Files |
 |-----------|---------------|-----------|

@@ -1,0 +1,20 @@
+graph TD
+    Author([Author]) --> ADR[ADR rationale]
+    Author --> DSL[LikeC4 model]
+    Author --> Doc[ARCHITECTURE.md + fences]
+
+    Doc --> Hook[pre-commit golden-rule gate]
+    Hook -->|gate FAIL| Author
+
+    Doc --> CI[CI 3 parallel jobs]
+    DSL --> CI
+    ADR --> CI
+    CI --> Validator[architect-validator pre-merge]
+    Validator -->|FAIL| Ledger[TECH_DEBT_LEDGER]
+
+    DSL --> Sentinel[sentinel AC dimension]
+    Doc --> Sentinel
+    SPEC([SPEC files]) --> Sentinel
+    Sentinel -->|periodic| Ledger
+
+    Ledger --> Author

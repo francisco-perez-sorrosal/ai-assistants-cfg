@@ -56,16 +56,7 @@ External tool servers the assistant can call for capabilities beyond its built-i
 
 The components form a layered architecture, from always-loaded directives down to delegated complex work:
 
-```mermaid
-graph TD
-    CM["<b>CLAUDE.md</b><br/>Always loaded. Global directives,<br/>methodology, personal info."]
-    RU["<b>Rules</b><br/>Loaded when contextually relevant.<br/>Domain knowledge (coding style,<br/>git conventions, coordination protocols)."]
-    SK["<b>Skills</b><br/>Activated for specific tasks.<br/>Expert workflows and procedures<br/>(Python, refactoring, CI/CD, SDD)."]
-    CO["<b>Commands</b><br/>User-invoked. Quick actions for<br/>frequent workflows (commits, worktrees,<br/>memory management, scaffolding)."]
-    AG["<b>Agents</b><br/>Delegated. Complex multi-step work<br/>in isolated contexts (research, architecture,<br/>implementation, testing, verification)."]
-
-    CM --> RU --> SK --> CO --> AG
-```
+![Praxion Component Layers — CLAUDE.md, Rules, Skills, Commands, Agents in descending load order](diagrams/concepts-component-layers/rendered/concepts-component-layers.svg)
 
 **Rules vs. Skills:** Rules are brief, declarative, and auto-loaded -- they define *what* conventions to follow. Skills are richer, procedural, and loaded on demand -- they define *how* to do specific work. When deciding where knowledge belongs: if it's a constraint or convention that applies broadly, it's a rule. If it's a workflow or procedure for a specific domain, it's a skill.
 
@@ -75,18 +66,7 @@ graph TD
 
 For complex features, agents form a pipeline where each stage's output feeds the next:
 
-```mermaid
-graph LR
-    P[promethean] --> R[researcher]
-    R --> SA[systems-architect]
-    SA --> IP[implementation-planner]
-    IP --> I[implementer]
-    IP --> TE[test-engineer]
-    IP -.-> DE["doc-engineer<br/>(when assigned)"]
-    I --> V[verifier]
-    TE --> V
-    DE -.-> V
-```
+![Agent Pipeline — promethean, researcher, systems-architect, implementation-planner, implementer, test-engineer, doc-engineer, verifier](diagrams/concepts-agent-pipeline/rendered/concepts-agent-pipeline.svg)
 
 1. **promethean** -- generates feature ideas from project state
 2. **researcher** -- explores the codebase, evaluates technologies, gathers external information

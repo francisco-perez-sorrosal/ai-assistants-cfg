@@ -1,0 +1,16 @@
+sequenceDiagram
+    participant A as Architect/Planner
+    participant FS as Worktree Filesystem
+    participant G as Git
+    participant FIN as finalize_adrs.py
+    participant IDX as regenerate_adr_index.py
+
+    A->>FS: Create .ai-state/decisions/drafts/<ts>-<user>-<branch>-<slug>.md
+    A->>FS: id: dec-draft-<hash>, cross-ref by hash
+    FS->>G: Commit draft on pipeline branch
+    G->>G: User merges branch into main
+    G->>FIN: post-merge hook invokes --merged
+    FIN->>FS: Detect drafts added in this merge
+    FIN->>FS: Rename drafts -> <NNN>-<slug>.md
+    FIN->>FS: Rewrite id + bounded cross-ref walk
+    FIN->>IDX: Regenerate DECISIONS_INDEX.md

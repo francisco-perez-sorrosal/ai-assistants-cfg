@@ -1,0 +1,26 @@
+graph LR
+    subgraph External["External actors"]
+        Dev[Developer]
+        CC[Claude Code host]
+        Phoenix[Arize Phoenix optional]
+    end
+    subgraph Praxion["Praxion plugin (i-am@bit-agora)"]
+        Pkg[Plugin package skills/agents/rules/commands]
+        MCP1[memory-mcp stdio]
+        MCP2[task-chronograph-mcp stdio + HTTP :8765]
+        Hooks[Lifecycle hooks]
+    end
+    subgraph Project["Praxion-managed user project"]
+        Code[Project source]
+        State[.ai-state/]
+        Work[.ai-work/task-slug/]
+    end
+    Dev -->|/onboard-project, /new-project| CC
+    CC -->|loads plugin| Pkg
+    CC -->|spawns MCP| MCP1
+    CC -->|spawns MCP| MCP2
+    MCP2 -.->|OTLP HTTP| Phoenix
+    CC -->|invokes hooks| Hooks
+    CC -->|read/write| Code
+    CC -->|read/write| State
+    CC -->|read/write| Work

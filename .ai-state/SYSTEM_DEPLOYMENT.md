@@ -22,34 +22,7 @@ Praxion is a meta-project distributed as a Claude Code plugin. There is no tradi
 <!-- OWNER: systems-architect | LAST UPDATED: 2026-05-03 by systems-architect -->
 <!-- L0 diagram: system boundary + external actors. -->
 
-```mermaid
-graph LR
-    subgraph External["External actors"]
-        Dev[Developer]
-        CC[Claude Code host]
-        Phoenix[Arize Phoenix<br/>optional]
-    end
-    subgraph Praxion["Praxion plugin (i-am@bit-agora)"]
-        Pkg[Plugin package<br/>skills/agents/rules/commands]
-        MCP1[memory-mcp<br/>stdio]
-        MCP2[task-chronograph-mcp<br/>stdio + HTTP :8765]
-        Hooks[Lifecycle hooks]
-    end
-    subgraph Project["Praxion-managed user project"]
-        Code[Project source]
-        State[.ai-state/]
-        Work[.ai-work/<task-slug>/]
-    end
-    Dev -->|/onboard-project, /new-project| CC
-    CC -->|loads plugin| Pkg
-    CC -->|spawns MCP| MCP1
-    CC -->|spawns MCP| MCP2
-    MCP2 -.->|OTLP HTTP| Phoenix
-    CC -->|invokes hooks| Hooks
-    CC -->|read/write| Code
-    CC -->|read/write| State
-    CC -->|read/write| Work
-```
+![Deployment System Context — developer, Claude Code host, Praxion plugin, managed project](diagrams/deployment-system-context/rendered/deployment-system-context.svg)
 
 > **Detail views:** [Service Topology](#3-service-topology)
 
@@ -83,25 +56,7 @@ The contract — `training_job_descriptor` schema and 8 lifecycle operations —
 
 Praxion has no servers in the traditional deployment sense. Two stdio MCP servers launch per Claude Code session; one of them additionally serves an HTTP daemon on `localhost:8765` for hook event ingestion.
 
-```mermaid
-graph TD
-    subgraph Host["Developer machine"]
-        CC[Claude Code]
-        subgraph PluginSurface["Praxion plugin surface"]
-            Plugin[skills + agents + rules + commands<br/>Markdown, Python, Shell]
-            Mem[memory-mcp<br/>Python stdio]
-            Chron[task-chronograph-mcp<br/>Python stdio + HTTP :8765]
-            Hooks[hooks/*.py, *.sh]
-        end
-    end
-    Phoenix[(Arize Phoenix<br/>SQLite)]
-    CC --> Plugin
-    CC --> Mem
-    CC --> Chron
-    CC --> Hooks
-    Hooks -.->|HTTP POST :8765| Chron
-    Chron -.->|OTLP HTTP :6006| Phoenix
-```
+![Deployment Service Topology — developer machine, Praxion plugin surface, MCP servers, Phoenix](diagrams/deployment-service-topology/rendered/deployment-service-topology.svg)
 
 | Service | Image/Build | Ports (host:container) | Health Check | Restart Policy |
 |---|---|---|---|---|

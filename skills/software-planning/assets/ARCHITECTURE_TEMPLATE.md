@@ -28,17 +28,17 @@
      May include planned external integrations with a note.
      Cross-reference docs/architecture.md for code-verified component details. -->
 
-<!-- After editing diagrams/architecture.c4, run scripts/diagram-regen-hook.sh (or commit to trigger pre-commit) to regenerate this SVG. -->
-<img src="diagrams/architecture/context.svg" alt="System Context (L0)" />
+<!-- After editing diagrams/architecture/src/architecture.c4, run scripts/diagram-regen-hook.sh (or commit to trigger pre-commit) to regenerate this SVG. -->
+<img src="diagrams/architecture/rendered/context.svg" alt="System Context (L0)" />
 
 <details>
-<summary>LikeC4 source (edit diagrams/architecture.c4 to update this diagram)</summary>
+<summary>LikeC4 source (edit diagrams/architecture/src/architecture.c4 to update this diagram)</summary>
 
 ```c4
 // System Context view — L0
 // Edit the shared .c4 model, then run the regeneration hook (pre-commit) or:
-//   likec4 gen d2 diagrams/architecture.c4 -o diagrams/architecture/
-//   d2 diagrams/architecture/context.d2 diagrams/architecture/context.svg
+//   likec4 gen d2 diagrams/architecture/src/architecture.c4 -o diagrams/architecture/
+//   d2 diagrams/architecture/rendered/context.d2 diagrams/architecture/rendered/context.svg
 specification {
   element person
   element system
@@ -75,17 +75,17 @@ views {
      Status values: Designed (interface defined, not yet implemented), Built (code exists on disk),
      Planned (roadmap item, no interface yet), Deprecated (scheduled for removal). -->
 
-<!-- After editing diagrams/architecture.c4, run scripts/diagram-regen-hook.sh (or commit to trigger pre-commit) to regenerate this SVG. -->
-<img src="diagrams/architecture/components.svg" alt="Components (L1)" />
+<!-- After editing diagrams/architecture/src/architecture.c4, run scripts/diagram-regen-hook.sh (or commit to trigger pre-commit) to regenerate this SVG. -->
+<img src="diagrams/architecture/rendered/components.svg" alt="Components (L1)" />
 
 <details>
-<summary>LikeC4 source (edit diagrams/architecture.c4 to update this diagram)</summary>
+<summary>LikeC4 source (edit diagrams/architecture/src/architecture.c4 to update this diagram)</summary>
 
 ```c4
 // Components view — L1
 // Edit the shared .c4 model, then run the regeneration hook (pre-commit) or:
-//   likec4 gen d2 diagrams/architecture.c4 -o diagrams/architecture/
-//   d2 diagrams/architecture/components.d2 diagrams/architecture/components.svg
+//   likec4 gen d2 diagrams/architecture/src/architecture.c4 -o diagrams/architecture/
+//   d2 diagrams/architecture/rendered/components.d2 diagrams/architecture/rendered/components.svg
 specification {
   element person
   element system
@@ -120,7 +120,7 @@ views {
 
 </details>
 
-<!-- aac:generated source=docs/diagrams/architecture.c4 view=components last-regen=YYYY-MM-DD -->
+<!-- aac:generated source=docs/diagrams/architecture/src/architecture.c4 view=components last-regen=YYYY-MM-DD -->
 
 | Component | Responsibility | Status | Key Files |
 |-----------|---------------|--------|-----------|
@@ -150,19 +150,7 @@ views {
 
 ### [Primary Scenario Name]
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant A as Component A
-    participant B as Component B
-    participant DB as Database
-    User->>A: Request
-    A->>B: Process
-    B->>DB: Store
-    DB-->>B: Confirm
-    B-->>A: Result
-    A-->>User: Response
-```
+![Sequence diagram example — User → Component A → Component B → Database, then response back through the chain](diagrams/architecture-template-sequence-example/rendered/architecture-template-sequence-example.svg)
 
 ## 6. Dependencies
 

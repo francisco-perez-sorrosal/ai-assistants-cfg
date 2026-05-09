@@ -1,0 +1,12 @@
+graph TD
+    subgraph Server["Production Server (Ubuntu 24.04)"]
+        Caddy[Caddy 2.x]
+        subgraph Docker["Docker Engine"]
+            App[Web App<br/>gunicorn + uvicorn]
+            DB[(PostgreSQL 17)]
+            Ollama[Ollama<br/>GPU passthrough]
+        end
+    end
+    Caddy -->|":8000"| App
+    App -->|":5432"| DB
+    App -->|":11434"| Ollama

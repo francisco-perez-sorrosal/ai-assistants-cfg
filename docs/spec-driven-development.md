@@ -71,16 +71,7 @@ For detailed rationale and edge case handling, see [`references/spec-format-guid
 
 REQ IDs flow through the pipeline in five stages, each consuming the output of the previous one.
 
-```mermaid
-flowchart LR
-    S1["<b>Stage 1</b><br/>Behavioral Spec<br/><i>Architect creates<br/>REQ-01..REQ-NN in<br/>SYSTEMS_PLAN.md</i>"]
-    S2["<b>Stage 2</b><br/>Implementation Plan<br/><i>Planner threads<br/>Validates REQ-01, REQ-03<br/>in test step fields</i>"]
-    S3["<b>Stage 3</b><br/>Test Files<br/><i>Test-engineer names<br/>test_req01_... in<br/>test code</i>"]
-    S4["<b>Stage 4</b><br/>Traceability Matrix<br/><i>Verifier produces<br/>matrix in<br/>VERIFICATION_REPORT.md</i>"]
-    S5["<b>Stage 5</b><br/>Persistent Spec<br/><i>Planner archives<br/>spec + matrix + decisions<br/>to .ai-state/specs/</i>"]
-
-    S1 --> S2 --> S3 --> S4 --> S5
-```
+![Spec-driven development five-stage flow — Stage 1 Behavioral Spec (architect) → Stage 2 Implementation Plan (planner) → Stage 3 Test Files (test-engineer) → Stage 4 Traceability Matrix (verifier) → Stage 5 Persistent Spec (planner archives to .ai-state/specs/)](diagrams/sdd-stage-flow/rendered/sdd-stage-flow.svg)
 
 The verifier's traceability matrix is the conformance checkpoint -- it shows whether every requirement has tests and implementation. The archived spec preserves the full chain for cross-session reference.
 

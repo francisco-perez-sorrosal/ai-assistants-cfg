@@ -1,0 +1,10 @@
+graph TD
+    A[Push to main] --> B{{CI passes?}}
+    B -->|No| C[Fix and retry]
+    B -->|Yes| D[SSH to server]
+    D --> E["git pull && docker compose pull"]
+    E --> F["docker compose up -d --build"]
+    F --> G{{Health checks pass?}}
+    G -->|Yes| H[Done]
+    G -->|No| I[Rollback: checkout previous commit]
+    I --> F

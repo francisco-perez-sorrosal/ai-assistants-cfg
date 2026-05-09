@@ -33,9 +33,9 @@ The architecture is organized around three core concerns: **knowledge delivery**
 <!-- OWNER: systems-architect | LAST UPDATED: 2026-04-30 by implementer (migrated Mermaid block to LikeC4-sourced SVG — structurizr-d2-diagrams pipeline Step 6) -->
 <!-- L0 diagram: system boundary + external actors/dependencies. -->
 
-<img src="../docs/diagrams/architecture/context.svg" alt="Praxion System Context (L0)" />
+<img src="../docs/diagrams/architecture/rendered/context.svg" alt="Praxion System Context (L0)" />
 
-*LikeC4 source: [`docs/diagrams/architecture.c4`](../docs/diagrams/architecture.c4). The pre-commit hook (`scripts/diagram-regen-hook.sh`) regenerates the SVG above when the source changes.*
+*LikeC4 source: [`docs/diagrams/architecture/src/architecture.c4`](../docs/diagrams/architecture/src/architecture.c4). The pre-commit hook (`scripts/diagram-regen-hook.sh`) regenerates the SVG above when the source changes.*
 
 > **Component detail:** [Components](#3-components)
 > **Code-verified paths:** [docs/architecture.md](../docs/architecture.md)
@@ -47,9 +47,9 @@ The architecture is organized around three core concerns: **knowledge delivery**
      Status values: Designed (interface defined, not yet implemented), Built (code exists on disk),
      Planned (roadmap item, no interface yet), Deprecated (scheduled for removal). -->
 
-<img src="../docs/diagrams/architecture/components.svg" alt="Praxion Components (L1)" />
+<img src="../docs/diagrams/architecture/rendered/components.svg" alt="Praxion Components (L1)" />
 
-*LikeC4 source: [`docs/diagrams/architecture.c4`](../docs/diagrams/architecture.c4). The pre-commit hook (`scripts/diagram-regen-hook.sh`) regenerates the SVG above when the source changes.*
+*LikeC4 source: [`docs/diagrams/architecture/src/architecture.c4`](../docs/diagrams/architecture/src/architecture.c4). The pre-commit hook (`scripts/diagram-regen-hook.sh`) regenerates the SVG above when the source changes.*
 
 | Component | Responsibility | Status | Key Files (illustrative) |
 |-----------|---------------|--------|--------------------------|
@@ -109,124 +109,23 @@ The architecture is organized around three core concerns: **knowledge delivery**
 
 ### Agent Pipeline Execution (Standard/Full Tier)
 
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant Main as Main Agent
-    participant Res as Researcher
-    participant Arch as Systems Architect
-    participant Plan as Impl. Planner
-    participant Impl as Implementer
-    participant Test as Test Engineer
-    participant Ver as Verifier
-
-    Dev->>Main: Task request
-    Main->>Main: Calibrate tier (Standard/Full)
-    Main->>Main: EnterWorktree
-    Main->>Res: Explore codebase + external docs
-    Res-->>Main: RESEARCH_FINDINGS.md
-    Main->>Arch: Design system
-    Arch-->>Main: SYSTEMS_PLAN.md + ADRs
-    Main->>Plan: Decompose into steps
-    Plan-->>Main: IMPLEMENTATION_PLAN.md + WIP.md
-    par Parallel execution (disjoint files)
-        Main->>Impl: Execute step N (production code)
-        Main->>Test: Execute step N (test code)
-    end
-    Impl-->>Main: Code + WIP update
-    Test-->>Main: Tests + WIP update
-    Main->>Main: Run tests, fix cycle
-    Main->>Ver: Verify against acceptance criteria
-    Ver-->>Main: VERIFICATION_REPORT.md
-    Main->>Main: ExitWorktree (keep branch)
-    Main-->>Dev: Branch name + summary
-```
+![Agent Pipeline Execution — Standard/Full Tier sequence diagram](diagrams/agent-pipeline-execution/rendered/agent-pipeline-execution.svg)
 
 ### Memory and Observability Flow
 
-```mermaid
-graph LR
-    subgraph Session
-        Hook[Lifecycle Hooks]
-        Agent[Agent Work]
-    end
-    subgraph Memory["Memory MCP"]
-        Curated[(memory.json<br/>Curated)]
-        Obs[(observations.jsonl<br/>session.id + trace_id + span_id)]
-    end
-    subgraph Chronograph["Chronograph MCP"]
-        ES[EventStore<br/>In-memory]
-        OTel[OTel Exporter<br/>session.id on every span]
-    end
-    Phoenix[(Arize Phoenix<br/>SQLite)]
-
-    Hook -->|inject_memory| Agent
-    Agent -->|remember()| Curated
-    Hook -->|capture_session| Obs
-    Hook -->|capture_memory + trace_id/span_id| Obs
-    Hook -.->|send_event HTTP| ES
-    ES --> OTel
-    OTel -.->|OTLP| Phoenix
-    Agent -->|recall/search| Curated
-```
+![Memory and Observability Flow — hooks, memory MCP, chronograph MCP, Phoenix](diagrams/memory-observability-flow/rendered/memory-observability-flow.svg)
 
 **Cross-layer correlation (dec-048).** Observations (`observations.jsonl`) and chronograph spans both carry the canonical OpenInference `session.id` attribute — the chronograph relay emits it on every span type including tool spans (formerly `praxion.session_id`). Observations additionally carry top-level `trace_id`, `span_id`, `traceparent`, and `parent_span_id` fields populated from W3C trace-context. Flow: the MCP tool request envelope surfaces `params._meta.traceparent`; the memory-mcp `remember()` / `recall()` handlers parse it via `correlation.parse_traceparent()` and forward the parsed IDs through the response `additionalContext`; the `capture_memory.py` hook reads `additionalContext` and writes those IDs into the observation row. `ObservationStore.query(trace_id=...)` supports exact-match filtering. Historical JSONL rows lacking these fields deserialize as `None` via `dict.get`, preserving backward compatibility.
 
 ### ADR Finalize Flow
 
-```mermaid
-sequenceDiagram
-    participant A as Architect/Planner
-    participant FS as Worktree Filesystem
-    participant G as Git
-    participant FIN as finalize_adrs.py
-    participant IDX as regenerate_adr_index.py
-
-    A->>FS: Create .ai-state/decisions/drafts/<ts>-<user>-<branch>-<slug>.md
-    A->>FS: id: dec-draft-<hash>, cross-ref by hash
-    FS->>G: Commit draft on pipeline branch
-    G->>G: User merges branch into main
-    G->>FIN: post-merge hook invokes --merged
-    FIN->>FS: Detect drafts added in this merge
-    FIN->>FS: Rename drafts -> <NNN>-<slug>.md
-    FIN->>FS: Rewrite id + bounded cross-ref walk
-    FIN->>IDX: Regenerate DECISIONS_INDEX.md
-```
+![ADR Finalize Flow — draft creation, git merge, finalize_adrs.py promotion sequence](diagrams/adr-finalize-flow/rendered/adr-finalize-flow.svg)
 
 The finalize flow activates only when `.ai-state/decisions/drafts/` has entries; the concurrency-model component (Section 3) describes the full primitive set. `scripts/finalize_adrs.py` is idempotent and guarded by an advisory `fcntl` lock.
 
 ### Tech-Debt Ledger Flow
 
-```mermaid
-graph LR
-    subgraph Producers
-        VER[Verifier<br/>per-change Phase 5/5.5]
-        SEN[Sentinel<br/>repo-wide TD dimension]
-    end
-    subgraph Artifact
-        LED[(.ai-state/<br/>TECH_DEBT_LEDGER.md)]
-    end
-    subgraph Consumers["5 Consumers<br/>permission-not-obligation per dec-069"]
-        SA[systems-architect]
-        IP[implementation-planner]
-        IM[implementer]
-        TE[test-engineer]
-        DE[doc-engineer]
-    end
-    subgraph Excluded["Explicitly excluded"]
-        PR[promethean]
-        RC[roadmap-cartographer]
-    end
-    VER -->|append rows| LED
-    SEN -->|append rows| LED
-    LED -->|filter by owner-role| SA
-    LED -->|filter by owner-role| IP
-    LED -->|filter by owner-role| IM
-    LED -->|filter by owner-role| TE
-    LED -->|filter by owner-role| DE
-    PR -. excluded .- LED
-    RC -. excluded .- LED
-```
+![Tech-Debt Ledger Flow — producers (verifier, sentinel) write rows; five consumers filter by owner-role](diagrams/tech-debt-ledger-flow/rendered/tech-debt-ledger-flow.svg)
 
 Two producers write rows, five consumers read and filter by `owner-role`. `/project-metrics` and `/project-coverage` are signal sources for the sentinel TD dimension — their `METRICS_REPORT_*.md` outputs feed sentinel's `TD01–TD04` checks but neither command writes to the ledger directly. Promethean (project-level ideation) and roadmap-cartographer (lens-set audit synthesis) are explicitly excluded — strategic horizons, not in-flight debt. Append-only writes plus the post-merge dedupe sequence (`scripts/finalize_tech_debt_ledger.py` — see `rules/swe/agent-intermediate-documents.md § TECH_DEBT_LEDGER.md`) keep concurrent worktree pipelines safe.
 

@@ -1,0 +1,14 @@
+graph LR
+    subgraph External
+        User[User]
+        ExtAPI[External API]
+    end
+    subgraph System["[Project Name]"]
+        App[Web App]
+        DB[(Database)]
+        LLM[LLM Service]
+    end
+    User -->|HTTPS| App
+    App --> DB
+    App -->|HTTP| LLM
+    App -.->|webhook| ExtAPI

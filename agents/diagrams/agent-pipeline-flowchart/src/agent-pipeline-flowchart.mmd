@@ -1,0 +1,28 @@
+flowchart TD
+    P["promethean"] -->|"IDEA_PROPOSAL.md + idea_ledgers/IDEA_LEDGER_*.md"| R
+
+    R["researcher"] -->|"RESEARCH_FINDINGS.md"| SA
+    CE1["context-engineer (shadow)"] -.->|"CONTEXT_REVIEW.md (research stage)"| SA
+
+    SA["systems-architect"] -->|"SYSTEMS_PLAN.md"| IP
+    CE2["context-engineer (shadow)"] -.->|"CONTEXT_REVIEW.md (architecture stage)"| IP
+
+    IP["implementation-planner"] -->|"IMPLEMENTATION_PLAN.md WIP.md, LEARNINGS.md"| EX
+
+    subgraph EX["Parallel Execution (disjoint file sets)"]
+        I["implementer → code"]
+        TE["test-engineer → tests"]
+        DE["doc-engineer → docs (when planner assigns)"]
+        CI["cicd-engineer → pipelines (when CI/CD steps exist)"]
+    end
+
+    EX -->|"VERIFICATION_REPORT.md"| V["verifier (optional)"]
+    V -.->|"SKILL_GENESIS_REPORT.md"| SG["skill-genesis (optional)"]
+
+    AV["architect-validator (per-PR / on-demand)"] -->|"ARCHITECTURE_VALIDATION.md TECH_DEBT_LEDGER.md"| ANY
+
+    SE["sentinel (independent audit)"]
+    SE -.->|"SENTINEL_REPORT_*.md + SENTINEL_LOG.md (.ai-state/sentinel_reports/)"| ANY["Any agent or user can consume reports"]
+
+    style SE fill:#f0f0f0,stroke:#999,stroke-dasharray: 5 5
+    style AV fill:#f0f0f0,stroke:#999,stroke-dasharray: 5 5

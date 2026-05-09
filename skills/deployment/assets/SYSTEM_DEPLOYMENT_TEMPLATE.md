@@ -23,22 +23,7 @@
      One diagram per environment if they differ significantly.
      Node shapes: rectangles for services, [(Database)] for storage, ([Queue]) for messaging. -->
 
-```mermaid
-graph LR
-    subgraph External
-        User[User]
-        ExtAPI[External API]
-    end
-    subgraph System["[Project Name]"]
-        App[Web App]
-        DB[(Database)]
-        LLM[LLM Service]
-    end
-    User -->|HTTPS| App
-    App --> DB
-    App -->|HTTP| LLM
-    App -.->|webhook| ExtAPI
-```
+![System context (L0) — User and External API outside the system boundary; Web App, Database, and LLM Service inside; HTTPS from User to App, App to DB, App to LLM via HTTP, App to ExtAPI via webhook](diagrams/deployment-context/rendered/deployment-context.svg)
 
 > **Detail views:** [Service Topology](#3-service-topology)
 
@@ -58,20 +43,7 @@ graph LR
 
 ### Production
 
-```mermaid
-graph TD
-    subgraph Server["Production Server (Ubuntu 24.04)"]
-        Caddy[Caddy 2.x]
-        subgraph Docker["Docker Engine"]
-            App[Web App<br/>gunicorn + uvicorn]
-            DB[(PostgreSQL 17)]
-            Ollama[Ollama<br/>GPU passthrough]
-        end
-    end
-    Caddy -->|":8000"| App
-    App -->|":5432"| DB
-    App -->|":11434"| Ollama
-```
+![Service topology — Production Server (Ubuntu 24.04) hosting Caddy 2.x reverse proxy in front of Docker engine; Docker hosts Web App (gunicorn+uvicorn), PostgreSQL 17, and Ollama with GPU passthrough; ports 8000/5432/11434](diagrams/deployment-topology/rendered/deployment-topology.svg)
 
 | Service | Image/Build | Ports (host:container) | Health Check | Restart Policy |
 |---------|-------------|----------------------|--------------|----------------|
@@ -113,18 +85,7 @@ graph TD
 
 <!-- Flowchart: max 10-12 nodes. Use {{Decision}} for decision points. -->
 
-```mermaid
-graph TD
-    A[Push to main] --> B{{CI passes?}}
-    B -->|No| C[Fix and retry]
-    B -->|Yes| D[SSH to server]
-    D --> E["git pull && docker compose pull"]
-    E --> F["docker compose up -d --build"]
-    F --> G{{Health checks pass?}}
-    G -->|Yes| H[Done]
-    G -->|No| I[Rollback: checkout previous commit]
-    I --> F
-```
+![Deployment flow — Push to main → CI gate → on pass, SSH to server → git pull + docker compose pull → docker compose up --build → health checks → done; on fail, rollback to previous commit and re-deploy](diagrams/deployment-flow/rendered/deployment-flow.svg)
 
 ### Deploy Steps
 

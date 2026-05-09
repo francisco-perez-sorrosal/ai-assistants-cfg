@@ -26,17 +26,17 @@
      Node shapes: rectangles for components, [(Database)] for storage, ([Queue]) for messaging.
      Only include integrations that exist in the current codebase. -->
 
-<!-- After editing diagrams/architecture.c4, run scripts/diagram-regen-hook.sh (or commit to trigger pre-commit) to regenerate this SVG. -->
-<img src="diagrams/architecture/context.svg" alt="System Context (L0)" />
+<!-- After editing diagrams/architecture/src/architecture.c4, run scripts/diagram-regen-hook.sh (or commit to trigger pre-commit) to regenerate this SVG. -->
+<img src="diagrams/architecture/rendered/context.svg" alt="System Context (L0)" />
 
 <details>
-<summary>LikeC4 source (edit diagrams/architecture.c4 to update this diagram)</summary>
+<summary>LikeC4 source (edit diagrams/architecture/src/architecture.c4 to update this diagram)</summary>
 
 ```c4
 // System Context view — L0
 // Edit the shared .c4 model, then run the regeneration hook (pre-commit) or:
-//   likec4 gen d2 diagrams/architecture.c4 -o diagrams/architecture/
-//   d2 diagrams/architecture/context.d2 diagrams/architecture/context.svg
+//   likec4 gen d2 diagrams/architecture/src/architecture.c4 -o diagrams/architecture/
+//   d2 diagrams/architecture/rendered/context.d2 diagrams/architecture/rendered/context.svg
 specification {
   element person
   element system
@@ -71,17 +71,17 @@ views {
      Solid arrows for direct dependencies, dotted for async/event-based.
      Every component listed here MUST exist on disk -- verify with ls/Glob before including. -->
 
-<!-- After editing diagrams/architecture.c4, run scripts/diagram-regen-hook.sh (or commit to trigger pre-commit) to regenerate this SVG. -->
-<img src="diagrams/architecture/components.svg" alt="Components (L1)" />
+<!-- After editing diagrams/architecture/src/architecture.c4, run scripts/diagram-regen-hook.sh (or commit to trigger pre-commit) to regenerate this SVG. -->
+<img src="diagrams/architecture/rendered/components.svg" alt="Components (L1)" />
 
 <details>
-<summary>LikeC4 source (edit diagrams/architecture.c4 to update this diagram)</summary>
+<summary>LikeC4 source (edit diagrams/architecture/src/architecture.c4 to update this diagram)</summary>
 
 ```c4
 // Components view — L1
 // Edit the shared .c4 model, then run the regeneration hook (pre-commit) or:
-//   likec4 gen d2 diagrams/architecture.c4 -o diagrams/architecture/
-//   d2 diagrams/architecture/components.d2 diagrams/architecture/components.svg
+//   likec4 gen d2 diagrams/architecture/src/architecture.c4 -o diagrams/architecture/
+//   d2 diagrams/architecture/rendered/components.d2 diagrams/architecture/rendered/components.svg
 specification {
   element person
   element system
@@ -116,7 +116,7 @@ views {
 
 </details>
 
-<!-- aac:generated source=docs/diagrams/architecture.c4 view=components last-regen=YYYY-MM-DD -->
+<!-- aac:generated source=docs/diagrams/architecture/src/architecture.c4 view=components last-regen=YYYY-MM-DD -->
 
 | Component | Responsibility | Key Files |
 |-----------|---------------|-----------|

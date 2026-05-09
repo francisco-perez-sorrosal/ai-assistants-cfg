@@ -1,0 +1,12 @@
+graph LR
+    P[promethean] --> R[researcher]
+    R --> SA[systems-architect]
+    SA --> IP[implementation-planner]
+    IP --> I[implementer]
+    IP --> TE[test-engineer]
+    IP -.-> DE["doc-engineer<br/>(when assigned)"]
+    I --> V[verifier]
+    TE --> V
+    DE -.-> V
+    R -. shadow .-> CE1[context-engineer]
+    SA -. shadow .-> CE2[context-engineer]
