@@ -26,11 +26,14 @@ from typing import Any
 import streamlit as st
 
 from streamlit_app.components._base import (
-    heading_to_anchor,
     read_md,
     split_h2_sections,
     surface_summary,
     surface_title,
+)
+from streamlit_app.components._render_helpers import (
+    render_anchored_body,
+    render_h2_toc_in_sidebar,
 )
 
 
@@ -96,30 +99,13 @@ def _render_proposal(
     if summary_section:
         st.info(summary_section)
 
-    non_summary_sections = [
-        (t, b) for t, b in sections if t and t.strip().lower() != "summary"
-    ]
-
-    with st.sidebar:
-        st.markdown("**Sections**")
-        if not non_summary_sections:
-            st.caption("(No additional H2 sections.)")
-        else:
-            for heading, _ in non_summary_sections:
-                anchor = heading_to_anchor(heading)
-                st.markdown(f"- [{heading}](#{anchor})")
-
-    pre_h2 = next((b for t, b in sections if not t and b), "")
-    if pre_h2:
-        st.markdown(pre_h2)
-
-    for heading, section_body in non_summary_sections:
-        anchor = heading_to_anchor(heading)
-        # Streamlit doesn't natively support fragment anchors; emit one as
-        # declarative HTML (no JS) per html-output-conventions.md.
-        st.markdown(f"<span id='{anchor}'></span>", unsafe_allow_html=True)
-        st.markdown(f"### {heading}")
-        st.markdown(section_body)
+    skip = frozenset({"summary"})
+    render_h2_toc_in_sidebar(
+        sections,
+        empty_message="(No additional H2 sections.)",
+        skip_titles=skip,
+    )
+    render_anchored_body(sections, skip_titles=skip)
 
 
 # ---------------------------------------------------------------------------

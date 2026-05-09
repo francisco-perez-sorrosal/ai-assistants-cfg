@@ -26,11 +26,14 @@ from typing import Any
 import streamlit as st
 
 from streamlit_app.components._base import (
-    heading_to_anchor,
     read_md,
     split_h2_sections,
     surface_summary,
     surface_title,
+)
+from streamlit_app.components._render_helpers import (
+    render_anchored_body,
+    render_h2_toc_in_sidebar,
 )
 
 
@@ -99,19 +102,13 @@ def _render_header(
 
 
 def _render_sidebar(sections: list[tuple[str, str]]) -> None:
-    h2_titles = [t for t, _ in sections if t]
+    render_h2_toc_in_sidebar(
+        sections, empty_message="(No H2 sections in this explanation.)"
+    )
+
     related_links = _extract_related_links(sections)
-
-    with st.sidebar:
-        st.markdown("**Sections**")
-        if not h2_titles:
-            st.caption("(No H2 sections in this explanation.)")
-        else:
-            for heading in h2_titles:
-                anchor = heading_to_anchor(heading)
-                st.markdown(f"- [{heading}](#{anchor})")
-
-        if related_links:
+    if related_links:
+        with st.sidebar:
             st.divider()
             st.markdown("**Related reading**")
             for label, url in related_links:
@@ -122,17 +119,7 @@ def _render_sidebar(sections: list[tuple[str, str]]) -> None:
 
 
 def _render_body(sections: list[tuple[str, str]]) -> None:
-    pre_h2 = next((b for t, b in sections if not t and b), "")
-    if pre_h2:
-        st.markdown(pre_h2)
-
-    for heading, section_body in [(t, b) for t, b in sections if t]:
-        anchor = heading_to_anchor(heading)
-        # Streamlit doesn't natively support fragment anchors; emit one as
-        # declarative HTML (no JS) per html-output-conventions.md.
-        st.markdown(f"<span id='{anchor}'></span>", unsafe_allow_html=True)
-        st.markdown(f"### {heading}")
-        st.markdown(section_body)
+    render_anchored_body(sections)
 
 
 # ---------------------------------------------------------------------------

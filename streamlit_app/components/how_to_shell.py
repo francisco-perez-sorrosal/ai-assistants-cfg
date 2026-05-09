@@ -29,6 +29,10 @@ from streamlit_app.components._base import (
     surface_summary,
     surface_title,
 )
+from streamlit_app.components._render_helpers import (
+    render_anchored_body,
+    render_h2_toc_in_sidebar,
+)
 
 
 # H2 titles that benefit from direct anchor-jump access in the sidebar.
@@ -80,19 +84,12 @@ def _render_header(surface: dict[str, Any], title: str, summary: str | None) -> 
 
 
 def _render_sidebar(sections: list[tuple[str, str]]) -> None:
+    render_h2_toc_in_sidebar(sections, empty_message="(No H2 sections in this how-to.)")
+
     h2_titles = [t for t, _ in sections if t]
     quick_links = _collect_quick_links(h2_titles)
-
-    with st.sidebar:
-        st.markdown("**Sections**")
-        if not h2_titles:
-            st.caption("(No H2 sections in this how-to.)")
-        else:
-            for heading in h2_titles:
-                anchor = heading_to_anchor(heading)
-                st.markdown(f"- [{heading}](#{anchor})")
-
-        if quick_links:
+    if quick_links:
+        with st.sidebar:
             st.divider()
             st.markdown("**Quick links**")
             for heading in quick_links:
@@ -101,17 +98,7 @@ def _render_sidebar(sections: list[tuple[str, str]]) -> None:
 
 
 def _render_body(sections: list[tuple[str, str]]) -> None:
-    pre_h2 = next((b for t, b in sections if not t and b), "")
-    if pre_h2:
-        st.markdown(pre_h2)
-
-    for heading, section_body in [(t, b) for t, b in sections if t]:
-        anchor = heading_to_anchor(heading)
-        # Streamlit doesn't natively support fragment anchors; emit one as
-        # declarative HTML (no JS) per html-output-conventions.md.
-        st.markdown(f"<span id='{anchor}'></span>", unsafe_allow_html=True)
-        st.markdown(f"### {heading}")
-        st.markdown(section_body)
+    render_anchored_body(sections)
 
 
 def _collect_quick_links(h2_titles: list[str]) -> list[str]:

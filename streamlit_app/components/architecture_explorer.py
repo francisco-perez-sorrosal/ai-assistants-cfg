@@ -30,6 +30,7 @@ from streamlit_app.components._base import (
     read_md,
     split_h2_sections,
 )
+from streamlit_app.components._render_helpers import render_anchored_body
 from streamlit_app.data import discovery
 
 
@@ -95,17 +96,7 @@ def _render_md_pane(path: Path | None, missing_msg: str) -> None:
                 anchor = heading_to_anchor(heading)
                 st.markdown(f"- [{heading}](#{anchor})")
 
-    pre_h2 = next((b for t, b in sections if not t and b), "")
-    if pre_h2:
-        st.markdown(pre_h2)
-
-    for heading, section_body in [(t, b) for t, b in sections if t]:
-        anchor = heading_to_anchor(heading)
-        # Streamlit doesn't natively support fragment anchors; emit one as
-        # declarative HTML (no JS) per html-output-conventions.md.
-        st.markdown(f"<span id='{anchor}'></span>", unsafe_allow_html=True)
-        st.markdown(f"### {heading}")
-        st.markdown(section_body)
+    render_anchored_body(sections)
 
 
 def _render_diagrams_pane(svgs: list[Path], project_root: Path) -> None:
