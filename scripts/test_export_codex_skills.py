@@ -32,7 +32,8 @@ def test_export_skills_writes_wrapper_with_short_description(tmp_path: Path):
     assert "`skills/ml-training/SKILL.md`" in text
     description_line = next(line for line in text.splitlines() if line.startswith("description: "))
     description = description_line.split(": ", 1)[1]
-    assert len(description) <= exporter.MAX_DESCRIPTION_LENGTH
+    assert description.startswith("'") and description.endswith("'")
+    assert len(description[1:-1]) <= exporter.MAX_DESCRIPTION_LENGTH
 
 
 def test_parse_rejects_missing_frontmatter(tmp_path: Path):

@@ -86,6 +86,10 @@ def shorten_description(description: str, limit: int = MAX_DESCRIPTION_LENGTH) -
     return compact[:cutoff] + "…"
 
 
+def yaml_single_quote(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
 def render_codex_skill(metadata: dict[str, str], source_path: Path) -> str:
     name = metadata["name"]
     description = shorten_description(metadata["description"])
@@ -94,7 +98,7 @@ def render_codex_skill(metadata: dict[str, str], source_path: Path) -> str:
         [
             "---",
             f"name: {name}",
-            f"description: {description}",
+            f"description: {yaml_single_quote(description)}",
             "---",
             "",
             f"# {name}",
