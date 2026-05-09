@@ -43,6 +43,9 @@ Praxion worktree home, `.claude/worktrees/<slug>/`, for isolated work.
   load them on demand.
 - Do not duplicate large rule, skill, command, or agent bodies into Codex files.
   Link to the existing artifacts and load them progressively.
+- Preserve canonical wording when adapting Praxion skills or agents to another
+  tool. Do not truncate, summarize, or rewrite source text unless a hard
+  platform constraint makes that unavoidable.
 - Do not modify `~/.claude/plugins/cache/`; edit source files in this repo.
 - Keep assistant-specific configuration in assistant-specific directories.
   Shared assets remain at the repository root.

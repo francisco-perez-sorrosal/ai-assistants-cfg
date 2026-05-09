@@ -14,7 +14,7 @@ The exporter preserves:
 - `name`
 - `description`
 - a thin `developer_instructions` wrapper that tells Codex to read the
-  canonical `agents/<name>.md` file before acting
+  canonical Praxion agent file before acting
 
 It intentionally does not translate Claude-specific tool, hook, permission,
 memory, or model frontmatter yet. Those fields have different Codex semantics
@@ -29,7 +29,7 @@ The exporter preserves:
 
 - the canonical skill name
 - the full canonical description
-- a thin wrapper body that points back to `skills/<name>/SKILL.md`
+- a thin wrapper body that points back to the canonical Praxion skill file
 
 It intentionally does not copy canonical skill bodies into the wrapper. Codex
 loads the wrapper at startup and can read the canonical skill on activation.

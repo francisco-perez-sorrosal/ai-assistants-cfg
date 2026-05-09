@@ -66,7 +66,12 @@ def parse_simple_yaml(lines: list[str], path: Path) -> dict[str, str]:
             metadata[key] = " ".join(part for part in block if part).strip()
             continue
 
-        metadata[key] = raw_value.strip('"').strip("'")
+        if raw_value.startswith("'") and raw_value.endswith("'"):
+            metadata[key] = raw_value[1:-1].replace("''", "'")
+        elif raw_value.startswith('"') and raw_value.endswith('"'):
+            metadata[key] = raw_value[1:-1]
+        else:
+            metadata[key] = raw_value
         index += 1
 
     for required in ("name", "description"):
@@ -115,9 +120,8 @@ def export_skills(repo_root: Path, out_dir: Path) -> list[Path]:
         target_dir = out_dir / metadata["name"]
         target_dir.mkdir(parents=True, exist_ok=True)
         target_path = target_dir / "SKILL.md"
-        relative_source = source_path.relative_to(repo_root)
         target_path.write_text(
-            render_codex_skill(metadata, relative_source),
+            render_codex_skill(metadata, source_path.resolve()),
             encoding="utf-8",
         )
         written.append(target_path)

@@ -268,7 +268,9 @@ adds generated Codex custom-agent wrappers under the target project's
 instead of copying their bodies. It also generates Codex skill wrappers
 under the target project's `.agents/skills/` directory, pointing back to
 canonical `skills/*/SKILL.md` files while preserving the full skill
-description in the wrapper metadata. It does not yet install hooks, configure
+description in the wrapper metadata. Adapter fidelity matters here: preserve
+canonical Praxion wording for agent and skill metadata unless a hard platform
+constraint forces a lossless transformation. It does not yet install hooks, configure
 MCP, create `.ai-state/`, or export slash commands. Those surfaces require
 explicit tool-specific adapters:
 
