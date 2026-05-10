@@ -70,15 +70,38 @@ Generated surfaces:
 - `.codex/hooks/praxion-memory-stop.py` -- enforces the memory gate with Codex
   MCP tool names
 - `.codex/hooks/praxion-observability-session-start.py` -- records session
-  lifecycle events
+  lifecycle events and context-surface measurements
 - `.codex/hooks/praxion-observability-stop.py` -- records session stop events
 - `.codex/hooks/praxion-user-prompt-submit.py` -- routes prompt-matched rules
+- `.codex/hooks/praxion-process-framing-user-prompt-submit.py` -- injects
+  Praxion process framing for non-trivial prompts
+- `.codex/hooks/praxion-subagent-pre-tool-use.py` -- injects the Praxion
+  behavioral contract into host-native subagent prompts
+- `.codex/hooks/praxion-commit-*-pre-tool-use.py` -- runs canonical Bash
+  commit gates for quality, ADR reminders, memory reminders, and ID citation
+  discipline
+- `.codex/hooks/praxion-cleanup-learnings-pre-tool-use.py` -- warns before
+  cleanup deletes unpromoted `.ai-work/**/LEARNINGS.md` content
+- `.codex/hooks/praxion-worktree-guard-pre-tool-use.py` -- blocks
+  cross-worktree file writes from linked git worktrees
 - `.codex/hooks/praxion-pre-tool-use.py` -- routes file-scoped rules before
   mutating file tool activity
 - `.codex/hooks/praxion-observability-pre-tool-use.py` -- forwards tool-start
   events to Praxion observability
 - `.codex/hooks/praxion-observability-post-tool-use.py` -- forwards tool-result
   events and captures memory observations
+- `.codex/hooks/praxion-format-python-post-tool-use.py` -- runs canonical
+  Python auto-formatting after file writes/edits
+- `.codex/hooks/praxion-detect-duplication-post-tool-use.py` -- runs canonical
+  intra-file duplication detection after file writes/edits
+- `.codex/hooks/praxion-observability-subagent-start.py` -- records subagent
+  lifecycle start events when Codex emits them
+- `.codex/hooks/praxion-memory-subagent-stop.py` -- enforces subagent memory
+  validation with Codex MCP tool names when Codex emits the event
+- `.codex/hooks/praxion-observability-subagent-stop.py` -- records subagent
+  lifecycle stop events when Codex emits them
+- `.codex/hooks/praxion-precompact-state.py` -- writes `.ai-work/` pipeline
+  state snapshots before compaction when Codex emits the event
 - `.codex/praxion/hook_registrations.json` -- expected Praxion hook
   registrations for merge/check logic
 
@@ -89,6 +112,10 @@ approval / sandbox policy semantics.
 The bridge also does **not** create `.ai-state/`. Generic project onboarding
 owns that lifecycle; generated Codex memory hooks and file-backed observation
 capture activate against an existing `.ai-state/` directory.
+
+The Claude marketplace auto-completion hook is intentionally not bridged to
+Codex because its job is to repair `~/.claude` plugin surfaces. Codex installs
+use `install_codex.sh` instead.
 
 Rule pickup is dynamic: every exporter run rescans `rules/**/*.md`. The bridge
 does not depend on a hardcoded Python allowlist for new rules. Automatic Codex

@@ -29,7 +29,7 @@ step() { printf "  %s\n" "$*"; }
 
 print_codex_hook_review_note() {
     warn "Codex may require one-time review for the Praxion project-local hooks."
-    step "If Codex reports hooks need review, open /hooks and approve the Praxion SessionStart, Stop, UserPromptSubmit, PreToolUse, and PostToolUse hooks."
+    step "If Codex reports hooks need review, open /hooks and approve the Praxion SessionStart, Stop, UserPromptSubmit, PreToolUse, PostToolUse, SubagentStart, SubagentStop, and PreCompact hooks."
     step "This is a Codex security gate for project-local commands; install.sh cannot pre-approve it."
 }
 

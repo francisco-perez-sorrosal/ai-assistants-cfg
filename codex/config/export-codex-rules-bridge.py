@@ -456,20 +456,46 @@ def payload_has_ai_state(raw_payload: str) -> bool:
     return bool(cwd) and Path(cwd, ".ai-state").is_dir()
 
 
+def payload_cwd(raw_payload: str) -> str | None:
+    try:
+        payload = json.loads(raw_payload or "{}")
+    except json.JSONDecodeError:
+        return None
+    cwd = str(payload.get("cwd", "") or "")
+    if not cwd or not Path(cwd).is_dir():
+        return None
+    return cwd
+
+
 def run_canonical_hook(
     relative_path: str,
+    raw_payload: str,
+    env_updates: dict[str, str] | None = None,
+) -> int:
+    return run_canonical_command([sys.executable, relative_path], raw_payload, env_updates)
+
+
+def run_canonical_command(
+    command: list[str],
     raw_payload: str,
     env_updates: dict[str, str] | None = None,
 ) -> int:
     env = os.environ.copy()
     if env_updates:
         env.update(env_updates)
+    resolved = [
+        str(REPO_ROOT / part)
+        if part.startswith(("hooks/", "scripts/"))
+        else part
+        for part in command
+    ]
     result = subprocess.run(
-        [sys.executable, str(REPO_ROOT / relative_path)],
+        resolved,
         input=raw_payload,
         text=True,
         capture_output=True,
         env=env,
+        cwd=payload_cwd(raw_payload),
         check=False,
     )
     if result.stdout:
@@ -661,7 +687,8 @@ def main() -> int:
     raw = sys.stdin.read()
     status = run_canonical_hook("hooks/send_event.py", raw)
     lifecycle_status = run_canonical_hook("hooks/capture_session.py", raw)
-    return lifecycle_status or status
+    surface_status = run_canonical_hook("hooks/measure_context_surface.py", raw)
+    return surface_status or lifecycle_status or status
 
 
 if __name__ == "__main__":
@@ -729,6 +756,323 @@ def main() -> int:
     status = run_canonical_hook("hooks/send_event.py", raw)
     capture_status = run_canonical_hook("hooks/capture_memory.py", raw)
     return capture_status or status
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "process-framing-user-prompt-submit":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_hook("hooks/inject_process_framing.py", raw)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "subagent-pre-tool-use":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def _normalize_task_payload(raw: str) -> str:
+    try:
+        payload = json.loads(raw or "{}")
+    except json.JSONDecodeError:
+        return raw
+    if payload.get("tool_name") == "Task":
+        payload["tool_name"] = "Agent"
+        return json.dumps(payload)
+    return raw
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_hook("hooks/inject_subagent_context.py", _normalize_task_payload(raw))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "worktree-guard-pre-tool-use":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_hook("hooks/worktree_guard.py", raw)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "commit-quality-pre-tool-use":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_command
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_command(["hooks/commit_gate.sh", "hooks/check_code_quality.py"], raw)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "commit-adr-pre-tool-use":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_command
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_command(["hooks/commit_gate.sh", "hooks/remind_adr.py"], raw)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "cleanup-learnings-pre-tool-use":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_command
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_command(["hooks/cleanup_gate.sh", "hooks/promote_learnings.py"], raw)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "commit-memory-pre-tool-use":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import CODEX_MEMORY_ENV, run_canonical_command
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_command(
+        ["hooks/commit_gate.sh", "hooks/remind_memory.py"],
+        raw,
+        CODEX_MEMORY_ENV,
+    )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "commit-id-citation-pre-tool-use":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_command
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_command(
+        ["hooks/commit_gate.sh", "scripts/check_id_citation_discipline.py"],
+        raw,
+    )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "format-python-post-tool-use":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_hook("hooks/format_python.py", raw)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "detect-duplication-post-tool-use":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_hook("hooks/detect_duplication.py", raw)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "observability-subagent-start":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    status = run_canonical_hook("hooks/send_event.py", raw)
+    lifecycle_status = run_canonical_hook("hooks/capture_session.py", raw)
+    return lifecycle_status or status
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "memory-subagent-stop":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import CODEX_MEMORY_ENV, run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_hook("hooks/validate_memory.py", raw, CODEX_MEMORY_ENV)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "observability-subagent-stop":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    status = run_canonical_hook("hooks/send_event.py", raw)
+    lifecycle_status = run_canonical_hook("hooks/capture_session.py", raw)
+    return lifecycle_status or status
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "precompact-state":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_hook("hooks/precompact_state.py", raw)
 
 
 if __name__ == "__main__":
@@ -819,11 +1163,97 @@ def render_hook_registrations() -> dict[str, object]:
                             "statusMessage": "Praxion: routing prompt-scoped rules",
                         }
                     ],
+                },
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-process-framing-user-prompt-submit.py",
+                                project_root,
+                            ),
+                            "timeout": 15,
+                            "statusMessage": "Praxion: injecting process framing",
+                        }
+                    ],
                 }
             ],
             "PreToolUse": [
                 {
-                    "matcher": "Edit|MultiEdit|NotebookEdit|Write",
+                    "matcher": "Agent|Task",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-subagent-pre-tool-use.py", project_root
+                            ),
+                            "timeout": 15,
+                            "statusMessage": "Praxion: injecting subagent contract",
+                        }
+                    ],
+                },
+                {
+                    "matcher": "Bash",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-commit-quality-pre-tool-use.py", project_root
+                            ),
+                            "timeout": 30,
+                            "statusMessage": "Praxion: checking commit quality",
+                        },
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-commit-adr-pre-tool-use.py", project_root
+                            ),
+                            "timeout": 30,
+                            "statusMessage": "Praxion: checking ADR reminder",
+                        },
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-cleanup-learnings-pre-tool-use.py",
+                                project_root,
+                            ),
+                            "timeout": 15,
+                            "statusMessage": "Praxion: checking learnings cleanup",
+                        },
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-commit-memory-pre-tool-use.py", project_root
+                            ),
+                            "timeout": 15,
+                            "statusMessage": "Praxion: checking commit memory",
+                        },
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-commit-id-citation-pre-tool-use.py",
+                                project_root,
+                            ),
+                            "timeout": 20,
+                            "statusMessage": "Praxion: checking id citations",
+                        },
+                    ],
+                },
+                {
+                    "matcher": "Edit|MultiEdit|NotebookEdit|Write|apply_patch|ApplyPatch",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-worktree-guard-pre-tool-use.py", project_root
+                            ),
+                            "timeout": 15,
+                            "statusMessage": "Praxion: checking worktree boundary",
+                        }
+                    ],
+                },
+                {
+                    "matcher": "Edit|MultiEdit|NotebookEdit|Write|apply_patch|ApplyPatch",
                     "hooks": [
                         {
                             "type": "command",
@@ -858,6 +1288,82 @@ def render_hook_registrations() -> dict[str, object]:
                             "timeout": 15,
                             "async": True,
                             "statusMessage": "Praxion: capturing tool result",
+                        }
+                    ],
+                },
+                {
+                    "matcher": "Write|Edit",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-format-python-post-tool-use.py", project_root
+                            ),
+                            "timeout": 15,
+                            "statusMessage": "Praxion: formatting Python",
+                        },
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-detect-duplication-post-tool-use.py",
+                                project_root,
+                            ),
+                            "timeout": 15,
+                            "statusMessage": "Praxion: detecting duplication",
+                        },
+                    ],
+                },
+            ],
+            "SubagentStart": [
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-observability-subagent-start.py", project_root
+                            ),
+                            "timeout": 15,
+                            "async": True,
+                            "statusMessage": "Praxion: capturing subagent start",
+                        }
+                    ],
+                }
+            ],
+            "SubagentStop": [
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-memory-subagent-stop.py", project_root
+                            ),
+                            "timeout": 15,
+                            "statusMessage": "Praxion: enforcing subagent memory",
+                        }
+                    ],
+                },
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-observability-subagent-stop.py", project_root
+                            ),
+                            "timeout": 15,
+                            "async": True,
+                            "statusMessage": "Praxion: capturing subagent stop",
+                        }
+                    ],
+                },
+            ],
+            "PreCompact": [
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command("praxion-precompact-state.py", project_root),
+                            "timeout": 15,
+                            "statusMessage": "Praxion: snapshotting pipeline state",
                         }
                     ],
                 }
@@ -895,9 +1401,23 @@ def export_rules_bridge(repo_root: Path, out_dir: Path) -> list[Path]:
         ("praxion-memory-stop.py", "memory-stop"),
         ("praxion-observability-stop.py", "observability-stop"),
         ("praxion-user-prompt-submit.py", "user-prompt-submit"),
+        ("praxion-process-framing-user-prompt-submit.py", "process-framing-user-prompt-submit"),
+        ("praxion-subagent-pre-tool-use.py", "subagent-pre-tool-use"),
+        ("praxion-commit-quality-pre-tool-use.py", "commit-quality-pre-tool-use"),
+        ("praxion-commit-adr-pre-tool-use.py", "commit-adr-pre-tool-use"),
+        ("praxion-cleanup-learnings-pre-tool-use.py", "cleanup-learnings-pre-tool-use"),
+        ("praxion-commit-memory-pre-tool-use.py", "commit-memory-pre-tool-use"),
+        ("praxion-commit-id-citation-pre-tool-use.py", "commit-id-citation-pre-tool-use"),
+        ("praxion-worktree-guard-pre-tool-use.py", "worktree-guard-pre-tool-use"),
         ("praxion-pre-tool-use.py", "pre-tool-use"),
         ("praxion-observability-pre-tool-use.py", "observability-pre-tool-use"),
         ("praxion-observability-post-tool-use.py", "observability-post-tool-use"),
+        ("praxion-format-python-post-tool-use.py", "format-python-post-tool-use"),
+        ("praxion-detect-duplication-post-tool-use.py", "detect-duplication-post-tool-use"),
+        ("praxion-observability-subagent-start.py", "observability-subagent-start"),
+        ("praxion-memory-subagent-stop.py", "memory-subagent-stop"),
+        ("praxion-observability-subagent-stop.py", "observability-subagent-stop"),
+        ("praxion-precompact-state.py", "precompact-state"),
     ]:
         hook_path = hooks_dir / hook_name
         hook_path.write_text(render_hook_script(kind), encoding="utf-8")

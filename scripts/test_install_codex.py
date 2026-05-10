@@ -72,6 +72,13 @@ def test_install_codex_exports_canonical_paths_and_check_passes(tmp_path: Path):
     assert (project_dir / ".codex" / "praxion" / "model_routing.json").exists()
     assert (project_dir / ".codex" / "hooks" / "praxion-memory-session-start.py").exists()
     assert (project_dir / ".codex" / "hooks" / "praxion-memory-stop.py").exists()
+    assert (project_dir / ".codex" / "hooks" / "praxion-subagent-pre-tool-use.py").exists()
+    assert (
+        project_dir / ".codex" / "hooks" / "praxion-commit-memory-pre-tool-use.py"
+    ).exists()
+    assert (
+        project_dir / ".codex" / "hooks" / "praxion-precompact-state.py"
+    ).exists()
     assert (
         project_dir / ".codex" / "hooks" / "praxion-observability-post-tool-use.py"
     ).exists()
@@ -86,6 +93,9 @@ def test_install_codex_exports_canonical_paths_and_check_passes(tmp_path: Path):
     hooks_text = (project_dir / ".codex" / "hooks.json").read_text(encoding="utf-8")
     assert "praxion-memory-session-start.py" in hooks_text
     assert "praxion-memory-stop.py" in hooks_text
+    assert "praxion-subagent-pre-tool-use.py" in hooks_text
+    assert "praxion-commit-memory-pre-tool-use.py" in hooks_text
+    assert "praxion-precompact-state.py" in hooks_text
     assert "praxion-observability-post-tool-use.py" in hooks_text
     shared_config = tomllib.loads(
         (home_dir / ".codex" / "config.toml").read_text(encoding="utf-8")

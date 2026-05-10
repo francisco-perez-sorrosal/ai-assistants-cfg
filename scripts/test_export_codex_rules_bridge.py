@@ -31,13 +31,18 @@ def run_hook(path: Path, payload: dict[str, object]) -> dict[str, object]:
     return json.loads(result.stdout) if result.stdout.strip() else {}
 
 
-def run_hook_result(path: Path, payload: dict[str, object]) -> subprocess.CompletedProcess[str]:
+def run_hook_result(
+    path: Path,
+    payload: dict[str, object],
+    cwd: Path | None = None,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["python3", str(path)],
         input=json.dumps(payload),
         text=True,
         capture_output=True,
         check=False,
+        cwd=cwd,
     )
 
 
@@ -59,7 +64,15 @@ def test_export_rules_bridge_writes_prefixed_hooks_and_manifest(tmp_path: Path):
     assert out_dir / "hooks" / "praxion-memory-stop.py" in written
     assert out_dir / "hooks" / "praxion-observability-post-tool-use.py" in written
     assert out_dir / "hooks" / "praxion-user-prompt-submit.py" in written
+    assert out_dir / "hooks" / "praxion-process-framing-user-prompt-submit.py" in written
+    assert out_dir / "hooks" / "praxion-subagent-pre-tool-use.py" in written
+    assert out_dir / "hooks" / "praxion-commit-memory-pre-tool-use.py" in written
+    assert out_dir / "hooks" / "praxion-worktree-guard-pre-tool-use.py" in written
     assert out_dir / "hooks" / "praxion-pre-tool-use.py" in written
+    assert out_dir / "hooks" / "praxion-format-python-post-tool-use.py" in written
+    assert out_dir / "hooks" / "praxion-detect-duplication-post-tool-use.py" in written
+    assert out_dir / "hooks" / "praxion-memory-subagent-stop.py" in written
+    assert out_dir / "hooks" / "praxion-precompact-state.py" in written
     assert out_dir / "praxion" / "hook_runtime.py" in written
 
     manifest = json.loads((out_dir / "praxion" / "rules_manifest.json").read_text(encoding="utf-8"))
@@ -77,10 +90,25 @@ def test_export_rules_bridge_writes_prefixed_hooks_and_manifest(tmp_path: Path):
     assert "praxion-memory-session-start.py" in hooks["SessionStart"][1]["hooks"][0]["command"]
     assert "praxion-memory-stop.py" in hooks["Stop"][0]["hooks"][0]["command"]
     assert "praxion-observability-post-tool-use.py" in hooks["PostToolUse"][0]["hooks"][0]["command"]
+    assert "praxion-process-framing-user-prompt-submit.py" in hooks["UserPromptSubmit"][1]["hooks"][0]["command"]
+    assert "praxion-memory-subagent-stop.py" in hooks["SubagentStop"][0]["hooks"][0]["command"]
+    assert "praxion-precompact-state.py" in hooks["PreCompact"][0]["hooks"][0]["command"]
     assert "git rev-parse" not in hooks["SessionStart"][0]["hooks"][0]["command"]
     assert "__PRAXION_PROJECT_ROOT__" in hooks["SessionStart"][0]["hooks"][0]["command"]
-    pre_tool_matcher = hooks["PreToolUse"][0]["matcher"]
-    assert pre_tool_matcher == "Edit|MultiEdit|NotebookEdit|Write"
+    pre_tool_commands = "\n".join(
+        hook["command"]
+        for group in hooks["PreToolUse"]
+        for hook in group["hooks"]
+    )
+    assert "praxion-subagent-pre-tool-use.py" in pre_tool_commands
+    assert "praxion-commit-memory-pre-tool-use.py" in pre_tool_commands
+    assert "praxion-worktree-guard-pre-tool-use.py" in pre_tool_commands
+    rule_group = next(
+        group
+        for group in hooks["PreToolUse"]
+        if "praxion-pre-tool-use.py" in group["hooks"][0]["command"]
+    )
+    assert rule_group["matcher"] == "Edit|MultiEdit|NotebookEdit|Write|apply_patch|ApplyPatch"
 
 
 def test_generated_hooks_route_always_on_prompt_and_path_rules(tmp_path: Path):
@@ -253,6 +281,225 @@ def test_observability_post_tool_use_hook_writes_observations(tmp_path: Path):
     observations = (ai_state / "observations.jsonl").read_text(encoding="utf-8")
     assert '"event_type":"tool_use"' in observations
     assert '"tool_name":"Write"' in observations
+
+
+def test_process_framing_hook_waits_for_ai_state_and_injects(tmp_path: Path):
+    exporter = load_exporter()
+    out_dir = tmp_path / ".codex"
+    exporter.export_rules_bridge(REPO_ROOT, out_dir)
+
+    framing_hook = out_dir / "hooks" / "praxion-process-framing-user-prompt-submit.py"
+
+    skipped = run_hook(
+        framing_hook,
+        {
+            "hook_event_name": "UserPromptSubmit",
+            "cwd": str(tmp_path),
+            "prompt": "Please design and implement the full adapter flow?",
+        },
+    )
+    assert skipped == {}
+
+    (tmp_path / ".ai-state").mkdir()
+    active = run_hook(
+        framing_hook,
+        {
+            "hook_event_name": "UserPromptSubmit",
+            "cwd": str(tmp_path),
+            "prompt": "Please design and implement the full adapter flow?",
+        },
+    )
+    assert "tier selector" in active["additionalContext"]
+    assert "behavioral contract" in active["additionalContext"]
+
+
+def test_subagent_context_hook_updates_agent_and_task_payloads(tmp_path: Path):
+    exporter = load_exporter()
+    out_dir = tmp_path / ".codex"
+    exporter.export_rules_bridge(REPO_ROOT, out_dir)
+    (tmp_path / ".ai-state").mkdir()
+
+    subagent_hook = out_dir / "hooks" / "praxion-subagent-pre-tool-use.py"
+    for tool_name in ("Agent", "Task"):
+        output = run_hook(
+            subagent_hook,
+            {
+                "hook_event_name": "PreToolUse",
+                "tool_name": tool_name,
+                "cwd": str(tmp_path),
+                "session_id": "session-1",
+                "tool_input": {
+                    "subagent_type": "general-purpose",
+                    "prompt": "Inspect the adapter surface.",
+                },
+            },
+        )
+        spec = output["hookSpecificOutput"]
+        assert spec["hookEventName"] == "PreToolUse"
+        assert spec["permissionDecision"] == "allow"
+        prompt = spec["updatedInput"]["tool_input"]["prompt"]
+        assert "Surface Assumptions" in prompt
+        assert "Inspect the adapter surface." in prompt
+
+
+def test_commit_memory_hook_uses_codex_memory_tool_name(tmp_path: Path):
+    exporter = load_exporter()
+    out_dir = tmp_path / ".codex"
+    exporter.export_rules_bridge(REPO_ROOT, out_dir)
+
+    transcript = tmp_path / "transcript.jsonl"
+    transcript.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "message": {
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Write",
+                                    "input": {"file_path": "src/alpha.py"},
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {"file_path": "src/beta.py"},
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Write",
+                                    "input": {"file_path": "src/gamma.py"},
+                                },
+                            ]
+                        },
+                    }
+                )
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    commit_memory_hook = out_dir / "hooks" / "praxion-commit-memory-pre-tool-use.py"
+    result = run_hook_result(
+        commit_memory_hook,
+        {
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+            "cwd": str(tmp_path),
+            "transcript_path": str(transcript),
+            "tool_input": {"command": "git commit -m adapter"},
+        },
+    )
+    assert result.returncode == 2
+    assert "mcp__memory__remember" in result.stderr
+    assert "mcp__plugin_i-am_memory__remember" not in result.stderr
+
+
+def test_cleanup_learnings_hook_surfaces_unpromoted_entries(tmp_path: Path):
+    exporter = load_exporter()
+    out_dir = tmp_path / ".codex"
+    exporter.export_rules_bridge(REPO_ROOT, out_dir)
+
+    learnings = tmp_path / ".ai-work" / "task-one" / "LEARNINGS.md"
+    learnings.parent.mkdir(parents=True)
+    learnings.write_text("- **[insight]** Keep adapters thin.\n", encoding="utf-8")
+
+    cleanup_hook = out_dir / "hooks" / "praxion-cleanup-learnings-pre-tool-use.py"
+    output = run_hook(
+        cleanup_hook,
+        {
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+            "cwd": str(tmp_path),
+            "tool_input": {"command": "rm -rf .ai-work"},
+        },
+    )
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "LEARNINGS.md files found" in context
+    assert ".ai-work/task-one/LEARNINGS.md" in context
+
+
+def test_subagent_stop_memory_hook_uses_codex_memory_tool_name(tmp_path: Path):
+    exporter = load_exporter()
+    out_dir = tmp_path / ".codex"
+    exporter.export_rules_bridge(REPO_ROOT, out_dir)
+
+    ai_state = tmp_path / ".ai-state"
+    ai_state.mkdir()
+    (ai_state / "memory.json").write_text(
+        json.dumps({"schema_version": "2.0", "memories": {}}),
+        encoding="utf-8",
+    )
+    transcript = tmp_path / "agent-transcript.jsonl"
+    transcript.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "message": {
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Write",
+                                    "input": {"file_path": "src/agent.py"},
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {"file_path": "src/agent.py"},
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Write",
+                                    "input": {"file_path": "tests/test_agent.py"},
+                                },
+                            ]
+                        },
+                    }
+                )
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    memory_hook = out_dir / "hooks" / "praxion-memory-subagent-stop.py"
+    result = run_hook_result(
+        memory_hook,
+        {
+            "hook_event_name": "SubagentStop",
+            "cwd": str(tmp_path),
+            "agent_type": "implementer",
+            "agent_transcript_path": str(transcript),
+        },
+    )
+    assert result.returncode == 2
+    decision = json.loads(result.stderr)
+    assert decision["decision"] == "block"
+    assert "mcp__memory__remember" in decision["reason"]
+
+
+def test_precompact_hook_writes_pipeline_state(tmp_path: Path):
+    exporter = load_exporter()
+    out_dir = tmp_path / ".codex"
+    exporter.export_rules_bridge(REPO_ROOT, out_dir)
+
+    wip = tmp_path / ".ai-work" / "adapter" / "WIP.md"
+    wip.parent.mkdir(parents=True)
+    wip.write_text("# WIP\n\nCurrent step: hook completion.\n", encoding="utf-8")
+
+    precompact_hook = out_dir / "hooks" / "praxion-precompact-state.py"
+    result = run_hook_result(
+        precompact_hook,
+        {"hook_event_name": "PreCompact", "cwd": str(tmp_path)},
+    )
+    assert result.returncode == 0
+    state = (tmp_path / ".ai-work" / "PIPELINE_STATE.md").read_text(encoding="utf-8")
+    assert "adapter/WIP.md" in state
+    assert "Current step: hook completion." in state
 
 
 def test_prompt_matching_avoids_generic_false_positives(tmp_path: Path):

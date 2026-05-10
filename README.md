@@ -400,9 +400,10 @@ checkout as the canonical source.
 `CLAUDE.md`, `rules/`, `skills/`, docs, source, tests, scripts, MCP server
 source, and `.ai-state/` data by reference.
 
-**What still needs explicit later work:** hook families beyond first-session
-Codex parity, such as worktree, compact, commit reminder, formatting, and
-duplication gates.
+**What still needs explicit later work:** generic project onboarding owns
+`.ai-state/` creation, Codex-native slash-command UX is still represented by
+skill wrappers, and user-global `$HOME/.agents/skills` export remains a future
+surface. Claude marketplace auto-completion remains Claude-only by design.
 
 By default, the Codex install generates Codex custom-agent wrappers under the
 target project's `.codex/agents/`. These wrappers are intentionally thin: each
@@ -431,9 +432,10 @@ the target project's `.codex/` directory:
 - `.codex/praxion/rules_manifest.json` indexes canonical Praxion rules
 - `.codex/hooks/praxion-*.py` inject always-on, prompt-scoped, and file-scoped
   Praxion rule routing
-- `.codex/hooks/praxion-*.py` also bridge the memory hooks
-  (`inject_memory.py`, `memory_gate.py`) and observation hooks
-  (`send_event.py`, `capture_session.py`, `capture_memory.py`) to Codex
+- `.codex/hooks/praxion-*.py` also bridge the portable canonical hook families:
+  process framing, subagent contract injection, memory gates, observability,
+  Bash commit/cleanup gates, worktree guard, post-write quality checks, and
+  precompact state snapshots
 - `.codex/praxion/hook_runtime.py` runs canonical Praxion hook scripts with
   Codex-specific MCP tool names
 - `.codex/hooks.json` registers those Praxion-managed hooks
