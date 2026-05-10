@@ -257,6 +257,7 @@ install_native_codex() {
         --repo-root "$PRAXION_ROOT" \
         --out-dir "$AGENT_SKILLS_DIR" >/dev/null
     install_codex_rules_bridge
+    install_codex_pipeline_adapter
 }
 
 is_generated_agent_wrapper() {
@@ -290,6 +291,13 @@ export_expected_rules_bridge() {
         --out-dir "$expected_root" >/dev/null
 }
 
+export_expected_pipeline_adapter() {
+    local expected_root="$1"
+    python3 "$PRAXION_ROOT/codex/config/export-codex-pipeline-adapter.py" \
+        --repo-root "$PRAXION_ROOT" \
+        --out-dir "$expected_root" >/dev/null
+}
+
 install_codex_rules_bridge() {
     python3 "$PRAXION_ROOT/codex/config/export-codex-rules-bridge.py" \
         --repo-root "$PRAXION_ROOT" \
@@ -300,11 +308,18 @@ install_codex_rules_bridge() {
         --mode install >/dev/null
 }
 
+install_codex_pipeline_adapter() {
+    python3 "$PRAXION_ROOT/codex/config/export-codex-pipeline-adapter.py" \
+        --repo-root "$PRAXION_ROOT" \
+        --out-dir "$CODEX_DIR" >/dev/null
+}
+
 prune_stale_native_codex() {
     local expected_root existing_file rel_path
     expected_root="$(mktemp -d)"
     export_expected_native_codex "$expected_root"
     export_expected_rules_bridge "$expected_root/rules_bridge"
+    export_expected_pipeline_adapter "$expected_root/pipeline_adapter"
 
     if [ -d "$CODEX_AGENTS_DIR" ]; then
         while IFS= read -r existing_file; do
@@ -347,8 +362,9 @@ prune_stale_native_codex() {
             rel_path="${existing_file#"$CODEX_DIR"/}"
             rel_path="${rel_path#/}"
             case "$(basename "$existing_file")" in
-                rules_manifest.json|rules_lookup.py|hook_registrations.json|config_state.json)
+                rules_manifest.json|rules_lookup.py|hook_registrations.json|pipeline_semantics.json|model_routing.json|config_state.json)
                     if [ ! -f "$expected_root/rules_bridge/$rel_path" ] &&
+                       [ ! -f "$expected_root/pipeline_adapter/$rel_path" ] &&
                        [ "$(basename "$existing_file")" != "config_state.json" ]; then
                         rm -f "$existing_file"
                     fi
@@ -375,6 +391,7 @@ uninstall_native_codex() {
     fi
     rmdir "$CODEX_AGENTS_DIR" 2>/dev/null || true
     uninstall_codex_rules_bridge
+    uninstall_codex_pipeline_adapter
     uninstall_codex_skills
     rmdir "$CODEX_DIR" 2>/dev/null || true
     rmdir "$TARGET_ROOT/.agents" 2>/dev/null || true
@@ -407,11 +424,18 @@ uninstall_codex_rules_bridge() {
     rmdir "$CODEX_PRAXION_DIR" 2>/dev/null || true
 }
 
+uninstall_codex_pipeline_adapter() {
+    rm -f "$CODEX_PRAXION_DIR"/pipeline_semantics.json 2>/dev/null || true
+    rm -f "$CODEX_PRAXION_DIR"/model_routing.json 2>/dev/null || true
+    rmdir "$CODEX_PRAXION_DIR" 2>/dev/null || true
+}
+
 check_native_codex() {
     local expected_root expected_file actual_file rel_path check_rc=0
     expected_root="$(mktemp -d)"
     export_expected_native_codex "$expected_root"
     export_expected_rules_bridge "$expected_root/rules_bridge"
+    export_expected_pipeline_adapter "$expected_root/pipeline_adapter"
 
     while IFS= read -r expected_file; do
         [ -n "$expected_file" ] || continue
@@ -485,6 +509,22 @@ check_native_codex() {
         fi
     done < <(find "$expected_root/rules_bridge" -type f ! -name 'config_state.json' | sort)
 
+    while IFS= read -r expected_file; do
+        [ -n "$expected_file" ] || continue
+        rel_path="${expected_file#"$expected_root/pipeline_adapter"/}"
+        rel_path="${rel_path#/}"
+        actual_file="$CODEX_DIR/$rel_path"
+        if [ ! -f "$actual_file" ]; then
+            warn "Codex pipeline adapter file missing: $actual_file"
+            check_rc=1
+            continue
+        fi
+        if ! cmp -s "$expected_file" "$actual_file"; then
+            warn "Codex pipeline adapter file is stale: $actual_file"
+            check_rc=1
+        fi
+    done < <(find "$expected_root/pipeline_adapter" -type f | sort)
+
     local rules_bridge_check_output
     rules_bridge_check_output="$(mktemp)"
     python3 "$PRAXION_ROOT/codex/config/manage-codex-rules-bridge.py" \
@@ -504,6 +544,7 @@ check_native_codex() {
         info "Codex native agents present in $CODEX_AGENTS_DIR"
         info "Codex skill and command wrappers present in $AGENT_SKILLS_DIR"
         info "Codex rules bridge present in $CODEX_DIR"
+        info "Codex pipeline adapter present in $CODEX_PRAXION_DIR"
     fi
     return "$check_rc"
 }
@@ -526,6 +567,7 @@ if $DO_DRY_RUN; then
         step "Would export Praxion agents to $CODEX_AGENTS_DIR"
         step "Would export Praxion skill and command wrappers to $AGENT_SKILLS_DIR"
         step "Would export Praxion rules bridge to $CODEX_DIR"
+        step "Would export Praxion pipeline adapter to $CODEX_PRAXION_DIR"
     fi
     exit 0
 fi
@@ -564,6 +606,7 @@ if $DO_NATIVE; then
     info "Codex native agents exported to $CODEX_AGENTS_DIR"
     info "Codex skill and command wrappers exported to $AGENT_SKILLS_DIR"
     info "Codex rules bridge exported to $CODEX_DIR"
+    info "Codex pipeline adapter exported to $CODEX_PRAXION_DIR"
     print_codex_hook_review_note
 fi
 step "Start a fresh AGENTS.md-aware agent session in the target project to auto-load it."

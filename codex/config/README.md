@@ -99,3 +99,21 @@ Praxion-managed Codex rule bridge state in a target project:
 
 All Praxion-managed rule-bridge assets are prefixed `praxion-` or live under
 `.codex/praxion/` so ownership remains explicit and uninstall stays surgical.
+
+## Pipeline Adapter
+
+`export-codex-pipeline-adapter.py` generates Codex adapter metadata from
+Praxion's canonical coordination and model-routing rules.
+
+Generated surfaces:
+
+- `.codex/praxion/pipeline_semantics.json` -- process-tier, agent-flow, and
+  shared-document metadata derived from
+  `rules/swe/swe-agent-coordination-protocol.md`
+- `.codex/praxion/model_routing.json` -- Praxion agent tier routes derived from
+  `rules/swe/agent-model-routing.md`, translated to Codex model classes without
+  pinning decaying model IDs
+
+The adapter metadata is intentionally machine-readable and pointer-based. It
+does not copy canonical agent, rule, or planning bodies; Codex orchestration
+must still read the canonical Praxion source files before acting.
