@@ -400,7 +400,8 @@ checkout as the canonical source.
 `CLAUDE.md`, `rules/`, `skills/`, docs, source, tests, scripts, MCP server
 source, and `.ai-state/` data by reference.
 
-**What still needs adapters for native behavior:** MCP registration.
+**What still needs explicit later work:** broader hook migration beyond the
+rule-routing bridge.
 
 By default, the Codex install generates Codex custom-agent wrappers under the
 target project's `.codex/agents/`. These wrappers are intentionally thin: each
@@ -445,6 +446,14 @@ The rules bridge rescans canonical `rules/**/*.md` on every Codex install/check
 run, so new rules are picked up automatically. When a rule needs an explicit
 Codex portability or load override, that metadata lives in the rule's own
 frontmatter rather than in a separate Python allowlist.
+
+For MCP, the Codex install now reuses the canonical `.claude-plugin/plugin.json`
+`mcpServers` definitions and writes the corresponding `memory` and
+`task-chronograph` registrations into the shared Codex user config at
+`~/.codex/config.toml`. A small shared state file under
+`~/.codex/praxion/mcp_state.json` tracks which projects installed Praxion so
+uninstall can restore any pre-existing user server blocks instead of
+clobbering unrelated Codex MCP configuration.
 
 Use `--compat-only` only for non-Codex AGENTS.md-aware tools or when debugging
 the bootstrap pointer without native Codex surfaces.

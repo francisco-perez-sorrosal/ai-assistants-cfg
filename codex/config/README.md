@@ -100,6 +100,24 @@ Praxion-managed Codex rule bridge state in a target project:
 All Praxion-managed rule-bridge assets are prefixed `praxion-` or live under
 `.codex/praxion/` so ownership remains explicit and uninstall stays surgical.
 
+## MCP Adapter
+
+`manage-codex-mcp.py` installs, checks, and uninstalls the Praxion-managed
+Codex MCP adapter in the shared Codex user config:
+
+- reads the canonical `mcpServers` definitions from `.claude-plugin/plugin.json`
+- writes the corresponding `memory` and `task-chronograph` entries into
+  `~/.codex/config.toml` as `mcp_servers.*` tables with concrete repo-root
+  paths
+- preserves unrelated Codex config sections and non-Praxion MCP entries
+- tracks installed Praxion projects in `~/.codex/praxion/mcp_state.json`
+- restores any pre-existing user server blocks when the last Praxion-installed
+  project is uninstalled
+
+This shared-config ownership model is intentional: the rules bridge is
+project-local under the target repo's `.codex/`, but Codex MCP registration is
+managed through the shared user config surface.
+
 ## Pipeline Adapter
 
 `export-codex-pipeline-adapter.py` generates Codex adapter metadata from

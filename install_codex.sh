@@ -84,6 +84,8 @@ done
 TARGET_ROOT="$(cd "$TARGET_PATH" && pwd)"
 AGENTS_FILE="$TARGET_ROOT/AGENTS.md"
 CODEX_DIR="$TARGET_ROOT/.codex"
+CODEX_SHARED_DIR="${HOME}/.codex"
+CODEX_SHARED_CONFIG="$CODEX_SHARED_DIR/config.toml"
 CODEX_AGENTS_DIR="$CODEX_DIR/agents"
 CODEX_HOOKS_DIR="$CODEX_DIR/hooks"
 CODEX_PRAXION_DIR="$CODEX_DIR/praxion"
@@ -264,6 +266,7 @@ install_native_codex() {
         --out-dir "$AGENT_SKILLS_DIR" >/dev/null
     install_codex_rules_bridge
     install_codex_pipeline_adapter
+    install_codex_mcp
 }
 
 is_generated_agent_wrapper() {
@@ -318,6 +321,13 @@ install_codex_pipeline_adapter() {
     python3 "$PRAXION_ROOT/codex/config/export-codex-pipeline-adapter.py" \
         --repo-root "$PRAXION_ROOT" \
         --out-dir "$CODEX_DIR" >/dev/null
+}
+
+install_codex_mcp() {
+    python3 "$PRAXION_ROOT/codex/config/manage-codex-mcp.py" \
+        --repo-root "$PRAXION_ROOT" \
+        --project-root "$TARGET_ROOT" \
+        --mode install >/dev/null
 }
 
 prune_stale_native_codex() {
@@ -398,6 +408,7 @@ uninstall_native_codex() {
     rmdir "$CODEX_AGENTS_DIR" 2>/dev/null || true
     uninstall_codex_rules_bridge
     uninstall_codex_pipeline_adapter
+    uninstall_codex_mcp
     uninstall_codex_skills
     rmdir "$CODEX_DIR" 2>/dev/null || true
     rmdir "$TARGET_ROOT/.agents" 2>/dev/null || true
@@ -434,6 +445,13 @@ uninstall_codex_pipeline_adapter() {
     rm -f "$CODEX_PRAXION_DIR"/pipeline_semantics.json 2>/dev/null || true
     rm -f "$CODEX_PRAXION_DIR"/model_routing.json 2>/dev/null || true
     rmdir "$CODEX_PRAXION_DIR" 2>/dev/null || true
+}
+
+uninstall_codex_mcp() {
+    python3 "$PRAXION_ROOT/codex/config/manage-codex-mcp.py" \
+        --repo-root "$PRAXION_ROOT" \
+        --project-root "$TARGET_ROOT" \
+        --mode uninstall >/dev/null
 }
 
 check_native_codex() {
@@ -544,6 +562,19 @@ check_native_codex() {
         }
     rm -f "$rules_bridge_check_output" 2>/dev/null || true
 
+    local mcp_check_output
+    mcp_check_output="$(mktemp)"
+    python3 "$PRAXION_ROOT/codex/config/manage-codex-mcp.py" \
+        --repo-root "$PRAXION_ROOT" \
+        --project-root "$TARGET_ROOT" \
+        --mode check >"$mcp_check_output" 2>&1 || {
+            cat "$mcp_check_output" | while IFS= read -r line; do
+                [ -n "$line" ] && warn "$line"
+            done
+            check_rc=1
+        }
+    rm -f "$mcp_check_output" 2>/dev/null || true
+
     rm -rf "$expected_root"
 
     if [ "$check_rc" -eq 0 ]; then
@@ -551,6 +582,7 @@ check_native_codex() {
         info "Codex skill and command wrappers present in $AGENT_SKILLS_DIR"
         info "Codex rules bridge present in $CODEX_DIR"
         info "Codex pipeline adapter present in $CODEX_PRAXION_DIR"
+        info "Codex shared MCP config present in $CODEX_SHARED_CONFIG"
     fi
     return "$check_rc"
 }
@@ -574,6 +606,7 @@ if $DO_DRY_RUN; then
         step "Would export Praxion skill and command wrappers to $AGENT_SKILLS_DIR"
         step "Would export Praxion rules bridge to $CODEX_DIR"
         step "Would export Praxion pipeline adapter to $CODEX_PRAXION_DIR"
+        step "Would install Praxion MCP servers in shared Codex config $CODEX_SHARED_CONFIG"
     fi
     exit 0
 fi
@@ -599,6 +632,7 @@ if $DO_UNINSTALL; then
     if $DO_NATIVE; then
         uninstall_native_codex
         info "Codex native adapter files removed from $CODEX_DIR"
+        info "Codex shared MCP config updated in $CODEX_SHARED_CONFIG"
     fi
     uninstall_block
     info "Praxion adapter block removed from $AGENTS_FILE"
@@ -613,6 +647,7 @@ if $DO_NATIVE; then
     info "Codex skill and command wrappers exported to $AGENT_SKILLS_DIR"
     info "Codex rules bridge exported to $CODEX_DIR"
     info "Codex pipeline adapter exported to $CODEX_PRAXION_DIR"
+    info "Codex shared MCP config updated in $CODEX_SHARED_CONFIG"
     print_codex_hook_review_note
 fi
 step "Start a fresh AGENTS.md-aware agent session in the target project to auto-load it."

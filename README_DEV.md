@@ -297,9 +297,17 @@ until the user approves those generated commands.
 This is intentionally different from native Codex `.rules`, which remain the
 surface for command approval / sandbox policy semantics. The Praxion rule
 bridge preserves Claude-style semantic rule meaning without repurposing that
-native Codex policy surface. The installer still does not configure MCP,
-create `.ai-state/`, or export slash commands. Those surfaces require explicit
-tool-specific adapters:
+native Codex policy surface.
+
+For MCP, `install_codex.sh` now reuses the canonical `.claude-plugin/plugin.json`
+`mcpServers` entries and writes the corresponding `memory` and
+`task-chronograph` registrations into the shared Codex user config at
+`~/.codex/config.toml`. A refcounted state file at
+`~/.codex/praxion/mcp_state.json` tracks which projects installed Praxion so
+uninstall restores any pre-existing user server blocks instead of clobbering
+unrelated Codex MCP config.
+
+The installer still does not create `.ai-state/`. Current Codex adapter status:
 
 Rule pickup is automatic on every Codex install/check run: the bridge rescans
 `rules/**/*.md` and rebuilds the manifest from source. New rules do not require
@@ -307,13 +315,13 @@ Python-side allowlist edits. When a rule needs an explicit Codex portability or
 load override, add optional `codex:` frontmatter to the canonical rule file
 instead of extending adapter code.
 
-| Surface | Native adapter needed |
+| Surface | Current Codex adapter status |
 |---|---|
-| `commands/*.md` | Slash-command exporter or installer |
+| `commands/*.md` | `install_codex.sh` generates `praxion-command-<name>` wrappers under project `.agents/skills/` |
 | `agents/*.md` | `install_codex.sh` generates thin `.codex/agents/*.toml` wrappers by default |
 | `rules/**/*.md` frontmatter | `install_codex.sh` now generates a hook-backed rules bridge under `.codex/praxion/` plus `.codex/hooks.json`; native `.codex/rules` stays reserved for approval policy |
 | `skills/*/SKILL.md` metadata | `install_codex.sh` generates project `.agents/skills/*` wrappers by default; user-global `$HOME/.agents/skills` is later work |
-| MCP servers | Target framework MCP config writer |
+| MCP servers | `install_codex.sh` now syncs canonical `.claude-plugin/plugin.json` `mcpServers` into shared `~/.codex/config.toml`, with refcounted restore state under `~/.codex/praxion/mcp_state.json` |
 | hooks | `install_codex.sh` now installs the Praxion rule-routing hooks only; broader hook surfaces remain later work |
 
 Use this flow to test a pet project from a Praxion checkout:
