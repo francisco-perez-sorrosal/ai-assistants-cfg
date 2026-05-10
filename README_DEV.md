@@ -339,7 +339,7 @@ instead of extending adapter code.
 | `commands/*.md` | `install_codex.sh` generates `praxion-command-<name>` wrappers under project `.agents/skills/` |
 | `agents/*.md` | `install_codex.sh` generates thin `.codex/agents/*.toml` wrappers by default |
 | `rules/**/*.md` frontmatter | `install_codex.sh` now generates a hook-backed rules bridge under `.codex/praxion/` plus `.codex/hooks.json`; native `.codex/rules` stays reserved for approval policy |
-| `skills/*/SKILL.md` metadata | `install_codex.sh` generates project `.agents/skills/*` wrappers by default; user-global `$HOME/.agents/skills` is later work |
+| `skills/*/SKILL.md` metadata | `install_codex.sh` generates project `.agents/skills/*` wrappers by default |
 | MCP servers | `install_codex.sh` now syncs canonical `.claude-plugin/plugin.json` `mcpServers` into shared `~/.codex/config.toml`, with refcounted restore state under `~/.codex/praxion/mcp_state.json` |
 | hooks | `install_codex.sh` now installs Praxion rule routing plus portable canonical hooks for process framing, subagent contract injection, memory gates, observability, Bash commit/cleanup gates, worktree guard, post-write quality checks, and precompact state snapshots; Claude marketplace auto-completion remains Claude-only |
 
