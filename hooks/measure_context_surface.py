@@ -21,7 +21,7 @@ import fcntl
 import json
 import re
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Allow hook tests to import shared utilities without forcing repo-relative
@@ -190,7 +190,7 @@ def main() -> None:
     session_id = payload.get("session_id", "")
 
     observation = {
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "session_id": session_id,
         "agent_type": payload.get("agent_type", "main"),
         "agent_id": payload.get("agent_id", "") or session_id,

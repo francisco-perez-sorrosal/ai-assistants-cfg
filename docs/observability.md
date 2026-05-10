@@ -176,8 +176,13 @@ tail -f ~/.phoenix/phoenix.err   # stderr
 1. Verify Phoenix is running: `phoenix-ctl status`
 2. Verify chronograph is running: check MCP server in Claude Code
 3. Check `OTEL_ENABLED` is set to `true` (plugin.json sets this automatically)
-4. Verify hooks are registered: `./install.sh code --check`
+4. Verify hooks are registered: `./install.sh code --check` for Claude Code,
+   or `./install.sh codex <project> --check` for Codex.
 5. Check that `PRAXION_DISABLE_OBSERVABILITY` is not set to `1` in `.claude/settings.json`
+6. For Codex sessions, check startup logs for `skipping async hook`. That
+   means the installed `.codex/hooks.json` is stale; rerun
+   `./install.sh codex <project>` so the generated hooks omit the unsupported
+   `async` field.
 
 **Tool spans show zero duration:**
 

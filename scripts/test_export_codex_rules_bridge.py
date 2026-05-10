@@ -11,7 +11,9 @@ EXPORTER_PATH = REPO_ROOT / "codex" / "config" / "export-codex-rules-bridge.py"
 
 
 def load_exporter():
-    spec = importlib.util.spec_from_file_location("export_codex_rules_bridge", EXPORTER_PATH)
+    spec = importlib.util.spec_from_file_location(
+        "export_codex_rules_bridge", EXPORTER_PATH
+    )
     assert spec is not None
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -64,7 +66,9 @@ def test_export_rules_bridge_writes_prefixed_hooks_and_manifest(tmp_path: Path):
     assert out_dir / "hooks" / "praxion-memory-stop.py" in written
     assert out_dir / "hooks" / "praxion-observability-post-tool-use.py" in written
     assert out_dir / "hooks" / "praxion-user-prompt-submit.py" in written
-    assert out_dir / "hooks" / "praxion-process-framing-user-prompt-submit.py" in written
+    assert (
+        out_dir / "hooks" / "praxion-process-framing-user-prompt-submit.py" in written
+    )
     assert out_dir / "hooks" / "praxion-subagent-pre-tool-use.py" in written
     assert out_dir / "hooks" / "praxion-commit-memory-pre-tool-use.py" in written
     assert out_dir / "hooks" / "praxion-worktree-guard-pre-tool-use.py" in written
@@ -75,7 +79,9 @@ def test_export_rules_bridge_writes_prefixed_hooks_and_manifest(tmp_path: Path):
     assert out_dir / "hooks" / "praxion-precompact-state.py" in written
     assert out_dir / "praxion" / "hook_runtime.py" in written
 
-    manifest = json.loads((out_dir / "praxion" / "rules_manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads(
+        (out_dir / "praxion" / "rules_manifest.json").read_text(encoding="utf-8")
+    )
     relpaths = {rule["relpath"] for rule in manifest["rules"]}
     assert "rules/swe/agent-behavioral-contract.md" in relpaths
     assert "rules/swe/testing-conventions.md" in relpaths
@@ -83,22 +89,38 @@ def test_export_rules_bridge_writes_prefixed_hooks_and_manifest(tmp_path: Path):
     assert "rules::swe::agent-model-routing" not in always_on
     assert "rules::swe::memory-protocol" not in always_on
 
-    registrations = json.loads((out_dir / "praxion" / "hook_registrations.json").read_text(encoding="utf-8"))
+    registrations = json.loads(
+        (out_dir / "praxion" / "hook_registrations.json").read_text(encoding="utf-8")
+    )
     hooks = registrations["hooks"]
+    serialized_hooks = json.dumps(hooks)
+    assert '"async"' not in serialized_hooks
     assert hooks["SessionStart"][0]["hooks"][0]["statusMessage"].startswith("Praxion:")
     assert "praxion-session-start.py" in hooks["SessionStart"][0]["hooks"][0]["command"]
-    assert "praxion-memory-session-start.py" in hooks["SessionStart"][1]["hooks"][0]["command"]
+    assert (
+        "praxion-memory-session-start.py"
+        in hooks["SessionStart"][1]["hooks"][0]["command"]
+    )
     assert "praxion-memory-stop.py" in hooks["Stop"][0]["hooks"][0]["command"]
-    assert "praxion-observability-post-tool-use.py" in hooks["PostToolUse"][0]["hooks"][0]["command"]
-    assert "praxion-process-framing-user-prompt-submit.py" in hooks["UserPromptSubmit"][1]["hooks"][0]["command"]
-    assert "praxion-memory-subagent-stop.py" in hooks["SubagentStop"][0]["hooks"][0]["command"]
-    assert "praxion-precompact-state.py" in hooks["PreCompact"][0]["hooks"][0]["command"]
+    assert (
+        "praxion-observability-post-tool-use.py"
+        in hooks["PostToolUse"][0]["hooks"][0]["command"]
+    )
+    assert (
+        "praxion-process-framing-user-prompt-submit.py"
+        in hooks["UserPromptSubmit"][1]["hooks"][0]["command"]
+    )
+    assert (
+        "praxion-memory-subagent-stop.py"
+        in hooks["SubagentStop"][0]["hooks"][0]["command"]
+    )
+    assert (
+        "praxion-precompact-state.py" in hooks["PreCompact"][0]["hooks"][0]["command"]
+    )
     assert "git rev-parse" not in hooks["SessionStart"][0]["hooks"][0]["command"]
     assert "__PRAXION_PROJECT_ROOT__" in hooks["SessionStart"][0]["hooks"][0]["command"]
     pre_tool_commands = "\n".join(
-        hook["command"]
-        for group in hooks["PreToolUse"]
-        for hook in group["hooks"]
+        hook["command"] for group in hooks["PreToolUse"] for hook in group["hooks"]
     )
     assert "praxion-subagent-pre-tool-use.py" in pre_tool_commands
     assert "praxion-commit-memory-pre-tool-use.py" in pre_tool_commands
@@ -108,7 +130,10 @@ def test_export_rules_bridge_writes_prefixed_hooks_and_manifest(tmp_path: Path):
         for group in hooks["PreToolUse"]
         if "praxion-pre-tool-use.py" in group["hooks"][0]["command"]
     )
-    assert rule_group["matcher"] == "Edit|MultiEdit|NotebookEdit|Write|apply_patch|ApplyPatch"
+    assert (
+        rule_group["matcher"]
+        == "Edit|MultiEdit|NotebookEdit|Write|apply_patch|ApplyPatch"
+    )
 
 
 def test_generated_hooks_route_always_on_prompt_and_path_rules(tmp_path: Path):
@@ -120,7 +145,9 @@ def test_generated_hooks_route_always_on_prompt_and_path_rules(tmp_path: Path):
     prompt_hook = out_dir / "hooks" / "praxion-user-prompt-submit.py"
     pre_hook = out_dir / "hooks" / "praxion-pre-tool-use.py"
 
-    session_output = run_hook(session_hook, {"hook_event_name": "SessionStart", "cwd": str(tmp_path)})
+    session_output = run_hook(
+        session_hook, {"hook_event_name": "SessionStart", "cwd": str(tmp_path)}
+    )
     session_context = session_output["hookSpecificOutput"]["additionalContext"]
     assert "rules/swe/agent-behavioral-contract.md" in session_context
     assert "rules/swe/agent-model-routing.md" not in session_context
@@ -128,16 +155,27 @@ def test_generated_hooks_route_always_on_prompt_and_path_rules(tmp_path: Path):
 
     prompt_output = run_hook(
         prompt_hook,
-        {"hook_event_name": "UserPromptSubmit", "cwd": str(tmp_path), "prompt": "Please update the tests and pytest coverage"},
+        {
+            "hook_event_name": "UserPromptSubmit",
+            "cwd": str(tmp_path),
+            "prompt": "Please update the tests and pytest coverage",
+        },
     )
     prompt_context = prompt_output["hookSpecificOutput"]["additionalContext"]
     assert "rules/swe/testing-conventions.md" in prompt_context
 
     prompt_path_output = run_hook(
         prompt_hook,
-        {"hook_event_name": "UserPromptSubmit", "cwd": str(tmp_path), "prompt": "Edit tests/test_example.py"},
+        {
+            "hook_event_name": "UserPromptSubmit",
+            "cwd": str(tmp_path),
+            "prompt": "Edit tests/test_example.py",
+        },
     )
-    assert "rules/swe/testing-conventions.md" in prompt_path_output["hookSpecificOutput"]["additionalContext"]
+    assert (
+        "rules/swe/testing-conventions.md"
+        in prompt_path_output["hookSpecificOutput"]["additionalContext"]
+    )
 
     pre_output = run_hook(
         pre_hook,
@@ -510,7 +548,11 @@ def test_prompt_matching_avoids_generic_false_positives(tmp_path: Path):
     prompt_hook = out_dir / "hooks" / "praxion-user-prompt-submit.py"
     output = run_hook(
         prompt_hook,
-        {"hook_event_name": "UserPromptSubmit", "cwd": str(tmp_path), "prompt": "work on skills and agents export"},
+        {
+            "hook_event_name": "UserPromptSubmit",
+            "cwd": str(tmp_path),
+            "prompt": "work on skills and agents export",
+        },
     )
     context = output["hookSpecificOutput"]["additionalContext"]
     assert "rules/swe/shipped-artifact-isolation.md" in context
@@ -518,7 +560,9 @@ def test_prompt_matching_avoids_generic_false_positives(tmp_path: Path):
     assert "rules/ml/gpu-budget-conventions.md" not in context
 
 
-def test_new_generic_rules_are_picked_up_automatically_without_allowlist(tmp_path: Path):
+def test_new_generic_rules_are_picked_up_automatically_without_allowlist(
+    tmp_path: Path,
+):
     exporter = load_exporter()
     repo_root = tmp_path / "repo"
     write_rule(
@@ -527,13 +571,15 @@ def test_new_generic_rules_are_picked_up_automatically_without_allowlist(tmp_pat
     )
     write_rule(
         repo_root / "rules" / "swe" / "new-path-rule.md",
-        "---\npaths:\n  - \"tests/**\"\n---\n\n## New Path Rule\n\nRules for tests.\n",
+        '---\npaths:\n  - "tests/**"\n---\n\n## New Path Rule\n\nRules for tests.\n',
     )
 
     out_dir = tmp_path / ".codex"
     exporter.export_rules_bridge(repo_root, out_dir)
 
-    manifest = json.loads((out_dir / "praxion" / "rules_manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads(
+        (out_dir / "praxion" / "rules_manifest.json").read_text(encoding="utf-8")
+    )
     rule_by_path = {rule["relpath"]: rule for rule in manifest["rules"]}
     assert rule_by_path["rules/swe/new-portable-rule.md"]["codex_load"] == "always_on"
     assert rule_by_path["rules/swe/new-path-rule.md"]["codex_load"] == "path_scoped"
@@ -556,8 +602,12 @@ def test_codex_metadata_can_override_automatic_classification(tmp_path: Path):
     out_dir = tmp_path / ".codex"
     exporter.export_rules_bridge(repo_root, out_dir)
 
-    manifest = json.loads((out_dir / "praxion" / "rules_manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads(
+        (out_dir / "praxion" / "rules_manifest.json").read_text(encoding="utf-8")
+    )
     rule_by_path = {rule["relpath"]: rule for rule in manifest["rules"]}
-    assert rule_by_path["rules/swe/forced-portable.md"]["codex_portability"] == "portable"
+    assert (
+        rule_by_path["rules/swe/forced-portable.md"]["codex_portability"] == "portable"
+    )
     assert rule_by_path["rules/swe/forced-portable.md"]["codex_load"] == "always_on"
     assert rule_by_path["rules/swe/forced-exclude.md"]["codex_load"] == "exclude"

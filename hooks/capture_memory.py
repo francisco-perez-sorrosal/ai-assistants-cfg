@@ -12,7 +12,7 @@ import fcntl
 import json
 import re
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from _hook_utils import DISABLE_OBSERVABILITY, is_disabled
@@ -191,7 +191,7 @@ def main() -> None:
     parent_span_id = str(additional_context.get("parent_span_id") or "")
 
     observation = {
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "session_id": session_id,
         "agent_type": payload.get("agent_type", "main"),
         "agent_id": agent_id,

@@ -2,7 +2,8 @@
 
 Agent pipeline observability for Praxion. Traces every session -- pipeline runs, native Claude Code agents, tool calls, decisions, and phase transitions -- via OpenTelemetry, with persistent storage in [Arize Phoenix](https://github.com/Arize-ai/phoenix).
 
-Used by **Claude Code** (plugin) and **Cursor** (via `./install.sh cursor`).
+Used by **Claude Code** (plugin), **Codex** (via the Praxion Codex adapter),
+and **Cursor** (via `./install.sh cursor`).
 
 ## Architecture
 
@@ -166,6 +167,10 @@ uv run ruff format             # Format
 - **launchd plists**: `$HOME` must be expanded to a literal path at generation time — launchd does not expand shell variables.
 - **`InMemorySpanExporter`**: Lives at `opentelemetry.sdk.trace.export.in_memory_span_exporter`, not `opentelemetry.sdk.trace.export`.
 - **Hook matchers**: Empty string `""` matches all tools. The `format_python.py` hook uses `"Write|Edit"` in its own entry and is unaffected by the observability hook's empty matcher.
+- **Codex async hook field**: Codex project-local hooks do not support the
+  Claude-style `async` handler field. The Codex adapter omits it from generated
+  observability hook registrations; if Codex prints `skipping async hook`, rerun
+  `./install.sh codex <project>` to refresh `.codex/hooks.json`.
 - **Frozen Event dataclass**: New fields must have defaults to avoid breaking existing callers.
 - **Test lifespan**: `test_server.py` uses `_core_lifespan` (not `app_lifespan`) because MCP session manager doesn't work with pytest-asyncio.
 - **`arize-phoenix-evals`**: Uses Elastic-2.0 license (not MIT/Apache). Fine for self-hosted tooling but blocks offering evaluations as a service.

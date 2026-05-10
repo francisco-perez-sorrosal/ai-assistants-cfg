@@ -167,7 +167,9 @@ def parse_rule_frontmatter(lines: list[str], path: Path) -> dict[str, object]:
                     continue
                 submatch = key_pattern.match(stripped_next)
                 if not submatch:
-                    raise RuleParseError(f"{path}: unsupported codex frontmatter line: {next_line!r}")
+                    raise RuleParseError(
+                        f"{path}: unsupported codex frontmatter line: {next_line!r}"
+                    )
                 subkey, subvalue = submatch.group(1), (submatch.group(2) or "").strip()
                 codex_metadata[subkey] = strip_yaml_string(subvalue)
                 index += 1
@@ -270,7 +272,9 @@ def resolve_codex_portability(
     )
 
 
-def resolve_codex_load(scope: str, portability: str, codex_metadata: dict[str, object]) -> str:
+def resolve_codex_load(
+    scope: str, portability: str, codex_metadata: dict[str, object]
+) -> str:
     value = str(codex_metadata.get("load", "auto")).strip().lower()
     if value in {"", "auto"}:
         if portability != "portable":
@@ -1096,7 +1100,9 @@ def render_hook_registrations() -> dict[str, object]:
                     "hooks": [
                         {
                             "type": "command",
-                            "command": command("praxion-session-start.py", project_root),
+                            "command": command(
+                                "praxion-session-start.py", project_root
+                            ),
                             "timeout": 30,
                             "statusMessage": "Praxion: loading always-on rules",
                         }
@@ -1107,7 +1113,9 @@ def render_hook_registrations() -> dict[str, object]:
                     "hooks": [
                         {
                             "type": "command",
-                            "command": command("praxion-memory-session-start.py", project_root),
+                            "command": command(
+                                "praxion-memory-session-start.py", project_root
+                            ),
                             "timeout": 30,
                             "statusMessage": "Praxion: injecting memory context",
                         }
@@ -1122,11 +1130,10 @@ def render_hook_registrations() -> dict[str, object]:
                                 "praxion-observability-session-start.py", project_root
                             ),
                             "timeout": 15,
-                            "async": True,
                             "statusMessage": "Praxion: capturing session start",
                         }
                     ],
-                }
+                },
             ],
             "Stop": [
                 {
@@ -1147,7 +1154,6 @@ def render_hook_registrations() -> dict[str, object]:
                                 "praxion-observability-stop.py", project_root
                             ),
                             "timeout": 15,
-                            "async": True,
                             "statusMessage": "Praxion: capturing session stop",
                         }
                     ],
@@ -1158,7 +1164,9 @@ def render_hook_registrations() -> dict[str, object]:
                     "hooks": [
                         {
                             "type": "command",
-                            "command": command("praxion-user-prompt-submit.py", project_root),
+                            "command": command(
+                                "praxion-user-prompt-submit.py", project_root
+                            ),
                             "timeout": 30,
                             "statusMessage": "Praxion: routing prompt-scoped rules",
                         }
@@ -1176,7 +1184,7 @@ def render_hook_registrations() -> dict[str, object]:
                             "statusMessage": "Praxion: injecting process framing",
                         }
                     ],
-                }
+                },
             ],
             "PreToolUse": [
                 {
@@ -1271,11 +1279,10 @@ def render_hook_registrations() -> dict[str, object]:
                                 "praxion-observability-pre-tool-use.py", project_root
                             ),
                             "timeout": 15,
-                            "async": True,
                             "statusMessage": "Praxion: capturing tool start",
                         }
                     ],
-                }
+                },
             ],
             "PostToolUse": [
                 {
@@ -1286,7 +1293,6 @@ def render_hook_registrations() -> dict[str, object]:
                                 "praxion-observability-post-tool-use.py", project_root
                             ),
                             "timeout": 15,
-                            "async": True,
                             "statusMessage": "Praxion: capturing tool result",
                         }
                     ],
@@ -1323,7 +1329,6 @@ def render_hook_registrations() -> dict[str, object]:
                                 "praxion-observability-subagent-start.py", project_root
                             ),
                             "timeout": 15,
-                            "async": True,
                             "statusMessage": "Praxion: capturing subagent start",
                         }
                     ],
@@ -1350,7 +1355,6 @@ def render_hook_registrations() -> dict[str, object]:
                                 "praxion-observability-subagent-stop.py", project_root
                             ),
                             "timeout": 15,
-                            "async": True,
                             "statusMessage": "Praxion: capturing subagent stop",
                         }
                     ],
@@ -1361,7 +1365,9 @@ def render_hook_registrations() -> dict[str, object]:
                     "hooks": [
                         {
                             "type": "command",
-                            "command": command("praxion-precompact-state.py", project_root),
+                            "command": command(
+                                "praxion-precompact-state.py", project_root
+                            ),
                             "timeout": 15,
                             "statusMessage": "Praxion: snapshotting pipeline state",
                         }
@@ -1383,7 +1389,9 @@ def export_rules_bridge(repo_root: Path, out_dir: Path) -> list[Path]:
     written: list[Path] = []
 
     manifest_path = praxion_dir / "rules_manifest.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     written.append(manifest_path)
 
     lookup_path = praxion_dir / "rules_lookup.py"
@@ -1401,19 +1409,28 @@ def export_rules_bridge(repo_root: Path, out_dir: Path) -> list[Path]:
         ("praxion-memory-stop.py", "memory-stop"),
         ("praxion-observability-stop.py", "observability-stop"),
         ("praxion-user-prompt-submit.py", "user-prompt-submit"),
-        ("praxion-process-framing-user-prompt-submit.py", "process-framing-user-prompt-submit"),
+        (
+            "praxion-process-framing-user-prompt-submit.py",
+            "process-framing-user-prompt-submit",
+        ),
         ("praxion-subagent-pre-tool-use.py", "subagent-pre-tool-use"),
         ("praxion-commit-quality-pre-tool-use.py", "commit-quality-pre-tool-use"),
         ("praxion-commit-adr-pre-tool-use.py", "commit-adr-pre-tool-use"),
         ("praxion-cleanup-learnings-pre-tool-use.py", "cleanup-learnings-pre-tool-use"),
         ("praxion-commit-memory-pre-tool-use.py", "commit-memory-pre-tool-use"),
-        ("praxion-commit-id-citation-pre-tool-use.py", "commit-id-citation-pre-tool-use"),
+        (
+            "praxion-commit-id-citation-pre-tool-use.py",
+            "commit-id-citation-pre-tool-use",
+        ),
         ("praxion-worktree-guard-pre-tool-use.py", "worktree-guard-pre-tool-use"),
         ("praxion-pre-tool-use.py", "pre-tool-use"),
         ("praxion-observability-pre-tool-use.py", "observability-pre-tool-use"),
         ("praxion-observability-post-tool-use.py", "observability-post-tool-use"),
         ("praxion-format-python-post-tool-use.py", "format-python-post-tool-use"),
-        ("praxion-detect-duplication-post-tool-use.py", "detect-duplication-post-tool-use"),
+        (
+            "praxion-detect-duplication-post-tool-use.py",
+            "detect-duplication-post-tool-use",
+        ),
         ("praxion-observability-subagent-start.py", "observability-subagent-start"),
         ("praxion-memory-subagent-stop.py", "memory-subagent-stop"),
         ("praxion-observability-subagent-stop.py", "observability-subagent-stop"),

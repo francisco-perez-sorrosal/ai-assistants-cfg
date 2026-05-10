@@ -10,7 +10,7 @@ from __future__ import annotations
 import fcntl
 import json
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from _hook_utils import DISABLE_OBSERVABILITY, is_disabled
@@ -82,7 +82,7 @@ def main() -> None:
     agent_id = payload.get("agent_id", "") or session_id  # main agent uses session_id
 
     observation = {
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "session_id": session_id,
         "agent_type": payload.get("agent_type", "main"),
         "agent_id": agent_id,

@@ -439,8 +439,13 @@ the target project's `.codex/` directory:
 - `.codex/praxion/hook_runtime.py` runs canonical Praxion hook scripts with
   Codex-specific MCP tool names
 - `.codex/hooks.json` registers those Praxion-managed hooks
-- `.codex/config.toml` is updated surgically to enable Codex hooks and remove
-  the deprecated `codex_hooks` flag
+- `.codex/config.toml` is updated surgically to enable `codex_hooks = true`
+  and remove the stale Praxion-generated `hooks` flag
+
+Codex hook registrations intentionally omit the Claude-style `async` field:
+current Codex builds reject async hook handlers during startup. Observability
+hooks still fan out through Codex's command-hook runner; the wrappers fail open
+if Chronograph or Phoenix is unavailable.
 
 Codex may still require one-time manual review of newly installed project-local
 hooks via `/hooks`; that review is a Codex security gate, not a Praxion drift
