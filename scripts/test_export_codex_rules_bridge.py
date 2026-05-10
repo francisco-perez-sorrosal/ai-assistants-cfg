@@ -166,7 +166,8 @@ def test_generated_hooks_route_always_on_prompt_and_path_rules(tmp_path: Path):
             "prompt": "Please update the tests and pytest coverage",
         },
     )
-    prompt_context = prompt_output["additionalContext"]
+    prompt_context = prompt_output["hookSpecificOutput"]["additionalContext"]
+    assert prompt_output["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
     assert "rules/swe/testing-conventions.md" in prompt_context
 
     prompt_path_output = run_hook(
@@ -179,7 +180,7 @@ def test_generated_hooks_route_always_on_prompt_and_path_rules(tmp_path: Path):
     )
     assert (
         "rules/swe/testing-conventions.md"
-        in prompt_path_output["additionalContext"]
+        in prompt_path_output["hookSpecificOutput"]["additionalContext"]
     )
 
     pre_output = run_hook(
@@ -237,9 +238,10 @@ def test_project_settings_overlay_disables_codex_hooks(tmp_path: Path):
         {"hook_event_name": "SessionStart", "cwd": str(tmp_path), "session_id": "s1"},
     )
     assert memory_output["hookSpecificOutput"]["hookEventName"] == "SessionStart"
-    assert "Memory MCP disabled for this project" in memory_output[
-        "hookSpecificOutput"
-    ]["additionalContext"]
+    assert (
+        "Memory MCP disabled for this project"
+        in memory_output["hookSpecificOutput"]["additionalContext"]
+    )
 
     memory_stop_hook = out_dir / "hooks" / "praxion-memory-stop.py"
     memory_stop_output = run_hook(
@@ -395,8 +397,51 @@ def test_process_framing_hook_waits_for_ai_state_and_injects(tmp_path: Path):
             "prompt": "Please design and implement the full adapter flow?",
         },
     )
-    assert "tier selector" in active["additionalContext"]
-    assert "behavioral contract" in active["additionalContext"]
+    spec = active["hookSpecificOutput"]
+    assert spec["hookEventName"] == "UserPromptSubmit"
+    assert "tier selector" in spec["additionalContext"]
+    assert "behavioral contract" in spec["additionalContext"]
+
+
+def test_post_tool_use_wrappers_normalize_legacy_additional_context(tmp_path: Path):
+    exporter = load_exporter()
+    out_dir = tmp_path / ".codex"
+    exporter.export_rules_bridge(REPO_ROOT, out_dir)
+
+    duplicate_hook = out_dir / "hooks" / "praxion-detect-duplication-post-tool-use.py"
+    target = tmp_path / "duplicate.py"
+    target.write_text(
+        """
+def alpha():
+    value = 1
+    total = value + 1
+    print(total)
+    print(total + 1)
+    return total
+
+
+def beta():
+    value = 1
+    total = value + 1
+    print(total)
+    print(total + 1)
+    return total
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    output = run_hook(
+        duplicate_hook,
+        {
+            "hook_event_name": "PostToolUse",
+            "cwd": str(tmp_path),
+            "tool_input": {"file_path": str(target)},
+        },
+    )
+    spec = output["hookSpecificOutput"]
+    assert spec["hookEventName"] == "PostToolUse"
+    assert "[duplication]" in spec["additionalContext"]
 
 
 def test_subagent_context_hook_updates_agent_and_task_payloads(tmp_path: Path):
@@ -602,7 +647,9 @@ def test_prompt_matching_avoids_generic_false_positives(tmp_path: Path):
             "prompt": "work on skills and agents export",
         },
     )
-    context = output["additionalContext"]
+    spec = output["hookSpecificOutput"]
+    assert spec["hookEventName"] == "UserPromptSubmit"
+    context = spec["additionalContext"]
     assert "rules/swe/shipped-artifact-isolation.md" in context
     assert "rules/ml/eval-driven-verification.md" not in context
     assert "rules/ml/gpu-budget-conventions.md" not in context

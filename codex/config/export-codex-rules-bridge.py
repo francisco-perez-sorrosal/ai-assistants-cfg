@@ -450,6 +450,9 @@ CODEX_MEMORY_ENV = {
     "PRAXION_MEMORY_REMEMBER_TOOL": "mcp__memory__remember",
 }
 PROJECT_SETTINGS_PATH = Path(".codex") / "praxion" / "settings.json"
+_LEGACY_ADDITIONAL_CONTEXT_EVENTS = frozenset(
+    {"SessionStart", "PostToolUse", "UserPromptSubmit"}
+)
 
 
 def payload_has_ai_state(raw_payload: str) -> bool:
@@ -524,16 +527,64 @@ def run_canonical_command(
         check=False,
     )
     if result.stdout:
-        sys.stdout.write(result.stdout)
+        sys.stdout.write(normalize_hook_stdout(raw_payload, result.stdout))
     if result.stderr:
         sys.stderr.write(result.stderr)
     return int(result.returncode)
+
+
+def normalize_hook_stdout(raw_payload: str, stdout: str) -> str:
+    if not stdout.strip():
+        return stdout
+    try:
+        payload = json.loads(raw_payload or "{}")
+        output = json.loads(stdout)
+    except json.JSONDecodeError:
+        return stdout
+    if not isinstance(output, dict) or "hookSpecificOutput" in output:
+        return stdout
+    event_name = str(payload.get("hook_event_name", "") or "")
+    if event_name not in _LEGACY_ADDITIONAL_CONTEXT_EVENTS:
+        return stdout
+    additional_context = output.get("additionalContext")
+    if not isinstance(additional_context, str):
+        return stdout
+    normalized: dict[str, object] = {
+        "hookSpecificOutput": {
+            "hookEventName": event_name,
+            "additionalContext": additional_context,
+        }
+    }
+    for key in (
+        "continue",
+        "decision",
+        "reason",
+        "stopReason",
+        "suppressOutput",
+        "systemMessage",
+    ):
+        if key in output:
+            normalized[key] = output[key]
+    return json.dumps(normalized)
 """
     )
 
 
 def render_hook_script(kind: str) -> str:
     if kind == "session-start":
+        imports = """#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from rules_lookup import always_on_rules, format_context, load_manifest  # noqa: E402
+
+"""
         body = """
 def main() -> int:
     payload = json.loads(sys.stdin.read() or "{}")
@@ -550,8 +601,28 @@ def main() -> int:
     return 0
 """
     elif kind == "user-prompt-submit":
+        imports = """#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+"""
         body = """
 def main() -> int:
+    from rules_lookup import (
+        extract_paths_from_prompt,
+        format_context,
+        load_manifest,
+        match_rules_for_paths,
+        match_rules_for_prompt,
+        normalize_paths,
+    )
+
     payload = json.loads(sys.stdin.read() or "{}")
     manifest = load_manifest()
     prompt = payload.get("prompt", "")
@@ -567,12 +638,29 @@ def main() -> int:
         return 0
     context = format_context("Prompt-matched Praxion rules to consult for this turn:", rules)
     output = {
-        "additionalContext": context,
+        "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": context,
+        }
     }
     print(json.dumps(output))
     return 0
 """
     elif kind == "pre-tool-use":
+        imports = """#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import re
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from rules_lookup import extract_paths_from_command, format_context, load_manifest, looks_like_path_fragment, match_rules_for_paths, normalize_paths  # noqa: E402
+
+"""
         body = """
 MUTATING_TOOL_NAMES = {"Edit", "MultiEdit", "NotebookEdit", "Write", "apply_patch", "ApplyPatch"}
 READ_ONLY_TOOL_NAMES = {"Glob", "Grep", "LS", "Read"}
@@ -627,20 +715,7 @@ def main() -> int:
 """
     if kind in {"session-start", "user-prompt-submit", "pre-tool-use"}:
         return (
-            """#!/usr/bin/env python3
-from __future__ import annotations
-
-import json
-import re
-import sys
-from pathlib import Path
-
-HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
-sys.path.insert(0, str(HELPER_DIR))
-
-from rules_lookup import always_on_rules, extract_paths_from_command, extract_paths_from_prompt, format_context, load_manifest, looks_like_path_fragment, match_rules_for_paths, match_rules_for_prompt, normalize_paths
-
-"""
+            imports
             + body
             + """
 
