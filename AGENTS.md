@@ -85,7 +85,7 @@ given agentic coding framework:
 - `skills/*/SKILL.md` metadata -> skill discovery and activation bridge.
 - MCP server manifests/source -> target framework MCP config writer.
 - hooks -> target framework lifecycle hook integration.
-- Assistant-specific config under `claude/`, `cursor/`, or future
+- Assistant-specific config under `claude/`, `codex/`, `cursor/`, or future
   tool-specific directories.
 
 ## Verification

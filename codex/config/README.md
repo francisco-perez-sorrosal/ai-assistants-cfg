@@ -4,6 +4,36 @@ Codex-specific adapter sources live here. Shared Praxion artifacts remain
 canonical at the repository root; files in this directory generate or install
 Codex-native surfaces from those sources.
 
+## User Baseline
+
+`install_codex.sh` owns three shared Codex user surfaces:
+
+- `AGENTS.md.tmpl` renders to `~/.codex/AGENTS.md`
+- `userPreferences.txt` installs as `~/.codex/AGENTS.override.md`
+- `config_items.txt` enumerates which rendered instruction files belong to the
+  Codex installer
+
+This preserves the same baseline/preferences split Claude uses with
+`CLAUDE.md` plus `userPreferences.txt`, but mapped onto Codex's native startup
+surfaces.
+
+## Claude-to-Codex Parity Map
+
+Files in `claude/config/` do not all have a literal one-file Codex twin. The
+goal is semantic parity, not blind duplication:
+
+- `claude/config/CLAUDE.md.tmpl` -> `codex/config/AGENTS.md.tmpl`
+- `claude/config/userPreferences.txt` ->
+  `codex/config/userPreferences.txt`
+- `claude/config/config_items.txt` -> `codex/config/config_items.txt`
+- `claude/config/claude_desktop_config.json` -> no static Codex template;
+  Codex shared config is managed in-place through `~/.codex/config.toml`
+- `claude/config/stale_symlinks.txt` -> no Codex analogue; Codex shared files
+  are rendered/merged, not symlink-managed
+- `claude/config/.personal_info.env` remains the shared source for stable
+  rendered identity fields when present, so Claude and Codex baselines carry
+  the same personal metadata without duplicating per-user state
+
 ## Agent Export
 
 `export-codex-agents.py` converts `agents/*.md` into Codex custom-agent TOML
@@ -174,6 +204,9 @@ All Praxion-managed rule-bridge assets are prefixed `praxion-` or live under
 Codex MCP adapter in the shared Codex user config:
 
 - reads the canonical `mcpServers` definitions from `.claude-plugin/plugin.json`
+- ensures `project_doc_fallback_filenames` in `~/.codex/config.toml` includes
+  `CLAUDE.md`, so Codex can discover Claude-first Praxion projects without
+  renaming their canonical project doc
 - writes the corresponding `memory` and `task-chronograph` entries into
   `~/.codex/config.toml` as `mcp_servers.*` tables with concrete repo-root
   paths

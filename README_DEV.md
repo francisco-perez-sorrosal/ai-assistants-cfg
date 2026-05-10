@@ -135,6 +135,11 @@ claude/config/                       # Claude personal config (symlinked to ~/.c
 ├── config_items.txt
 ├── stale_symlinks.txt
 └── settings.local.json              # gitignored
+codex/config/                        # Codex shared instruction templates + adapter docs
+├── README.md
+├── AGENTS.md.tmpl
+├── userPreferences.txt
+└── config_items.txt
 cursor/config/                       # Cursor installer config
 ├── mcp.json.template
 ├── expected-mcp-servers.txt
@@ -193,7 +198,7 @@ eval/                                # Out-of-band quality evals (praxion-evals 
 install.sh                           # Installer router
 install_claude.sh                    # Claude Code / Desktop installer
 install_cursor.sh                    # Cursor installer
-install_codex.sh                     # Project-local AGENTS.md adapter installer
+install_codex.sh                     # Codex adapter installer (project-local + shared ~/.codex/)
 Makefile                             # Development targets
 ```
 
@@ -243,9 +248,9 @@ The flags are read by each hook via `is_disabled()` in `hooks/_hook_utils.py`. T
 
 - **Assistant-agnostic shared assets**: `skills/`, `commands/`, `agents/`, and `rules/` live at the repo root, reusable across any AI assistant
 - **AGENTS.md compatibility shim**: root `AGENTS.md` points AGENTS.md-aware tools to Praxion's canonical artifacts without copying their bodies
-- **Assistant-specific config**: Personal settings live in config directories (`claude/config/` for Claude, `cursor/config/` for Cursor, future tool directories as needed)
+- **Assistant-specific config**: Personal settings live in config directories (`claude/config/` for Claude, `codex/config/` for Codex, `cursor/config/` for Cursor, future tool directories as needed)
 - **Plugin distribution**: Skills, commands, and agents are installed via Claude Code's plugin system (`.claude-plugin/plugin.json`)
-- **Symlink for personal config**: `install_claude.sh` symlinks Claude config to `~/.claude/`; `install_cursor.sh` symlinks skills and rules into `.cursor/` or `~/.cursor/`
+- **Personal config ownership**: `install_claude.sh` symlinks Claude config to `~/.claude/`; `install_codex.sh` renders shared instruction files into `~/.codex/` and merges managed settings into `~/.codex/config.toml`; `install_cursor.sh` symlinks skills and rules into `.cursor/` or `~/.cursor/`
 - **Progressive disclosure**: Skills load metadata at startup, full content on activation, reference files on demand
 - **CLAUDE.md stays lean**: Skills, commands, agents, and rules are auto-discovered by Claude via filesystem scanning -- listing them in `CLAUDE.md` wastes always-loaded tokens and creates a sync burden. `README.md` and per-directory READMEs serve as the human-facing catalogs
 - **Nested CLAUDE.md for progressive disclosure**: Each artifact directory has its own `CLAUDE.md` with conventions specific to that directory. These are lazily loaded -- Claude reads them only when it accesses files in that directory, adding zero cost to sessions that don't touch the directory
@@ -258,7 +263,8 @@ AGENTS.md-aware coding agent. The root `AGENTS.md` names the compatibility
 contract and points agents back to canonical source artifacts.
 
 `install_codex.sh` installs a marked Praxion block into a target project's
-`AGENTS.md`. The block is safe to update or remove because it is delimited by:
+`AGENTS.md` and renders Codex shared instruction files into `~/.codex/`. The
+project-local block is safe to update or remove because it is delimited by:
 
 ```md
 <!-- PRAXION:AGENTS_ADAPTER:START -->
@@ -323,6 +329,11 @@ For MCP, `install_codex.sh` now reuses the canonical `.claude-plugin/plugin.json
 uninstall restores any pre-existing user server blocks instead of clobbering
 unrelated Codex MCP config.
 
+The same shared-config manager also ensures
+`project_doc_fallback_filenames` includes `CLAUDE.md`, which is the Codex-side
+equivalent of teaching the agent to read Praxion's canonical Claude-first
+project doc without forcing every project to rename that file.
+
 The installer still does not create `.ai-state/`; Claude project onboarding
 owns that lifecycle. Codex memory hooks and file-backed observation capture
 activate only when the target project already has `.ai-state/`. Current Codex
@@ -336,6 +347,9 @@ instead of extending adapter code.
 
 | Surface | Current Codex adapter status |
 |---|---|
+| `~/.codex/AGENTS.md` | `install_codex.sh` renders `codex/config/AGENTS.md.tmpl` into the Codex user config dir as the user baseline |
+| `~/.codex/AGENTS.override.md` | `install_codex.sh` copies `codex/config/userPreferences.txt` into the Codex user config dir as the user preference layer |
+| `~/.codex/config.toml` project-doc fallback | `install_codex.sh` ensures `project_doc_fallback_filenames` includes `CLAUDE.md`, with restoration of any pre-existing user value on uninstall |
 | `commands/*.md` | `install_codex.sh` generates `praxion-command-<name>` wrappers under project `.agents/skills/` |
 | `agents/*.md` | `install_codex.sh` generates thin `.codex/agents/*.toml` wrappers by default |
 | `rules/**/*.md` frontmatter | `install_codex.sh` now generates a hook-backed rules bridge under `.codex/praxion/` plus `.codex/hooks.json`; native `.codex/rules` stays reserved for approval policy |

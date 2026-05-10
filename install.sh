@@ -357,6 +357,8 @@ EOF
   Target: ${B}AGENTS.md-aware agents${R}
 
   Components:
+    • Shared Codex instructions  (~/.codex/AGENTS.md and AGENTS.override.md)
+    • Shared Codex config merge  (~/.codex/config.toml for MCP + CLAUDE.md fallback)
     • Project-local AGENTS.md adapter block
     • Pointers to Praxion source artifacts (no copied rules/skills/agents)
     • Codex custom-agent wrappers generated from agents/*.md
@@ -379,8 +381,10 @@ Usage: $(basename "$0") [code|desktop|cursor [path]|codex path] [--check] [--dry
   cursor       Install for Cursor: user profile ~/.cursor/ (default)
   cursor PATH  Install for Cursor: per-project at PATH/.cursor/
   codex PATH   Install project-local AGENTS.md adapter for Codex and other
-               AGENTS.md-aware coding agents
-  --native     With 'codex', export Codex-native Praxion agent wrappers
+               AGENTS.md-aware coding agents plus shared ~/.codex instruction
+               files and shared ~/.codex/config.toml updates
+  --native     With 'codex', export Codex-native Praxion agent wrappers and the
+               shared ~/.codex instruction/config surfaces
                (default; accepted for readability)
   --compat-only
                With 'codex', only install the AGENTS.md compatibility pointer

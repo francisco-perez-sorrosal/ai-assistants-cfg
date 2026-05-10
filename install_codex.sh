@@ -14,6 +14,8 @@ set -eo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 START_MARKER="<!-- PRAXION:AGENTS_ADAPTER:START -->"
 END_MARKER="<!-- PRAXION:AGENTS_ADAPTER:END -->"
+CODEX_CONFIG_DIR="${SCRIPT_DIR}/codex/config"
+CLAUDE_PERSONAL_INFO_ENV="${SCRIPT_DIR}/claude/config/.personal_info.env"
 
 if [ -t 1 ]; then
     B=$'\033[1m' D=$'\033[2m' R=$'\033[0m'
@@ -39,7 +41,9 @@ Usage: $(basename "$0") PATH [--check] [--dry-run] [--uninstall] [--help]
 
   PATH         Target project directory. Required.
   --native     Also install Codex-native adapter files under PATH/.codex/.
-               This is the default; the flag is accepted for readability.
+               This is the default; the flag is accepted for readability. It
+               also renders shared Codex instruction files into ~/.codex/ and
+               updates shared Codex config in ~/.codex/config.toml.
   --compat-only
                Only install the AGENTS.md compatibility pointer. Intended for
                non-Codex AGENTS.md-aware tools or debugging the bootstrap layer.
@@ -85,6 +89,7 @@ TARGET_ROOT="$(cd "$TARGET_PATH" && pwd)"
 AGENTS_FILE="$TARGET_ROOT/AGENTS.md"
 CODEX_DIR="$TARGET_ROOT/.codex"
 CODEX_SHARED_DIR="${HOME}/.codex"
+CODEX_SHARED_CONFIG_ITEMS="${CODEX_CONFIG_DIR}/config_items.txt"
 CODEX_SHARED_CONFIG="$CODEX_SHARED_DIR/config.toml"
 CODEX_AGENTS_DIR="$CODEX_DIR/agents"
 CODEX_HOOKS_DIR="$CODEX_DIR/hooks"
@@ -253,7 +258,113 @@ praxion_skill_names() {
     done
 }
 
+load_render_personal_info_args() {
+    if [ -f "$CLAUDE_PERSONAL_INFO_ENV" ]; then
+        # shellcheck source=/dev/null
+        source "$CLAUDE_PERSONAL_INFO_ENV"
+        if [ -n "${PRAXION_USERNAME:-}" ] &&
+           [ -n "${PRAXION_EMAIL:-}" ] &&
+           [ -n "${PRAXION_GITHUB_URL:-}" ]; then
+            printf '%s\n' "$PRAXION_USERNAME" "$PRAXION_EMAIL" "$PRAXION_GITHUB_URL"
+            return 0
+        fi
+    fi
+    return 1
+}
+
+render_codex_shared_item() {
+    local template_path="$1"
+    local output_path="$2"
+    local values
+
+    if values="$(load_render_personal_info_args)"; then
+        mapfile -t personal_info < <(printf '%s\n' "$values")
+        python3 "$PRAXION_ROOT/scripts/render_claude_md.py" \
+            "$template_path" "$output_path" \
+            "${personal_info[0]}" "${personal_info[1]}" "${personal_info[2]}" >/dev/null
+        return
+    fi
+
+    python3 "$PRAXION_ROOT/scripts/render_claude_md.py" \
+        "$template_path" "$output_path" >/dev/null
+}
+
+codex_shared_item_target() {
+    printf '%s/%s\n' "$CODEX_SHARED_DIR" "$1"
+}
+
+codex_shared_item_source() {
+    case "$1" in
+        AGENTS.md) printf '%s/AGENTS.md.tmpl\n' "$CODEX_CONFIG_DIR" ;;
+        AGENTS.override.md) printf '%s/userPreferences.txt\n' "$CODEX_CONFIG_DIR" ;;
+        *) printf '%s/%s\n' "$CODEX_CONFIG_DIR" "$1" ;;
+    esac
+}
+
+install_codex_shared_user_config() {
+    [ -f "$CODEX_SHARED_CONFIG_ITEMS" ] || fail "Codex config item list not found: $CODEX_SHARED_CONFIG_ITEMS"
+    mkdir -p "$CODEX_SHARED_DIR"
+
+    local item source_path target_path
+    while IFS= read -r item || [ -n "$item" ]; do
+        [ -n "$item" ] || continue
+        source_path="$(codex_shared_item_source "$item")"
+        target_path="$(codex_shared_item_target "$item")"
+        [ -f "$source_path" ] || fail "Codex config source not found: $source_path"
+        render_codex_shared_item "$source_path" "$target_path"
+    done < "$CODEX_SHARED_CONFIG_ITEMS"
+}
+
+uninstall_codex_shared_user_config() {
+    local item target_path
+    if [ -f "$CODEX_SHARED_CONFIG_ITEMS" ]; then
+        while IFS= read -r item || [ -n "$item" ]; do
+            [ -n "$item" ] || continue
+            target_path="$(codex_shared_item_target "$item")"
+            rm -f "$target_path" 2>/dev/null || true
+        done < "$CODEX_SHARED_CONFIG_ITEMS"
+    fi
+    rmdir "$CODEX_SHARED_DIR" 2>/dev/null || true
+}
+
+check_codex_shared_user_config() {
+    [ -f "$CODEX_SHARED_CONFIG_ITEMS" ] || fail "Codex config item list not found: $CODEX_SHARED_CONFIG_ITEMS"
+
+    local check_rc=0 item source_path target_path expected_file label
+    while IFS= read -r item || [ -n "$item" ]; do
+        [ -n "$item" ] || continue
+        source_path="$(codex_shared_item_source "$item")"
+        target_path="$(codex_shared_item_target "$item")"
+        expected_file="$(mktemp)"
+        render_codex_shared_item "$source_path" "$expected_file"
+
+        case "$item" in
+            AGENTS.md) label="Codex shared AGENTS baseline" ;;
+            AGENTS.override.md) label="Codex shared AGENTS override" ;;
+            *) label="Codex shared config item" ;;
+        esac
+
+        if [ ! -f "$target_path" ]; then
+            warn "$label missing: $target_path"
+            check_rc=1
+            rm -f "$expected_file"
+            continue
+        fi
+        if ! cmp -s "$expected_file" "$target_path"; then
+            warn "$label is stale: $target_path"
+            check_rc=1
+            rm -f "$expected_file"
+            continue
+        fi
+        info "$label present in $target_path"
+        rm -f "$expected_file"
+    done < "$CODEX_SHARED_CONFIG_ITEMS"
+
+    return "$check_rc"
+}
+
 install_native_codex() {
+    install_codex_shared_user_config
     prune_stale_native_codex
     python3 "$PRAXION_ROOT/codex/config/export-codex-agents.py" \
         --repo-root "$PRAXION_ROOT" \
@@ -397,6 +508,7 @@ prune_stale_native_codex() {
 }
 
 uninstall_native_codex() {
+    uninstall_codex_shared_user_config
     if [ -d "$CODEX_AGENTS_DIR" ]; then
         while IFS= read -r agent_file; do
             [ -n "$agent_file" ] || continue
@@ -458,6 +570,9 @@ uninstall_codex_mcp() {
 check_native_codex() {
     local expected_root expected_file actual_file rel_path check_rc=0
     expected_root="$(mktemp -d)"
+    if ! check_codex_shared_user_config; then
+        check_rc=1
+    fi
     export_expected_native_codex "$expected_root"
     export_expected_rules_bridge "$expected_root/rules_bridge"
     export_expected_pipeline_adapter "$expected_root/pipeline_adapter"
@@ -607,7 +722,8 @@ if $DO_DRY_RUN; then
         step "Would export Praxion skill and command wrappers to $AGENT_SKILLS_DIR"
         step "Would export Praxion rules bridge to $CODEX_DIR"
         step "Would export Praxion pipeline adapter to $CODEX_PRAXION_DIR"
-        step "Would install Praxion MCP servers in shared Codex config $CODEX_SHARED_CONFIG"
+        step "Would install shared Codex instruction files in $CODEX_SHARED_DIR"
+        step "Would update shared Codex config in $CODEX_SHARED_CONFIG"
     fi
     exit 0
 fi
@@ -633,6 +749,7 @@ if $DO_UNINSTALL; then
     if $DO_NATIVE; then
         uninstall_native_codex
         info "Codex native adapter files removed from $CODEX_DIR"
+        info "Codex shared instruction files removed from $CODEX_SHARED_DIR"
         info "Codex shared MCP config updated in $CODEX_SHARED_CONFIG"
     fi
     uninstall_block
@@ -648,6 +765,7 @@ if $DO_NATIVE; then
     info "Codex skill and command wrappers exported to $AGENT_SKILLS_DIR"
     info "Codex rules bridge exported to $CODEX_DIR"
     info "Codex pipeline adapter exported to $CODEX_PRAXION_DIR"
+    info "Codex shared instruction files installed in $CODEX_SHARED_DIR"
     info "Codex shared MCP config updated in $CODEX_SHARED_CONFIG"
     print_codex_hook_review_note
 fi

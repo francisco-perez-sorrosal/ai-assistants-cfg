@@ -49,7 +49,7 @@ The operational infrastructure for the development philosophy in `~/.claude/CLAU
 - **No AI authorship** in commit messages — see `rules/swe/vcs/git-conventions.md`.
 - **Build output to `/dev/null`**, temp files in `tmp/` (gitignored), debug prints prefixed `# DEBUG:` for grep-removal.
 - **Praxion-specific principles** (extend `~/.claude/CLAUDE.md`): token budget first-class, measure before optimize, standards convergence as opportunity, curiosity over dogma. Full rationale in `README.md#guiding-principles`.
-- **Assistant-agnostic shared assets** at repo root (`skills/`, `commands/`, `agents/`); assistant-specific config in subdirectories (`claude/config/`, `cursor/config/`).
+- **Assistant-agnostic shared assets** at repo root (`skills/`, `commands/`, `agents/`); assistant-specific config in subdirectories (`claude/config/`, `codex/config/`, `cursor/config/`).
 - **Progressive disclosure** in skills (metadata at startup, body on activation, references on demand) is a load-bearing pattern — preserve it when crafting new skills.
 - **Memory MCP disabled for Praxion** (`PRAXION_DISABLE_MEMORY_MCP=1`): skip `remember`, `recall`, `search`, `browse_index` calls. The protocol in `rules/swe/memory-protocol.md` applies when memory is available; here it is not.
 

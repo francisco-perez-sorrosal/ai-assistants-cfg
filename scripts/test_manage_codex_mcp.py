@@ -48,6 +48,7 @@ def test_manage_codex_mcp_install_and_check_round_trip(tmp_path: Path):
 
     config_path = home_dir / ".codex" / "config.toml"
     parsed = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    assert parsed["project_doc_fallback_filenames"] == ["CLAUDE.md"]
     memory_config = parsed["mcp_servers"]["memory"]
     chronograph_config = parsed["mcp_servers"]["task-chronograph"]
 
@@ -104,7 +105,8 @@ def test_manage_codex_mcp_uninstall_restores_user_server_blocks(tmp_path: Path):
     codex_dir = home_dir / ".codex"
     codex_dir.mkdir()
     original_config = (
-        '# shared comment\n[profiles.default]\nmodel = "gpt-5"\n\n'
+        '# shared comment\nproject_doc_fallback_filenames = ["TEAM_GUIDE.md"]\n\n'
+        '[profiles.default]\nmodel = "gpt-5"\n\n'
         '[mcp_servers.memory]\n# preserve me\ncommand = "python3"\n'
         'args = ["-m", "user_memory"]\nstartup_timeout_sec = 30\n\n'
         '[mcp_servers.memory.env]\nMEMORY_FILE = "user-memory.json"\n'
@@ -123,6 +125,10 @@ def test_manage_codex_mcp_uninstall_restores_user_server_blocks(tmp_path: Path):
     assert install.returncode == 0, install.stderr or install.stdout
 
     installed = tomllib.loads((codex_dir / "config.toml").read_text(encoding="utf-8"))
+    assert installed["project_doc_fallback_filenames"] == [
+        "TEAM_GUIDE.md",
+        "CLAUDE.md",
+    ]
     assert installed["profiles"]["default"]["model"] == "gpt-5"
     assert installed["mcp_servers"]["memory"]["command"] == "uv"
 
@@ -138,12 +144,7 @@ def test_manage_codex_mcp_uninstall_restores_user_server_blocks(tmp_path: Path):
     assert uninstall.returncode == 0, uninstall.stderr or uninstall.stdout
 
     restored = (codex_dir / "config.toml").read_text(encoding="utf-8")
-    assert '# shared comment\n[profiles.default]\nmodel = "gpt-5"' in restored
-    assert "# preserve me" in restored
-    assert 'command = "python3"' in restored
-    assert 'args = ["-m", "user_memory"]' in restored
-    assert "startup_timeout_sec = 30" in restored
-    assert 'MEMORY_FILE = "user-memory.json"' in restored
+    assert restored == original_config
     assert not (codex_dir / "praxion" / "mcp_state.json").exists()
 
 
@@ -191,6 +192,7 @@ def test_manage_codex_mcp_refcounts_multiple_projects(tmp_path: Path):
 
     config_path = home_dir / ".codex" / "config.toml"
     parsed = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    assert parsed["project_doc_fallback_filenames"] == ["CLAUDE.md"]
     assert parsed["mcp_servers"]["memory"]["command"] == "uv"
 
     check_b = run_manager(

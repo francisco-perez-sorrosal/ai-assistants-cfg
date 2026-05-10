@@ -384,11 +384,12 @@ For **Claude Code vs Cursor** format differences (discovery paths, command expor
 
 ### Codex / AGENTS.md-aware agents (`./install.sh codex /path/repo`)
 
-Installs a small Praxion adapter block into the target project's `AGENTS.md`.
-This is intentionally lighter than the Claude Code and Cursor installers: it
-does not copy Praxion rule, skill, command, or agent bodies into Codex-native
-files. Generated wrappers point AGENTS.md-aware agents back to this Praxion
-checkout as the canonical source.
+Installs a small Praxion adapter block into the target project's `AGENTS.md`
+and renders Codex shared user instructions into `~/.codex/`. This is
+intentionally lighter than the Claude Code and Cursor installers: it does not
+copy Praxion rule, skill, command, or agent bodies into Codex-native files.
+Generated wrappers point AGENTS.md-aware agents back to this Praxion checkout
+as the canonical source.
 
 ```bash
 ./install.sh codex /path/to/repo --dry-run
@@ -425,6 +426,15 @@ and `.codex/praxion/model_routing.json` when present. That keeps task sizing,
 delegation, and model-routing guidance at the main-session adapter layer rather
 than copying Claude-only routing text into Codex wrappers.
 
+The installer also renders:
+
+- `codex/config/AGENTS.md.tmpl` -> `~/.codex/AGENTS.md`
+- `codex/config/userPreferences.txt` -> `~/.codex/AGENTS.override.md`
+
+That preserves the same baseline/preferences split used by Claude's
+`CLAUDE.md` plus `userPreferences.txt`, but on Codex's native shared
+instruction surfaces.
+
 For rules, the Codex install now generates a Praxion-managed rules bridge under
 the target project's `.codex/` directory:
 
@@ -440,8 +450,8 @@ the target project's `.codex/` directory:
 - `.codex/praxion/settings.json` optionally supplies project-local env
   overrides for Codex hook toggles
 - `.codex/hooks.json` registers those Praxion-managed hooks
-- `.codex/config.toml` is updated surgically to enable `codex_hooks = true`
-  and remove the stale Praxion-generated `hooks` flag
+- `.codex/config.toml` is updated surgically to enable `hooks = true`
+  and remove the stale Praxion-generated `codex_hooks` flag
 
 Codex hook registrations intentionally omit the Claude-style `async` field:
 current Codex builds reject async hook handlers during startup. Observability
@@ -460,6 +470,17 @@ The rules bridge rescans canonical `rules/**/*.md` on every Codex install/check
 run, so new rules are picked up automatically. When a rule needs an explicit
 Codex portability or load override, that metadata lives in the rule's own
 frontmatter rather than in a separate Python allowlist.
+
+For shared Codex config, the installer reuses the canonical
+`.claude-plugin/plugin.json` `mcpServers` entries and writes the corresponding
+`memory` and `task-chronograph` registrations into `~/.codex/config.toml`.
+That same managed shared-config surface also ensures
+`project_doc_fallback_filenames` includes `CLAUDE.md`, so Codex can load
+Praxion's canonical Claude-first project doc without requiring each repo to
+rename it to `AGENTS.md`. A refcounted state file at
+`~/.codex/praxion/mcp_state.json` tracks which projects installed Praxion so
+uninstall restores any pre-existing user config instead of clobbering
+unrelated Codex MCP settings.
 
 The Codex installer does not create `.ai-state/`; Claude project onboarding
 owns that lifecycle. Memory hooks and file-backed observation capture are
@@ -496,6 +517,10 @@ Read the user preferences from https://raw.githubusercontent.com/francisco-perez
 **Config directories** -- Installer resources live in tool-specific dirs:
 
 - **claude/config/** -- Personal config files (CLAUDE.md, userPreferences.txt, claude_desktop_config.json) and lists. See [claude/config/README.md](claude/config/README.md).
+- **codex/config/** -- Codex-native shared instruction templates
+  (`AGENTS.md.tmpl`, `userPreferences.txt`), installer manifest
+  (`config_items.txt`), and adapter docs. See
+  [codex/config/README.md](codex/config/README.md).
 - **cursor/config/** -- MCP template and expected servers. See [cursor/config/README.md](cursor/config/README.md).
 
 ## Advanced Topics
