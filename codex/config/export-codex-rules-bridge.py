@@ -449,6 +449,7 @@ CODEX_MEMORY_ENV = {
     "PRAXION_MEMORY_TOOL_PREFIXES": "mcp__memory__,mcp__plugin_i-am_memory__",
     "PRAXION_MEMORY_REMEMBER_TOOL": "mcp__memory__remember",
 }
+PROJECT_SETTINGS_PATH = Path(".codex") / "praxion" / "settings.json"
 
 
 def payload_has_ai_state(raw_payload: str) -> bool:
@@ -471,6 +472,23 @@ def payload_cwd(raw_payload: str) -> str | None:
     return cwd
 
 
+def load_project_env(raw_payload: str) -> dict[str, str]:
+    cwd = payload_cwd(raw_payload)
+    if not cwd:
+        return {}
+    settings_path = Path(cwd) / PROJECT_SETTINGS_PATH
+    if not settings_path.exists():
+        return {}
+    try:
+        payload = json.loads(settings_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return {}
+    env = payload.get("env")
+    if not isinstance(env, dict):
+        return {}
+    return {str(key): str(value) for key, value in env.items()}
+
+
 def run_canonical_hook(
     relative_path: str,
     raw_payload: str,
@@ -487,6 +505,9 @@ def run_canonical_command(
     env = os.environ.copy()
     if env_updates:
         env.update(env_updates)
+    project_env = load_project_env(raw_payload)
+    if project_env:
+        env.update(project_env)
     resolved = [
         str(REPO_ROOT / part)
         if part.startswith(("hooks/", "scripts/"))
@@ -546,10 +567,7 @@ def main() -> int:
         return 0
     context = format_context("Prompt-matched Praxion rules to consult for this turn:", rules)
     output = {
-        "hookSpecificOutput": {
-            "hookEventName": "UserPromptSubmit",
-            "additionalContext": context,
-        }
+        "additionalContext": context,
     }
     print(json.dumps(output))
     return 0

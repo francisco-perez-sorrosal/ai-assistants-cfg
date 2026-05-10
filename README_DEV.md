@@ -199,7 +199,7 @@ Makefile                             # Development targets
 
 ## Per-Project Hook Opt-Outs
 
-Five env-var flags let a downstream project disable Praxion hooks that cost tokens or block behavior. Absence of the flag preserves default behavior — set to `1`, `true`, or `yes` in the target project's `.claude/settings.json` `env` block to disable.
+Six env-var flags let a downstream project disable Praxion hooks that cost tokens or block behavior. Absence of the flag preserves default behavior — set to `1`, `true`, or `yes` in the target project's `.claude/settings.json` `env` block for Claude or `.codex/praxion/settings.json` `env` block for Codex.
 
 | Flag | What it disables | When to use |
 |------|------------------|-------------|
@@ -207,6 +207,7 @@ Five env-var flags let a downstream project disable Praxion hooks that cost toke
 | `PRAXION_DISABLE_MEMORY_GATE` | `memory_gate.py` (Stop) and `validate_memory.py` (SubagentStop) | Silences the "you must call remember()" blocker. No prompt-token impact — disables enforcement, not injection. |
 | `PRAXION_DISABLE_OBSERVABILITY` | `send_event.py`, `capture_session.py`, `capture_memory.py` | Disables chronograph telemetry and `observations.jsonl` writes. Zero prompt-token impact; saves process-spawn time and local I/O. |
 | `PRAXION_DISABLE_MEMORY_MCP` | Unified kill switch: implies `DISABLE_MEMORY_INJECTION` + `DISABLE_MEMORY_GATE`, and additionally injects a small "memory MCP disabled" notice so the assistant stops voluntary `remember()`/`recall()` calls driven by the `memory-protocol` rule. | Set when the project wants the memory MCP server's tools to remain nominally callable but behaviorally inert — e.g., during experiments, when memory.json has drifted schema, or when you simply do not want memory persistence for this project. |
+| `PRAXION_DISABLE_PROCESS_INJECT` | `inject_process_framing.py` (UserPromptSubmit) | Disables the compact process-framing reminder that reinforces the tier selector and behavioral contract. No prompt-token impact; use when you want Codex or Claude to stay silent on that reminder. |
 | `PRAXION_DISABLE_WORKTREE_GUARD` | `worktree_guard.py` (PreToolUse on `Write\|Edit\|NotebookEdit`) | Disables the cross-worktree write guard that blocks absolute paths resolving outside the session worktree into a sibling git tree. No prompt-token impact. Set when a workflow legitimately needs to edit the main repo or a sibling worktree from inside a linked worktree (rare; fail-open semantics mean the guard never wedges work — this flag silences the explicit block). |
 
 **Why a fourth flag?** The first three disable hook *side-effects* but cannot stop the assistant from voluntarily calling `remember()` because the always-loaded `rules/swe/memory-protocol.md` rule instructs it to. The MCP flag adds the missing piece: an assistant-observable signal injected at SessionStart/SubagentStart that triggers the rule's skip-all-operations exit clause. Without the notice, the rule's exit clause never fires.
@@ -222,6 +223,8 @@ Example for finer-grained control — keep the gate blocker silent but continue 
 ```json
 { "env": { "PRAXION_DISABLE_MEMORY_GATE": "1" } }
 ```
+
+Codex uses the same `env` shape in `.codex/praxion/settings.json`, so the same flags work there without touching `.claude/settings.json`.
 
 The flags are read by each hook via `is_disabled()` in `hooks/_hook_utils.py`. To disable every Praxion hook at once, disable the plugin itself in `enabledPlugins`.
 

@@ -122,6 +122,21 @@ The bridge also does **not** create `.ai-state/`. Claude project onboarding
 owns that lifecycle; generated Codex memory hooks and file-backed observation
 capture activate against an existing `.ai-state/` directory.
 
+## Project Settings Overlay
+
+Codex-generated Praxion hook wrappers also read an optional project-local
+`.codex/praxion/settings.json` file before they invoke canonical hooks. The
+file uses the same `{"env": {...}}` shape as Claude Code settings, and the
+environment entries are merged into the hook subprocess environment.
+
+Use it to flip the same `PRAXION_DISABLE_*` flags documented in
+`README_DEV.md` without touching `.claude/settings.json`. The common case is
+disabling memory or prompt-injection helpers for a Codex-managed project:
+
+```json
+{ "env": { "PRAXION_DISABLE_MEMORY_MCP": "1", "PRAXION_DISABLE_PROCESS_INJECT": "1" } }
+```
+
 The Claude marketplace auto-completion hook is intentionally not bridged to
 Codex because its job is to repair `~/.claude` plugin surfaces. Codex installs
 use `install_codex.sh` instead.

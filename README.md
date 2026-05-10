@@ -438,6 +438,8 @@ the target project's `.codex/` directory:
   precompact state snapshots
 - `.codex/praxion/hook_runtime.py` runs canonical Praxion hook scripts with
   Codex-specific MCP tool names
+- `.codex/praxion/settings.json` optionally supplies project-local env
+  overrides for Codex hook toggles
 - `.codex/hooks.json` registers those Praxion-managed hooks
 - `.codex/config.toml` is updated surgically to enable `codex_hooks = true`
   and remove the stale Praxion-generated `hooks` flag
@@ -464,6 +466,11 @@ The Codex installer does not create `.ai-state/`; Claude project onboarding
 owns that lifecycle. Memory hooks and file-backed observation capture are
 installed by the Codex adapter, but they activate only when the target project
 already has `.ai-state/`.
+
+Codex hook wrappers also honor an optional project-local
+`.codex/praxion/settings.json` overlay with the same `{"env": {...}}` shape as
+Claude Code settings. Use it to disable memory, process framing, observability,
+or worktree-guard behavior for Codex without touching `.claude/settings.json`.
 
 For MCP, the Codex install now reuses the canonical `.claude-plugin/plugin.json`
 `mcpServers` definitions and writes the corresponding `memory` and

@@ -53,6 +53,11 @@ def write_rule(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def write_project_settings(path: Path, env: dict[str, str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"env": env}), encoding="utf-8")
+
+
 def test_export_rules_bridge_writes_prefixed_hooks_and_manifest(tmp_path: Path):
     exporter = load_exporter()
     out_dir = tmp_path / ".codex"
@@ -161,7 +166,7 @@ def test_generated_hooks_route_always_on_prompt_and_path_rules(tmp_path: Path):
             "prompt": "Please update the tests and pytest coverage",
         },
     )
-    prompt_context = prompt_output["hookSpecificOutput"]["additionalContext"]
+    prompt_context = prompt_output["additionalContext"]
     assert "rules/swe/testing-conventions.md" in prompt_context
 
     prompt_path_output = run_hook(
@@ -174,7 +179,7 @@ def test_generated_hooks_route_always_on_prompt_and_path_rules(tmp_path: Path):
     )
     assert (
         "rules/swe/testing-conventions.md"
-        in prompt_path_output["hookSpecificOutput"]["additionalContext"]
+        in prompt_path_output["additionalContext"]
     )
 
     pre_output = run_hook(
@@ -210,6 +215,49 @@ def test_generated_hooks_route_always_on_prompt_and_path_rules(tmp_path: Path):
         },
     )
     assert bash_output == {}
+
+
+def test_project_settings_overlay_disables_codex_hooks(tmp_path: Path):
+    exporter = load_exporter()
+    out_dir = tmp_path / ".codex"
+    exporter.export_rules_bridge(REPO_ROOT, out_dir)
+
+    write_project_settings(
+        tmp_path / ".codex" / "praxion" / "settings.json",
+        {
+            "PRAXION_DISABLE_MEMORY_MCP": "1",
+            "PRAXION_DISABLE_PROCESS_INJECT": "1",
+        },
+    )
+    (tmp_path / ".ai-state").mkdir()
+
+    memory_hook = out_dir / "hooks" / "praxion-memory-session-start.py"
+    memory_output = run_hook(
+        memory_hook,
+        {"hook_event_name": "SessionStart", "cwd": str(tmp_path), "session_id": "s1"},
+    )
+    assert memory_output["hookSpecificOutput"]["hookEventName"] == "SessionStart"
+    assert "Memory MCP disabled for this project" in memory_output[
+        "hookSpecificOutput"
+    ]["additionalContext"]
+
+    memory_stop_hook = out_dir / "hooks" / "praxion-memory-stop.py"
+    memory_stop_output = run_hook(
+        memory_stop_hook,
+        {"hook_event_name": "Stop", "cwd": str(tmp_path), "transcript_path": "x"},
+    )
+    assert memory_stop_output == {}
+
+    framing_hook = out_dir / "hooks" / "praxion-process-framing-user-prompt-submit.py"
+    framing_output = run_hook(
+        framing_hook,
+        {
+            "hook_event_name": "UserPromptSubmit",
+            "cwd": str(tmp_path),
+            "prompt": "Please design the adapter flow for Codex",
+        },
+    )
+    assert framing_output == {}
 
 
 def test_memory_session_start_hook_waits_for_ai_state(tmp_path: Path):
@@ -554,7 +602,7 @@ def test_prompt_matching_avoids_generic_false_positives(tmp_path: Path):
             "prompt": "work on skills and agents export",
         },
     )
-    context = output["hookSpecificOutput"]["additionalContext"]
+    context = output["additionalContext"]
     assert "rules/swe/shipped-artifact-isolation.md" in context
     assert "rules/ml/eval-driven-verification.md" not in context
     assert "rules/ml/gpu-budget-conventions.md" not in context
