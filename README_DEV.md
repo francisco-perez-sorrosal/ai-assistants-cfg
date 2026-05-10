@@ -273,6 +273,13 @@ canonical Praxion wording for agent and skill metadata. If Codex warns that
 skill descriptions were shortened to fit its startup budget, accept that
 runtime warning instead of pre-trimming generated wrappers.
 
+When native Codex surfaces are installed, the project-local `AGENTS.md` adapter
+is also the current consumer for the generated pipeline metadata. It points
+AGENTS.md-aware tools to `.codex/praxion/pipeline_semantics.json` for task
+sizing and delegation and to `.codex/praxion/model_routing.json` for Codex-side
+routing, rather than asking Codex to reinterpret the Claude-only routing rule
+directly.
+
 For rules, the installer now generates a **Codex rules bridge** rather than a
 lossy direct export to native `.codex/rules/`:
 

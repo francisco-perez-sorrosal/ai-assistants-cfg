@@ -417,6 +417,12 @@ may warn that skill descriptions were shortened to fit its startup budget; that
 runtime warning is preferred over pre-trimming Praxion's canonical
 descriptions.
 
+When native Codex surfaces are installed, the project-local `AGENTS.md` adapter
+also points AGENTS.md-aware tools at `.codex/praxion/pipeline_semantics.json`
+and `.codex/praxion/model_routing.json` when present. That keeps task sizing,
+delegation, and model-routing guidance at the main-session adapter layer rather
+than copying Claude-only routing text into Codex wrappers.
+
 For rules, the Codex install now generates a Praxion-managed rules bridge under
 the target project's `.codex/` directory:
 

@@ -117,3 +117,7 @@ Generated surfaces:
 The adapter metadata is intentionally machine-readable and pointer-based. It
 does not copy canonical agent, rule, or planning bodies; Codex orchestration
 must still read the canonical Praxion source files before acting.
+
+Current consumer: the installed project `AGENTS.md` adapter block points
+AGENTS.md-aware main sessions at these files when present, so task sizing,
+delegation, and model routing stay in the Codex adapter layer.

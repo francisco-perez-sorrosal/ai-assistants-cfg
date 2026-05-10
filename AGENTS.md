@@ -120,6 +120,12 @@ When working in this project:
    skill references only when needed.
 5. Treat `/Users/fperez/dev/praxion/commands/*.md` and `/Users/fperez/dev/praxion/agents/*.md` as
    workflow specs unless this agentic framework has a native adapter for them.
+6. If `.codex/praxion/pipeline_semantics.json` exists, read it before task
+   sizing or delegation; it is the Codex-native translation of Praxion
+   pipeline semantics.
+7. If `.codex/praxion/model_routing.json` exists, read it before choosing
+   model or reasoning settings for Codex agent work; it is the Codex adapter
+   for Praxion's Claude-only routing rule.
 
 Always-on Praxion stance:
 

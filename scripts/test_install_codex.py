@@ -35,6 +35,7 @@ def test_install_codex_exports_canonical_paths_and_check_passes(tmp_path: Path):
     command = (
         project_dir / ".agents" / "skills" / "praxion-command-co" / "SKILL.md"
     ).read_text(encoding="utf-8")
+    agents_md = (project_dir / "AGENTS.md").read_text(encoding="utf-8")
 
     assert (
         str((REPO_ROOT / "agents" / "researcher.md").resolve()).replace("\\", "/")
@@ -53,6 +54,10 @@ def test_install_codex_exports_canonical_paths_and_check_passes(tmp_path: Path):
     assert (project_dir / ".codex" / "praxion" / "rules_manifest.json").exists()
     assert (project_dir / ".codex" / "praxion" / "pipeline_semantics.json").exists()
     assert (project_dir / ".codex" / "praxion" / "model_routing.json").exists()
+    assert ".codex/praxion/pipeline_semantics.json" in agents_md
+    assert ".codex/praxion/model_routing.json" in agents_md
+    assert "Codex-native translation of Praxion" in agents_md
+    assert "Claude-only routing rule" in agents_md
     assert (project_dir / ".codex" / "hooks.json").exists()
     config_text = (project_dir / ".codex" / "config.toml").read_text(encoding="utf-8")
     assert "hooks = true" in config_text
