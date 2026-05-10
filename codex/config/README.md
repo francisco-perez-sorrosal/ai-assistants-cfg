@@ -61,17 +61,34 @@ Generated surfaces:
   `rules/**/*.md`
 - `.codex/praxion/rules_lookup.py` -- helper for matching always-on,
   prompt-scoped, and path-scoped Praxion rules
+- `.codex/praxion/hook_runtime.py` -- helper for running canonical Praxion hook
+  scripts with Codex-specific runtime environment
 - `.codex/hooks/praxion-session-start.py` -- injects always-on Praxion rule
   context at session start
+- `.codex/hooks/praxion-memory-session-start.py` -- injects curated memory
+  context when the target project already has `.ai-state/`
+- `.codex/hooks/praxion-memory-stop.py` -- enforces the memory gate with Codex
+  MCP tool names
+- `.codex/hooks/praxion-observability-session-start.py` -- records session
+  lifecycle events
+- `.codex/hooks/praxion-observability-stop.py` -- records session stop events
 - `.codex/hooks/praxion-user-prompt-submit.py` -- routes prompt-matched rules
 - `.codex/hooks/praxion-pre-tool-use.py` -- routes file-scoped rules before
   mutating file tool activity
+- `.codex/hooks/praxion-observability-pre-tool-use.py` -- forwards tool-start
+  events to Praxion observability
+- `.codex/hooks/praxion-observability-post-tool-use.py` -- forwards tool-result
+  events and captures memory observations
 - `.codex/praxion/hook_registrations.json` -- expected Praxion hook
   registrations for merge/check logic
 
 This bridge intentionally does **not** export semantic Praxion Markdown rules
 into `.codex/rules/`. Native Codex `.rules` remain reserved for command
 approval / sandbox policy semantics.
+
+The bridge also does **not** create `.ai-state/`. Generic project onboarding
+owns that lifecycle; generated Codex memory hooks and file-backed observation
+capture activate against an existing `.ai-state/` directory.
 
 Rule pickup is dynamic: every exporter run rescans `rules/**/*.md`. The bridge
 does not depend on a hardcoded Python allowlist for new rules. Automatic Codex

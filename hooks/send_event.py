@@ -237,6 +237,8 @@ def _project_dir(data):
 
 
 _MCP_PRAXION_PREFIX = "mcp__plugin_i-am_"
+_MCP_SERVER_PREFIX = "mcp__"
+_PRAXION_MCP_SERVERS = frozenset({"memory", "task-chronograph", "task_chronograph"})
 
 
 def _classify_mcp_tool(tool_name):
@@ -252,7 +254,15 @@ def _classify_mcp_tool(tool_name):
     We strip the known prefix to get ``<server>__<tool>``, then split once.
     """
     if not tool_name.startswith(_MCP_PRAXION_PREFIX):
-        return None
+        if not tool_name.startswith(_MCP_SERVER_PREFIX):
+            return None
+        parts = tool_name.split("__", 2)
+        if len(parts) < 3:
+            return None
+        server, tool = parts[1], parts[2]
+        if server not in _PRAXION_MCP_SERVERS:
+            return None
+        return (server, tool)
     remainder = tool_name[len(_MCP_PRAXION_PREFIX) :]
     if "__" in remainder:
         server, tool = remainder.split("__", 1)

@@ -30,6 +30,8 @@ def _clear_praxion_env(monkeypatch):
         "PRAXION_DISABLE_MEMORY_GATE",
         "PRAXION_DISABLE_OBSERVABILITY",
         "PRAXION_DISABLE_MEMORY_MCP",
+        "PRAXION_MEMORY_TOOL_PREFIXES",
+        "PRAXION_MEMORY_REMEMBER_TOOL",
     ):
         monkeypatch.delenv(key, raising=False)
 
@@ -73,6 +75,31 @@ def test_flag_names_are_distinct():
     }
     assert len(names) == 4
     assert all(n.startswith("PRAXION_DISABLE_") for n in names)
+
+
+def test_memory_tool_defaults_to_claude_plugin_namespace():
+    hu = _import_hook_utils()
+
+    assert hu.MEMORY_TOOL_PREFIXES == ("mcp__plugin_i-am_memory__",)
+    assert hu.MEMORY_REMEMBER_TOOL == "mcp__plugin_i-am_memory__remember"
+    assert "mcp__plugin_i-am_memory__remember" in hu.REMEMBER_PROMPT
+
+
+def test_memory_tool_namespace_can_be_overridden_for_codex(monkeypatch):
+    monkeypatch.setenv(
+        "PRAXION_MEMORY_TOOL_PREFIXES",
+        "mcp__memory__,mcp__plugin_i-am_memory__",
+    )
+    monkeypatch.setenv("PRAXION_MEMORY_REMEMBER_TOOL", "mcp__memory__remember")
+
+    hu = _import_hook_utils()
+
+    assert hu.MEMORY_TOOL_PREFIXES == (
+        "mcp__memory__",
+        "mcp__plugin_i-am_memory__",
+    )
+    assert hu.MEMORY_REMEMBER_TOOL == "mcp__memory__remember"
+    assert "mcp__memory__remember" in hu.REMEMBER_PROMPT
 
 
 # -- Integration: each hook short-circuits when its flag is set ---------------

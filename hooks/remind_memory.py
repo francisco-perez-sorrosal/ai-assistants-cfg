@@ -27,6 +27,7 @@ import sys
 sys.path.insert(0, __import__("os").path.dirname(__file__))
 
 from _hook_utils import (  # noqa: E402
+    MEMORY_REMEMBER_TOOL,
     REMEMBER_PROMPT,
     is_exempt,
     scan_transcript,
@@ -64,7 +65,7 @@ def main() -> None:
     print(
         f"{PREFIX} You did significant work ({stats.work_summary}) but "
         f"haven't called remember() yet. You MUST call "
-        f"mcp__plugin_i-am_memory__remember now before committing.\n"
+        f"{MEMORY_REMEMBER_TOOL} now before committing.\n"
         f"{REMEMBER_PROMPT}",
         file=sys.stderr,
     )

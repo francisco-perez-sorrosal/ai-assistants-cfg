@@ -19,6 +19,7 @@ import sys
 from _hook_utils import (
     DISABLE_MEMORY_GATE,
     DISABLE_MEMORY_MCP,
+    MEMORY_REMEMBER_TOOL,
     REMEMBER_PROMPT,
     is_disabled,
     is_memory_system_active,
@@ -58,7 +59,7 @@ def main() -> None:
 
     message = (
         f"[memory-gate] You did significant work ({stats.work_summary}) but never "
-        f"called remember(). You MUST call the mcp__plugin_i-am_memory__remember "
+        f"called remember(). You MUST call the {MEMORY_REMEMBER_TOOL} "
         f"tool now before stopping. {REMEMBER_PROMPT}"
     )
     print(

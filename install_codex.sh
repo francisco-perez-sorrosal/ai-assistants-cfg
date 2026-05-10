@@ -28,8 +28,8 @@ header() { printf "\n${B}%s${R}\n" "$*"; }
 step() { printf "  %s\n" "$*"; }
 
 print_codex_hook_review_note() {
-    warn "Codex may require one-time review for the Praxion rules bridge hooks."
-    step "If Codex reports '3 hooks need review', open /hooks and approve the Praxion PreToolUse, SessionStart, and UserPromptSubmit hooks."
+    warn "Codex may require one-time review for the Praxion project-local hooks."
+    step "If Codex reports hooks need review, open /hooks and approve the Praxion SessionStart, Stop, UserPromptSubmit, PreToolUse, and PostToolUse hooks."
     step "This is a Codex security gate for project-local commands; install.sh cannot pre-approve it."
 }
 
@@ -378,7 +378,7 @@ prune_stale_native_codex() {
             rel_path="${existing_file#"$CODEX_DIR"/}"
             rel_path="${rel_path#/}"
             case "$(basename "$existing_file")" in
-                rules_manifest.json|rules_lookup.py|hook_registrations.json|pipeline_semantics.json|model_routing.json|config_state.json)
+                rules_manifest.json|rules_lookup.py|hook_runtime.py|hook_registrations.json|pipeline_semantics.json|model_routing.json|config_state.json)
                     if [ ! -f "$expected_root/rules_bridge/$rel_path" ] &&
                        [ ! -f "$expected_root/pipeline_adapter/$rel_path" ] &&
                        [ "$(basename "$existing_file")" != "config_state.json" ]; then
@@ -436,6 +436,7 @@ uninstall_codex_rules_bridge() {
     rm -f "$CODEX_HOOKS_DIR"/praxion-*.py 2>/dev/null || true
     rm -f "$CODEX_PRAXION_DIR"/rules_manifest.json 2>/dev/null || true
     rm -f "$CODEX_PRAXION_DIR"/rules_lookup.py 2>/dev/null || true
+    rm -f "$CODEX_PRAXION_DIR"/hook_runtime.py 2>/dev/null || true
     rm -f "$CODEX_PRAXION_DIR"/hook_registrations.json 2>/dev/null || true
     rmdir "$CODEX_HOOKS_DIR" 2>/dev/null || true
     rmdir "$CODEX_PRAXION_DIR" 2>/dev/null || true

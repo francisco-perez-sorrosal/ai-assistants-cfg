@@ -18,6 +18,7 @@ import sys
 from _hook_utils import (
     DISABLE_MEMORY_GATE,
     DISABLE_MEMORY_MCP,
+    MEMORY_REMEMBER_TOOL,
     REMEMBER_PROMPT,
     is_disabled,
     is_exempt,
@@ -63,7 +64,7 @@ def main() -> None:
     message = (
         f"[validate-memory] Agent [{agent_type}] did significant work "
         f"({stats.work_summary}) but never called remember(). You MUST call the "
-        f"mcp__plugin_i-am_memory__remember tool now before completing. "
+        f"{MEMORY_REMEMBER_TOOL} tool now before completing. "
         f"{REMEMBER_PROMPT}"
     )
     print(

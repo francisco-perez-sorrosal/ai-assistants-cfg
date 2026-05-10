@@ -37,6 +37,8 @@ DISABLE_MEMORY_INJECTION = "PRAXION_DISABLE_MEMORY_INJECTION"
 DISABLE_MEMORY_GATE = "PRAXION_DISABLE_MEMORY_GATE"
 DISABLE_OBSERVABILITY = "PRAXION_DISABLE_OBSERVABILITY"
 DISABLE_MEMORY_MCP = "PRAXION_DISABLE_MEMORY_MCP"
+MEMORY_TOOL_PREFIXES_ENV = "PRAXION_MEMORY_TOOL_PREFIXES"
+MEMORY_REMEMBER_TOOL_ENV = "PRAXION_MEMORY_REMEMBER_TOOL"
 
 _TRUTHY = frozenset({"1", "true", "yes"})
 
@@ -46,13 +48,34 @@ def is_disabled(flag_name: str) -> bool:
     return os.environ.get(flag_name, "").strip().lower() in _TRUTHY
 
 
-# Tool classification for significance detection
+# Tool classification for significance detection.
+#
+# The defaults target Claude plugin installs. Cross-tool adapters (for example
+# Codex project-local wrappers) can override the active memory tool namespace by
+# setting PRAXION_MEMORY_TOOL_PREFIXES / PRAXION_MEMORY_REMEMBER_TOOL before
+# invoking the canonical hook scripts.
 EDIT_TOOLS = frozenset({"Write", "Edit"})
 READ_TOOLS = frozenset({"Read"})
 SEARCH_TOOLS = frozenset({"Grep", "Glob"})
 DELEGATION_TOOLS = frozenset({"Agent"})
 REMEMBER_SUBSTRING = "remember"
-MEMORY_TOOL_PREFIX = "mcp__plugin_i-am_memory__"
+
+
+def _configured_memory_tool_prefixes() -> tuple[str, ...]:
+    raw = os.environ.get(MEMORY_TOOL_PREFIXES_ENV, "").strip()
+    if not raw:
+        return ("mcp__plugin_i-am_memory__",)
+    prefixes = tuple(part.strip() for part in raw.split(",") if part.strip())
+    return prefixes or ("mcp__plugin_i-am_memory__",)
+
+
+def _configured_memory_remember_tool() -> str:
+    value = os.environ.get(MEMORY_REMEMBER_TOOL_ENV, "").strip()
+    return value or "mcp__plugin_i-am_memory__remember"
+
+
+MEMORY_TOOL_PREFIXES = _configured_memory_tool_prefixes()
+MEMORY_REMEMBER_TOOL = _configured_memory_remember_tool()
 
 # Agents exempt from memory enforcement. Read-only/navigational agents
 # ("Explore", "Plan") and agents whose outputs are persistent project
@@ -259,7 +282,7 @@ def scan_transcript(transcript_path: str) -> TranscriptStats:
                         agent_count += 1
                         agents_since += 1
 
-                    if name.startswith(MEMORY_TOOL_PREFIX):
+                    if any(name.startswith(prefix) for prefix in MEMORY_TOOL_PREFIXES):
                         memory_tools_seen = True
 
                     if REMEMBER_SUBSTRING in name.lower():
@@ -322,7 +345,7 @@ REMEMBER_PROMPT = (
     "- Conventions or constraints not documented elsewhere\n"
     "- Architectural insights or trade-off rationales\n"
     "- Analysis findings, audit results, or health trends\n\n"
-    'Call: mcp__plugin_i-am_memory__remember with category="learnings", '
+    f'Call: {MEMORY_REMEMBER_TOOL} with category="learnings", '
     "a descriptive key, the insight as value, relevant tags, "
     "importance (3-8), a one-line summary, and type "
     "(decision/gotcha/pattern/convention/preference/correction/insight)."

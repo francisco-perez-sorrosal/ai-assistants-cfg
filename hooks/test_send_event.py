@@ -67,6 +67,58 @@ def summarize_tool_output():
     return _module._summarize_tool_output
 
 
+@pytest.fixture
+def classify_mcp_tool():
+    """Provide _classify_mcp_tool if available, else skip."""
+    if _module is None or not hasattr(_module, "_classify_mcp_tool"):
+        pytest.skip("_classify_mcp_tool not available")
+    return _module._classify_mcp_tool
+
+
+# ---------------------------------------------------------------------------
+# MCP classification -- Claude plugin and Codex MCP tool names are recognized
+# ---------------------------------------------------------------------------
+
+
+class TestMcpToolClassification:
+    """Praxion MCP tool names are classified across supported adapter shapes."""
+
+    @pytest.mark.parametrize(
+        ("tool_name", "expected"),
+        [
+            (
+                "mcp__plugin_i-am_memory__remember",
+                ("memory", "remember"),
+            ),
+            (
+                "mcp__memory__remember",
+                ("memory", "remember"),
+            ),
+            (
+                "mcp__task_chronograph__report_interaction",
+                ("task_chronograph", "report_interaction"),
+            ),
+            (
+                "mcp__task-chronograph__report_interaction",
+                ("task-chronograph", "report_interaction"),
+            ),
+        ],
+        ids=[
+            "claude_plugin_memory",
+            "codex_memory",
+            "codex_task_chronograph_underscore",
+            "codex_task_chronograph_hyphen",
+        ],
+    )
+    def test_praxion_mcp_tool_names_classify(self, classify_mcp_tool, tool_name, expected):
+        """Praxion MCP tools return their server and tool components."""
+        assert classify_mcp_tool(tool_name) == expected
+
+    def test_non_praxion_mcp_tool_is_ignored(self, classify_mcp_tool):
+        """Non-Praxion MCP tools do not get classified as Praxion events."""
+        assert classify_mcp_tool("mcp__github__get_pull_request") is None
+
+
 # ---------------------------------------------------------------------------
 # Pattern coverage -- each secret type is redacted
 # ---------------------------------------------------------------------------

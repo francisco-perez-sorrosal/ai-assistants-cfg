@@ -423,6 +423,64 @@ def format_context(label: str, rules: list[dict]) -> str:
 """
 
 
+def render_hook_runtime_module(repo_root: Path) -> str:
+    repo_root_str = repo_root.resolve().as_posix()
+    return (
+        """#!/usr/bin/env python3
+\"\"\"Runtime helpers for generated Praxion Codex hook wrappers.\"\"\"
+
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+
+REPO_ROOT = Path("""
+        + repr(repo_root_str)
+        + """)
+CODEX_MEMORY_ENV = {
+    "PRAXION_MEMORY_TOOL_PREFIXES": "mcp__memory__,mcp__plugin_i-am_memory__",
+    "PRAXION_MEMORY_REMEMBER_TOOL": "mcp__memory__remember",
+}
+
+
+def payload_has_ai_state(raw_payload: str) -> bool:
+    try:
+        payload = json.loads(raw_payload or "{}")
+    except json.JSONDecodeError:
+        return False
+    cwd = str(payload.get("cwd", "") or "")
+    return bool(cwd) and Path(cwd, ".ai-state").is_dir()
+
+
+def run_canonical_hook(
+    relative_path: str,
+    raw_payload: str,
+    env_updates: dict[str, str] | None = None,
+) -> int:
+    env = os.environ.copy()
+    if env_updates:
+        env.update(env_updates)
+    result = subprocess.run(
+        [sys.executable, str(REPO_ROOT / relative_path)],
+        input=raw_payload,
+        text=True,
+        capture_output=True,
+        env=env,
+        check=False,
+    )
+    if result.stdout:
+        sys.stdout.write(result.stdout)
+    if result.stderr:
+        sys.stderr.write(result.stderr)
+    return int(result.returncode)
+"""
+    )
+
+
 def render_hook_script(kind: str) -> str:
     if kind == "session-start":
         body = """
@@ -519,11 +577,9 @@ def main() -> int:
     print(json.dumps(output))
     return 0
 """
-    else:
-        raise ValueError(f"unsupported hook kind: {kind}")
-
-    return (
-        """#!/usr/bin/env python3
+    if kind in {"session-start", "user-prompt-submit", "pre-tool-use"}:
+        return (
+            """#!/usr/bin/env python3
 from __future__ import annotations
 
 import json
@@ -537,13 +593,149 @@ sys.path.insert(0, str(HELPER_DIR))
 from rules_lookup import always_on_rules, extract_paths_from_command, extract_paths_from_prompt, format_context, load_manifest, looks_like_path_fragment, match_rules_for_paths, match_rules_for_prompt, normalize_paths
 
 """
-        + body
-        + """
+            + body
+            + """
 
 if __name__ == "__main__":
     raise SystemExit(main())
 """
-    )
+        )
+    if kind == "memory-session-start":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import CODEX_MEMORY_ENV, payload_has_ai_state, run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    if not payload_has_ai_state(raw):
+        return 0
+    return run_canonical_hook("hooks/inject_memory.py", raw, CODEX_MEMORY_ENV)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "memory-stop":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import CODEX_MEMORY_ENV, run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_hook("hooks/memory_gate.py", raw, CODEX_MEMORY_ENV)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "observability-session-start":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    status = run_canonical_hook("hooks/send_event.py", raw)
+    lifecycle_status = run_canonical_hook("hooks/capture_session.py", raw)
+    return lifecycle_status or status
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "observability-stop":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    status = run_canonical_hook("hooks/send_event.py", raw)
+    lifecycle_status = run_canonical_hook("hooks/capture_session.py", raw)
+    return lifecycle_status or status
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "observability-pre-tool-use":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    return run_canonical_hook("hooks/send_event.py", raw)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    elif kind == "observability-post-tool-use":
+        return """#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+HELPER_DIR = Path(__file__).resolve().parents[1] / "praxion"
+sys.path.insert(0, str(HELPER_DIR))
+
+from hook_runtime import run_canonical_hook
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    status = run_canonical_hook("hooks/send_event.py", raw)
+    capture_status = run_canonical_hook("hooks/capture_memory.py", raw)
+    return capture_status or status
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+    else:
+        raise ValueError(f"unsupported hook kind: {kind}")
 
 
 def render_hook_registrations() -> dict[str, object]:
@@ -565,7 +757,57 @@ def render_hook_registrations() -> dict[str, object]:
                             "statusMessage": "Praxion: loading always-on rules",
                         }
                     ],
+                },
+                {
+                    "matcher": "startup|resume|clear",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command("praxion-memory-session-start.py", project_root),
+                            "timeout": 30,
+                            "statusMessage": "Praxion: injecting memory context",
+                        }
+                    ],
+                },
+                {
+                    "matcher": "startup|resume|clear",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-observability-session-start.py", project_root
+                            ),
+                            "timeout": 15,
+                            "async": True,
+                            "statusMessage": "Praxion: capturing session start",
+                        }
+                    ],
                 }
+            ],
+            "Stop": [
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command("praxion-memory-stop.py", project_root),
+                            "timeout": 15,
+                            "statusMessage": "Praxion: enforcing memory gate",
+                        }
+                    ],
+                },
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-observability-stop.py", project_root
+                            ),
+                            "timeout": 15,
+                            "async": True,
+                            "statusMessage": "Praxion: capturing session stop",
+                        }
+                    ],
+                },
             ],
             "UserPromptSubmit": [
                 {
@@ -588,6 +830,34 @@ def render_hook_registrations() -> dict[str, object]:
                             "command": command("praxion-pre-tool-use.py", project_root),
                             "timeout": 30,
                             "statusMessage": "Praxion: routing file-scoped rules",
+                        }
+                    ],
+                },
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-observability-pre-tool-use.py", project_root
+                            ),
+                            "timeout": 15,
+                            "async": True,
+                            "statusMessage": "Praxion: capturing tool start",
+                        }
+                    ],
+                }
+            ],
+            "PostToolUse": [
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": command(
+                                "praxion-observability-post-tool-use.py", project_root
+                            ),
+                            "timeout": 15,
+                            "async": True,
+                            "statusMessage": "Praxion: capturing tool result",
                         }
                     ],
                 }
@@ -614,10 +884,20 @@ def export_rules_bridge(repo_root: Path, out_dir: Path) -> list[Path]:
     lookup_path.write_text(render_lookup_module(), encoding="utf-8")
     written.append(lookup_path)
 
+    runtime_path = praxion_dir / "hook_runtime.py"
+    runtime_path.write_text(render_hook_runtime_module(repo_root), encoding="utf-8")
+    written.append(runtime_path)
+
     for hook_name, kind in [
         ("praxion-session-start.py", "session-start"),
+        ("praxion-memory-session-start.py", "memory-session-start"),
+        ("praxion-observability-session-start.py", "observability-session-start"),
+        ("praxion-memory-stop.py", "memory-stop"),
+        ("praxion-observability-stop.py", "observability-stop"),
         ("praxion-user-prompt-submit.py", "user-prompt-submit"),
         ("praxion-pre-tool-use.py", "pre-tool-use"),
+        ("praxion-observability-pre-tool-use.py", "observability-pre-tool-use"),
+        ("praxion-observability-post-tool-use.py", "observability-post-tool-use"),
     ]:
         hook_path = hooks_dir / hook_name
         hook_path.write_text(render_hook_script(kind), encoding="utf-8")

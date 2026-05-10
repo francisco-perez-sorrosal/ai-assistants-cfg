@@ -67,8 +67,14 @@ def test_install_codex_exports_canonical_paths_and_check_passes(tmp_path: Path):
     )
     assert "Treat any user text after the command name as `$ARGUMENTS`." in command
     assert (project_dir / ".codex" / "praxion" / "rules_manifest.json").exists()
+    assert (project_dir / ".codex" / "praxion" / "hook_runtime.py").exists()
     assert (project_dir / ".codex" / "praxion" / "pipeline_semantics.json").exists()
     assert (project_dir / ".codex" / "praxion" / "model_routing.json").exists()
+    assert (project_dir / ".codex" / "hooks" / "praxion-memory-session-start.py").exists()
+    assert (project_dir / ".codex" / "hooks" / "praxion-memory-stop.py").exists()
+    assert (
+        project_dir / ".codex" / "hooks" / "praxion-observability-post-tool-use.py"
+    ).exists()
     assert ".codex/praxion/pipeline_semantics.json" in agents_md
     assert ".codex/praxion/model_routing.json" in agents_md
     assert "Codex-native translation of Praxion" in agents_md
@@ -77,6 +83,10 @@ def test_install_codex_exports_canonical_paths_and_check_passes(tmp_path: Path):
     config_text = (project_dir / ".codex" / "config.toml").read_text(encoding="utf-8")
     assert "hooks = true" in config_text
     assert "codex_hooks" not in config_text
+    hooks_text = (project_dir / ".codex" / "hooks.json").read_text(encoding="utf-8")
+    assert "praxion-memory-session-start.py" in hooks_text
+    assert "praxion-memory-stop.py" in hooks_text
+    assert "praxion-observability-post-tool-use.py" in hooks_text
     shared_config = tomllib.loads(
         (home_dir / ".codex" / "config.toml").read_text(encoding="utf-8")
     )

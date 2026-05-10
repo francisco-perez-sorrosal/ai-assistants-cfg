@@ -286,6 +286,11 @@ lossy direct export to native `.codex/rules/`:
 - `.codex/praxion/rules_manifest.json` indexes canonical Praxion rules
 - `.codex/hooks/praxion-*.py` route always-on, prompt-scoped, and file-scoped
   rule matches back to canonical `rules/**/*.md`
+- `.codex/hooks/praxion-*.py` also bridge the memory hooks
+  (`inject_memory.py`, `memory_gate.py`) and observation hooks
+  (`send_event.py`, `capture_session.py`, `capture_memory.py`) to Codex
+- `.codex/praxion/hook_runtime.py` runs canonical Praxion hook scripts with
+  Codex-specific MCP tool names
 - `.codex/hooks.json` registers those Praxion-managed hooks
 - `.codex/config.toml` is updated surgically to enable `hooks = true` and
   remove deprecated `codex_hooks` entries
@@ -307,7 +312,10 @@ For MCP, `install_codex.sh` now reuses the canonical `.claude-plugin/plugin.json
 uninstall restores any pre-existing user server blocks instead of clobbering
 unrelated Codex MCP config.
 
-The installer still does not create `.ai-state/`. Current Codex adapter status:
+The installer still does not create `.ai-state/`; generic project onboarding
+owns that lifecycle. Codex memory hooks and file-backed observation capture
+activate only when the target project already has `.ai-state/`. Current Codex
+adapter status:
 
 Rule pickup is automatic on every Codex install/check run: the bridge rescans
 `rules/**/*.md` and rebuilds the manifest from source. New rules do not require
@@ -322,7 +330,7 @@ instead of extending adapter code.
 | `rules/**/*.md` frontmatter | `install_codex.sh` now generates a hook-backed rules bridge under `.codex/praxion/` plus `.codex/hooks.json`; native `.codex/rules` stays reserved for approval policy |
 | `skills/*/SKILL.md` metadata | `install_codex.sh` generates project `.agents/skills/*` wrappers by default; user-global `$HOME/.agents/skills` is later work |
 | MCP servers | `install_codex.sh` now syncs canonical `.claude-plugin/plugin.json` `mcpServers` into shared `~/.codex/config.toml`, with refcounted restore state under `~/.codex/praxion/mcp_state.json` |
-| hooks | `install_codex.sh` now installs the Praxion rule-routing hooks only; broader hook surfaces remain later work |
+| hooks | `install_codex.sh` now installs Praxion rule routing, memory injection/gating, and session/tool observation hooks; remaining hook families such as worktree, compact, commit reminder, formatting, and duplication gates remain later work |
 
 Use this flow to test a pet project from a Praxion checkout:
 

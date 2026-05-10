@@ -31,6 +31,16 @@ def run_hook(path: Path, payload: dict[str, object]) -> dict[str, object]:
     return json.loads(result.stdout) if result.stdout.strip() else {}
 
 
+def run_hook_result(path: Path, payload: dict[str, object]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["python3", str(path)],
+        input=json.dumps(payload),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
 def write_rule(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
@@ -44,8 +54,13 @@ def test_export_rules_bridge_writes_prefixed_hooks_and_manifest(tmp_path: Path):
 
     assert out_dir / "praxion" / "rules_manifest.json" in written
     assert out_dir / "hooks" / "praxion-session-start.py" in written
+    assert out_dir / "hooks" / "praxion-memory-session-start.py" in written
+    assert out_dir / "hooks" / "praxion-observability-session-start.py" in written
+    assert out_dir / "hooks" / "praxion-memory-stop.py" in written
+    assert out_dir / "hooks" / "praxion-observability-post-tool-use.py" in written
     assert out_dir / "hooks" / "praxion-user-prompt-submit.py" in written
     assert out_dir / "hooks" / "praxion-pre-tool-use.py" in written
+    assert out_dir / "praxion" / "hook_runtime.py" in written
 
     manifest = json.loads((out_dir / "praxion" / "rules_manifest.json").read_text(encoding="utf-8"))
     relpaths = {rule["relpath"] for rule in manifest["rules"]}
@@ -59,6 +74,9 @@ def test_export_rules_bridge_writes_prefixed_hooks_and_manifest(tmp_path: Path):
     hooks = registrations["hooks"]
     assert hooks["SessionStart"][0]["hooks"][0]["statusMessage"].startswith("Praxion:")
     assert "praxion-session-start.py" in hooks["SessionStart"][0]["hooks"][0]["command"]
+    assert "praxion-memory-session-start.py" in hooks["SessionStart"][1]["hooks"][0]["command"]
+    assert "praxion-memory-stop.py" in hooks["Stop"][0]["hooks"][0]["command"]
+    assert "praxion-observability-post-tool-use.py" in hooks["PostToolUse"][0]["hooks"][0]["command"]
     assert "git rev-parse" not in hooks["SessionStart"][0]["hooks"][0]["command"]
     assert "__PRAXION_PROJECT_ROOT__" in hooks["SessionStart"][0]["hooks"][0]["command"]
     pre_tool_matcher = hooks["PreToolUse"][0]["matcher"]
@@ -126,6 +144,115 @@ def test_generated_hooks_route_always_on_prompt_and_path_rules(tmp_path: Path):
         },
     )
     assert bash_output == {}
+
+
+def test_memory_session_start_hook_waits_for_ai_state(tmp_path: Path):
+    exporter = load_exporter()
+    out_dir = tmp_path / ".codex"
+    exporter.export_rules_bridge(REPO_ROOT, out_dir)
+
+    memory_hook = out_dir / "hooks" / "praxion-memory-session-start.py"
+
+    skipped = run_hook(
+        memory_hook,
+        {"hook_event_name": "SessionStart", "cwd": str(tmp_path), "session_id": "s1"},
+    )
+    assert skipped == {}
+
+    (tmp_path / ".ai-state").mkdir()
+    active = run_hook(
+        memory_hook,
+        {"hook_event_name": "SessionStart", "cwd": str(tmp_path), "session_id": "s1"},
+    )
+    context = active["hookSpecificOutput"]["additionalContext"]
+    assert "Memory obligation" in context
+
+
+def test_memory_stop_hook_uses_codex_memory_tool_name(tmp_path: Path):
+    exporter = load_exporter()
+    out_dir = tmp_path / ".codex"
+    exporter.export_rules_bridge(REPO_ROOT, out_dir)
+
+    ai_state = tmp_path / ".ai-state"
+    ai_state.mkdir()
+    (ai_state / "memory.json").write_text(
+        json.dumps({"schema_version": "2.0", "memories": {}}),
+        encoding="utf-8",
+    )
+    transcript = tmp_path / "transcript.jsonl"
+    transcript.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "message": {
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Write",
+                                    "input": {"file_path": "src/alpha.py"},
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {"file_path": "src/beta.py"},
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Write",
+                                    "input": {"file_path": "src/gamma.py"},
+                                },
+                            ]
+                        },
+                    }
+                )
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    memory_stop = out_dir / "hooks" / "praxion-memory-stop.py"
+    result = run_hook_result(
+        memory_stop,
+        {
+            "hook_event_name": "Stop",
+            "cwd": str(tmp_path),
+            "transcript_path": str(transcript),
+        },
+    )
+    assert result.returncode == 2
+    decision = json.loads(result.stderr)
+    assert decision["decision"] == "block"
+    assert "mcp__memory__remember" in decision["reason"]
+    assert "mcp__plugin_i-am_memory__remember" not in decision["reason"]
+
+
+def test_observability_post_tool_use_hook_writes_observations(tmp_path: Path):
+    exporter = load_exporter()
+    out_dir = tmp_path / ".codex"
+    exporter.export_rules_bridge(REPO_ROOT, out_dir)
+
+    ai_state = tmp_path / ".ai-state"
+    ai_state.mkdir()
+    post_hook = out_dir / "hooks" / "praxion-observability-post-tool-use.py"
+
+    result = run_hook_result(
+        post_hook,
+        {
+            "hook_event_name": "PostToolUse",
+            "cwd": str(tmp_path),
+            "session_id": "session-1",
+            "tool_name": "Write",
+            "tool_input": {"file_path": "src/example.py"},
+            "tool_response": {},
+        },
+    )
+    assert result.returncode == 0
+    observations = (ai_state / "observations.jsonl").read_text(encoding="utf-8")
+    assert '"event_type":"tool_use"' in observations
+    assert '"tool_name":"Write"' in observations
 
 
 def test_prompt_matching_avoids_generic_false_positives(tmp_path: Path):

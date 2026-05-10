@@ -400,8 +400,9 @@ checkout as the canonical source.
 `CLAUDE.md`, `rules/`, `skills/`, docs, source, tests, scripts, MCP server
 source, and `.ai-state/` data by reference.
 
-**What still needs explicit later work:** broader hook migration beyond the
-rule-routing bridge.
+**What still needs explicit later work:** hook families beyond first-session
+Codex parity, such as worktree, compact, commit reminder, formatting, and
+duplication gates.
 
 By default, the Codex install generates Codex custom-agent wrappers under the
 target project's `.codex/agents/`. These wrappers are intentionally thin: each
@@ -430,6 +431,11 @@ the target project's `.codex/` directory:
 - `.codex/praxion/rules_manifest.json` indexes canonical Praxion rules
 - `.codex/hooks/praxion-*.py` inject always-on, prompt-scoped, and file-scoped
   Praxion rule routing
+- `.codex/hooks/praxion-*.py` also bridge the memory hooks
+  (`inject_memory.py`, `memory_gate.py`) and observation hooks
+  (`send_event.py`, `capture_session.py`, `capture_memory.py`) to Codex
+- `.codex/praxion/hook_runtime.py` runs canonical Praxion hook scripts with
+  Codex-specific MCP tool names
 - `.codex/hooks.json` registers those Praxion-managed hooks
 - `.codex/config.toml` is updated surgically to enable Codex hooks and remove
   the deprecated `codex_hooks` flag
@@ -446,6 +452,11 @@ The rules bridge rescans canonical `rules/**/*.md` on every Codex install/check
 run, so new rules are picked up automatically. When a rule needs an explicit
 Codex portability or load override, that metadata lives in the rule's own
 frontmatter rather than in a separate Python allowlist.
+
+The Codex installer does not create `.ai-state/`; generic project onboarding
+owns that lifecycle. Memory hooks and file-backed observation capture are
+installed by the Codex adapter, but they activate only when the target project
+already has `.ai-state/`.
 
 For MCP, the Codex install now reuses the canonical `.claude-plugin/plugin.json`
 `mcpServers` definitions and writes the corresponding `memory` and
