@@ -6,7 +6,7 @@
 **Pipeline branch**: `worktree-multi-language-support`
 **Start date**: 2026-05-11
 **End date**: 2026-05-11
-**Status**: Shipped (pending verifier pass — step-21)
+**Status**: Shipped — verifier PASS-WITH-WARNINGS (step-21); 2 catalog-text WARNs fixed post-verify; ADRs finalized as dec-135..dec-140 at merge-to-main
 
 ## Feature Summary
 
@@ -28,11 +28,11 @@ Extended Praxion from Python-only to a polyglot ecosystem covering Node.js, Type
 
 | AC | Description | Implementing step(s) | Verification | Status |
 |----|-------------|---------------------|--------------|--------|
-| AC-01 | Polyglot Skill Template ADR on disk | Pre-condition (architect Phase 2); `dec-draft-849b9356` | ADR draft exists at `.ai-state/decisions/drafts/…polyglot-skill-template.md`; `python3 scripts/finalize_adrs.py --all --dry-run` exits 0; step-19 PASS | PASS |
-| AC-02 | Frontend Framework Nesting ADR on disk | Pre-condition (architect Phase 2); `dec-draft-5530be05` | ADR draft exists at `.ai-state/decisions/drafts/…frontend-framework-nesting.md`; finalize dry-run exits 0; step-19 PASS | PASS |
-| AC-03 | Angular Exclusion ADR on disk | Pre-condition (architect Phase 2); `dec-draft-0fca1a23` | ADR draft exists at `.ai-state/decisions/drafts/…angular-exclusion-from-contexts.md`; finalize dry-run exits 0; step-19 PASS | PASS |
+| AC-01 | Polyglot Skill Template ADR on disk | Pre-condition (architect Phase 2); `dec-139` | ADR draft exists at `.ai-state/decisions/drafts/…polyglot-skill-template.md`; `python3 scripts/finalize_adrs.py --all --dry-run` exits 0; step-19 PASS | PASS |
+| AC-02 | Frontend Framework Nesting ADR on disk | Pre-condition (architect Phase 2); `dec-137` | ADR draft exists at `.ai-state/decisions/drafts/…frontend-framework-nesting.md`; finalize dry-run exits 0; step-19 PASS | PASS |
+| AC-03 | Angular Exclusion ADR on disk | Pre-condition (architect Phase 2); `dec-135` | ADR draft exists at `.ai-state/decisions/drafts/…angular-exclusion-from-contexts.md`; finalize dry-run exits 0; step-19 PASS | PASS |
 | AC-04 | All 5 open questions answered in SYSTEMS_PLAN.md | Pre-condition (architect Phase 2 + implementation-planner) | SYSTEMS_PLAN.md §Decisions on Open Questions section present; verified by implementation-planner before plan approval | PASS |
-| AC-05 | Zod v3/v4 split has canonical home in `node-prj-mgmt` | step-01, step-13 | `grep "overrides" skills/node-prj-mgmt/contexts/typescript.md` returns match (step-01 done-when); step-13 adds cross-ref to `agentic-sdks/contexts/openai-agents-typescript.md`; `dec-draft-a5387191` ADR documents the decision; step-19 PASS | PASS |
+| AC-05 | Zod v3/v4 split has canonical home in `node-prj-mgmt` | step-01, step-13 | `grep "overrides" skills/node-prj-mgmt/contexts/typescript.md` returns match (step-01 done-when); step-13 adds cross-ref to `agentic-sdks/contexts/openai-agents-typescript.md`; `dec-140` ADR documents the decision; step-19 PASS | PASS |
 | AC-06 | Complete artifact creation order in IMPLEMENTATION_PLAN.md | Implementation plan itself (steps 01–21 with dependency graph and parallel groups A–F) | `IMPLEMENTATION_PLAN.md` exists with 21 steps and parallel group table; deliverable is the planning document itself | PASS |
 | AC-07 | `coding-style-typescript.md` has required `paths:` frontmatter; not always-loaded | step-12 | `grep -q "^paths:" rules/swe/coding-style-typescript.md` exits 0; step-18 measured always-loaded surface — rule excluded; step-18 verdict: **AC-07 PASS** | PASS |
 | AC-08 | Token budget unchanged; no new always-loaded surface | step-18 (measurement), step-14/15 (catalog updates only) | step-18: baseline 89,265 bytes → post-pipeline 89,565 bytes; delta +300 bytes; tolerance +2,000 bytes; step-18 verdict: **AC-08 PASS** | PASS |
@@ -40,16 +40,16 @@ Extended Praxion from Python-only to a polyglot ecosystem covering Node.js, Type
 
 ## Decisions Made
 
-Six ADR drafts were authored by the systems-architect in Phase 2. They will be promoted to stable `dec-NNN` identifiers at merge-to-main by `scripts/finalize_adrs.py`. The dry-run in step-19 confirmed all 6 parse without error and would be numbered `dec-135` through `dec-140`.
+Six ADR drafts authored by the systems-architect in Phase 2 were promoted to stable identifiers `dec-135` through `dec-140` at merge-to-main by `scripts/finalize_adrs.py` (step-19's dry-run had confirmed all 6 parse cleanly).
 
-| Draft ID | Title | Category | Key Decision |
+| ADR | Title | Category | Key Decision |
 |----------|-------|----------|--------------|
-| `dec-draft-849b9356` | Polyglot skill template — references/ vs contexts/ separation with extension protocol | architectural | `contexts/` for runnable mechanics; `references/` for language-agnostic concepts; Language Contexts table is the canonical extension surface |
-| `dec-draft-5530be05` | Frontend framework contexts nest inside typescript-development, not as sibling skills | architectural | Framework contexts live under `typescript-development/contexts/<framework>.md`; activation is redirect-based from the base TypeScript context |
-| `dec-draft-0fca1a23` | Angular intentionally excluded from first-class typescript-development contexts | architectural | Angular excluded from `contexts/` because it ships its own CLI toolchain and design philosophy incompatible with the Biome/Vitest defaults; revisit if 3+ Praxion-managed Angular projects emerge |
-| `dec-draft-a5387191` | Zod v3/v4 cross-skill version split — canonical home in node-prj-mgmt | implementation | Zod coexistence gotcha (pnpm `overrides` pattern) lives in `node-prj-mgmt/contexts/typescript.md`; cross-references from `mcp-crafting` and `agentic-sdks` contexts point back |
-| `dec-draft-c8652a92` | MCP TypeScript SDK v2 promotion — trigger-based review, not date-based | behavioral | SDK v2 promotion criteria: v2 reaches stable AND at least one Praxion-managed project uses it in production; no calendar date trigger |
-| `dec-draft-de6d2f9b` | Biome / ESLint coexistence in typescript-development — one context file, conditional guidance | configuration | Single `contexts/typescript.md` file with a top-level conditional decision rule (Biome v2 default for greenfield; ESLint v9 for framework path); framework contexts override explicitly when they diverge |
+| `dec-139` | Polyglot skill template — references/ vs contexts/ separation with extension protocol | architectural | `contexts/` for runnable mechanics; `references/` for language-agnostic concepts; Language Contexts table is the canonical extension surface |
+| `dec-137` | Frontend framework contexts nest inside typescript-development, not as sibling skills | architectural | Framework contexts live under `typescript-development/contexts/<framework>.md`; activation is redirect-based from the base TypeScript context |
+| `dec-135` | Angular intentionally excluded from first-class typescript-development contexts | architectural | Angular excluded from `contexts/` because it ships its own CLI toolchain and design philosophy incompatible with the Biome/Vitest defaults; revisit if 3+ Praxion-managed Angular projects emerge |
+| `dec-140` | Zod v3/v4 cross-skill version split — canonical home in node-prj-mgmt | implementation | Zod coexistence gotcha (pnpm `overrides` pattern) lives in `node-prj-mgmt/contexts/typescript.md`; cross-references from `mcp-crafting` and `agentic-sdks` contexts point back |
+| `dec-138` | MCP TypeScript SDK v2 promotion — trigger-based review, not date-based | behavioral | SDK v2 promotion criteria: v2 reaches stable AND at least one Praxion-managed project uses it in production; no calendar date trigger |
+| `dec-136` | Biome / ESLint coexistence in typescript-development — one context file, conditional guidance | configuration | Single `contexts/typescript.md` file with a top-level conditional decision rule (Biome v2 default for greenfield; ESLint v9 for framework path); framework contexts override explicitly when they diverge |
 
 ### Additional implementation-planner decisions recorded in LEARNINGS.md
 
