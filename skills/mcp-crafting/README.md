@@ -39,9 +39,8 @@ Trigger explicitly by asking about "MCP server," "MCP bundle," "building an MCP 
 |------|---------|
 | [`SKILL.md`](SKILL.md) | Protocol core: MCP concepts, transports, client integration, error handling, bundles overview, MCP Inspector, common pitfalls |
 | [`README.md`](README.md) | This file -- overview and usage guide |
-| [`contexts/python.md`](contexts/python.md) | Python implementation: SDK landscape, quickstart, primitives code, testing, project structure, deployment |
+| [`contexts/python.md`](contexts/python.md) | Python implementation: SDK landscape, quickstart, primitives code, server composition, testing, deployment, project structure, community resources |
 | [`references/resources.md`](references/resources.md) | Protocol deep-dive: bundle manifest spec, security, team sharing, community resources |
-| [`references/python-resources.md`](references/python-resources.md) | Python deep-dive: server composition, deployment, SDK versions, Python community resources |
 
 ## Quick Start
 

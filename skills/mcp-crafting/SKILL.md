@@ -1,6 +1,6 @@
 ---
 name: mcp-crafting
-description: Building MCP (Model Context Protocol) servers using official SDKs. Covers protocol concepts (tools, resources, prompts), transports (stdio, streamable HTTP), bundles (.mcpb), testing with MCP Inspector, client integration with Claude Desktop and Claude Code, logging, error handling, and security principles. Language modules available for Python (with FastMCP). Use when creating MCP servers, defining MCP tools or MCP resources, configuring transports, packaging bundles, testing MCP servers, or integrating with Claude. Also relevant for MCP tool definition, MCP resource exposure, and FastMCP server patterns.
+description: Building MCP (Model Context Protocol) servers using official SDKs. Covers protocol concepts (tools, resources, prompts), transports (stdio, streamable HTTP), bundles (.mcpb), testing with MCP Inspector, client integration with Claude Desktop and Claude Code, logging, error handling, and security principles. Language modules available for Python (with FastMCP) and TypeScript (with @modelcontextprotocol/sdk). Use when creating MCP servers, defining MCP tools or MCP resources, configuring transports, packaging bundles, testing MCP servers, or integrating with Claude. Also relevant for MCP tool definition, MCP resource exposure, and FastMCP server patterns.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 compatibility: Claude Code
 ---
@@ -12,7 +12,6 @@ Build [Model Context Protocol](https://modelcontextprotocol.io) servers that exp
 **Satellite files** (loaded on-demand):
 
 - [references/resources.md](references/resources.md) -- full manifest specification, bundle structures, advanced examples
-- [references/python-resources.md](references/python-resources.md) -- Python-specific FastMCP patterns and examples
 - [../skill-crafting/references/artifact-naming.md](../skill-crafting/references/artifact-naming.md) -- naming conventions for all artifact types
 
 For MCP connector API features (calling MCP servers from the Messages API), consult the `claude-ecosystem` skill.
@@ -35,6 +34,7 @@ For MCP connector API features (calling MCP servers from the Messages API), cons
 | Language | Context File | Related Skills |
 |----------|-------------|----------------|
 | Python   | [contexts/python.md](contexts/python.md) | python-development, python-prj-mgmt |
+| TypeScript | [contexts/typescript.md](contexts/typescript.md) | typescript-development, node-prj-mgmt |
 
 When working in a specific language, load the corresponding context for SDK setup, code examples, testing, and deployment patterns.
 

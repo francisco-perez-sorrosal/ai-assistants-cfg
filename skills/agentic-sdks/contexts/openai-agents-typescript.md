@@ -198,5 +198,8 @@ Context sharing follows the same pattern as Python via generic type parameters, 
 
 - Using `new Agent()` instead of `Agent.create()` when handoffs are present (loses type inference)
 - Not installing Zod v4 -- the SDK validates schemas using Zod v4 API; v3 schemas fail at runtime
+
+  **Cross-skill version split.** If your project uses both OpenAI Agents SDK JS (which requires Zod v4) and the MCP TypeScript SDK (whose stable release uses Zod v3), see `node-prj-mgmt` § Zod v3/v4 coexistence for the canonical `pnpm overrides` pattern that resolves the conflict.
+
 - Forgetting to call `server.connect()` / `server.close()` for MCP servers
 - Not handling `MaxTurnsExceededError` for production agents

@@ -28,23 +28,33 @@ rules/
 └── README.md
 ```
 
+### Always-Loaded Rules
+
 | File | Purpose |
 | ---- | ------- |
 | `ml/eval-driven-verification.md` | ML acceptance criteria as metric thresholds — verifier evaluates `TRAINING_RESULTS.md` recorded metrics against PASS/FAIL/WARN tolerance bands |
-| `ml/experiment-tracking-conventions.md` | Experiment lineage, run-tag mapping, tracker selection (MLflow/W&B/Aim). Path-scoped: loads only when accessing `runs/**`, `experiments/**`, or `program.md` |
 | `ml/gpu-budget-conventions.md` | Compute-budget declaration in WIP.md and step prompts; open-ended training runs prohibited |
-| `swe/agent-behavioral-contract.md` | Four-behavior contract (Surface Assumptions, Register Objection, Stay Surgical, Simplicity First) for every write/plan/review agent. Always-loaded |
+| `swe/agent-behavioral-contract.md` | Four-behavior contract (Surface Assumptions, Register Objection, Stay Surgical, Simplicity First) for every write/plan/review agent |
 | `swe/agent-intermediate-documents.md` | Agent document locations (`.ai-work/` ephemeral, `.ai-state/` persistent), lifecycle tiers, cleanup |
-| `swe/agent-model-routing.md` | Per-agent Claude model tier table (13 agents → opus/sonnet/haiku), 4-layer override precedence, operator kill switch, quality-cliff guards. Always-loaded |
+| `swe/agent-model-routing.md` | Per-agent Claude model tier table (13 agents → opus/sonnet/haiku), 4-layer override precedence, operator kill switch, quality-cliff guards |
 | `swe/coding-style.md` | Immutability, function/file size, nesting, error handling, naming, validation |
 | `swe/adr-conventions.md` | ADR file format (YAML frontmatter + MADR body), naming convention, supersession protocol, agent authoring guidance |
-| `swe/staleness-policy.md` | Marker syntax and threshold protocol for drift-prone skill sections. Path-scoped: loads only when accessing `**/SKILL.md` |
 | `swe/swe-agent-coordination-protocol.md` | Agent selection, coordination pipeline, parallel execution — detailed tables in `software-planning` skill reference |
 | `swe/vcs/git-conventions.md` | Commit scope, staging discipline, secrets, exclusions, message format |
 | `swe/memory-protocol.md` | When and how to use the memory MCP — `remember()` triggers, tag vocabulary, conflict resolution between memory systems |
-| `swe/testing-conventions.md` | Test file placement, naming, coverage expectations, and test isolation. Path-scoped: loads only when accessing `tests/**` |
-| `writing/diagram-conventions.md` | Mermaid syntax, layered decomposition (L0/L1/L2), diagram type selection. Path-scoped: loads only when accessing documentation-authoring surfaces (`docs/`, architecture docs, `.ai-state/`) |
-| `writing/readme-style.md` | Precision-first technical writing and structural integrity conventions for README.md files. Path-scoped: loads only when accessing `**/README.md` or `**/README_DEV.md` |
+
+### Path-Scoped Rules
+
+Path-scoped rules load only when editing files matching their `paths:` pattern. They do not count against the always-loaded token budget.
+
+| File | Purpose |
+| ---- | ------- |
+| `ml/experiment-tracking-conventions.md` | Experiment lineage, run-tag mapping, tracker selection (MLflow/W&B/Aim). Paths: `runs/**`, `experiments/**`, `program.md` |
+| `swe/coding-style-typescript.md` | TypeScript coding style — strict-mode requirements, import ordering, no-`any` discipline, named-exports preference; links to typescript-development skill for toolchain depth. Paths: `**/*.ts`, `**/*.tsx`, `**/*.mts`, `**/*.cts` |
+| `swe/staleness-policy.md` | Marker syntax and threshold protocol for drift-prone skill sections. Paths: `**/SKILL.md` |
+| `swe/testing-conventions.md` | Test file placement, naming, coverage expectations, and test isolation. Paths: `tests/**` |
+| `writing/diagram-conventions.md` | Mermaid syntax, layered decomposition (L0/L1/L2), diagram type selection. Paths: documentation-authoring surfaces (`docs/`, architecture docs, `.ai-state/`) |
+| `writing/readme-style.md` | Precision-first technical writing and structural integrity conventions for README.md files. Paths: `**/README.md`, `**/README_DEV.md` |
 
 ## How Rules Work
 

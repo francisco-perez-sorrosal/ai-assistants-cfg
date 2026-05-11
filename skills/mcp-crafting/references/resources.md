@@ -119,7 +119,7 @@ my-server.mcpb (ZIP)
 └── package.json
 ```
 
-For language-specific bundle structures, see the corresponding language resources file (e.g., `python-resources.md`).
+For language-specific bundle structures, see the corresponding language context file (e.g., `contexts/python.md`).
 
 ### mcpb CLI
 

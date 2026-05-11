@@ -5,7 +5,8 @@ description: Designing and implementing evaluations (evals) for AI agents -- eva
   grader design, scoring, non-determinism handling, and CI/CD integration. Use when
   evaluating agent behavior, choosing an eval framework, designing eval suites, building
   golden datasets, implementing trajectory evaluation, setting up eval-driven development,
-  or integrating evals into CI/CD pipelines. Python-focused with framework-agnostic patterns.
+  or integrating evals into CI/CD pipelines. Python-focused with TypeScript coverage
+  (Vitest + Promptfoo) in references/typescript.md.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 compatibility: Claude Code
 ---
@@ -17,6 +18,7 @@ Evaluate AI agent behavior systematically. Agent evals differ fundamentally from
 **Satellite files** (loaded on-demand):
 
 - [references/framework-patterns.md](references/framework-patterns.md) -- framework comparison, Python code examples for Inspect AI, DeepEval, Promptfoo
+- [references/typescript.md](references/typescript.md) -- TypeScript eval tooling: Vitest async patterns for LLM calls, Promptfoo YAML schema, TypeScript provider config, CLI vs SDK usage
 - [references/eval-design-patterns.md](references/eval-design-patterns.md) -- golden datasets, LLM-as-judge, grader design, scoring, non-determinism
 - [references/cicd-integration.md](references/cicd-integration.md) -- GitHub Actions workflows, deployment gates, regression tracking, cost management
 
@@ -228,6 +230,7 @@ This mirrors the `spec-driven-development` skill's behavioral specification work
 ## Cross-Skill References
 
 - **`python-development`** -- pytest patterns, test organization, and code quality tools for eval implementations
+- **`typescript-development`** -- TypeScript conventions and baseline setup; see also [references/typescript.md](references/typescript.md) for Vitest + Promptfoo eval patterns specific to TypeScript projects
 - **`agentic-sdks`** -- agent building patterns (the systems you are evaluating); SDK-specific testing hooks
 - **`spec-driven-development`** -- behavioral specifications and acceptance criteria inform eval design; REQ IDs thread into eval case naming
 - **[`llm-prompt-engineering`](../llm-prompt-engineering/SKILL.md)** -- single-prompt regression-assertion design (Promptfoo YAML, DeepEval pytest, LLM-judge bias mitigations); see [`references/prompt-testing.md`](../llm-prompt-engineering/references/prompt-testing.md). This skill (agent-evals) owns the full eval harness and agent-level metric design; llm-prompt-engineering owns prompt-level test authoring

@@ -3,12 +3,13 @@ name: test-coverage
 description: >
   Locating, invoking, and rendering a project's test coverage consistently
   across terminals, Markdown reports, and verifier fragments. Dispatches to
-  the project's own coverage tooling (pytest-cov, etc.) via a convention-based
-  probe order — never installs tooling, never mutates project config.
-  Activates when reporting coverage percentages, running a project's canonical
-  coverage target, rendering coverage tables, comparing coverage against a
-  prior run, or wiring coverage into commands, agents, or metrics pipelines.
-  Language references ship per language; Python is available in v1.
+  the project's own coverage tooling (pytest-cov, vitest, etc.) via a
+  convention-based probe order — never installs tooling, never mutates project
+  config. Activates when reporting coverage percentages, running a project's
+  canonical coverage target, rendering coverage tables, comparing coverage
+  against a prior run, or wiring coverage into commands, agents, or metrics
+  pipelines. Language references ship per language; Python and TypeScript are
+  available.
 allowed-tools: [Read, Glob, Grep, Bash]
 compatibility: Claude Code
 ---
@@ -22,14 +23,16 @@ Language-agnostic skeleton for locating, invoking, and rendering project test co
 **Satellite files** (loaded on-demand, one per language):
 
 - [references/python.md](references/python.md) — target-discovery probe order, invocation conventions, presentation notes, copy-pasteable default coverage config block
+- [references/typescript.md](references/typescript.md) — Vitest + `@vitest/coverage-v8` setup, Istanbul reporter options, `vitest.config.ts` thresholds, Next.js/React coverage notes
 
-Future language references (e.g., `references/typescript.md`, `references/go.md`, `references/rust.md`) are added here without body changes to this file. New rows go into the Language References table below.
+Future language references (e.g., `references/go.md`, `references/rust.md`) are added here without body changes to this file. New rows go into the Language References table below.
 
 ## Language References
 
-| Language | Reference | Tooling (project-owned) |
-|----------|-----------|-------------------------|
-| Python   | [references/python.md](references/python.md) | `pytest` + `pytest-cov` |
+| Language   | Reference | Tooling (project-owned) |
+|------------|-----------|-------------------------|
+| Python     | [references/python.md](references/python.md) | `pytest` + `pytest-cov` |
+| TypeScript | [references/typescript.md](references/typescript.md) | `vitest` + `@vitest/coverage-v8` |
 
 When a caller activates this skill for a project, detect the language and load the matching reference. If no reference exists for the detected language, fall back gracefully — emit a clear "no language reference available" message and decline to invent a probe order.
 
