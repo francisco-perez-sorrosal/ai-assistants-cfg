@@ -1,7 +1,7 @@
 ---
-id: dec-draft-591b9ed2
+id: dec-146
 title: Dashboard renderer registry + Diátaxis-typed shells (Next.js App Router shape)
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-11
 summary: Introduce a lightweight typed Map<diataxis|contentType, ReactComponent> renderer registry that the documentation page dispatches through; build reference + explanation + default shells, stub the other three Diátaxis types. This is the contract the html-output-conventions.md rewrite describes — replacing the phantom Python-shaped dashboard_app/components/ structure.

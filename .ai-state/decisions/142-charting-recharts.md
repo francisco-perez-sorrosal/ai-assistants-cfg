@@ -1,7 +1,7 @@
 ---
-id: dec-draft-99429dc4
+id: dec-142
 title: Dashboard charting — adopt recharts via a TrendChart wrapper; parse METRICS_LOG.md / SENTINEL_LOG.md for historical series
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-11
 summary: Replace hand-rolled SVG charts with recharts (MIT) wrapped in a generic TrendChart component; parse the append-only log files for historical trend series so charts are not flat when only one report JSON exists. Supersedes the Streamlit-era graphviz+plotly+pyvis stack, already obsoleted by the Next.js rewrite.

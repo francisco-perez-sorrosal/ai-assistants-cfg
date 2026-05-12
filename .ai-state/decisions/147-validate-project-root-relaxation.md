@@ -1,7 +1,7 @@
 ---
-id: dec-draft-d93c4dfb
+id: dec-147
 title: Dashboard validateProjectRoot requires only .ai-state/; missing PRAXION_PROJECT_ROOT renders an actionable error page
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-11
 summary: Drop .ai-work/ from the required-directories check (it's gitignored and absent on fresh projects); treat its absence as "no active workshops". Add an error.tsx boundary + inline catch so a missing/invalid PRAXION_PROJECT_ROOT renders an actionable error UI, not a raw 500. No auto-creation of .ai-work/ (the dashboard is read-only).

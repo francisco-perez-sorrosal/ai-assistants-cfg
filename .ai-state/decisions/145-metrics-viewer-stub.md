@@ -1,7 +1,7 @@
 ---
-id: dec-draft-d9e81c5a
+id: dec-145
 title: Replace metrics-viewer.html.tmpl with a static redirect stub; remove the committed index.html and orphaned SENTRUX_* files
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-11
 summary: The dashboard now fully covers the Chart.js metrics viewer (and adds interactivity + the sentinel sparkline). Replace metrics-viewer.html.tmpl with a ~30-line static stub pointing at the dashboard, keep deploying it via /onboard-project Phase 4 so bookmarks resolve, and delete Praxion's own .ai-state/metrics_reports/index.html plus the orphaned SENTRUX_* files. Supersedes the soft-deprecation-with-banner plan.

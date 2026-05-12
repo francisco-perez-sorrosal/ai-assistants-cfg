@@ -1,7 +1,7 @@
 ---
-id: dec-draft-b72cbb7d
+id: dec-144
 title: Dashboard diagram serving — route handler + markdown image-ref rewrite + server-side SVG sanitization
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-11
 summary: A Next.js route handler streams allowlisted project-root SVGs; markdown bodies' relative <img> refs are rewritten server-side to that route; inline-injected SVGs (interactive viewer) are scrubbed with sanitize-html; pan/zoom is hand-rolled (no dep).

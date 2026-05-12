@@ -1,7 +1,7 @@
 ---
-id: dec-draft-697b4cde
+id: dec-148
 title: Dashboard redesign step ordering and decomposition design
-status: proposed
+status: accepted
 category: implementation
 date: 2026-05-12
 summary: Records the four non-obvious step-ordering and component-design decisions made during implementation plan decomposition for the dashboard redesign.

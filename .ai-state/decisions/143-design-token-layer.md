@@ -1,7 +1,7 @@
 ---
-id: dec-draft-6c940795
+id: dec-143
 title: Dashboard design system — globals.css CSS-custom-property token layer, single polished light theme, no icon dependency
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-11
 summary: Formalize and extend the de-facto :root tokens into a real token layer (typography scale, spacing scale, radii, color tokens incl. status/grade colors, shadows) consumed by every component; add the missing chrome primitives (chip/badge, tabs, error state, popover, enhanced empty state); keep the warm-paper aesthetic; single light theme; inline-SVG icons only (no icon library); dark mode deferred.

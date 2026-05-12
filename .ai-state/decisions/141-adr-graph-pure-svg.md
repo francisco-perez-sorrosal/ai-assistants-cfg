@@ -1,7 +1,7 @@
 ---
-id: dec-draft-564191b1
+id: dec-141
 title: ADR relationship graph — pure-SVG layered layout, no graph-layout library
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-11
 summary: The ADR relationship graph (and the workshop step DAG, its single-chain case) is rendered as pure SVG with a hand-rolled longest-path layering computed in useMemo; no dagre / elkjs / d3 dependency. Supersedes the deferred-Mermaid decision, which is moot under the new diagram pipeline.
