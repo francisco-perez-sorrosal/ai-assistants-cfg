@@ -73,6 +73,34 @@ describe("sanitizeSvg — strips XSS vectors", () => {
     expect(output).toContain("fedropshadow");
   });
 
+  it("preserves the root viewBox and other camelCase SVG attributes (regression: htmlparser2 lowercases attribute names)", () => {
+    // Mermaid emits <svg width="100%" viewBox="-50 -10 1645.5 597"> with no height.
+    // Before the fix, "viewBox" (camelCase) in the allowlist matched nothing —
+    // htmlparser2 lowercases attribute names — so viewBox was silently stripped and
+    // the diagram rendered at intrinsic size with no fit-to-container (the original
+    // "diagrams render badly" defect). The attribute survives as lowercase "viewbox";
+    // the HTML5 parser restores the canonical casing when the markup is injected.
+    const input = `<svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg"
+        viewBox="-50 -10 1645.5 597" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="g" gradientTransform="rotate(20)" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#fff"/>
+        </linearGradient>
+        <marker id="m" refX="5" refY="5" markerWidth="8" markerHeight="8"/>
+      </defs>
+      <rect x="0" y="0" width="100" height="50" fill="url(#g)"/>
+    </svg>`;
+
+    const output = sanitizeSvg(input);
+
+    expect(output).toContain('viewbox="-50 -10 1645.5 597"');
+    expect(output).toContain('preserveaspectratio="xMidYMid meet"');
+    expect(output).toContain('gradienttransform="rotate(20)"');
+    expect(output).toContain('gradientunits="userSpaceOnUse"');
+    expect(output).toContain('refx="5"');
+    expect(output).toContain('markerwidth="8"');
+  });
+
   it("preserves <foreignObject> with safe HTML children (Mermaid node labels)", () => {
     // Mermaid renders every node label as HTML inside <foreignObject><div xmlns=...>.
     // Without foreignObject the label is invisible (empty yellow box).

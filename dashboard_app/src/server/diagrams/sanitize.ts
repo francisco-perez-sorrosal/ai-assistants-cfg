@@ -7,11 +7,18 @@ import sanitizeHtml from "sanitize-html";
 // an <img>-sourced SVG cannot execute script even when it contains <script> elements,
 // so those bytes are served as-is without sanitization.
 
-// sanitize-html / htmlparser2 lowercases all tag names before matching.
-// SVG camelCase element names (clipPath, linearGradient, feDropShadow, etc.)
-// must be registered in their lowercase form to survive the allowlist check.
-// The sanitized output will carry lowercase tag names — functionally equivalent
-// for rendering purposes (browsers resolve SVG elements case-insensitively).
+// sanitize-html / htmlparser2 lowercases all tag names AND all attribute names
+// before matching. SVG camelCase element names (clipPath, linearGradient,
+// feDropShadow, etc.) and camelCase attribute names (viewBox, preserveAspectRatio,
+// gradientTransform, markerWidth, refX, stdDeviation, etc.) must therefore be
+// registered in their lowercase form in BOTH SVG_ALLOWED_TAGS and
+// SVG_ALLOWED_ATTRIBUTES, or they are silently stripped. (Registering only the
+// camelCase form leaves the diagram without its viewBox → it renders at intrinsic
+// size with no fit-to-container — the original "diagrams render badly" defect.)
+// The sanitized output carries lowercased tag/attribute names; when that markup is
+// later injected via dangerouslySetInnerHTML, the HTML5 parser's foreign-content
+// attribute-adjustment step restores the canonical SVG casing (viewbox → viewBox),
+// so rendering is unaffected.
 const SVG_ALLOWED_TAGS = [
   "svg",
   "g",
@@ -115,6 +122,9 @@ const SVG_ALLOWED_TAGS = [
   "set"
 ];
 
+// NOTE: all attribute names below are LOWERCASE — htmlparser2 lowercases attribute
+// names before matching (see the block comment above SVG_ALLOWED_TAGS). A camelCase
+// entry here matches nothing and the attribute is silently dropped.
 const SVG_ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions["allowedAttributes"] = {
   "*": [
     // Identity and presentation
@@ -137,9 +147,13 @@ const SVG_ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions["allowedAttributes"] = {
     "ry",
     "width",
     "height",
-    "viewBox",
-    "preserveAspectRatio",
+    "viewbox",            // SVG: viewBox
+    "preserveaspectratio", // SVG: preserveAspectRatio
     "transform",
+    // Data attributes the diagram-normalization step adds to the root <svg>
+    "data-aspect",
+    "data-vb-w",
+    "data-vb-h",
     // Fill and stroke
     "fill",
     "fill-opacity",
@@ -178,32 +192,32 @@ const SVG_ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions["allowedAttributes"] = {
     "marker-start",
     "marker-mid",
     "marker-end",
-    "markerWidth",
-    "markerHeight",
-    "markerUnits",
+    "markerwidth",        // SVG: markerWidth
+    "markerheight",       // SVG: markerHeight
+    "markerunits",        // SVG: markerUnits
     "orient",
-    "refX",
-    "refY",
+    "refx",               // SVG: refX
+    "refy",               // SVG: refY
     // Gradients and stops
     "offset",
     "stop-color",
     "stop-opacity",
-    "gradientUnits",
-    "gradientTransform",
-    "patternUnits",
-    "patternTransform",
-    "patternContentUnits",
-    "spreadMethod",
+    "gradientunits",      // SVG: gradientUnits
+    "gradienttransform",  // SVG: gradientTransform
+    "patternunits",       // SVG: patternUnits
+    "patterntransform",   // SVG: patternTransform
+    "patterncontentunits", // SVG: patternContentUnits
+    "spreadmethod",       // SVG: spreadMethod
     "fx",
     "fy",
     // Filters
     "filter",
-    "filterUnits",
-    "primitiveUnits",
+    "filterunits",        // SVG: filterUnits
+    "primitiveunits",     // SVG: primitiveUnits
     "result",
     "in",
     "in2",
-    "stdDeviation",
+    "stddeviation",       // SVG: stdDeviation
     "flood-color",
     "flood-opacity",
     "mode",
@@ -217,15 +231,15 @@ const SVG_ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions["allowedAttributes"] = {
     "order",
     "divisor",
     "bias",
-    "kernelMatrix",
-    "baseFrequency",
-    "numOctaves",
+    "kernelmatrix",       // SVG: kernelMatrix
+    "basefrequency",      // SVG: baseFrequency
+    "numoctaves",         // SVG: numOctaves
     "seed",
-    "stitchTiles",
+    "stitchtiles",        // SVG: stitchTiles
     "fractalNoise",
     // Masks and clips
-    "maskUnits",
-    "maskContentUnits",
+    "maskunits",          // SVG: maskUnits
+    "maskcontentunits",   // SVG: maskContentUnits
     // Definitions and linking
     "href",
     "xlink:href",
@@ -263,19 +277,19 @@ const SVG_ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions["allowedAttributes"] = {
     "lang",
     "title",
     // Animation (SMIL — non-scriptable)
-    "attributeName",
-    "attributeType",
+    "attributename",      // SVG: attributeName
+    "attributetype",      // SVG: attributeType
     "begin",
     "dur",
     "end",
     "from",
     "to",
     "by",
-    "repeatCount",
-    "repeatDur",
-    "calcMode",
-    "keyTimes",
-    "keySplines",
+    "repeatcount",        // SVG: repeatCount
+    "repeatdur",          // SVG: repeatDur
+    "calcmode",           // SVG: calcMode
+    "keytimes",           // SVG: keyTimes
+    "keysplines",         // SVG: keySplines
     "additive",
     "accumulate"
   ]
