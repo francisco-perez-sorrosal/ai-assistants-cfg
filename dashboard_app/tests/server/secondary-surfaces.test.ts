@@ -47,7 +47,7 @@ describe("secondary dashboard surfaces", () => {
       "---\ntitle: Draft decision\nstatus: proposed\n---\n# Draft\n"
     );
 
-    const adrs = await getAdrData(root);
+    const { records: adrs } = await getAdrData(root);
 
     expect(adrs).toHaveLength(2);
     expect(adrs.some((adr) => adr.isDraft)).toBe(true);

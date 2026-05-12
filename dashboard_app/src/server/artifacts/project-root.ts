@@ -3,8 +3,8 @@ import "server-only";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-const ALLOWED_ARTIFACT_ROOTS = [".ai-state", ".ai-work", "docs", "ROADMAP.md"] as const;
-const REQUIRED_PROJECT_DIRECTORIES = [".ai-state", ".ai-work"] as const;
+export const ALLOWED_ARTIFACT_ROOTS = [".ai-state", ".ai-work", "docs", "ROADMAP.md"] as const;
+const REQUIRED_PROJECT_DIRECTORIES = [".ai-state"] as const;
 
 async function pathExists(target: string): Promise<boolean> {
   try {

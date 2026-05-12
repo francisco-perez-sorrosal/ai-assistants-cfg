@@ -2,17 +2,14 @@
 paths:
   - "dashboard_app/**"
   - "streamlit_app/**"
-  - "**/*.html"
   - "**/doc_manifest.yaml"
-  - "**/components/**.py"
-  - "**/components/**.j2"
-  - "**/components/**.jinja"
-  - "**/components/**.html"
+  - "dashboard_app/**/*.ts"
+  - "dashboard_app/**/*.tsx"
 ---
 
 ## HTML Output Conventions
 
-Praxion uses HTML as a **presentation veneer over Markdown source**, never as a replacement. Markdown stays the canonical source of truth for both human and agent reading; HTML enhances the human reading experience by adding visual structure, hides dense content behind anchored links to MD sections, and is assembled by the per-project dashboard server. `dashboard_app/` is the active runtime (Next.js App Router + TypeScript); `streamlit_app/` remains as migration reference only. This rule applies when authoring or modifying anything in the rendering layer — dashboard pages, component library files, doc manifests, and committed `.html` artifacts.
+Praxion uses HTML as a **presentation veneer over Markdown source**, never as a replacement. Markdown stays the canonical source of truth for both human and agent reading; HTML enhances the human reading experience by adding visual structure, hides dense content behind anchored links to MD sections, and is assembled by the per-project dashboard server. `dashboard_app/` is the active runtime (Next.js App Router + TypeScript); `streamlit_app/` remains in-tree as a retirement-pending reference — parity with the redesign has been reached; it is NOT a migration target. Active development targets `dashboard_app/` exclusively. This rule applies when authoring or modifying anything in the rendering layer — dashboard pages, component library files, doc manifests, and committed `.html` artifacts.
 
 ### The Architectural Pattern
 
@@ -51,37 +48,59 @@ Two render modes coexist; pick by audience and lifetime:
 
 ### Component Library
 
-HTML rendering is **not hand-authored per artifact**. A small library of reusable, content-typed renderers lives at `dashboard_app/components/` (TypeScript/React templates). The dashboard selects the renderer by file type + Diátaxis frontmatter.
+HTML rendering is **not hand-authored per artifact**. The as-built Next.js App Router structure is:
 
-**Initial component set:**
-
-| Component | Consumes | Renders |
+| Layer | Location | Role |
 |---|---|---|
-| `plan_view` | `IMPLEMENTATION_PLAN.md` + `WIP.md` | Step cards with progress, blockers, acceptance criteria expandable |
-| `adr_card` | `<NNN>-*.md` ADR | Frontmatter as header chip; body collapsed; supersedes/re-affirms graph |
-| `verification_report` | `VERIFICATION_REPORT.md` | Color-coded findings (PASS / WARN / FAIL); contract-violation tags as filters |
-| `architecture_explorer` | `DESIGN.md` + `architecture.md` + diagrams | Three-pane: Diátaxis-explanation / code-verified-reference / live SVG viewport |
-| `traceability_matrix` | `traceability.yml` + spec | Sortable table; REQ → test → impl click-through |
-| `idea_grid` | `IDEA_PROPOSAL.md` + `IDEA_LEDGER_*.md` | Side-by-side proposal cards |
-| `metrics_view` | `METRICS_REPORT_*.json` | Existing metrics page (already in `streamlit_app/`) |
+| **Server view-models** | `dashboard_app/src/server/view-models/<surface>.ts` | Data shaping — reads MD/JSON/YAML from disk, returns typed props |
+| **Presentation primitives** | `dashboard_app/src/components/` | Stateless React components: `EmptyState`, `MarkdownSurface`, `LiveRefresh`, `MetricsDashboard`, `SidebarNav`, `MetricsSummaryCards`, `MetricsTrends`, `ArtifactCard`, `MetadataChips`, `EducationalPopover` |
+| **Diátaxis shells** | `dashboard_app/src/components/shells/` | Layout chrome wrapping `MarkdownSurface`: `ReferenceShell`, `ExplanationShell`, `DefaultShell`; `TutorialShell`/`HowToShell`/`ConceptsShell` are default-aliasing stubs (see Diátaxis-Typed Shells) |
+| **Renderer registry** | `dashboard_app/src/components/registry.ts` | `RENDERER_REGISTRY: Map<string, ComponentType<{body: string; surface?: ManifestSurface}>>` + `resolveRenderer(diataxis?, contentType?)` |
+| **Viz components** | `dashboard_app/src/components/viz/` | Interactive: `DiagramViewer`, `DecisionGraph`, `TrendChart`, `Sparkline`, `usePanZoom` |
+| **Chrome components** | `dashboard_app/src/components/chrome/` | `Chip`, `Tabs`, `ErrorState` |
+| **Page routes** | `dashboard_app/src/app/<surface>/page.tsx` | 7 surface pages: `adrs`, `architecture`, `documentation`, `metrics`, `roadmap`, `sentinel`, `workshops` |
 
-**Adding a new component:** create a new module under `dashboard_app/components/<name>/` exporting a `render(source_paths, ...)` callable. Register it in `dashboard_app/components/__init__.ts`'s renderer map keyed by content type. Document its `Consumes:` and `Renders:` rows in `dashboard_app/components/README.md`.
+**Initial surface coverage:**
+
+| Surface | Consumes | Implemented in |
+|---|---|---|
+| `plan_view` | `IMPLEMENTATION_PLAN.md` + `WIP.md` | `dashboard_app/` (via `MarkdownSurface` + registry) |
+| `adr_card` | `<NNN>-*.md` ADR + graph | `dashboard_app/src/app/adrs/` |
+| `verification_report` | `VERIFICATION_REPORT.md` | `dashboard_app/` (via `MarkdownSurface`) |
+| `architecture_explorer` | `DESIGN.md` + `architecture.md` + diagrams | `dashboard_app/src/app/architecture/` |
+| `traceability_matrix` | `traceability.yml` + spec | `dashboard_app/` (via `MarkdownSurface`) |
+| `idea_grid` | `IDEA_PROPOSAL.md` + `IDEA_LEDGER_*.md` | `dashboard_app/` (via `MarkdownSurface`) |
+| `metrics_view` | `METRICS_REPORT_*.json` | Implemented in `dashboard_app/src/app/metrics/` + `src/components/metrics-dashboard.tsx` |
+
+**Adding a new component:** add a server view-model under `dashboard_app/src/server/view-models/`, a React component in `dashboard_app/src/components/`, and wire a page route under `dashboard_app/src/app/<surface>/page.tsx`. For content-typed rendering, register the component in `RENDERER_REGISTRY` keyed by its `diataxis:` value or content-type string. There is no `render(source_paths)` callable, no `__init__.ts`, and no top-level `dashboard_app/components/` directory — these do not exist in the as-built Next.js structure.
 
 ### Diátaxis-Typed Shells
 
-When rendering an MD file, the renderer chooses a shell based on the `diataxis:` frontmatter:
+The renderer registry (`dashboard_app/src/components/registry.ts`) maps `diataxis:` frontmatter values to shell components. The documentation page dispatches through it:
 
-| `diataxis:` value | Shell template | Visual emphasis |
+| `diataxis:` value | Shell | Status |
 |---|---|---|
-| `tutorial` | progress-through-steps wrapper; "what you'll have built when done" header | sequential numbered cards, prereq sidebar |
-| `how-to` | numbered checklist + copy-paste blocks + verification commands | terse, scan-friendly, command emphasis |
-| `reference` | sortable tables, anchored navigation, search bar | dense data, table-of-contents fixed sidebar |
-| `explanation` | wide-text + illustration-heavy + "why this matters" sidebar | prose flow, embedded diagrams, no commands |
-| `concepts` | glossary + decision rationale + relationship graph | conceptual map, cross-references prominent |
+| `reference` | `ReferenceShell` — fixed ToC sidebar slot + dense-table styling | Implemented |
+| `explanation` | `ExplanationShell` — wide prose column + "why this matters" aside slot | Implemented |
+| `tutorial` | `TutorialShell` — default-aliasing stub (`export { DefaultShell as TutorialShell }`) | Stub — pending dedicated chrome (tracked in `.ai-state/TECH_DEBT_LEDGER.md`) |
+| `how-to` | `HowToShell` — default-aliasing stub | Stub — pending dedicated chrome |
+| `concepts` | `ConceptsShell` — default-aliasing stub | Stub — pending dedicated chrome |
+| *(fallback)* | `DefaultShell` — plain card wrapping `MarkdownSurface` | Implemented |
 
-The MD body is rendered into the shell's content slot. **Same source, different cognitive ergonomics.**
+The MD body is rendered into the shell's content slot. **Same source, different cognitive ergonomics.** Other pages may dispatch through the registry but are not required to; the documentation page does.
 
-### No JavaScript in HTML
+### SVG and Diagram Rendering
+
+Two embedding strategies apply depending on the context:
+
+| Context | Strategy | Rationale |
+|---|---|---|
+| Committed Markdown + committed `.html` share-out files | `<img>` tag referencing `diagrams/<name>/rendered/<name>.svg` | Renderer-agnostic; GitHub-renderable; no JS required |
+| Dashboard server (interactive surfaces) | Inline SVG via `dangerouslySetInnerHTML` or the `/api/diagram` route | Enables pan/zoom, node events, CSS interaction — only the dashboard server may use this pattern |
+
+The dashboard server's `/api/diagram` route streams allowlisted SVGs from the project root. SVGs served through this route or injected inline in the React tree must be sanitized via `sanitize-html` (see `dashboard_app/src/server/diagrams/sanitize.ts`). Committed Markdown source never changes to accommodate inline SVG — the `<img>` convention stays.
+
+### No JavaScript in Committed HTML
 
 Committed `.html` files (share-out renders) are **declarative HTML + CSS + SVG only.** No `<script>` tags. No client-side fetch. No interactive widgets embedded in the HTML.
 
@@ -99,16 +118,17 @@ Committed `.html` files (share-out renders) are **declarative HTML + CSS + SVG o
 
 ### MD Inlining via the Dashboard Server
 
-When a renderer needs to embed MD content inline (e.g., a how-to guide's commands inside a tutorial wrapper):
+When a renderer needs to embed MD content inline, read it server-side using the project's file utilities:
 
-```python
-# dashboard_app/components/how_to/render.tsx
-from pathlib import Path
+```typescript
+// dashboard_app/src/server/view-models/documentation.ts
+import { readText } from "@/server/artifacts/files";
 
-def render(md_path: Path):
-    raw = md_path.read_text()
-    frontmatter, body = split_frontmatter(raw)
-    renderMarkdown(body)  # MD body rendered live
+export async function getHowToViewModel(surface: string) {
+  const raw = await readText(`docs/${surface}.md`);
+  const { content, data: frontmatter } = parseFrontmatter(raw);
+  return { body: content, frontmatter };
+}
 ```
 
 **Never:**
@@ -121,9 +141,9 @@ The only allowed flow is: `MD on disk → dashboard server reads at view-time �
 
 ### `doc_manifest.yaml` — the Entry-Point Spine
 
-Each project ships a `.ai-state/doc_manifest.yaml` listing every doc surface with type, renderer, location, and relationships. The dashboard reads it on startup to build navigation. Schema lives in [`skills/doc-management/references/doc-manifest-schema.md`](../../skills/doc-management/references/doc-manifest-schema.md) (when authored).
+Each project ships a `.ai-state/doc_manifest.yaml` listing every doc surface with type, renderer, location, and relationships. The dashboard reads it on startup to build navigation. Schema lives in [`skills/doc-management/references/doc-manifest-schema.md`](../../skills/doc-management/references/doc-manifest-schema.md).
 
-The manifest is **generated**, not hand-maintained — `scripts/build_doc_manifest.py` walks `docs/`, `.ai-state/`, `.ai-work/<active-slug>/` and emits the YAML. Sentinel check `EC07-doc-manifest-fresh` validates it stays in sync with the filesystem.
+The manifest is **generated**, not hand-maintained — `scripts/build_doc_manifest.py` walks `docs/`, `.ai-state/`, `.ai-work/<active-slug>/` and emits the YAML.
 
 ### Sharability and File Layout
 
@@ -145,7 +165,7 @@ For dashboard-rendered artifacts:
 | Author | What they author |
 |---|---|
 | Skill / agent / convention authors | **MD only.** Never HTML. Frontmatter declares `diataxis:` and (optionally) `share_out: true`. |
-| `dashboard_app/components/` maintainers | Renderer code (TypeScript + React). Components are reusable; one renderer serves N artifacts of the same type. |
+| `dashboard_app/src/components/` maintainers | Renderer code (TypeScript + React). Components are reusable; one renderer serves N artifacts of the same type. |
 | Pre-render hook (auto-generated) | `<file>.html` for `share_out: true` files. Never hand-edit the output. |
 | User / dashboard user | Reads only. May export ad-hoc snapshots via dashboard "share" buttons. |
 
@@ -153,21 +173,14 @@ This is the same single-author-per-surface discipline already enforced for MD do
 
 ### Integration with `diagram-conventions.md`
 
-The diagram source/render separation already established in [`diagram-conventions.md`](diagram-conventions.md) composes cleanly: SVG renders are embedded as `<img>` tags in HTML the same way they're embedded in Markdown. No additional mechanism needed. When a renderer (e.g., `architecture_explorer`) needs to embed an SVG, it reads the same `<doc-tree>/diagrams/<name>/rendered/<name>.svg` path the MD source references.
+The diagram source/render separation already established in [`diagram-conventions.md`](diagram-conventions.md) composes cleanly. For committed Markdown and HTML artifacts, SVG renders are embedded as `<img>` tags. When the dashboard server renders SVGs inline for interactive surfaces (e.g., `DiagramViewer`, `DecisionGraph`), the SVG source path still follows the `diagrams/<name>/rendered/<name>.svg` convention — only the delivery mechanism changes (route-served or inline-injected vs. `<img>` tag). The committed Markdown source never changes.
 
 ### Self-test Before Committing HTML-Layer Changes
 
 - Did I author MD source first, with HTML rendering as a derived view?
-- Did I check that no MD content is duplicated into HTML or Python source?
-- Did I select the appropriate renderer from `dashboard_app/components/` rather than hand-authoring a one-off HTML page?
+- Did I check that no MD content is duplicated into HTML or TypeScript source?
+- Did I use the renderer registry or an appropriate existing component from `dashboard_app/src/components/` rather than hand-authoring a one-off HTML page?
 - For interactivity, did I use dashboard controls rather than HTML+JS?
-- For MD content embedding, did I read the Markdown at view-time rather than pre-baking it into HTML?
+- For MD content embedding, did I read the Markdown at view-time using `readText()` rather than pre-baking it into HTML?
 - Did I add the new doc surface to `.ai-state/doc_manifest.yaml` (or trigger the generator that does)?
-
-### Migration Clause (Existing Streamlit Pages)
-
-`streamlit_app/` pages authored before this convention took effect (e.g., the existing metrics page) **stay in place** as migration references. Migration to the component-library structure happens opportunistically when a page is touched for any other reason. Sentinel check `EC07b-dashboard-page-uses-components` (when implemented) flags pages that bypass the renderer registry, but does not block — it advises.
-
-### Anchored Cross-Reference
-
-The full rationale, sub-phases (HTML-A through HTML-F), and migration sequencing live in `.ai-state/decisions/drafts/` (the locked HTML strategy will get its own ADR when this rule is finalized at merge-to-main).
+- For SVG in the dashboard server, did I sanitize via `sanitize-html` before injecting inline?

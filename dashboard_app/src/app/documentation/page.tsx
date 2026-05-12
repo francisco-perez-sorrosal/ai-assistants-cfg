@@ -2,7 +2,7 @@ import Link from "next/link";
 import path from "node:path";
 
 import { EmptyState } from "@/components/empty-state";
-import { MarkdownSurface } from "@/components/markdown-surface";
+import { resolveRenderer } from "@/components/registry";
 import { getConfig } from "@/lib/config";
 import {
   getDocumentationData,
@@ -58,11 +58,15 @@ export default async function DocumentationPage({
   );
 
   if (selectedSurfaceData?.renderMode === "markdown") {
+    const Renderer = resolveRenderer(
+      selectedSurface?.diataxis,
+      selectedSurface?.type
+    );
     renderedBody =
       selectedSurfaceData.body === null ? (
         <p className="muted">{selectedSurfaceData.errorMessage ?? "Unreadable file."}</p>
       ) : (
-        <MarkdownSurface body={selectedSurfaceData.body} />
+        <Renderer body={selectedSurfaceData.body} surface={selectedSurface ?? undefined} />
       );
   } else if (selectedSurfaceData?.renderMode === "code") {
     renderedBody =

@@ -3,7 +3,7 @@
 
 Walks the project filesystem according to the schema specified in
 ``skills/doc-management/references/doc-manifest-schema.md`` and emits a YAML
-manifest the per-project Streamlit dashboard reads at session start.
+manifest the per-project dashboard reads at session start.
 
 The generator is deterministic: given the same filesystem state, it always
 emits identical YAML (modulo `generated_at`). This is the contract that lets

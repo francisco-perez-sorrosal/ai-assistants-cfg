@@ -1,9 +1,51 @@
 import path from "node:path";
 
+import { ArtifactCard } from "@/components/artifact-card";
+import { EducationalPopover } from "@/components/educational-popover";
 import { EmptyState } from "@/components/empty-state";
 import { MarkdownSurface } from "@/components/markdown-surface";
+import { Sparkline } from "@/components/viz/sparkline";
 import { getConfig } from "@/lib/config";
 import { getSentinelData } from "@/server/view-models/sentinel";
+import type { SentinelLogPoint } from "@/server/view-models/sentinel";
+
+// ─── Grade helpers ────────────────────────────────────────────────────────────
+
+const GRADE_NUMBERS: Record<string, number> = {
+  a: 4,
+  b: 3,
+  c: 2,
+  d: 1
+};
+
+const GRADE_COLOR_TOKENS: Record<number, string> = {
+  4: "var(--grade-a)",
+  3: "var(--grade-b)",
+  2: "var(--grade-c)",
+  1: "var(--grade-d)"
+};
+
+function gradeToNumber(grade: string | null): number | null {
+  if (grade === null) {
+    return null;
+  }
+  return GRADE_NUMBERS[grade.toLowerCase()] ?? null;
+}
+
+function gradeColorTokenForNumber(y: number): string {
+  return GRADE_COLOR_TOKENS[Math.round(y)] ?? "var(--color-text-muted)";
+}
+
+function logSeriesToSparklinePoints(
+  logSeries: SentinelLogPoint[]
+): Array<{ x: string; y: number | null }> {
+  return logSeries.map((point, idx) => ({
+    x: point.timestamp ?? String(idx + 1),
+    y: gradeToNumber(point.grade)
+  }));
+}
+
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default async function SentinelPage() {
   const cfg = getConfig();
@@ -16,40 +58,99 @@ export default async function SentinelPage() {
           <p className="eyebrow">Ecosystem quality</p>
           <h2>Sentinel</h2>
           <p>
-            Health history and the latest audit rendered from `.ai-state/sentinel_reports/`.
+            Health history and the latest audit rendered from{" "}
+            <code>.ai-state/sentinel_reports/</code>.{" "}
+            <EducationalPopover
+              title="Sentinel audits"
+              body="The sentinel agent audits the project's context artifacts across ten dimensions and grades overall health. Findings are tiered Critical / Important / Suggested."
+              href="agents/sentinel.md"
+            />
           </p>
         </div>
         <aside>
           <span>Latest report</span>
           <strong>
-            {sentinel.reports.length > 0 ? path.basename(sentinel.reports[0]) : "None"}
+            {sentinel.reports.length > 0
+              ? path.basename(sentinel.reports[0] ?? "")
+              : "None"}
           </strong>
         </aside>
       </header>
 
-      {!sentinel.latest ? (
+      {sentinel.latest === null ? (
         <EmptyState
           title="No sentinel reports found"
           body="Run `/sentinel` in the target project to generate the first ecosystem audit."
+          producerPath=".ai-state/sentinel_reports/"
         />
       ) : (
-        <div className="grid-two">
-          <article className="artifact-card">
-            <h3>Latest report</h3>
-            <div className="artifact-meta">
-              <span className="chip">{path.relative(cfg.projectRoot, sentinel.latest.path)}</span>
+        <div className="sentinel-body">
+          {/* ── Health grade sparkline ──────────────────────────────────────── */}
+          {sentinel.logSeries.length > 0 ? (
+            <div className="sentinel-sparkline-row">
+              <span className="sentinel-sparkline-label muted">Health grade trend</span>
+              <Sparkline
+                series={[
+                  {
+                    label: "Health",
+                    color: "var(--color-accent)",
+                    points: logSeriesToSparklinePoints(sentinel.logSeries)
+                  }
+                ]}
+                colorForValue={(y) => gradeColorTokenForNumber(y)}
+              />
             </div>
-            <MarkdownSurface body={sentinel.latest.body} />
-          </article>
+          ) : null}
 
-          <article className="artifact-card">
-            <h3>History</h3>
-            {sentinel.log ? (
-              <MarkdownSurface body={sentinel.log.body} />
+          {/* ── Collapsible finding sections ────────────────────────────────── */}
+          <div className="sentinel-sections">
+            {sentinel.latest.sections !== null ? (
+              <>
+                {sentinel.latest.sections.critical.length > 0 ? (
+                  <ArtifactCard title="Critical" defaultOpen={true}>
+                    <MarkdownSurface body={sentinel.latest.sections.critical} />
+                  </ArtifactCard>
+                ) : null}
+
+                {sentinel.latest.sections.important.length > 0 ? (
+                  <ArtifactCard title="Important">
+                    <MarkdownSurface body={sentinel.latest.sections.important} />
+                  </ArtifactCard>
+                ) : null}
+
+                {sentinel.latest.sections.suggested.length > 0 ? (
+                  <ArtifactCard title="Suggested">
+                    <MarkdownSurface body={sentinel.latest.sections.suggested} />
+                  </ArtifactCard>
+                ) : null}
+
+                {sentinel.latest.sections.rest.trim().length > 0 ? (
+                  <ArtifactCard title="Full report">
+                    <MarkdownSurface body={sentinel.latest.sections.rest} />
+                  </ArtifactCard>
+                ) : null}
+              </>
             ) : (
-              <p className="muted">No `SENTINEL_LOG.md` found alongside the reports.</p>
+              /* sections parse failed — render full body */
+              <ArtifactCard
+                title={path.basename(sentinel.latest.path)}
+                defaultOpen={true}
+              >
+                <MarkdownSurface body={sentinel.latest.body} />
+              </ArtifactCard>
             )}
-          </article>
+          </div>
+
+          {/* ── Report history list ─────────────────────────────────────────── */}
+          <ArtifactCard title="Report history">
+            <ul className="surface-list">
+              {sentinel.reports.map((reportPath) => (
+                <li key={reportPath} className="surface-row">
+                  <code>{path.basename(reportPath)}</code>
+                </li>
+              ))}
+            </ul>
+          </ArtifactCard>
         </div>
       )}
     </section>

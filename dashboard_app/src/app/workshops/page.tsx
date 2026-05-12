@@ -1,9 +1,30 @@
 import path from "node:path";
 
+import { DecisionGraph } from "@/components/viz/decision-graph";
+import { EducationalPopover } from "@/components/educational-popover";
 import { EmptyState } from "@/components/empty-state";
 import { LiveRefresh } from "@/components/live-refresh";
 import { getConfig } from "@/lib/config";
+import type { AdrGraphNode } from "@/server/view-models/adr-graph";
 import { getWorkshopsData } from "@/server/view-models/workshops";
+import type { WorkshopProgressItem } from "@/server/types";
+
+const MIN_STEPS_FOR_DAG = 3;
+
+function stepsToNodes(items: WorkshopProgressItem[]): AdrGraphNode[] {
+  return items.map((item, index) => {
+    const status = item.checked ? "accepted" : item.current ? "proposed" : "superseded";
+    const prevItem = index > 0 ? items[index - 1] : undefined;
+    const nextItem = index < items.length - 1 ? items[index + 1] : undefined;
+    return {
+      id: item.stepId,
+      status,
+      title: item.label,
+      supersedes: prevItem?.stepId,
+      superseded_by: nextItem?.stepId
+    };
+  });
+}
 
 export default async function WorkshopsPage() {
   const cfg = getConfig();
@@ -16,7 +37,14 @@ export default async function WorkshopsPage() {
       <header className="page-intro">
         <div>
           <p className="eyebrow">Live supervision</p>
-          <h2>Workshops</h2>
+          <h2>
+            Workshops
+            <EducationalPopover
+              title="Pipeline workshops"
+              body="In-flight agent pipelines surface here: the current WIP step, the step plan, the PROGRESS.md transition log, and which intermediate artifacts exist. Workshop directories disappear after the pipeline completes and is cleaned."
+              href="rules/swe/agent-intermediate-documents.md"
+            />
+          </h2>
           <p>
             In-flight pipeline state from `.ai-work/&lt;task-slug&gt;/`, refreshed on a
             fixed cadence without introducing a secondary data store.
@@ -32,6 +60,7 @@ export default async function WorkshopsPage() {
         <EmptyState
           title="No active workshops"
           body="`.ai-work/` is empty right now. Pipelines surface here while they are in flight and disappear after cleanup."
+          producerPath=".ai-work/<task-slug>/"
         />
       ) : (
         <div className="grid-two">
@@ -48,16 +77,21 @@ export default async function WorkshopsPage() {
                 {workshop.progress.length === 0 ? (
                   <p className="muted">No parsed WIP checklist yet.</p>
                 ) : (
-                  <ul className="status-list">
-                    {workshop.progress.map((item) => (
-                      <li className="status-row" key={`${workshop.path}:${item.stepId}`}>
-                        <strong>
-                          {item.checked ? "Completed" : item.current ? "Current" : "Pending"} · Step {item.stepId}
-                        </strong>
-                        <span className="muted">{item.label}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <>
+                    {workshop.progress.length >= MIN_STEPS_FOR_DAG && (
+                      <DecisionGraph nodes={stepsToNodes(workshop.progress)} />
+                    )}
+                    <ul className="status-list">
+                      {workshop.progress.map((item) => (
+                        <li className="status-row" key={`${workshop.path}:${item.stepId}`}>
+                          <strong>
+                            {item.checked ? "Completed" : item.current ? "Current" : "Pending"} · Step {item.stepId}
+                          </strong>
+                          <span className="muted">{item.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
                 )}
               </section>
 

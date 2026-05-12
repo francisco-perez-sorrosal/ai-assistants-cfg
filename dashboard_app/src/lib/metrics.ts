@@ -87,21 +87,6 @@ export type MetricsSnapshot = {
   wallClockSeconds: number | null;
 };
 
-export type SentruxSnapshot = {
-  callEdges: number | null;
-  commitSha: string | null;
-  exitCode: number | null;
-  fileName: string | null;
-  filesKept: number | null;
-  id: string;
-  importEdges: number | null;
-  inheritEdges: number | null;
-  qualitySignal: number | null;
-  rulesChecked: number | null;
-  rulesPass: boolean | null;
-  timestamp: string | null;
-};
-
 export type DashboardMetricsData = {
   latest: MetricsSnapshot | null;
   latestPath: string | null;
@@ -109,16 +94,30 @@ export type DashboardMetricsData = {
     body: string;
     path: string;
   } | null;
-  sentrux: {
-    history: SentruxSnapshot[];
-    latest: SentruxSnapshot | null;
-    latestPath: string | null;
-    log: {
-      body: string;
-      path: string;
-    } | null;
-  };
+  logSeries: MetricsLogPoint[];
   snapshots: MetricsSnapshot[];
+};
+
+/**
+ * One row from METRICS_LOG.md. Numeric cells that are absent or non-numeric coerce to null.
+ */
+export type MetricsLogPoint = {
+  timestamp: string | null;
+  commit_sha: string | null;
+  window_days: number | null;
+  sloc_total: number | null;
+  file_count: number | null;
+  language_count: number | null;
+  ccn_p95: number | null;
+  cognitive_p95: number | null;
+  cyclic_deps: number | null;
+  churn_total_90d: number | null;
+  change_entropy_90d: number | null;
+  truck_factor: number | null;
+  hotspot_top_score: number | null;
+  hotspot_gini: number | null;
+  coverage_line_pct: number | null;
+  report_file: string | null;
 };
 
 export type MetricChartSection = {
@@ -415,4 +414,23 @@ export function sliceSnapshotsUpTo<T extends { id: string }>(
   }
 
   return snapshots.slice(0, selectedIndex + 1);
+}
+
+/**
+ * Filters METRICS_LOG.md rows to those whose timestamp is at or before
+ * `untilTimestamp`. Rows with a null timestamp are dropped when filtering
+ * (they have no temporal anchor and cannot be placed reliably). When
+ * `untilTimestamp` is null, returns the full `logSeries` unmodified.
+ */
+export function sliceLogSeriesUpTo(
+  logSeries: MetricsLogPoint[],
+  untilTimestamp: string | null
+): MetricsLogPoint[] {
+  if (untilTimestamp === null) {
+    return logSeries;
+  }
+
+  return logSeries.filter(
+    (row) => row.timestamp !== null && row.timestamp <= untilTimestamp
+  );
 }

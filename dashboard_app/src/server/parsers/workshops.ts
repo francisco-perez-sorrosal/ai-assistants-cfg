@@ -4,6 +4,7 @@ import type { WorkshopEvent, WorkshopProgressItem } from "@/server/types";
 
 const CHECKLIST_LINE =
   /^\s*-\s+\[([xX ])\]\s+Step\s+(\S+?):\s+(.+?)(?:\s+\[[A-Z_]+\])?\s*$/;
+const CHECKLIST_LINE_BARE = /^\s*-\s*\[([xX ])\]\s+(\d+)\.\s+(.+)$/i;
 const EVENT_LINE =
   /^\[([^\]]+)\]\s+\[([^\]]+)\]\s+Phase\s+(\S+):\s+(?:\[[^\]]+\]\s+--\s+)?(.+)$/;
 
@@ -51,17 +52,20 @@ export function parseWipBody(body: string): {
       continue;
     }
 
-    const match = CHECKLIST_LINE.exec(rawLine);
+    const match = CHECKLIST_LINE.exec(rawLine) ?? CHECKLIST_LINE_BARE.exec(rawLine);
     if (!match) {
       continue;
     }
 
-    const checked = match[1].toLowerCase() === "x";
+    const checkMark = match[1] ?? " ";
+    const stepId = match[2] ?? "";
+    const label = match[3] ?? "";
+    const checked = checkMark.toLowerCase() === "x";
     progress.push({
       checked,
       current: !checked && currentStep !== null && rawLine.includes(currentStep),
-      label: match[3].trim(),
-      stepId: match[2].trim()
+      label: label.trim(),
+      stepId: stepId.trim()
     });
   }
 
@@ -74,9 +78,9 @@ export function parseProgressBody(body: string): WorkshopEvent[] {
     .map((line) => EVENT_LINE.exec(line))
     .filter((match): match is RegExpExecArray => Boolean(match))
     .map((match) => ({
-      agent: match[2],
-      phase: match[3],
-      summary: match[4],
-      timestamp: match[1]
+      agent: match[2] ?? "",
+      phase: match[3] ?? "",
+      summary: match[4] ?? "",
+      timestamp: match[1] ?? ""
     }));
 }
