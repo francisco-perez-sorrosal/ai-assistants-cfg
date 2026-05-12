@@ -352,6 +352,12 @@ Your `SYSTEMS_PLAN.md` is the implementation planner's primary input. Focus on:
 - When the task involves context artifacts, the context-engineer may shadow this stage — running in parallel, reading the research-stage review from `CONTEXT_REVIEW.md`, and appending the architecture-stage section. Read the `## Research Stage Review` section (if present) for context artifact inventory and health assessment to inform your design decisions
 - Scope boundary: you make architectural decisions; the context-engineer provides context engineering domain expertise that informs those decisions
 
+### With the Interface Designer
+
+- **Default partition**: you own *that* the interface exists (a REST endpoint, a TUI surface, an MCP tool set) and its behavioral contract; the interface-designer owns *what it looks like* — naming, ergonomics, error shapes, pagination style, tool description quality, accessibility
+- **Obligation to re-evaluate**: when the interface-designer raises an `## Architecture Challenges` entry, read each contested decision and incorporate the proposed alternative unless you can articulate a concrete architectural reason to reject it. Silent acceptance of a bad design is a contract violation on the architect's side; silent rejection of a challenge is a contract violation on the designer's side. The orchestrator mediates if the parties cannot converge in one round
+- **Scope boundary**: you make load-bearing structural decisions; the interface-designer refines quality and taste within those constraints — but taste that affects correctness (e.g., an error format that can't be parsed by clients, a tool description that breaks model comprehension) is a structural concern and rises to you for resolution
+
 Structural coherence of the architect's outputs (DSL, `ARCHITECTURE.md`, ADR cross-references) is verified downstream by `architect-validator` once the design is committed; the architect does not run this check.
 
 ## Output

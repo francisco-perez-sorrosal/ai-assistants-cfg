@@ -27,6 +27,7 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | `/refresh-skill` | Refresh version-sensitive sections of a skill against current upstream documentation |
 | `/release` | Bump version, update changelog, and create a release tag |
 | `/report-upstream` | File a well-formed bug report on an upstream open-source project |
+| `/review-interface` | Run an interface design review on a file, PR, branch, or named surface via the interface-designer agent |
 | `/review-pr` | Code review a pull request |
 | `/roadmap` | Produce a project-audited `ROADMAP.md` via a project-derived evaluation lens set (SPIRIT, DORA, SPACE, FAIR, CNCF Platform Maturity, or Custom) through the roadmap-cartographer agent; covers strengths, weaknesses, **opportunities (forward lines of work)**, phased improvements, and deprecations |
 | `/run-experiment` | Dispatch an ML training experiment, validate compute budget, stream metrics, write `TRAINING_RESULTS.md` |

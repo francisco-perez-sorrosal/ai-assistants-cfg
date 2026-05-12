@@ -99,6 +99,7 @@ For the full step sequence (draft detection, NNN assignment, file rename + front
 |-------|------|-------|-------------|
 | systems-architect | Phase 4 (trade-off analysis) | Significant trade-offs: system boundaries, data model, technology selection, security | `.ai-state/decisions/drafts/` (fragment) |
 | implementation-planner | Step decomposition | Decisions affecting step ordering, module structure, approach | `.ai-state/decisions/drafts/` (fragment) |
+| interface-designer | Phase 4 (trade-off analysis) | Interface-layer decisions: UI framework / API paradigm / MCP tool decomposition / error format / pagination / component-pattern selection | `.ai-state/decisions/drafts/` (fragment) |
 | user | Direct tier or manual | Any decision worth preserving | `.ai-state/decisions/drafts/` preferred; `<NNN>-<slug>.md` acceptable for direct-tier, no-pipeline authoring |
 
 All ADR authors also record decisions in `LEARNINGS.md ### Decisions Made` using the structured format. While a pipeline is in flight, `LEARNINGS.md` carries `dec-draft-<hash>` references; finalize rewrites these to `dec-NNN` at merge-to-main.

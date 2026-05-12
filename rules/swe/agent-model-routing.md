@@ -25,6 +25,7 @@ Aliases only (`opus`/`sonnet`/`haiku`); pin full IDs at spawn time only when ver
 | `roadmap-cartographer` | H | `opus` | Multi-phase synthesis, 6-way fan-out |
 | `verifier` | H | `opus` | Quality-critical gate; structural reasoning |
 | `architect-validator` | H | `opus` | Structural reasoning across DSL + code graph + ADR set; pre-merge gate |
+| `interface-designer` | H | `opus` | Interface-layer design decisions and taste under trade-offs across web/TUI/API/agentic surfaces; same rationale as systems-architect and verifier — the agent's value is quality judgement across a broad design space |
 | `implementation-planner` | M | `sonnet` | Feature-scoped decomposition |
 | `implementer` | M | `sonnet` | Single-step execution; step-H/L override |
 | `test-engineer` | M | `sonnet` | Per-step judgment paired with implementer |

@@ -7,7 +7,7 @@ description: >
   reports completion. Use when an IMPLEMENTATION_PLAN.md exists with steps
   ready for execution, or when the implementation-planner delegates a step.
 tools: Read, Write, Edit, Glob, Grep, Bash
-skills: [software-planning, code-review, refactoring, external-api-docs]
+skills: [software-planning, code-review, refactoring, external-api-docs, web-ui-design, tui-design, agentic-interface-design, api-design-craft]
 permissionMode: acceptEdits
 background: true
 memory: user

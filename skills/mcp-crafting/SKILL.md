@@ -59,6 +59,8 @@ Tools perform computation and side effects. The LLM invokes them. Define paramet
 
 Use tools for: computation, side effects, actions on external systems, anything that changes state.
 
+**Tool *design* quality** — naming a tool well, writing its description so a model comprehends it on every call, deciding fat-vs-thin decomposition, applying progressive disclosure when the surface exceeds ~20 tools, and designing errors the model can self-recover from — is a design discipline distinct from the implementation mechanics on this page. For that craft, see the [`agentic-interface-design`](../agentic-interface-design/SKILL.md) skill (the tool name and description ARE the interface; the description is the primary lever for correcting model behavior). This page covers *how to build* an MCP server; `agentic-interface-design` covers *how good* the tool design is.
+
 ### Resources -- Data Exposure
 
 Resources provide data to LLMs (like GET endpoints). No significant side effects. Identified by URI templates.

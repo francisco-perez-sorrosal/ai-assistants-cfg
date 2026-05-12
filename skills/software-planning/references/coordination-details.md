@@ -149,6 +149,62 @@ Signals that shadowing is needed:
 
 For the full context-engineer engagement table (stage → role → trigger), see [agent-pipeline-details.md#context-engineer-pipeline-engagement](agent-pipeline-details.md#context-engineer-pipeline-engagement).
 
+## Interface-Designer Shadowing & the Architecture-Challenge Loop
+
+When work involves a **substantial interface surface** (new web UI, new TUI, CLI-output pass, new or changed API, MCP tool surface, A2A contract design), the interface-designer runs in parallel with the researcher and systems-architect, producing cumulative `INTERFACE_DESIGN.md` that flows forward to the planner.
+
+### Activation
+
+Shadowing is **conditional** — it activates only when the task has a substantial interface surface in scope. A one-line log-statement change does not activate it; a new dashboard page, a new API endpoint, or a new MCP tool surface does.
+
+### Research-Stage Shadow
+
+- Runs in parallel with the researcher.
+- Inventories existing interface surfaces in the affected area: components, CSS tokens, CLI output patterns, API endpoints, tool schemas.
+- Writes the `## Research Stage` section of `.ai-work/<task-slug>/INTERFACE_DESIGN.md` (scope + inventory + canon notes + recommendations for architect).
+
+### Architecture-Stage Shadow
+
+- Runs in parallel with the systems-architect.
+- Reads the research-stage section first.
+- Decides the interface-layer technology (UI framework, API paradigm, error format, pagination, tool decomposition) and sketches the designs.
+- Writes the `## Architecture Stage` section + the `## Architecture Challenges` section of `INTERFACE_DESIGN.md`.
+- Creates ADR fragments in `.ai-state/decisions/drafts/` for load-bearing interface decisions.
+
+### The `## Architecture Challenges` Channel
+
+When an architectural decision constrains a materially-better interface design (e.g., the architect picked REST but a streaming/GraphQL surface would serve the consumer far better; a service boundary forces an N+1-prone API shape; a multi-page flow conflicts with a single-canvas interaction model), the interface-designer **must** write the challenge into `INTERFACE_DESIGN.md`'s `## Architecture Challenges` section:
+
+- **Contested architectural decision** — which decision in `SYSTEMS_PLAN.md` this contests
+- **Proposed alternative** — the better design and the architectural change it requires
+- **Quality rationale** — why the alternative serves the consumer materially better (canon principle, perception threshold, ergonomics argument)
+- **Blast-radius assessment** — what changes if the alternative is adopted (modules, topology, scope)
+- **Recommendation** — adopt / adopt-with-modification / escalate-to-user
+
+For the interface-designer, silence in the face of a known-better design is a behavioral-contract violation, not optional politeness.
+
+### The Orchestrator-Mediated Loop-Back
+
+This is the **one** loop-back in an otherwise forward-only model. It runs *between* pipeline stages via the main agent (orchestrator) — not as concurrent-agent messaging — so the no-thrash forward-only model is preserved.
+
+**Protocol:**
+1. The orchestrator reads `## Architecture Challenges` after the interface-designer completes its architecture-stage pass.
+2. A **substantive challenge** — one with a quality rationale, a blast-radius assessment, and a contested decision genuinely inside the architect's partition — is routed back to `systems-architect` for re-evaluation **before the implementation plan is finalized**.
+3. A non-substantive "challenge" (no quality rationale, no blast-radius, or contesting something inside the designer's own partition) may be declined by the orchestrator without routing.
+4. The architect re-evaluates: engage with the alternative and its quality rationale, then **accept or reject with a reason** — it may not dismiss the challenge.
+5. **One re-evaluation round**, then converge or escalate: if architect and designer cannot converge, the orchestrator escalates to the user with **both positions stated** (designer's challenge + architect's rejection reason). The user resolves it.
+6. The interface-designer does not get the last word and does not block the pipeline waiting for resolution.
+
+This shape is structurally identical to the existing verifier-FAIL-loops-to-implementer pattern — no new coordination primitive.
+
+### Information Flow
+
+Information flows **forward only between concurrent agents**: the architect reads the `## Research Stage` section of `INTERFACE_DESIGN.md` when scoping the interface's role; the interface-designer and architect do not message each other while running concurrently. The planner reads the full `INTERFACE_DESIGN.md` when sequencing steps. The implementer builds the sketched designs (with the four interface-design skills injected). The verifier checks against `INTERFACE_DESIGN.md` and each in-scope skill's `design-review-checklist.md`.
+
+### Scope and Document Lifecycle
+
+`INTERFACE_DESIGN.md` is single-writer (interface-designer only) and cumulative per pipeline run. It is ephemeral — deleted with `.ai-work/<task-slug>/` after the pipeline completes. It is not subject to fragment file patterns.
+
 ## Doc-Engineer Parallel Execution
 
 When the planner assigns a doc step to a parallel group, the doc-engineer runs concurrently with the implementer and test-engineer on **disjoint file sets**: documentation files (READMEs, catalogs, architecture guides) vs production code vs test code.

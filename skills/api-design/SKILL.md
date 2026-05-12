@@ -92,25 +92,23 @@ Use standard HTTP status codes consistently:
 
 ### Standard Error Response
 
-Define a single error format and use it across every endpoint:
+Use **RFC 9457 (Problem Details for HTTP APIs)** — the standard structured error format — instead of inventing a proprietary error shape. Use it across every endpoint.
 
 ```json
 {
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Request validation failed",
-    "details": [
-      {
-        "field": "email",
-        "message": "Must be a valid email address"
-      }
-    ],
-    "request_id": "req_abc123"
-  }
+  "type": "https://example.com/probs/validation-error",
+  "title": "Request validation failed",
+  "status": 422,
+  "detail": "The 'email' field must be a valid email address.",
+  "instance": "/users",
+  "errors": [
+    { "field": "email", "message": "Must be a valid email address" }
+  ],
+  "request_id": "req_abc123"
 }
 ```
 
-Include: machine-readable error code, human-readable message, field-level details for validation errors, request ID for tracing. Never expose stack traces or internal implementation details.
+Core members: `type` (a URI identifying the problem class), `title` (a short human-readable summary), `status` (the HTTP status code), `detail` (a human-readable explanation specific to this occurrence), `instance` (a URI identifying the specific occurrence). Add extension members for field-level validation detail (`errors`) and tracing (`request_id`). Send `Content-Type: application/problem+json`. Never expose stack traces or internal implementation details. For API quality review and the broader error-design canon, see the `api-design-craft` skill.
 
 ### Pagination
 
@@ -210,6 +208,7 @@ Apply these security patterns to every API:
 - **[Spec-Driven Development](../spec-driven-development/SKILL.md)** -- behavioral specifications (When/and/the system/so that) define what the API should do; API design defines how the surface exposes that behavior
 - **[Data Modeling](../data-modeling/SKILL.md)** -- data models inform API resource design; schema evolution rules complement API versioning strategy
 - **[Doc Management](../doc-management/SKILL.md)** -- API documentation generation and maintenance
+- **[api-design-craft](../api-design-craft/SKILL.md)** -- the quality/taste/review lens above this methodology: the API canon, Bloch principles as a review checklist, RFC 9457 error design, low-latency ergonomics. Consult when reviewing an API design or applying a taste lens.
 
 ## Pre-Design Checklist
 

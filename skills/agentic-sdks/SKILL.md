@@ -121,6 +121,8 @@ Gate agent actions on human approval.
 ## Tool Integration Patterns
 <!-- last-verified: 2026-05-01 -->
 
+For tool-*design* quality — naming craft, the description-as-interface principle, parameter disambiguation, fat-vs-thin decomposition, progressive disclosure of large tool surfaces, and error ergonomics that let a model self-recover — see the [`agentic-interface-design`](../agentic-interface-design/SKILL.md) skill; this skill (`agentic-sdks`) owns the SDK loop mechanics (wiring tools to the agent loop, framework selection, multi-agent orchestration), `agentic-interface-design` owns the design craft.
+
 ### Function Tools
 <!-- last-verified: 2026-05-01 -->
 

@@ -65,6 +65,7 @@ Outputs use path prefixes to signal lifecycle: `.ai-work/<slug>/` = ephemeral (d
 | `skill-genesis` | Learning triage, artifact proposal from experience | `.ai-work/<slug>/SKILL_GENESIS_REPORT.md` | No |
 | `cicd-engineer` | CI/CD pipeline design, GitHub Actions, deployment automation | Workflow files + pipeline config | Yes |
 | `roadmap-cartographer` | Project-level audit-to-roadmap through a project-derived lens set (SPIRIT, DORA, SPACE, FAIR, CNCF, or Custom); invoked via `/roadmap` | `ROADMAP.md` at project root, `.ai-work/<slug>/ROADMAP_DRAFT.md`, `.ai-work/<slug>/AUDIT_<lens>.md` fragments | No |
+| `interface-designer` | Interface-layer design specialist — peer sub-architect for web UI, TUI/CLI, REST/GraphQL/gRPC APIs, MCP/agent tools, A2A contracts; makes framework/paradigm/error-format/pagination decisions and sketches designs; writes ADR fragments for load-bearing calls | `.ai-work/<slug>/INTERFACE_DESIGN.md` + ADR fragments in `.ai-state/decisions/drafts/` | Yes |
 
 **Conditional output footnotes:** ^1 For Standard/Full tier pipelines — always create both architecture docs unless the project is trivially simple (single module, no external dependencies).
 
@@ -87,6 +88,7 @@ Spawn agents without waiting for the user to ask:
 - Ecosystem health or regression check --> `sentinel`; stale check: `.ai-state/sentinel_reports/SENTINEL_LOG.md` vs `git log -1 --format=%ci`
 - Documentation impact likely --> `doc-engineer`: at pipeline checkpoints (after planning, after implementation, after refactoring), or in parallel with `implementer` + `test-engineer` when the planner assigns a doc step to the parallel group
 - Pipeline complete + LEARNINGS.md has content --> `skill-genesis`
+- Task involves substantial interface surface (new web UI, new TUI, CLI-output pass, new/changed API, MCP tool surface) --> `interface-designer` (parallel with `researcher` / `systems-architect` as shadow; see Interface-designer shadowing + challenge loop rule below)
 
 **Depth check:** Before spawning an agent recommended by another agent's output, confirm with the user if doing so would create a chain of 3+ agents from the original request.
 
@@ -113,6 +115,7 @@ Agents communicate through shared documents, not direct invocation. The pipeline
 | Context-engineer scope | Single artifact → direct invocation any stage; 3+ artifacts → full pipeline; also runs for standalone audits |
 | Sentinel | Independent of pipeline; reports (`SENTINEL_REPORT_*.md`) public to any agent or user |
 | Doc-engineer parallel | When planner assigns to parallel group, runs concurrently with implementer / test-engineer on disjoint files; also runs at pipeline checkpoints |
+| Interface-designer shadowing + challenge loop | Conditional on interface surface in scope; parallel to researcher + systems-architect; forward-only `INTERFACE_DESIGN.md`; one orchestrator-mediated loop-back when `## Architecture Challenges` is populated; see [`coordination-details.md`](../../skills/software-planning/references/coordination-details.md) |
 
 ### Agent Selection Criteria
 

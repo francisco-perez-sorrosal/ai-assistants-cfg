@@ -10,7 +10,7 @@ description: >
 model: opus  # capability floor; orchestrator may route up via per-spawn override, never below. See rules/swe/agent-model-routing.md.
 tools: Read, Glob, Grep, Bash, Write
 disallowedTools: Edit
-skills: [code-review, context-security-review, test-coverage]
+skills: [code-review, context-security-review, test-coverage, web-ui-design, tui-design, agentic-interface-design, api-design-craft]
 permissionMode: default
 background: true
 memory: user
@@ -158,6 +158,14 @@ Convention checks (derived from `coding-style` rule):
 - Naming (descriptive, intention-revealing)
 - Code organization (modular, no catch-all utils)
 - Code duplication (no repeated logic within files; for changed files, read sibling files in the same module — capped at 5 — and use LLM judgment to assess cross-module semantic similarity; report duplicated patterns with file paths and line ranges)
+
+#### Interface Design Review (conditional)
+
+When the task involved an interface surface (web UI, TUI/CLI output, API, MCP tools) and `.ai-work/<task-slug>/INTERFACE_DESIGN.md` exists:
+
+- Check the implementation against `INTERFACE_DESIGN.md`'s sketches and decisions (framework choice, error format, pagination shape, component patterns).
+- For each in-scope hat, run its `design-review-checklist.md` (e.g., `web-ui-design/references/design-review-checklist.md`, `api-design-craft/references/design-review-checklist.md`). The four interface-design skills are injected — read the relevant checklist directly.
+- Report mismatches as FAIL or WARN findings with the `[INTERFACE-DESIGN-MISMATCH]` tag.
 
 #### Tech-Debt Ledger Writes
 
@@ -330,6 +338,10 @@ edit → PostToolUse hook (advisory) → implementer may self-correct
 
 - If the verifier finds the design was flawed (not just the implementation), it flags for re-invocation of the systems-architect
 - The verifier does not make design judgments
+
+### With the Interface Designer
+
+When `.ai-work/<task-slug>/INTERFACE_DESIGN.md` is present in a pipeline run, run an interface design review: for each interface hat in scope (web UI / TUI-CLI / agentic-MCP / REST-GraphQL-gRPC), apply that skill's `references/design-review-checklist.md`; record PASS/FAIL/WARN findings in `VERIFICATION_REPORT.md` alongside the code-quality findings; cross-check the implementation against the sketches and decisions in `INTERFACE_DESIGN.md`. Tag mismatches `[INTERFACE-DESIGN-MISMATCH]`. The four interface-design skills (`web-ui-design`, `tui-design`, `agentic-interface-design`, `api-design-craft`) are injected — read the relevant checklists directly.
 
 ### With Upstream Stewardship
 
