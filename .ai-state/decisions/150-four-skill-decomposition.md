@@ -1,7 +1,7 @@
 ---
-id: dec-draft-3c309b4c
+id: dec-150
 title: Four interface-design skills; `api-design-craft` is a new skill; cross-cutting fundamentals duplicated as `references/design-fundamentals.md` in each skill
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-12
 summary: Encode interface-design domain knowledge as four hat-skills (web-ui-design, tui-design, agentic-interface-design, api-design-craft); api-design-craft is a new skill alongside api-design, not additive references; the shared canon lives as a canonical references/design-fundamentals.md duplicated verbatim across all four (deliberate duplication for separation-of-contexts).
@@ -23,7 +23,7 @@ affected_files:
 
 ## Context
 
-The interface-designer agent (see `dec-draft-af4e66ee`) needs its domain knowledge encoded as skills — its "hats". The two research passes recommended: two UX skills (`web-ui-design` + `tui-design`) sharing a fundamentals reference, and a new `api-design-craft` skill alongside the existing `api-design` (which is a *methodology* skill — the API-first process, OpenAPI/GraphQL spec patterns, contract types). The research left open: where the cross-cutting fundamentals (Rams/Norman/Nielsen/Tufte/Bloch synthesis, the "interface = a contract" framing, the perception thresholds) should live, and whether `api-design-craft` should be a new skill or additive references inside `api-design`. Separation of contexts is a hard requirement — a web task must not pull in terminal rules; an agentic-tool task must not pull in WCAG ratios.
+The interface-designer agent (see `dec-149`) needs its domain knowledge encoded as skills — its "hats". The two research passes recommended: two UX skills (`web-ui-design` + `tui-design`) sharing a fundamentals reference, and a new `api-design-craft` skill alongside the existing `api-design` (which is a *methodology* skill — the API-first process, OpenAPI/GraphQL spec patterns, contract types). The research left open: where the cross-cutting fundamentals (Rams/Norman/Nielsen/Tufte/Bloch synthesis, the "interface = a contract" framing, the perception thresholds) should live, and whether `api-design-craft` should be a new skill or additive references inside `api-design`. Separation of contexts is a hard requirement — a web task must not pull in terminal rules; an agentic-tool task must not pull in WCAG ratios.
 
 ## Decision
 
@@ -74,4 +74,4 @@ The four `design-fundamentals.md` copies must stay byte-identical (a `LEARNINGS.
 - `design-fundamentals.md` is physically duplicated four times (~600–800 lines total of duplicated canon). **The `sentinel`'s redundancy check will flag this** — it is *expected and intentional*, documented in `LEARNINGS.md`, in each skill's README, and here; the alternative (a fifth skill or cross-references) is worse for separation-of-contexts. A sync-check (sentinel rule or script) is a cheap follow-up if drift becomes real — flagged, not shipped (Praxion's flag-but-don't-ship-future-hardening pattern).
 - Maintenance: updating the canon means updating four files — mitigated by it being durable, slow-moving content (Rams/Norman/Nielsen/Tufte/Bloch don't change).
 
-This decision pairs with `dec-draft-af4e66ee` (the agent shape — these are its hats) and `dec-draft-51aeea61` (the architect boundary — these skills are what the interface-designer reads to make its decisions). Recorded in `LEARNINGS.md ### Decisions Made` by the implementation-planner.
+This decision pairs with `dec-149` (the agent shape — these are its hats) and `dec-151` (the architect boundary — these skills are what the interface-designer reads to make its decisions). Recorded in `LEARNINGS.md ### Decisions Made` by the implementation-planner.

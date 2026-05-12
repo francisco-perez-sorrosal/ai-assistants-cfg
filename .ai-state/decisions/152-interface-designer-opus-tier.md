@@ -1,7 +1,7 @@
 ---
-id: dec-draft-2fc1015c
+id: dec-152
 title: `interface-designer` runs at opus tier (capability floor)
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-12
 summary: Place interface-designer in the H tier (alias `opus`) in agent-model-routing.md — its value is taste-under-trade-offs across a broad design space, the same rationale as systems-architect and verifier. Capability floor, not a ceiling; the orchestrator may route up via per-spawn override, never below.
@@ -17,7 +17,7 @@ affected_files:
 
 ## Context
 
-`agent-model-routing.md` assigns every Praxion subagent a tier (H/M/L → `opus`/`sonnet`/`haiku`) acting as a capability floor: the orchestrator may route up via a per-spawn override, never below. The `interface-designer` agent (see `dec-draft-af4e66ee`) needs a tier assignment and a Tier Table row. Its `model:` frontmatter must match.
+`agent-model-routing.md` assigns every Praxion subagent a tier (H/M/L → `opus`/`sonnet`/`haiku`) acting as a capability floor: the orchestrator may route up via a per-spawn override, never below. The `interface-designer` agent (see `dec-149`) needs a tier assignment and a Tier Table row. Its `model:` frontmatter must match.
 
 ## Decision
 
@@ -54,4 +54,4 @@ Matches `systems-architect` and `verifier`; a capability floor, not a ceiling.
 **Negative / accepted:**
 - One more opus-tier agent — accepted; the agent only runs when an interface surface is in scope, and interface design is high-leverage.
 
-This decision is a consequence of `dec-draft-af4e66ee` (the agent shape) split out because the routing-rule Tier Table row is its own concern. It also re-affirms the routing-model principles in `dec-076`–`dec-080` (the agent-model-routing cohort) — the frontmatter-floor-semantic, the hybrid routing mechanism, the always-loaded-rule placement; named here in prose rather than the single-valued `re_affirms:` frontmatter field. Recorded in `LEARNINGS.md ### Decisions Made` by the implementation-planner.
+This decision is a consequence of `dec-149` (the agent shape) split out because the routing-rule Tier Table row is its own concern. It also re-affirms the routing-model principles in `dec-076`–`dec-080` (the agent-model-routing cohort) — the frontmatter-floor-semantic, the hybrid routing mechanism, the always-loaded-rule placement; named here in prose rather than the single-valued `re_affirms:` frontmatter field. Recorded in `LEARNINGS.md ### Decisions Made` by the implementation-planner.

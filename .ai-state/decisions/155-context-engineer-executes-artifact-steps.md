@@ -1,7 +1,7 @@
 ---
-id: dec-draft-7b53c91c
+id: dec-155
 title: context-engineer executes all interface-design artifact steps; main-agent handles plugin.json and diagram re-render
-status: proposed
+status: accepted
 category: implementation
 date: 2026-05-12
 summary: Routes all context-artifact creation (skills, agent, rules, command, READMEs, consumer-agent wiring) to the context-engineer; main-agent retains two mechanical shell-toolchain steps.

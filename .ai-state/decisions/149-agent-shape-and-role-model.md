@@ -1,7 +1,7 @@
 ---
-id: dec-draft-af4e66ee
+id: dec-149
 title: One `interface-designer` agent — advisory sub-architect with interface-layer decision authority, four skills as hats
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-12
 summary: Add a single opus-tier `interface-designer` agent (a peer sub-architect for the interface layer, not subordinate to systems-architect) backed by four hat-skills; it designs and decides interface-layer technology, sketches UI/API designs, writes ADRs, but does not write production code.
@@ -64,4 +64,4 @@ Split by surface family — human-facing vs machine-facing.
 - The engagement trigger ("a task touches an interface surface") could over-fire — mitigated by scoping the trigger to *substantial* interface surfaces (a new web UI, a new TUI, a CLI-output pass, a new/changed API, an MCP tool surface), not "any task that prints a line".
 - `doc-engineer` not getting the four skills means a doc-engineer reviewing CLI help-text docs consults `tui-design` by name rather than having it injected — accepted as a rare overlap served by the established by-name cross-reference pattern.
 
-This decision pairs with `dec-draft-2fc1015c` (the opus-tier routing-rule row), `dec-draft-51aeea61` (the `interface-designer` ↔ `systems-architect` default partition), `dec-draft-46e9accc` (the active dynamic on top of that partition — the interface-designer's standing to challenge architectural decisions, the orchestrator-mediated loop), `dec-draft-3c309b4c` (the four-skill decomposition), and `dec-draft-49af87a8` (the `/review-interface` command). Each significant decision is also recorded in `LEARNINGS.md ### Decisions Made` by the implementation-planner.
+This decision pairs with `dec-152` (the opus-tier routing-rule row), `dec-151` (the `interface-designer` ↔ `systems-architect` default partition), `dec-154` (the active dynamic on top of that partition — the interface-designer's standing to challenge architectural decisions, the orchestrator-mediated loop), `dec-150` (the four-skill decomposition), and `dec-153` (the `/review-interface` command). Each significant decision is also recorded in `LEARNINGS.md ### Decisions Made` by the implementation-planner.

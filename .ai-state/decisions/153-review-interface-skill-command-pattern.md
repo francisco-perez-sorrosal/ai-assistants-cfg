@@ -1,5 +1,5 @@
 ---
-id: dec-draft-49af87a8
+id: dec-153
 title: `/review-interface` spawns the `interface-designer` agent in standalone mode — extending the Skill+Command family with a separate-context-window rule
 status: accepted
 category: architectural
@@ -18,7 +18,7 @@ affected_files:
 
 ## Context
 
-Praxion has two established patterns for user-triggered cross-cutting workflows: the **bare Skill+Command** pattern (dec-014 upstream-stewardship, dec-015 project-exploration — methodology in a skill, trigger in a command, no agent, because those workflows are *interactive* and need the main conversation context) and the **agent+skill+command** pattern (dec-029 roadmap-creation — the workflow runs in its own context window, because it's a cross-codebase audit). Adding `interface-designer` (see `dec-draft-af4e66ee`) requires a standalone-mode trigger — a `/review-interface` slash command, peer to `/review-pr` (code-review). The question: does `/review-interface` follow dec-014/dec-015 (invoke skills in the main conversation) or dec-029 (spawn an agent)?
+Praxion has two established patterns for user-triggered cross-cutting workflows: the **bare Skill+Command** pattern (dec-014 upstream-stewardship, dec-015 project-exploration — methodology in a skill, trigger in a command, no agent, because those workflows are *interactive* and need the main conversation context) and the **agent+skill+command** pattern (dec-029 roadmap-creation — the workflow runs in its own context window, because it's a cross-codebase audit). Adding `interface-designer` (see `dec-149`) requires a standalone-mode trigger — a `/review-interface` slash command, peer to `/review-pr` (code-review). The question: does `/review-interface` follow dec-014/dec-015 (invoke skills in the main conversation) or dec-029 (spawn an agent)?
 
 ## Decision
 
@@ -60,4 +60,4 @@ This decision **acknowledges and builds on** dec-014 (Skill+Command composition 
 
 What this ADR *does* add is a **clarifying family rule** so the dec-014/dec-015 vs dec-029 distinction is explicit for future commands: *when a user-triggered cross-cutting workflow needs a separate context window for cross-codebase reasoning, add an agent (dec-029's shape); when it's interactive and main-conversation-bound, keep it Skill+Command (dec-014/dec-015's shape).* `/review-interface` is non-interactive cross-codebase analysis — the same profile that gave `roadmap-cartographer` an agent — so it follows dec-029's shape; `/review-pr` is line-scoped, not cross-codebase, so it stays a main-conversation skill invocation. The family rule is a *note*, not a re-affirmation in the formal ADR sense — none of the three priors was re-opened, so `status: re-affirmation` and the `re_affirms:` frontmatter field would both be inaccurate; `accepted` with this body section is the honest classification.
 
-Pairs with `dec-draft-af4e66ee` (the agent whose standalone mode this command triggers). Recorded in `LEARNINGS.md ### Decisions Made` by the implementation-planner.
+Pairs with `dec-149` (the agent whose standalone mode this command triggers). Recorded in `LEARNINGS.md ### Decisions Made` by the implementation-planner.
