@@ -54,6 +54,38 @@ describe("secondary dashboard surfaces", () => {
     expect(adrs.some((adr) => adr.body.includes("Runtime"))).toBe(true);
   });
 
+  it("degrades gracefully when an ADR has a backtick-prefixed title rejected by js-yaml", async () => {
+    const root = await createTempProjectRoot("dashboard-adrs-backtick-");
+    await seedProjectRoot(root);
+    await mkdir(path.join(root, ".ai-state", "decisions", "drafts"), { recursive: true });
+
+    // Valid ADR
+    await writeFile(
+      path.join(root, ".ai-state", "decisions", "001-good-decision.md"),
+      "---\ntitle: Good decision\nstatus: accepted\n---\n# Good\n"
+    );
+    // ADR with backtick-prefixed title — PyYAML tolerates this, js-yaml does not
+    await writeFile(
+      path.join(root, ".ai-state", "decisions", "032-backtick-title.md"),
+      "---\nid: dec-032\ntitle: `ROADMAP.md` at project root as a living document\nstatus: superseded\n---\n# Body content\n"
+    );
+
+    // Must not throw — the page must still render the valid ADR
+    const { records: adrs } = await getAdrData(root);
+
+    expect(adrs).toHaveLength(2);
+
+    const good = adrs.find((adr) => adr.path.includes("001-good-decision"));
+    expect(good?.data.title).toBe("Good decision");
+    expect(good?.body).toContain("Good");
+
+    // The malformed ADR should be present with fallback empty data and the body content
+    const fallback = adrs.find((adr) => adr.path.includes("032-backtick-title"));
+    expect(fallback).toBeDefined();
+    expect(fallback?.data).toEqual({});
+    expect(fallback?.body).toContain("Body content");
+  });
+
   it("loads the latest sentinel report and the history log", async () => {
     const root = await createTempProjectRoot("dashboard-sentinel-valid-");
     await seedProjectRoot(root);

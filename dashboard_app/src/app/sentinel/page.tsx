@@ -4,10 +4,11 @@ import { ArtifactCard } from "@/components/artifact-card";
 import { EducationalPopover } from "@/components/educational-popover";
 import { EmptyState } from "@/components/empty-state";
 import { MarkdownSurface } from "@/components/markdown-surface";
-import { Sparkline } from "@/components/viz/sparkline";
 import { getConfig } from "@/lib/config";
 import { getSentinelData } from "@/server/view-models/sentinel";
 import type { SentinelLogPoint } from "@/server/view-models/sentinel";
+
+import { SentinelSparklineClient } from "./sentinel-sparkline-client";
 
 // ─── Grade helpers ────────────────────────────────────────────────────────────
 
@@ -18,22 +19,11 @@ const GRADE_NUMBERS: Record<string, number> = {
   d: 1
 };
 
-const GRADE_COLOR_TOKENS: Record<number, string> = {
-  4: "var(--grade-a)",
-  3: "var(--grade-b)",
-  2: "var(--grade-c)",
-  1: "var(--grade-d)"
-};
-
 function gradeToNumber(grade: string | null): number | null {
   if (grade === null) {
     return null;
   }
   return GRADE_NUMBERS[grade.toLowerCase()] ?? null;
-}
-
-function gradeColorTokenForNumber(y: number): string {
-  return GRADE_COLOR_TOKENS[Math.round(y)] ?? "var(--color-text-muted)";
 }
 
 function logSeriesToSparklinePoints(
@@ -89,15 +79,8 @@ export default async function SentinelPage() {
           {sentinel.logSeries.length > 0 ? (
             <div className="sentinel-sparkline-row">
               <span className="sentinel-sparkline-label muted">Health grade trend</span>
-              <Sparkline
-                series={[
-                  {
-                    label: "Health",
-                    color: "var(--color-accent)",
-                    points: logSeriesToSparklinePoints(sentinel.logSeries)
-                  }
-                ]}
-                colorForValue={(y) => gradeColorTokenForNumber(y)}
+              <SentinelSparklineClient
+                points={logSeriesToSparklinePoints(sentinel.logSeries)}
               />
             </div>
           ) : null}
