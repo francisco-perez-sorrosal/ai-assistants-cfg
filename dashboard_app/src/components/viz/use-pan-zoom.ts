@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -277,6 +277,63 @@ export function usePanZoom(options: PanZoomOptions = {}): PanZoomResult {
       scale: clampScale(t.scale - ZOOM_STEP, minZoom, maxZoom)
     }));
   }, [minZoom, maxZoom]);
+
+  // ── Fit-to-viewport on mount and on container resize ──────────────────────
+  // Runs after the SVG is injected into the DOM via dangerouslySetInnerHTML.
+  // A requestAnimationFrame defers the measurement until the browser has laid
+  // out the SVG so getBBox / clientWidth / clientHeight are accurate.
+  // A ResizeObserver re-fits when the card or viewport changes size.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let rafId: number | undefined;
+
+    function applyFit(): void {
+      const c = containerRef.current;
+      if (!c) return;
+      const innerEl = c.querySelector<HTMLElement>("[data-pan-zoom-content]");
+      if (!innerEl) return;
+      const svgEl = innerEl.querySelector("svg");
+      // Prefer viewBox dimensions (most reliable for intrinsic size), then
+      // explicit width/height attributes, then fall back to scroll dimensions.
+      let w = 0;
+      let h = 0;
+      if (svgEl) {
+        const vb = svgEl.viewBox.baseVal;
+        if (vb.width > 0 && vb.height > 0) {
+          w = vb.width;
+          h = vb.height;
+        } else {
+          const wAttr = parseFloat(svgEl.getAttribute("width") ?? "");
+          const hAttr = parseFloat(svgEl.getAttribute("height") ?? "");
+          if (wAttr > 0 && hAttr > 0) {
+            w = wAttr;
+            h = hAttr;
+          }
+        }
+      }
+      if (w === 0 || h === 0) {
+        w = innerEl.scrollWidth || c.clientWidth;
+        h = innerEl.scrollHeight || c.clientHeight;
+      }
+      setTransform(fitTransform(c.clientWidth, c.clientHeight, w, h));
+    }
+
+    rafId = requestAnimationFrame(applyFit);
+
+    const observer = new ResizeObserver(() => {
+      rafId = requestAnimationFrame(applyFit);
+    });
+    observer.observe(container);
+
+    return () => {
+      if (rafId !== undefined) cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
+    // reset is not a dep — it reads the same containerRef; we use applyFit directly
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     containerRef,

@@ -62,8 +62,53 @@ const SVG_ALLOWED_TAGS = [
   "fespecularlighting", // SVG: feSpecularLighting
   "fetile",            // SVG: feTile
   "feturbulence",      // SVG: feTurbulence
-  // Intentionally excluded: <script>, <foreignObject>, <iframe>
-  // foreignObject allows arbitrary HTML injection including script execution.
+  // <foreignObject> is included because Mermaid uses it exclusively to embed node
+  // labels as HTML <div> elements. Without it, every Mermaid node renders as an
+  // empty yellow box. The contents of foreignObject are sanitized by the same
+  // sanitize-html pass — <script>, on* handlers, <iframe>, <object>, <embed>,
+  // and javascript: hrefs are stripped just as they are outside foreignObject.
+  // The risk profile is therefore equivalent to any other HTML in an allow-listed
+  // SVG: CSS-injection via <style> is already accepted (allowVulnerableTags: true)
+  // and script-execution vectors are covered by the existing exclusions.
+  "foreignobject",      // SVG: foreignObject (htmlparser2 lowercases)
+  // HTML tags Mermaid embeds inside foreignObject label divs:
+  "div",
+  "span",
+  "p",
+  "br",
+  "b",
+  "strong",
+  "i",
+  "em",
+  "u",
+  "s",
+  "code",
+  "pre",
+  "a",
+  "ul",
+  "ol",
+  "li",
+  "table",
+  "thead",
+  "tbody",
+  "tr",
+  "td",
+  "th",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "sub",
+  "sup",
+  "hr",
+  "blockquote",
+  "font",
+  "small",
+  "label",
+  // Intentionally excluded from foreignObject contents: <script>, <iframe>,
+  // <object>, <embed>, <form>, <input> — these can execute or exfiltrate.
   "animate",
   "animatetransform",  // SVG: animateTransform
   "mpath",
@@ -200,6 +245,23 @@ const SVG_ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions["allowedAttributes"] = {
     "data-id",
     "data-look",
     "data-points",
+    // foreignObject HTML content attributes.
+    // Mermaid wraps labels in <div xmlns="http://www.w3.org/1999/xhtml" class="nodeLabel">.
+    // The xmlns attribute is required for valid foreignObject embedding; class/style/id
+    // are already present above and apply here too.
+    // Table layout attributes used by some diagram generators:
+    "align",
+    "valign",
+    "bgcolor",
+    "colspan",
+    "rowspan",
+    "cellpadding",
+    "cellspacing",
+    "border",
+    "nowrap",
+    "dir",
+    "lang",
+    "title",
     // Animation (SMIL — non-scriptable)
     "attributeName",
     "attributeType",

@@ -64,6 +64,9 @@ export function DiagramViewer({
         >
           Reset
         </button>
+        <span className="diagram-viewer-hint">
+          scroll to zoom · drag to pan · Reset to fit
+        </span>
       </div>
     </div>
   );

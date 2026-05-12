@@ -33,7 +33,7 @@ The architecture is organized around three core concerns: **knowledge delivery**
 <!-- OWNER: systems-architect | LAST UPDATED: 2026-04-30 by implementer (migrated Mermaid block to LikeC4-sourced SVG — structurizr-d2-diagrams pipeline Step 6) -->
 <!-- L0 diagram: system boundary + external actors/dependencies. -->
 
-<img src="../docs/diagrams/architecture/rendered/context.svg" alt="Praxion System Context (L0)" />
+![Praxion System Context (L0)](../docs/diagrams/architecture/rendered/context.svg)
 
 *LikeC4 source: [`docs/diagrams/architecture/src/architecture.c4`](../docs/diagrams/architecture/src/architecture.c4). The pre-commit hook (`scripts/diagram-regen-hook.sh`) regenerates the SVG above when the source changes.*
 
@@ -47,7 +47,7 @@ The architecture is organized around three core concerns: **knowledge delivery**
      Status values: Designed (interface defined, not yet implemented), Built (code exists on disk),
      Planned (roadmap item, no interface yet), Deprecated (scheduled for removal). -->
 
-<img src="../docs/diagrams/architecture/rendered/components.svg" alt="Praxion Components (L1)" />
+![Praxion Components (L1)](../docs/diagrams/architecture/rendered/components.svg)
 
 *LikeC4 source: [`docs/diagrams/architecture/src/architecture.c4`](../docs/diagrams/architecture/src/architecture.c4). The pre-commit hook (`scripts/diagram-regen-hook.sh`) regenerates the SVG above when the source changes.*
 

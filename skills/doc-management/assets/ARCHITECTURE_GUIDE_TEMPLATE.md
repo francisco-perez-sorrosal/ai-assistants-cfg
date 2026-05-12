@@ -27,7 +27,7 @@
      Only include integrations that exist in the current codebase. -->
 
 <!-- After editing diagrams/architecture/src/architecture.c4, run scripts/diagram-regen-hook.sh (or commit to trigger pre-commit) to regenerate this SVG. -->
-<img src="diagrams/architecture/rendered/context.svg" alt="System Context (L0)" />
+![System Context (L0)](diagrams/architecture/rendered/context.svg)
 
 <details>
 <summary>LikeC4 source (edit diagrams/architecture/src/architecture.c4 to update this diagram)</summary>
@@ -72,7 +72,7 @@ views {
      Every component listed here MUST exist on disk -- verify with ls/Glob before including. -->
 
 <!-- After editing diagrams/architecture/src/architecture.c4, run scripts/diagram-regen-hook.sh (or commit to trigger pre-commit) to regenerate this SVG. -->
-<img src="diagrams/architecture/rendered/components.svg" alt="Components (L1)" />
+![Components (L1)](diagrams/architecture/rendered/components.svg)
 
 <details>
 <summary>LikeC4 source (edit diagrams/architecture/src/architecture.c4 to update this diagram)</summary>

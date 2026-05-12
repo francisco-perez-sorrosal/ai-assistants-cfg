@@ -95,10 +95,13 @@ Two embedding strategies apply depending on the context:
 
 | Context | Strategy | Rationale |
 |---|---|---|
-| Committed Markdown + committed `.html` share-out files | `<img>` tag referencing `diagrams/<name>/rendered/<name>.svg` | Renderer-agnostic; GitHub-renderable; no JS required |
+| Committed Markdown (`.md` files) | Markdown image syntax `![alt](diagrams/<name>/rendered/<name>.svg)` | Renderer-agnostic; GitHub-renderable; renders correctly in react-markdown (the dashboard's renderer) without raw-HTML parsing — `<img>` in a `.md` body shows as literal text in react-markdown |
+| Committed `.html` share-out files | `<img>` tag referencing `diagrams/<name>/rendered/<name>.svg` | HTML files allow raw tags; no react-markdown involved |
 | Dashboard server (interactive surfaces) | Inline SVG via `dangerouslySetInnerHTML` or the `/api/diagram` route | Enables pan/zoom, node events, CSS interaction — only the dashboard server may use this pattern |
 
-The dashboard server's `/api/diagram` route streams allowlisted SVGs from the project root. SVGs served through this route or injected inline in the React tree must be sanitized via `sanitize-html` (see `dashboard_app/src/server/diagrams/sanitize.ts`). Committed Markdown source never changes to accommodate inline SVG — the `<img>` convention stays.
+The dashboard server's `/api/diagram` route streams allowlisted SVGs from the project root. SVGs served through this route or injected inline in the React tree must be sanitized via `sanitize-html` (see `dashboard_app/src/server/diagrams/sanitize.ts`). Committed Markdown source never uses raw `<img>` — the `![alt](path)` convention stays.
+
+The dashboard server's `MarkdownSurface` component strips `<!-- ... -->` comments and normalises any stray raw `<img>` to markdown image syntax at render-time, providing a safety net for legacy `.md` files. New commits always use `![alt](path)` directly.
 
 ### No JavaScript in Committed HTML
 

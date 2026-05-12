@@ -73,20 +73,55 @@ describe("sanitizeSvg — strips XSS vectors", () => {
     expect(output).toContain("fedropshadow");
   });
 
-  it("removes <foreignObject> elements (potential HTML injection vector)", () => {
-    const input = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  it("preserves <foreignObject> with safe HTML children (Mermaid node labels)", () => {
+    // Mermaid renders every node label as HTML inside <foreignObject><div xmlns=...>.
+    // Without foreignObject the label is invisible (empty yellow box).
+    const input = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
       <g>
-        <foreignObject width="100" height="50">
-          <div xmlns="http://www.w3.org/1999/xhtml">
-            <span>Some HTML</span>
-          </div>
+        <foreignObject width="120" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="nodeLabel">Some Label</div>
         </foreignObject>
       </g>
     </svg>`;
 
     const output = sanitizeSvg(input);
 
-    expect(output).not.toContain("foreignObject");
+    // sanitize-html lowercases tag names — foreignObject → foreignobject
+    expect(output.toLowerCase()).toContain("foreignobject");
+    expect(output).toContain("nodeLabel");
+    expect(output).toContain("Some Label");
+    expect(output).toContain('xmlns="http://www.w3.org/1999/xhtml"');
+  });
+
+  it("strips <script> inside <foreignObject> while keeping safe content", () => {
+    const input = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+      <foreignObject width="120" height="40">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="nodeLabel">
+          Safe text
+          <script>evil()</script>
+        </div>
+      </foreignObject>
+    </svg>`;
+
+    const output = sanitizeSvg(input);
+
+    expect(output).toContain("Safe text");
+    expect(output).not.toContain("<script");
+    expect(output).not.toContain("evil()");
+  });
+
+  it("strips onload= handler inside <foreignObject> while keeping safe content", () => {
+    const input = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+      <foreignObject width="120" height="40">
+        <div xmlns="http://www.w3.org/1999/xhtml" onload="steal()">Safe</div>
+      </foreignObject>
+    </svg>`;
+
+    const output = sanitizeSvg(input);
+
+    expect(output).toContain("Safe");
+    expect(output).not.toContain("onload");
+    expect(output).not.toContain("steal()");
   });
 });
 

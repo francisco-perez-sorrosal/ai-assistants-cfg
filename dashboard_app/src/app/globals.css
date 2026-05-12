@@ -1229,3 +1229,78 @@ details summary {
   display: grid;
   gap: var(--space-3);
 }
+
+/* ─── DiagramViewer ────────────────────────────────────────────────────────── */
+
+.diagram-viewer-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Clipping viewport: fixed height so the SVG never dictates the box size. */
+.diagram-viewer-container {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: grab;
+  height: clamp(280px, 55vh, 560px);
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.diagram-viewer-container:active {
+  cursor: grabbing;
+}
+
+.diagram-viewer-container:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Pan/zoom layer: absolute so it can overflow the container (clipped by overflow:hidden). */
+.diagram-viewer-transform {
+  left: 0;
+  position: absolute;
+  top: 0;
+  will-change: transform;
+}
+
+/* The injected SVG must not be constrained by any global max-width rule.
+   fitTransform measures intrinsic size and scales; override any interference. */
+.diagram-viewer-transform > svg,
+.diagram-viewer-transform svg {
+  display: block;
+  height: auto;
+  max-height: none;
+  max-width: none;
+  width: auto;
+}
+
+/* Controls bar: reset button + optional hint text. */
+.diagram-viewer-controls {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.diagram-viewer-reset {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-3);
+  transition: background 120ms ease;
+}
+
+.diagram-viewer-reset:hover {
+  background: var(--color-surface-raised);
+}
+
+.diagram-viewer-hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
