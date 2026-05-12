@@ -129,12 +129,19 @@ _install_dashboard_app() {
     mkdir -p "$HOME_DIR" "$STORE_DIR"
     _sync_dashboard_source
 
+    # `if ! cmd` disables `set -e` for the install: pnpm 10/11 can exit non-zero
+    # on ERR_PNPM_IGNORED_BUILDS (sharp's optional native build — the dashboard
+    # does not use next/image, so it is intentionally not built; see
+    # dashboard_app/pnpm-workspace.yaml). That is harmless; the next-binary check
+    # below is the real gate, and `next build` would surface any genuine breakage.
     (
         cd "$APP_DIR"
-        CI=true pnpm install --frozen-lockfile --store-dir "$STORE_DIR"
+        if ! CI=true pnpm install --frozen-lockfile --store-dir "$STORE_DIR"; then
+            warn "pnpm install exited non-zero (commonly the harmless sharp ERR_PNPM_IGNORED_BUILDS); verifying the install below."
+        fi
     )
 
-    [[ -x "$(_next_bin)" ]] || fail "next binary not found after install."
+    [[ -x "$(_next_bin)" ]] || fail "next binary not found after install — pnpm install did not produce node_modules."
 
     (
         cd "$APP_DIR"

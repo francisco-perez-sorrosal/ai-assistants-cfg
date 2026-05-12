@@ -1,2 +1,9 @@
-allowBuilds:
-  sharp: set this to true or false
+# pnpm settings for the standalone dashboard app (not a monorepo — no `packages:`).
+# `sharp` is a transitive native dep of Next.js (image optimization). The dashboard
+# does not use next/image, so its native build is unnecessary; listing it here lets
+# pnpm 10/11 build it during a fresh install instead of leaving it "ignored" (which
+# pnpm 11 / CI mode treats as an error). `scripts/praxion-dashboard install`
+# additionally warn-and-continues past a non-zero pnpm exit, with the next-binary
+# check as the real gate — so the install completes through to `next build` either way.
+onlyBuiltDependencies:
+  - sharp
