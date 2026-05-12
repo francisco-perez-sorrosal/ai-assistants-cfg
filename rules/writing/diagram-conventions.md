@@ -43,6 +43,8 @@ For LikeC4 sources that compile to multiple views, all views render into the sam
 
 Use a descriptive alt-text — it serves both accessibility and the agent's text-mode read.
 
+**Dashboard server exception:** The `<img>` embedding rule applies to committed Markdown and HTML artifacts. The dashboard server may rewrite those refs to its `/api/diagram` route or render SVGs inline for interactive surfaces (e.g., `DiagramViewer`, `DecisionGraph`) — provided the SVG source path follows the `diagrams/<name>/rendered/<name>.svg` convention. The committed Markdown source never changes.
+
 **Rationale:**
 
 - **Renderer-agnostic** — any markdown viewer shows the figure (no Mermaid plugin required); the dashboard's documentation page renders trivially

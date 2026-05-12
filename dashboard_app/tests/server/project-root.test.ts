@@ -63,4 +63,24 @@ describe("project-root guards", () => {
       assertAllowedArtifactPath(root, path.join(root, "package.json"))
     ).rejects.toThrow(/allowed/i);
   });
+
+  it("accepts a freshly-onboarded project that has only .ai-state and no .ai-work", async () => {
+    const root = await createTempProjectRoot("dashboard-root-fresh-");
+    await mkdir(path.join(root, ".ai-state"), { recursive: true });
+
+    await expect(validateProjectRoot(root)).resolves.toBe(root);
+  });
+
+  it("rejects a project that has .ai-work but no .ai-state", async () => {
+    const root = await createTempProjectRoot("dashboard-root-no-state-");
+    await mkdir(path.join(root, ".ai-work"), { recursive: true });
+
+    await expect(validateProjectRoot(root)).rejects.toThrow(/project root/i);
+  });
+
+  it("rejects a directory that has neither .ai-state nor .ai-work", async () => {
+    const root = await createTempProjectRoot("dashboard-root-empty-");
+
+    await expect(validateProjectRoot(root)).rejects.toThrow(/project root/i);
+  });
 });

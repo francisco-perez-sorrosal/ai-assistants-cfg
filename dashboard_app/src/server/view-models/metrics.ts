@@ -8,17 +8,15 @@ import type {
   MetricKey,
   MetricsAggregate,
   MetricsHotspot,
+  MetricsLogPoint,
   MetricsSnapshot,
-  SentruxSnapshot,
   ToolAvailability
 } from "@/lib/metrics";
 import { METRIC_KEYS } from "@/lib/metrics";
 import { isMetricsReportJson, listDirectory } from "@/server/artifacts/files";
 import { assertAllowedArtifactPath, validateProjectRoot } from "@/server/artifacts/project-root";
 import { readJson, readMarkdown } from "@/server/parsers/content";
-
-const SENTRUX_REPORT_JSON =
-  /^SENTRUX_REPORT_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.json$/;
+import { parseMarkdownTable } from "@/server/parsers/markdown-table";
 
 type RawMetricsReport = {
   aggregate?: Record<string, unknown>;
@@ -39,15 +37,6 @@ type RawMetricsReport = {
   };
 };
 
-type RawSentruxReport = {
-  commit_sha?: unknown;
-  exit_code?: unknown;
-  graph?: Record<string, unknown>;
-  quality_signal?: unknown;
-  rules?: Record<string, unknown>;
-  timestamp?: unknown;
-};
-
 function toStringValue(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value : null;
 }
@@ -56,37 +45,55 @@ function toFiniteNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-function toBoolean(value: unknown): boolean | null {
-  return typeof value === "boolean" ? value : null;
+/**
+ * Parses the METRICS_LOG.md append-only table into a typed array of log points.
+ * Numeric columns that are blank or non-numeric coerce to null.
+ * A markdown link in the report_file cell is reduced to its label text.
+ */
+export function parseMetricsLog(body: string): MetricsLogPoint[] {
+  const rows = parseMarkdownTable(body);
+  return rows.map((row) => ({
+    timestamp: toStringCell(row["timestamp"]),
+    commit_sha: toStringCell(row["commit_sha"]),
+    window_days: toNumberCell(row["window_days"]),
+    sloc_total: toNumberCell(row["sloc_total"]),
+    file_count: toNumberCell(row["file_count"]),
+    language_count: toNumberCell(row["language_count"]),
+    ccn_p95: toNumberCell(row["ccn_p95"]),
+    cognitive_p95: toNumberCell(row["cognitive_p95"]),
+    cyclic_deps: toNumberCell(row["cyclic_deps"]),
+    churn_total_90d: toNumberCell(row["churn_total_90d"]),
+    change_entropy_90d: toNumberCell(row["change_entropy_90d"]),
+    truck_factor: toNumberCell(row["truck_factor"]),
+    hotspot_top_score: toNumberCell(row["hotspot_top_score"]),
+    hotspot_gini: toNumberCell(row["hotspot_gini"]),
+    coverage_line_pct: toNumberCell(row["coverage_line_pct"]),
+    report_file: stripMarkdownLink(row["report_file"])
+  }));
 }
 
-function isSentruxReportJson(filename: string): boolean {
-  return SENTRUX_REPORT_JSON.test(filename);
-}
-
-function parseMarkdownTable(body: string): Array<Record<string, string>> {
-  const tableLines = body
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("|"));
-  if (tableLines.length < 2) {
-    return [];
+function toStringCell(cell: string | undefined): string | null {
+  if (cell === undefined || cell.trim() === "") {
+    return null;
   }
+  return cell.trim();
+}
 
-  const splitRow = (row: string): string[] => row.split("|").slice(1, -1).map((cell) => cell.trim());
-  const headers = splitRow(tableLines[0] ?? "");
-  const rows = tableLines
-    .slice(1)
-    .filter((line) => !/^\|\s*[-:]+\s*(\|\s*[-:]+\s*)+\|?$/.test(line));
+function toNumberCell(cell: string | undefined): number | null {
+  if (cell === undefined || cell.trim() === "") {
+    return null;
+  }
+  const parsed = Number(cell.trim());
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
-  return rows.map((row) => {
-    const cells = splitRow(row);
-    const paddedCells = cells.length >= headers.length ? cells : cells.concat(Array(headers.length - cells.length).fill(""));
-    return headers.reduce<Record<string, string>>((record, header, index) => {
-      record[header] = paddedCells[index] ?? "";
-      return record;
-    }, {});
-  });
+/** Converts `[label](url)` to `label`; returns the raw string if not a link. */
+function stripMarkdownLink(cell: string | undefined): string | null {
+  if (cell === undefined || cell.trim() === "") {
+    return null;
+  }
+  const match = /^\[([^\]]+)\]\([^)]*\)$/.exec(cell.trim());
+  return match?.[1] ?? cell.trim();
 }
 
 function buildAggregate(raw: Record<string, unknown> | undefined): MetricsAggregate {
@@ -188,51 +195,6 @@ function buildMetricsSnapshot(reportPath: string, report: RawMetricsReport): Met
   };
 }
 
-function buildSentruxSnapshotFromRow(
-  row: Record<string, string>,
-  fileName: string | null
-): SentruxSnapshot {
-  return {
-    callEdges: toFiniteNumber(Number(row.call_edges)),
-    commitSha: row.commit_sha || null,
-    exitCode: toFiniteNumber(Number(row.exit_code)),
-    fileName,
-    filesKept: toFiniteNumber(Number(row.files_kept)),
-    id: row.timestamp || fileName || row.commit_sha || "sentrux-history-row",
-    importEdges: toFiniteNumber(Number(row.import_edges)),
-    inheritEdges: toFiniteNumber(Number(row.inherit_edges)),
-    qualitySignal: toFiniteNumber(Number(row.quality_signal)),
-    rulesChecked: toFiniteNumber(Number(row.rules_checked)),
-    rulesPass:
-      row.rules_pass === "true" ? true : row.rules_pass === "false" ? false : null,
-    timestamp: row.timestamp || null
-  };
-}
-
-function buildSentruxSnapshotFromReport(
-  reportPath: string,
-  report: RawSentruxReport
-): SentruxSnapshot | null {
-  if (!report || typeof report !== "object") {
-    return null;
-  }
-
-  return {
-    callEdges: toFiniteNumber(report.graph?.call_edges),
-    commitSha: toStringValue(report.commit_sha),
-    exitCode: toFiniteNumber(report.exit_code),
-    fileName: path.basename(reportPath),
-    filesKept: toFiniteNumber(report.graph?.files_kept),
-    id: path.basename(reportPath),
-    importEdges: toFiniteNumber(report.graph?.import_edges),
-    inheritEdges: toFiniteNumber(report.graph?.inherit_edges),
-    qualitySignal: toFiniteNumber(report.quality_signal),
-    rulesChecked: toFiniteNumber(report.rules?.checked),
-    rulesPass: toBoolean(report.rules?.passed),
-    timestamp: toStringValue(report.timestamp)
-  };
-}
-
 function sortMetricSnapshots(snapshots: MetricsSnapshot[]): MetricsSnapshot[] {
   return [...snapshots].sort((left, right) => {
     if (left.aggregate.timestamp && right.aggregate.timestamp) {
@@ -243,16 +205,6 @@ function sortMetricSnapshots(snapshots: MetricsSnapshot[]): MetricsSnapshot[] {
   });
 }
 
-function sortSentruxSnapshots(snapshots: SentruxSnapshot[]): SentruxSnapshot[] {
-  return [...snapshots].sort((left, right) => {
-    if (left.timestamp && right.timestamp) {
-      return left.timestamp.localeCompare(right.timestamp);
-    }
-
-    return (left.fileName ?? "").localeCompare(right.fileName ?? "");
-  });
-}
-
 export async function getMetricsData(projectRoot: string): Promise<DashboardMetricsData> {
   const validatedRoot = await validateProjectRoot(projectRoot);
   const reportsRoot = path.join(validatedRoot, ".ai-state", "metrics_reports");
@@ -260,11 +212,6 @@ export async function getMetricsData(projectRoot: string): Promise<DashboardMetr
 
   const metricReportPaths = entries
     .filter((entry) => isMetricsReportJson(entry))
-    .sort((left, right) => left.localeCompare(right))
-    .map((entry) => path.join(reportsRoot, entry));
-
-  const sentruxReportPaths = entries
-    .filter((entry) => isSentruxReportJson(entry))
     .sort((left, right) => left.localeCompare(right))
     .map((entry) => path.join(reportsRoot, entry));
 
@@ -282,51 +229,18 @@ export async function getMetricsData(projectRoot: string): Promise<DashboardMetr
     validatedRoot,
     path.join(reportsRoot, "METRICS_LOG.md")
   );
-  const sentruxLogPath = await assertAllowedArtifactPath(
-    validatedRoot,
-    path.join(reportsRoot, "SENTRUX_HISTORY.md")
-  );
 
-  const [metricsLog, sentruxLog] = await Promise.all([
-    readMarkdown(metricsLogPath),
-    readMarkdown(sentruxLogPath)
-  ]);
+  const metricsLog = await readMarkdown(metricsLogPath);
 
-  const sentruxHistoryFromLog =
-    sentruxLog?.body === undefined
-      ? []
-      : parseMarkdownTable(sentruxLog.body).map((row) => buildSentruxSnapshotFromRow(row, null));
-
-  const sentruxHistoryFromReports = (
-    await Promise.all(
-      sentruxReportPaths.map(async (reportPath) => {
-        const allowedPath = await assertAllowedArtifactPath(validatedRoot, reportPath);
-        const report = await readJson<RawSentruxReport>(allowedPath);
-        return report ? buildSentruxSnapshotFromReport(allowedPath, report) : null;
-      })
-    )
-  ).filter((snapshot): snapshot is SentruxSnapshot => snapshot !== null);
-
-  const sentruxHistory =
-    sentruxHistoryFromLog.length > 0 ? sentruxHistoryFromLog : sentruxHistoryFromReports;
   const sortedMetrics = sortMetricSnapshots(metricSnapshots);
-  const sortedSentrux = sortSentruxSnapshots(sentruxHistory);
   const latestMetrics = sortedMetrics.at(-1) ?? null;
-  const latestSentrux = sortedSentrux.at(-1) ?? null;
+  const logSeries = metricsLog ? parseMetricsLog(metricsLog.body) : [];
 
   return {
     latest: latestMetrics,
     latestPath: latestMetrics?.path ?? null,
     log: metricsLog ? { body: metricsLog.body, path: metricsLog.path } : null,
-    sentrux: {
-      history: sortedSentrux,
-      latest: latestSentrux,
-      latestPath:
-        sentruxReportPaths.length > 0
-          ? await assertAllowedArtifactPath(validatedRoot, sentruxReportPaths.at(-1) as string)
-          : null,
-      log: sentruxLog ? { body: sentruxLog.body, path: sentruxLog.path } : null
-    },
+    logSeries,
     snapshots: sortedMetrics
   };
 }

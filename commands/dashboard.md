@@ -1,5 +1,5 @@
 ---
-description: Launch the Praxion pipeline dashboard for the current project. Opens a browser tab showing architecture, in-flight workshops, ADRs, sentinel reports, roadmap, and metrics. Requires the dashboard to be installed (part of the Praxion plugin). Delegates to praxion-dashboard for process management.
+description: Launch the Praxion pipeline dashboard for the current project. Opens the dashboard in your browser on macOS; prints the URL to open manually on other platforms. Shows architecture, documentation, in-flight workshops, ADRs, sentinel reports, roadmap, and metrics. Requires the dashboard to be installed (part of the Praxion plugin). Delegates to praxion-dashboard for process management.
 argument-hint: [project-root]
 allowed-tools: Bash
 ---
@@ -35,3 +35,4 @@ Report the URL printed by the script. If startup fails (e.g., dashboard not inst
 - Manage lifecycle from the shell: `scripts/praxion-dashboard stop`, `scripts/praxion-dashboard status`, `scripts/praxion-dashboard restart`
 - Use `/dashboard` again to get the URL if you've lost it — the script detects the running process and prints it
 - The dashboard is macOS-only in v1; Linux users see a manual-launch hint in the script output
+- `PRAXION_DASHBOARD_POLL_SECONDS` — controls live-refresh cadence for the workshops surface (default: 15). Set in the shell environment before launching.

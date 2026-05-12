@@ -1,7 +1,8 @@
 ---
 id: dec-129
 title: Pipeline Dashboard supersedes metrics-viewer.html.tmpl — soft deprecation
-status: accepted
+status: superseded
+superseded_by: dec-draft-d9e81c5a
 category: architectural
 date: 2026-05-07
 summary: The Streamlit dashboard supersedes the static metrics-viewer.html.tmpl with a soft deprecation: both ship for one release cycle with a banner in the static viewer pointing to praxion-dashboard; hard removal in next-after-next release.

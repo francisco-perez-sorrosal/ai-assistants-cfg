@@ -79,6 +79,73 @@ Draft failing tests
   });
 });
 
+describe("parseWipBody — bare checklist format", () => {
+  it("parses bare numeric checklist items like '- [ ] 1. description'", () => {
+    const parsed = parseWipBody(`
+## Current Step
+
+Ship the reader
+
+## Status
+
+[IN-PROGRESS]
+
+## Progress
+
+- [x] 1. scaffold the package layout
+- [ ] 2. Ship the reader
+`);
+
+    expect(parsed.progress).toEqual([
+      { checked: true, current: false, label: "scaffold the package layout", stepId: "1" },
+      { checked: false, current: true, label: "Ship the reader", stepId: "2" }
+    ]);
+  });
+
+  it("parses a body that mixes Step X.Y: format and bare numeric format", () => {
+    const parsed = parseWipBody(`
+## Current Step
+
+Beta task
+
+## Status
+
+[IN-PROGRESS]
+
+## Progress
+
+- [x] Step alpha: Earlier checkpoint
+- [ ] 2. Beta task
+`);
+
+    expect(parsed.progress).toHaveLength(2);
+    expect(parsed.progress[0]).toMatchObject({ checked: true, stepId: "alpha" });
+    expect(parsed.progress[1]).toMatchObject({ checked: false, stepId: "2" });
+  });
+
+  it("still parses the original Step X.Y: format unchanged", () => {
+    const parsed = parseWipBody(`
+## Current Step
+
+Draft failing tests
+
+## Status
+
+[IN-PROGRESS]
+
+## Progress
+
+- [x] Step 1.1: Scaffold
+- [ ] Step 1.2: Draft failing tests
+`);
+
+    expect(parsed.progress).toEqual([
+      { checked: true, current: false, label: "Scaffold", stepId: "1.1" },
+      { checked: false, current: true, label: "Draft failing tests", stepId: "1.2" }
+    ]);
+  });
+});
+
 describe("getWorkshopsData", () => {
   it("rejects roots that do not look like Praxion projects", async () => {
     const root = await createTempProjectRoot("dashboard-workshops-invalid-");

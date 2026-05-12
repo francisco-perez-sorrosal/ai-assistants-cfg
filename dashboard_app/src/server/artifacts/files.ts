@@ -54,6 +54,7 @@ export async function listDirectoryByMtimeDesc(target: string): Promise<string[]
     return [];
   }
 
+  // Returns only subdirectories (not files) — by design for workshop discovery.
   const withStats = await Promise.all(
     (await fs.readdir(target)).map(async (entry) => {
       const entryPath = path.join(target, entry);
@@ -75,8 +76,12 @@ export async function readText(target: string): Promise<string | null> {
   }
 }
 
-export async function walkRenderedSvgs(projectRoot: string): Promise<string[]> {
-  const diagramsRoot = path.join(projectRoot, "docs", "diagrams");
+// Diagram root directories to scan for rendered SVGs, relative to the project root.
+// Scans both docs/diagrams/ (convention-docs diagrams) and .ai-state/diagrams/
+// (architecture-as-code / DESIGN.md diagrams).
+const DIAGRAM_ROOTS = ["docs/diagrams", ".ai-state/diagrams"] as const;
+
+async function walkRenderedSvgsInRoot(diagramsRoot: string): Promise<string[]> {
   if (!(await isDirectory(diagramsRoot))) {
     return [];
   }
@@ -103,7 +108,16 @@ export async function walkRenderedSvgs(projectRoot: string): Promise<string[]> {
     }
   }
 
-  return results.sort((left, right) => left.localeCompare(right));
+  return results;
+}
+
+export async function walkRenderedSvgs(projectRoot: string): Promise<string[]> {
+  const allResults = await Promise.all(
+    DIAGRAM_ROOTS.map((relRoot) => walkRenderedSvgsInRoot(path.join(projectRoot, relRoot)))
+  );
+
+  const combined = allResults.flat();
+  return combined.sort((left, right) => left.localeCompare(right));
 }
 
 export function isFinalizedAdr(filename: string): boolean {
