@@ -7,7 +7,7 @@ audience: developer
 
 A point-in-time study comparing four external "Karpathy-inspired CLAUDE.md" projects against Praxion's own context-engineering setup, to find ideas Praxion can adopt for its project-management artifacts (agents, rules, skills, commands, CLAUDE.md). The four externals are much smaller than Praxion (single-artifact repos + one article); the point was to mine them for transferable micro-techniques and framings, not to match their scope.
 
-**The actionable output is the roadmap** — [`07-praxion-roadmap.md`](07-praxion-roadmap.md), also copied to [`../../.ai-state/ROADMAP.md`](../../.ai-state/ROADMAP.md) as the working roadmap to follow. The rest of this folder is the supporting analysis: it's a dated snapshot, not a maintained document.
+**The actionable output is the roadmap** — [`07-praxion-roadmap.md`](07-praxion-roadmap.md). P1–P6 were completed on 2026-05-12; the working copy that lived at `.ai-state/ROADMAP.md` was retired post-completion per [`dec-092`](../../.ai-state/decisions/092-retire-roadmap-living-document.md), and this file is preserved as study material. The rest of this folder is the supporting analysis: it's a dated snapshot, not a maintained document.
 
 ## What's here
 
@@ -20,7 +20,7 @@ A point-in-time study comparing four external "Karpathy-inspired CLAUDE.md" proj
 | [`sources/04-alphasignal-karpathy-inspired-claudemd.md`](sources/04-alphasignal-karpathy-inspired-claudemd.md) | Deep dive: the AlphaSignal article that popularized the forrestchang repo. | How faithfully the discourse represents Karpathy; the calibration-notice idea. |
 | [`05-comparison.md`](05-comparison.md) | **The comparison.** Executive summary · per-source lessons · the unified deduped critical-dimension set · the 5-system matrix (4 externals + Praxion) · dimension-by-dimension detail · where Praxion is already ahead · the adoptable list. | The full picture. Start here. |
 | [`06-not-comparable.md`](06-not-comparable.md) | Scope mismatches and non-goals — what Praxion should *not* chase (and why), plus the dimensions Praxion already covers as well or better. | Before adding anything not on the roadmap. |
-| [`07-praxion-roadmap.md`](07-praxion-roadmap.md) | **The roadmap.** Six headline items + a parked appendix, each scoped to a Praxion artifact with a "done when" and a budget impact; the three-step "relocate-don't-delete" cut protocol; sequencing. | Execution. (Working copy: [`../../.ai-state/ROADMAP.md`](../../.ai-state/ROADMAP.md).) |
+| [`07-praxion-roadmap.md`](07-praxion-roadmap.md) | **The roadmap.** Six headline items + a parked appendix, each scoped to a Praxion artifact with a "done when" and a budget impact; the three-step "relocate-don't-delete" cut protocol; sequencing. | Study material — P1–P6 completed 2026-05-12; the `.ai-state/` working copy was retired per `dec-092`. |
 | [`08-claude-code-behavior-verification.md`](08-claude-code-behavior-verification.md) | The empirical Claude Code behavior check (path-scoped-rule triggering, rule re-injection, `CLAUDE.local.md`/`claudeMdExcludes`, the "~150–200 instruction" claim, ancestor/nested CLAUDE.md loading, auto-memory) — verified 2026-05-12 against the official docs + GitHub issues. | Why the roadmap's P1 exists and why the folklore numbers are *not* imported. |
 
 ## Headline findings
