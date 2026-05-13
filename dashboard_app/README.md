@@ -1,9 +1,9 @@
 # Praxion Pipeline Dashboard
 
-> [!IMPORTANT]
-> `streamlit_app/` remains as a temporary migration reference. The active
-> dashboard runtime is `dashboard_app/` (Next.js App Router + TypeScript),
-> served through `scripts/praxion-dashboard`.
+> [!NOTE]
+> The active dashboard runtime is `dashboard_app/` (Next.js App Router +
+> TypeScript), served through `scripts/praxion-dashboard`. It replaced an
+> earlier Streamlit prototype (`streamlit_app/`, removed in commit `313a50e`).
 
 The active per-project dashboard runtime — turns a Praxion-onboarded
 project's `.ai-state/`, `.ai-work/<slug>/`, and selected project-root

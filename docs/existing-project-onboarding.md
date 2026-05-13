@@ -129,12 +129,12 @@ Without these, the first concurrent edit to `.ai-state/memory.json` corrupts it 
 
 ### Phase 4 — Git hooks
 
-Two hooks installed under `.git/hooks/`:
+A `pre-commit` hook plus a multiplexed lifecycle dispatcher symlinked to three triggers, all under `.git/hooks/`:
 
 - **`pre-commit`** — *not* a symlink to a plugin script; the command writes a small bash file directly that resolves the plugin install path at hook-run time (so plugin upgrades flow automatically) and runs `scripts/check_id_citation_discipline.py` against staged files. Blocks commits that reference ephemeral pipeline IDs (`REQ-NN`, `AC-NN`, `Step N`) in committed source code per [id-citation-discipline rule](../rules/swe/id-citation-discipline.md).
-- **`post-merge`** — symlink to the plugin's `scripts/git-post-merge-hook.sh`. Chains: `reconcile_ai_state.py` → `finalize_adrs.py` (promote draft ADRs to stable `dec-NNN`) → `finalize_tech_debt_ledger.py` (dedupe rows by `dedup_key`) → `check_squash_safety.py` (warn if squash erased `.ai-state/`).
+- **`post-merge` / `post-commit` / `post-checkout`** — three symlinks to the plugin's `scripts/git-finalize-hook.sh` (a single multiplexed dispatcher; behavior is selected by the invocation's basename). `post-merge` runs the full chain `reconcile_ai_state.py` → `finalize_adrs.py` (promote draft ADRs to stable `dec-NNN`) → `finalize_tech_debt_ledger.py` (dedupe rows by `dedup_key`) → `check_squash_safety.py` (warn if a squash erased `.ai-state/`); `post-commit` and `post-checkout` run the finalize step alone when arriving on `main` with drafts present — catching direct commits, rebases, cherry-picks, and drafts that land without a local commit.
 
-If a non-Praxion hook already exists at `.git/hooks/pre-commit` or `post-merge`, it's backed up to `<name>.pre-praxion` and the user is warned — the command never silently overwrites a non-Praxion hook.
+If a non-Praxion hook already exists at `.git/hooks/pre-commit`, `post-merge`, `post-commit`, or `post-checkout`, it's backed up to `<name>.pre-praxion` and the user is warned — the command never silently overwrites a non-Praxion hook.
 
 ### Phase 5 — `.claude/settings.json` toggles
 

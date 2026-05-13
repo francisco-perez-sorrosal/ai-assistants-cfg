@@ -36,7 +36,7 @@ Mermaid → SVG:
 mmdc -i docs/diagrams/<name>/src/<name>.mmd -o docs/diagrams/<name>/rendered/<name>.svg
 ```
 
-The pre-commit hook (`scripts/diagram-regen-hook.sh`) regenerates LikeC4 outputs automatically when staged `.c4` files change. Mermaid currently regenerates on demand (no hook yet — see deferred TODO in `IMPROVEMENT_PLAN.md`).
+The pre-commit hook (`scripts/diagram-regen-hook.sh`) regenerates LikeC4 outputs automatically when staged `.c4` files change. Mermaid has no auto-regen hook yet — invoke `mmdc` manually after editing a `.mmd` source.
 
 ## Tooling
 

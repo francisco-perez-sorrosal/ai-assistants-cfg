@@ -18,9 +18,9 @@ AGENTS.md-aware agents such as **Codex**.
 
 ## What You Get
 
-- **43 skills** covering Python, API design, CI/CD, deployment, observability, refactoring, spec-driven development, external API docs, security review, testing strategy, test coverage, roadmap synthesis, ML/AI training, and more -- loaded automatically when the task matches
-- **13 specialized agents** that collaborate on complex features (research, architecture, planning, implementation, testing, verification, roadmap cartography)
-- **32 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding, testing, releases, code review, roadmap generation, metrics, ML experiment dispatch
+- **49 skills** covering Python, API design, CI/CD, deployment, observability, refactoring, spec-driven development, external API docs, security review, testing strategy, test coverage, roadmap synthesis, ML/AI training, web/TUI/API interface design, and more -- loaded automatically when the task matches
+- **15 specialized agents** that collaborate on complex features (research, architecture, interface design, planning, implementation, testing, verification, structural validation, roadmap cartography)
+- **34 slash commands** for daily workflows -- commits, worktrees, memory management, project scaffolding, testing, releases, code review, roadmap generation, metrics, ML experiment dispatch
 - **Coding rules** auto-loaded by context -- coding style, git conventions, documentation standards, agent coordination
 - **MCP servers** for persistent memory and agent lifecycle observability
 - **Architecture-as-Code + Documentation-as-Code stack** -- fence convention, fitness functions, golden-rule pre-commit gate, architect-validator agent, architecture CI workflow, REQ↔arch traceability, sentinel periodic audit, Diátaxis-aligned doc taxonomy. See [docs/aac-dac.md](docs/aac-dac.md) for the philosophy and how the mechanisms compose.

@@ -231,7 +231,7 @@ def build_keywords(relpath: str, title: str, globs: list[str]) -> set[str]:
     alias_map = {
         "readme": {"readme"},
         "diagram": {"diagram", "architecture", "mermaid"},
-        "dashboard": {"dashboard", "streamlit"},
+        "dashboard": {"dashboard", "nextjs"},
         "testing": {"test", "tests", "pytest", "spec"},
         "staleness": {"skill", "skills", "skill_md"},
         "agent": {"agent", "agents"},

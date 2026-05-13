@@ -69,9 +69,9 @@ The components form a layered architecture, from always-loaded directives down t
 
 ## The Agent Pipeline
 
-For complex features, agents form a pipeline where each stage's output feeds the next:
+For complex features, agents form a pipeline where each stage's output feeds the next (simplified below — the diagram omits the `context-engineer` / `interface-designer` shadow advisors, the `cicd-engineer` and `doc-engineer` parallel slots, and the `sentinel` / `architect-validator` audit roles; see [`agents/README.md`](../agents/README.md) for the full pipeline):
 
-![Agent Pipeline — promethean, researcher, systems-architect, implementation-planner, implementer, test-engineer, doc-engineer, verifier](diagrams/concepts-agent-pipeline/rendered/concepts-agent-pipeline.svg)
+![Agent Pipeline (simplified conceptual overview) — promethean, researcher, systems-architect, implementation-planner, implementer, test-engineer, doc-engineer, verifier](diagrams/concepts-agent-pipeline/rendered/concepts-agent-pipeline.svg)
 
 1. **promethean** -- generates feature ideas from project state
 2. **researcher** -- explores the codebase, evaluates technologies, gathers external information
