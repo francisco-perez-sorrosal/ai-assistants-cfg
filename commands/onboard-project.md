@@ -333,7 +333,17 @@ disable:
   - ml/*                   # Example: disable entire category
 ```
 
-See [`docs/rules-taxonomy.md`](../../docs/rules-taxonomy.md) for the complete reference on rule categories, token accounting, and blacklist configuration. A project with no `.claude/praxion-rules.yaml` loads all rules identically to the current behavior — backward compatible, opt-out default. For a template, see [`.claude/praxion-rules.yaml.example`](../../.claude/praxion-rules.yaml.example).
+**Action (idempotent).** If the project does not already have `.claude/praxion-rules.yaml.example`, copy Praxion's template into the project so the user has a starting point to edit:
+
+```bash
+# Skip if either path already exists in the project (.example or live config)
+[ -f .claude/praxion-rules.yaml.example ] || [ -f .claude/praxion-rules.yaml ] || \
+  cp "$CLAUDE_PLUGIN_ROOT/claude/config/praxion-rules.yaml.example" .claude/praxion-rules.yaml.example
+```
+
+The user can then rename `.example` to `.claude/praxion-rules.yaml` and edit the `disable:` list to activate the blacklist (or keep `.example` for reference and author a fresh `praxion-rules.yaml` from scratch).
+
+See [`docs/rules-taxonomy.md`](../../docs/rules-taxonomy.md) for the complete reference on rule categories, token accounting, and blacklist configuration. A project with no `.claude/praxion-rules.yaml` loads all rules identically to the current behavior — backward compatible, opt-out default.
 
 ## §Phase 6 — `CLAUDE.md` Praxion blocks
 

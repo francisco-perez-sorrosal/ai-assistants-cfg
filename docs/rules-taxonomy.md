@@ -247,4 +247,4 @@ No blacklist — accept all rules:
 - [Architecture Guide: Rules section](architecture.md#3-components) — technical components implementing the two-channel delivery
 - [Onboarding: Rules Configuration](../commands/onboard-project.md) — how to add this to an existing project
 - [rules/_manifest.yaml](../rules/_manifest.yaml) — machine-readable rule taxonomy (auto-generated)
-- [Example Configuration](../.claude/praxion-rules.yaml.example) — template for new projects
+- [Example Configuration](../claude/config/praxion-rules.yaml.example) — template shipped by Praxion; copy to your project's `.claude/praxion-rules.yaml` and edit the `disable:` list
