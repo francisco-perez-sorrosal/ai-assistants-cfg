@@ -380,7 +380,7 @@ install_git_merge_infra() {
     # into shipped surfaces (rules/, skills/, agents/, commands/,
     # claude/config/). Rationale: rules/swe/shipped-artifact-isolation.md.
     #
-    # Idempotency contract (td-021 fix): the Praxion-managed block is wrapped
+    # Idempotency contract (td-020 fix): the Praxion-managed block is wrapped
     # in sentinel comments so a re-install replaces JUST that block, leaving
     # any user-authored content above/below untouched. Four paths:
     #   (1) no pre-commit on disk          -> write fresh, sentinel-wrapped
