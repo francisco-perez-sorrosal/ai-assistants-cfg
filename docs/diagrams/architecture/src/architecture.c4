@@ -6,10 +6,17 @@
  *   components — L1 Components: internals grouped by architectural layer
  *
  * Layer structure (R1):
- *   Knowledge Layer      — Skills, Rules, Commands
- *   Orchestration Layer  — Agent Pipeline, Hooks, .ai-work/
+ *   Knowledge Layer      — Skills, Rules, Commands, Agents (authored definitions)
+ *   Orchestration Layer  — Agent Pipeline (runtime), Hooks, .ai-work/
  *   Persistence Layer    — Memory MCP, Chronograph MCP, .ai-state/
  *   Tooling              — Installers, Scripts, Versioning
+ *
+ * Dual representation of Agents: the authored Markdown family (knowledge.agents)
+ * lives alongside skills/rules/commands as a deployable knowledge surface; the
+ * runtime, spawned-subprocess side (orchestration.pipeline) lives in the
+ * orchestration layer where execution, ephemeral state, and lifecycle wiring
+ * cohere. The two are linked by knowledge.agents -> orchestration.pipeline
+ * "spawns". See ADR (dec-draft-…) "Architecture C4 dual-agent representation".
  *
  * Regen:
  *   likec4 gen d2 docs/diagrams/ -o docs/diagrams/architecture/
@@ -42,13 +49,14 @@ model {
       skills   = component "Skills"         { description "Domain expertise modules" }
       rules    = component "Rules"          { description "Declarative conventions" }
       commands = component "Commands"       { description "User-invoked workflows" }
+      agents   = component "Agents"         { description "Authored subprocess specifications" }
     }
 
     // Orchestration Layer: runtime execution and ephemeral state
     orchestration = component "Orchestration Layer" {
-      agents = component "Agent Pipeline"   { description "15 specialized agents" }
-      hooks  = component "Hooks"            { description "Lifecycle enforcement" }
-      aiwork = component ".ai-work/"        { description "Ephemeral pipeline docs" }
+      pipeline = component "Agent Pipeline" { description "Spawned subprocesses (runtime instances)" }
+      hooks    = component "Hooks"          { description "Lifecycle enforcement" }
+      aiwork   = component ".ai-work/"      { description "Ephemeral pipeline docs" }
     }
 
     // Persistence Layer: durable intelligence and observability
@@ -66,18 +74,24 @@ model {
     }
 
     // ── Intra-system Relationships ──────────────────────────────────────────
-    knowledge.skills    -> orchestration.agents "injects"
-    knowledge.rules     -> orchestration.agents "constrains"
-    knowledge.commands  -> orchestration.agents "triggers"
-    orchestration.hooks -> orchestration.agents "enforces"
-    orchestration.hooks -> persistence.chronograph "emits events"
-    orchestration.hooks -> persistence.memory "injects context"
-    orchestration.agents -> orchestration.aiwork "reads/writes"
-    orchestration.agents -> persistence.aistate "persists"
-    persistence.memory  -> persistence.aistate "reads/writes"
+    // Knowledge → Orchestration: authored surfaces shape / inject / constrain / trigger the runtime
+    knowledge.skills      -> orchestration.pipeline "injects"
+    knowledge.rules       -> orchestration.pipeline "constrains"
+    knowledge.commands    -> orchestration.pipeline "triggers"
+    knowledge.agents      -> orchestration.pipeline "spawns"
+    // Orchestration internal
+    orchestration.hooks    -> orchestration.pipeline "enforces"
+    orchestration.hooks    -> persistence.chronograph "emits events"
+    orchestration.hooks    -> persistence.memory "injects context"
+    orchestration.pipeline -> orchestration.aiwork "reads/writes"
+    orchestration.pipeline -> persistence.aistate "persists"
+    persistence.memory     -> persistence.aistate "reads/writes"
+    // Tooling: installers deploy the authored knowledge surface (definitions on disk),
+    // not the runtime (which is spawned per-task by the host).
     tooling.installers  -> knowledge.skills   "deploys"
     tooling.installers  -> knowledge.rules    "deploys"
     tooling.installers  -> knowledge.commands "deploys"
+    tooling.installers  -> knowledge.agents   "deploys"
   }
 
   // ── Cross-boundary Relationships ─────────────────────────────────────────
@@ -109,8 +123,8 @@ views {
       developer, claude_code, claude_desktop, cursor, arize_phoenix, github,
       praxion,
       praxion.knowledge, praxion.orchestration, praxion.persistence, praxion.tooling,
-      praxion.knowledge.skills, praxion.knowledge.rules, praxion.knowledge.commands,
-      praxion.orchestration.agents, praxion.orchestration.hooks, praxion.orchestration.aiwork,
+      praxion.knowledge.skills, praxion.knowledge.rules, praxion.knowledge.commands, praxion.knowledge.agents,
+      praxion.orchestration.pipeline, praxion.orchestration.hooks, praxion.orchestration.aiwork,
       praxion.persistence.memory, praxion.persistence.chronograph, praxion.persistence.aistate,
       praxion.tooling.installers, praxion.tooling.scripts, praxion.tooling.versioning
   }
