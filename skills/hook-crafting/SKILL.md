@@ -23,6 +23,17 @@ Hooks are shell commands, prompts, or agents that Claude Code executes in respon
 
 **Relationship to built-in skill**: Use `plugin-dev:hook-development` for writing hook scripts (prompt vs command types, security best practices, matcher patterns, bash validation examples). Use this skill for everything around the scripts: registration lifecycle, why hooks don't fire, output patterns (`additionalContext`, `updatedInput`, `decision`), the `if` conditional field, the 15 events the built-in skill doesn't document, known bugs, and installer integration. The built-in skill tells you how to write a hook; this skill tells you how to ship one.
 
+## When a Hook (vs a Rule)
+
+The dividing line is **guarantee strength**, not topic:
+
+- A behavior that must happen **100% of the time, with zero exceptions** → **hook**. Hooks are deterministic and lifecycle-executed: the harness runs them, not the model.
+- A behavior the model **should generally follow** → **rule** (or a `CLAUDE.md` line). `CLAUDE.md` and rules are delivered as context, not enforced config — there's no guarantee of strict compliance.
+
+**Rules shape behavior; hooks enforce it.** The robust pattern is often *both*: a rule documents the convention so the model understands *why*, and a `PreToolUse` / `PostToolUse` hook makes the load-bearing part non-negotiable so a forgetful or adversarial run can't skip it. Don't reach for a hook when a rule will do — hooks are heavier to maintain and a misfiring hook blocks the agent (see [Gotchas](#gotchas)). But when correctness depends on it firing every time, a rule is the wrong tool.
+
+For the rules-vs-`CLAUDE.md`-vs-skills decision, see the [`rule-crafting`](../rule-crafting/SKILL.md) skill; for writing the hook script itself, `plugin-dev:hook-development`.
+
 ## Gotchas
 
 Hard-won lessons from production use. Read these before writing or debugging hooks.

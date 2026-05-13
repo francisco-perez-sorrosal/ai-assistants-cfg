@@ -146,17 +146,37 @@ For Codex interop, preserve Praxion rule meaning before optimizing for native
 surface area. A smaller number of faithful translations beats a broad but lossy
 export.
 
-## Memory Hierarchy
+## Context Hierarchy — What Loads, When, and Who Wins
+<!-- last-verified: 2026-05-12 -->
 
-| Priority | Source | Loading |
-|---|---|---|
-| 1 (highest) | Managed policy (enterprise) | always |
-| 2 | Project memory (`.claude/CLAUDE.md`) | always |
-| 3 | Project rules (`.claude/rules/`) | when relevant |
-| 4 | User memory (`~/.claude/CLAUDE.md`) | always |
-| 5 (lowest) | Project local (`.claude/CLAUDE.local.md`) | gitignored override |
+Claude Code assembles always-loaded instruction context from a layered hierarchy. Loading walks from least-specific to most-specific; **on conflict, the more specific layer wins** (the cwd's own file is read last). Ancestor `CLAUDE.md` / `CLAUDE.local.md` files are loaded **in full at launch** (walking cwd → filesystem root, parent before child); subdirectory `CLAUDE.md` files load **on-demand** when Claude reads a file in that subdir — *not* at launch.
 
-Rules override user memory but yield to project memory and managed policy. See `~/.claude/CLAUDE.md` and `rules/CLAUDE.md` for full coverage. Use `/memory` in Claude Code to inspect loaded rules.
+| Layer (least → most specific) | Path(s) | Loading | What belongs here |
+|---|---|---|---|
+| Managed policy | macOS `/Library/Application Support/ClaudeCode/CLAUDE.md`; Linux/WSL `/etc/claude-code/CLAUDE.md`; `managed-settings.json` `claudeMd` key | Always at launch; **cannot be excluded** | Org-wide mandates only |
+| User | `~/.claude/CLAUDE.md`, `~/.claude/rules/*.md` | Always at launch | Cross-project philosophy and conventions |
+| Ancestor directories | any `CLAUDE.md` / `CLAUDE.local.md` between cwd and `/` | Loaded in full at launch (root-down) | Rare outside monorepos |
+| Workspace (directory-of-repos) | a `CLAUDE.md` at e.g. `~/repos/<org>/`, the parent of several checkouts | Picked up as an ancestor when `claude` runs from a nested project — no special mechanism, just a convention + a file | Cross-repo norms ("everything under here is trunk-based dev"); a worktree-context banner |
+| Project | `./CLAUDE.md` or `./.claude/CLAUDE.md`; `./.claude/rules/*.md` | Always at launch | Project baseline + path-scoped rules |
+| Project-local override | `./CLAUDE.local.md` | Always at launch; **`.gitignore` it** | Private per-project prefs (supported, not deprecated). Worktree caveat: exists only in the worktree where created — to share across worktrees, `@~/.claude/...`-import instead |
+| Subdirectory | `<subdir>/CLAUDE.md` | **On-demand** when Claude reads a file under `<subdir>/` — not at launch | Directory-local conventions (e.g. `scripts/CLAUDE.md`, `tests/CLAUDE.md`); keeps them off the launch-time always-loaded surface |
+
+Path-scoped rules (`paths:` frontmatter, in project or user `rules/`) sit alongside the project / user layers but load **on Read of a matching file** — see [Path-Scoped Rules: Read-Only Loading Trigger](#path-scoped-rules-read-only-loading-trigger).
+
+- **`claudeMdExcludes`** — real setting (array; set in `.claude/settings.local.json` etc.; merges across layers): skip specific `CLAUDE.md` / rules files by absolute-path glob. Useful for monorepos with irrelevant ancestor files. Managed-policy `CLAUDE.md` can't be excluded.
+- **`InstructionsLoaded` hook** — the docs recommend it to log exactly which instruction files load, when, and why; it's the tool for debugging path-scoped rules and lazy-loaded subdirectory files. (`--add-dir` does *not* load `CLAUDE.md` from extra dirs unless `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1`.)
+- Inspect what actually loaded in a live session with `/memory`.
+
+Rules override user memory but yield to project memory and managed policy. Full coverage: `~/.claude/CLAUDE.md` and `rules/CLAUDE.md`.
+
+## Why the Always-Loaded Budget Exists
+
+`CLAUDE.md` files and unconditional rules are **context, not enforced config** — Claude Code delivers them as a user message after the system prompt, so there is no guarantee of strict compliance (per `code.claude.com/docs/en/memory`). Two consequences:
+
+- **Specific, concise, well-structured wins.** Concrete constraints and a `| pattern | why it fails | what to do |` table are followed more reliably than long discursive prose. The docs' guideline: target **under 200 lines per `CLAUDE.md` / rule file** — longer files "consume more context and reduce adherence."
+- **For a hard guarantee, use a hook.** A rule line is advisory and probabilistic; a hook (`PreToolUse`, `PostToolUse`, `SessionStart`, …) is deterministic and lifecycle-executed. If a behavior must happen 100% of the time, it isn't a rule — see the [`hook-crafting`](../hook-crafting/SKILL.md) skill's "When a Hook (vs a Rule)" criterion.
+
+The ecosystem-wide budget for *all* always-loaded content (every `CLAUDE.md` plus every rule without `paths:` frontmatter) is **25,000 tokens** — a failure-mode guardrail, not a target. The operating principle: every always-loaded token must earn its attention share — applied in >30% of sessions, or unconditionally relevant. Anything below that bar belongs in a `paths:`-scoped rule or a skill. (Practitioner write-ups circulate specific per-session token breakdowns and "instruction-count ceilings"; those *numbers* aren't documented by Anthropic — treat the discipline as load-bearing and the figures as folklore.)
 
 ## Rule File Structure
 
@@ -279,6 +299,7 @@ State what should be true, not steps to follow. Procedural content belongs in a 
 - **Group by domain** — one file per coherent domain area
 - **Include examples** — show correct and incorrect patterns when clarity demands it
 - **Explain the _why_** — when a constraint isn't self-evident, briefly state the rationale
+- **Pair every prohibition with a remedy** — a `NEVER` / `Don't` line must be followed by a `→ do this instead`. Document anti-patterns as a `| pattern | why it fails | what to do instead |` table (see [Anti-Patterns](#anti-patterns) below for the canonical shape), not a bare list of forbidden things — a rule that only says "don't" leaves the reader to guess the right move, which is exactly the moment a stochastic model improvises.
 - **Token budget awareness** — rules are eagerly loaded within scope (personal = all projects, project = that project), adding to the baseline token cost of every conversation and agent spawn. The ecosystem budget is 25,000 tokens for all always-loaded content (CLAUDE.md files + rules) as a failure-mode guardrail — every always-loaded token must earn its attention share. Keep rules concise; if one grows too large, compress it (tables over prose, remove redundancy) or move procedural content to a skill — but never split into main + reference files (see Self-Containment Constraint below)
 
 ### Customization Sections
