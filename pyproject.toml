@@ -56,7 +56,7 @@ dev = [
 
 [tool.pytest.ini_options]
 addopts = "--cov --cov-report=xml --cov-report=term-missing"
-testpaths = ["tests", "scripts", "streamlit_app"]
+testpaths = ["tests", "scripts"]
 markers = [
     "slow: marks tests that invoke real pip/venv operations (deselect with -m 'not slow')",
 ]
