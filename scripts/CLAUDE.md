@@ -19,6 +19,7 @@ Utility and operational scripts for the Praxion ecosystem.
 - `check_shipped_artifact_isolation.py` — Outbound shipped-artifact isolation check: scans shipped artifact surfaces for references to specific pipeline/state entries. Wired into `hooks/commit_gate.sh`. See `rules/swe/shipped-artifact-isolation.md`
 - `check_aac_golden_rule.py` — AaC golden-rule enforcement: detects staged generated-artifact edits (`docs/diagrams/<name>/<view>.{d2,svg}` or content inside `<!-- aac:generated -->` fences) without a co-staged source change. Gate mode (`--mode=gate`, default) wired into `git-pre-commit-hook.sh` Block D; audit mode (`--mode=audit --json`) consumed by sentinel EC07. Stdlib-only; side-effect-free. See `rules/writing/aac-dac-conventions.md`
 - `migrate_worktree_home.sh` — Print copy-paste-ready `git worktree move` commands to migrate legacy `.trees/<name>/` worktrees to `.claude/worktrees/<name>/`. Performs no automatic move
+- `check_paths_syntax.py` — Static check over `rules/**/*.md` `paths:` frontmatter forms. Classifies each declaration as `inline-array` / `block-list-single` / `block-list-multi` / `single-string` / `unknown`, flags multi-entry YAML block-lists as `AT_RISK` per upstream [anthropics/claude-code#16853](https://github.com/anthropics/claude-code/issues/16853) (the `_9A()` CSV parser reportedly mis-handles them), and prints a suggested inline-array rewrite. `--json` for machine output, `--check` exits 1 on AT_RISK. Stdlib-only. See `td-033` in `.ai-state/TECH_DEBT_LEDGER.md`
 
 ## Conventions
 
