@@ -15,14 +15,8 @@ import { getSentinelData } from "@/server/view-models/sentinel";
 import { getWorkshopsData } from "@/server/view-models/workshops";
 
 export type SidebarSignals = {
-  /** Primary field name — use this in new code. */
+  /** Active workshops: WIP.md parsed with status neither COMPLETE nor absent. */
   activeWorkshops: number;
-  /**
-   * Alias for activeWorkshops — both fields always carry the same value.
-   * Retained for backward-compatibility with early tests and future
-   * /overview consumers that may prefer the more explicit name.
-   */
-  activeWorkshopCount: number;
   sentinelGrade: string | null;
 };
 
@@ -74,5 +68,5 @@ export async function getSidebarSignals(projectRoot: string): Promise<SidebarSig
       ? extractLatestGrade(sentinelResult.value)
       : null;
 
-  return { activeWorkshops, activeWorkshopCount: activeWorkshops, sentinelGrade };
+  return { activeWorkshops, sentinelGrade };
 }

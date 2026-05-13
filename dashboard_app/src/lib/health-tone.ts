@@ -27,52 +27,6 @@ export type HealthSummary = {
   degradedNote: string | null;
 };
 
-// ─── metricTone ──────────────────────────────────────────────────────────────
-
-export type ToneResult = {
-  /** Semantic tone from the existing MetricTone type. */
-  tone: MetricTone;
-  /** Direction arrow glyph. */
-  arrow: "↗" | "↘" | "→";
-  /** Human-readable word. */
-  word: string;
-};
-
-/**
- * Derives a tone + arrow + word from a metric's current and previous values.
- *
- * - `previous === null` → baseline (no comparison available)
- * - values equal within epsilon → steady
- * - `betterDirection === "lower"` → lower current is good → arrow ↘ for good
- * - `betterDirection === "higher"` → higher current is good → arrow ↗ for good
- */
-export function metricTone(
-  current: number | null,
-  previous: number | null,
-  betterDirection: "lower" | "higher"
-): ToneResult {
-  if (previous === null || current === null) {
-    return { tone: "neutral", arrow: "→", word: "baseline" };
-  }
-
-  const EPSILON = 1e-9;
-  const diff = current - previous;
-
-  if (Math.abs(diff) < EPSILON) {
-    return { tone: "steady", arrow: "→", word: "stable" };
-  }
-
-  // For "lower is better": diff < 0 means improved.
-  // For "higher is better": diff > 0 means improved.
-  const improved = betterDirection === "lower" ? diff < 0 : diff > 0;
-
-  if (improved) {
-    return { tone: "good", arrow: "↘", word: "improving" };
-  }
-
-  return { tone: "bad", arrow: "↗", word: "worsening" };
-}
-
 // ─── healthSummary ────────────────────────────────────────────────────────────
 
 /**

@@ -370,7 +370,7 @@ a {
   font-weight: var(--weight-medium);
 }
 
-/* Live count badge — Workshops row only, when activeWorkshopCount > 0. */
+/* Live count badge — Workshops row only, when activeWorkshops > 0. */
 .nav-badge {
   background: var(--color-accent);
   border-radius: var(--radius-full);
