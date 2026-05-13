@@ -926,6 +926,217 @@ class TestModuleInterface:
 
 
 # ===========================================================================
+# Group 9: _link_rules() per-file filtering — new manifest-driven behavior
+# ===========================================================================
+
+
+def _make_plugin_cache(tmp_path: Path) -> Path:
+    """Build a minimal plugin cache with a rules/ directory. Returns the cache path."""
+    cache = tmp_path / "home" / ".claude" / "plugins" / "cache" / "bit-agora" / "i-am"
+    cache.mkdir(parents=True)
+    return cache
+
+
+def _seed_rules(rules_src: Path, files: dict[str, str]) -> None:
+    """Write rule files into rules_src. Keys are relative paths, values are content."""
+    for rel, content in files.items():
+        target = rules_src / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content)
+
+
+def _seed_manifest(rules_src: Path, hook_deliver_ids: list[str]) -> None:
+    """Write a synthetic _manifest.yaml into rules_src.
+
+    hook_deliver_ids is a list of IDs like 'swe/memory-protocol'; their path
+    field is derived as 'rules/<id>.md'.
+    """
+    entries = []
+    for rule_id in hook_deliver_ids:
+        entries.append(
+            f"- id: {rule_id}\n"
+            f"  path: rules/{rule_id}.md\n"
+            f"  install: hook-deliver\n"
+            f"  core: false\n"
+        )
+    symlink_ids = ["swe/agent-behavioral-contract"]
+    for rule_id in symlink_ids:
+        if rule_id not in hook_deliver_ids:
+            entries.append(
+                f"- id: {rule_id}\n"
+                f"  path: rules/{rule_id}.md\n"
+                f"  install: symlink\n"
+                f"  core: true\n"
+            )
+    manifest_content = "version: 1\nrules:\n" + "".join(entries)
+    (rules_src / "_manifest.yaml").write_text(manifest_content)
+
+
+class TestLinkRulesFiltering:
+    """Unit tests for _link_rules() per-file manifest-driven filtering."""
+
+    @pytest.fixture(autouse=True)
+    def _require_module(self):
+        """Skip all tests in this class if the module doesn't exist yet."""
+        if not _MODULE_PATH.exists():
+            pytest.skip("auto_complete_install.py not yet implemented")
+
+    def _get_link_rules(self):
+        """Return the _link_rules callable from the module."""
+        module = _load_module()
+        fn = getattr(module, "_link_rules", None)
+        assert fn is not None, "_link_rules must be defined in auto_complete_install.py"
+        return fn
+
+    def test_hook_deliver_rule_not_symlinked_when_manifest_present(self, tmp_path):
+        """With manifest marking a rule hook-deliver, that rule's symlink is NOT created."""
+        cache = _make_plugin_cache(tmp_path)
+        home = tmp_path / "home"
+        rules_src = cache / "rules"
+
+        _seed_rules(
+            rules_src,
+            {
+                "swe/agent-behavioral-contract.md": "# behavioral contract\n",
+                "swe/memory-protocol.md": "# memory protocol\n",
+            },
+        )
+        _seed_manifest(rules_src, hook_deliver_ids=["swe/memory-protocol"])
+
+        _link_rules = self._get_link_rules()
+        _link_rules(home)
+
+        rules_dest = home / ".claude" / "rules"
+        sentinel = rules_dest / "swe" / "agent-behavioral-contract.md"
+        memory_link = rules_dest / "swe" / "memory-protocol.md"
+
+        assert sentinel.is_symlink(), (
+            "Core rule swe/agent-behavioral-contract.md must always be symlinked"
+        )
+        assert not memory_link.exists(), (
+            "Hook-deliver rule swe/memory-protocol.md must NOT be symlinked"
+        )
+
+    def test_stale_hook_deliver_symlink_is_removed(self, tmp_path):
+        """Pre-existing symlink for a now-hook-deliver rule is removed on re-install."""
+        cache = _make_plugin_cache(tmp_path)
+        home = tmp_path / "home"
+        rules_src = cache / "rules"
+
+        _seed_rules(
+            rules_src,
+            {
+                "swe/agent-behavioral-contract.md": "# behavioral contract\n",
+                "swe/memory-protocol.md": "# memory protocol\n",
+            },
+        )
+        # Create a stale symlink as if a previous install had linked the file
+        stale_link = home / ".claude" / "rules" / "swe" / "memory-protocol.md"
+        stale_link.parent.mkdir(parents=True, exist_ok=True)
+        stale_link.symlink_to(rules_src / "swe" / "memory-protocol.md")
+        assert stale_link.is_symlink(), "Precondition: stale symlink must exist"
+
+        _seed_manifest(rules_src, hook_deliver_ids=["swe/memory-protocol"])
+
+        _link_rules = self._get_link_rules()
+        _link_rules(home)
+
+        assert not stale_link.exists(), (
+            "Stale symlink for hook-deliver rule must be removed on re-install"
+        )
+
+    def test_no_manifest_links_all_rules(self, tmp_path):
+        """Without manifest (legacy fallback), all .md rules are linked."""
+        cache = _make_plugin_cache(tmp_path)
+        home = tmp_path / "home"
+        rules_src = cache / "rules"
+
+        _seed_rules(
+            rules_src,
+            {
+                "swe/agent-behavioral-contract.md": "# behavioral contract\n",
+                "swe/memory-protocol.md": "# memory protocol\n",
+                "CLAUDE.md": "# CLAUDE\n",
+            },
+        )
+        # No _manifest.yaml written — fallback path
+
+        _link_rules = self._get_link_rules()
+        _link_rules(home)
+
+        rules_dest = home / ".claude" / "rules"
+        assert (rules_dest / "swe" / "agent-behavioral-contract.md").is_symlink(), (
+            "No-manifest fallback must link agent-behavioral-contract.md"
+        )
+        assert (rules_dest / "swe" / "memory-protocol.md").is_symlink(), (
+            "No-manifest fallback must link memory-protocol.md"
+        )
+        assert (rules_dest / "CLAUDE.md").is_symlink(), (
+            "No-manifest fallback must link root-level CLAUDE.md"
+        )
+
+    def test_readme_and_references_are_skipped(self, tmp_path):
+        """README.md files and */references/* paths are never symlinked."""
+        cache = _make_plugin_cache(tmp_path)
+        home = tmp_path / "home"
+        rules_src = cache / "rules"
+
+        _seed_rules(
+            rules_src,
+            {
+                "swe/agent-behavioral-contract.md": "# behavioral contract\n",
+                "README.md": "# README\n",
+                "swe/references/some-reference.md": "# reference\n",
+            },
+        )
+        # No manifest — fallback path (all non-skipped files linked)
+
+        _link_rules = self._get_link_rules()
+        _link_rules(home)
+
+        rules_dest = home / ".claude" / "rules"
+        assert not (rules_dest / "README.md").exists(), (
+            "README.md must never be symlinked"
+        )
+        assert not (rules_dest / "swe" / "references" / "some-reference.md").exists(), (
+            "Files under references/ must never be symlinked"
+        )
+        assert (rules_dest / "swe" / "agent-behavioral-contract.md").is_symlink(), (
+            "Regular rule files must still be symlinked"
+        )
+
+    def test_sentinel_path_always_linked(self, tmp_path):
+        """swe/agent-behavioral-contract.md is always symlinked (core rule, install: symlink)."""
+        cache = _make_plugin_cache(tmp_path)
+        home = tmp_path / "home"
+        rules_src = cache / "rules"
+
+        _seed_rules(
+            rules_src,
+            {
+                "swe/agent-behavioral-contract.md": "# behavioral contract\n",
+                "swe/memory-protocol.md": "# memory protocol\n",
+                "swe/agent-model-routing.md": "# agent model routing\n",
+            },
+        )
+        # All non-sentinel rules are hook-deliver; sentinel stays symlinked
+        _seed_manifest(
+            rules_src,
+            hook_deliver_ids=["swe/memory-protocol", "swe/agent-model-routing"],
+        )
+
+        _link_rules = self._get_link_rules()
+        _link_rules(home)
+
+        rules_dest = home / ".claude" / "rules"
+        sentinel = rules_dest / "swe" / "agent-behavioral-contract.md"
+        assert sentinel.is_symlink(), (
+            "swe/agent-behavioral-contract.md (sentinel path checked by auto_complete_install.py:115)"
+            " must always be symlinked regardless of manifest"
+        )
+
+
+# ===========================================================================
 # Helpers
 # ===========================================================================
 

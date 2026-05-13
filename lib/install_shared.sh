@@ -45,6 +45,28 @@ link_rules() {
 
     mkdir -p "$rules_target_dir"
 
+    # Build the set of rule paths to skip during symlinking.
+    # Rules with install: hook-deliver are NOT symlinked — they are injected
+    # at session start by hooks/inject_rules.py, which reads the same manifest
+    # and emits them as additionalContext. Symlinking them in addition would
+    # load them unconditionally and defeat the per-project blacklist mechanism.
+    local hook_deliver_paths=""
+    local manifest_file="${rules_source_dir}/_manifest.yaml"
+    if [ -f "$manifest_file" ]; then
+        hook_deliver_paths=$(python3 - "$manifest_file" <<'PYEOF' 2>/dev/null
+import yaml, sys
+try:
+    with open(sys.argv[1]) as f:
+        m = yaml.safe_load(f)
+    for r in m.get("rules", []):
+        if r.get("install") == "hook-deliver":
+            print(r["path"])
+except Exception as e:
+    sys.stderr.write(f"[link_rules] manifest parse failed: {e}; linking all rules\n")
+PYEOF
+        )
+    fi
+
     LINK_RULES_COUNT=0
     while IFS= read -r rule_file; do
         local rel_path="${rule_file#"$rules_source_dir"/}"
@@ -55,6 +77,13 @@ link_rules() {
         [[ "$(basename "$rule_file")" == "README.md" ]] && continue
         # Reference files are skill/rule support material, not rules themselves
         [[ "$rel_path" == */references/* ]] && continue
+        # Skip hook-deliver rules — delivered by inject_rules.py at session start
+        if [ -n "$hook_deliver_paths" ]; then
+            local rule_repo_path="rules/${rel_path}"
+            if echo "$hook_deliver_paths" | grep -qxF "$rule_repo_path"; then
+                continue
+            fi
+        fi
 
         [ "$rel_dir" != "." ] && mkdir -p "${rules_target_dir}/${rel_dir}"
         ln -sf "$rule_file" "${rules_target_dir}/${rel_path}"

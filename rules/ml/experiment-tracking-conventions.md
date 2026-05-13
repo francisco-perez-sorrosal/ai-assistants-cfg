@@ -1,8 +1,9 @@
 ---
 paths:
-  - "runs/**"
-  - "experiments/**"
-  - "program.md"
+- runs/**
+- experiments/**
+- program.md
+core: false
 ---
 
 ## Experiment Tracking Conventions

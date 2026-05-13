@@ -1,8 +1,9 @@
 ---
 paths:
-  - "**/ARCHITECTURE.md"
-  - "docs/architecture.md"
-  - "**/*.c4"
+- '**/ARCHITECTURE.md'
+- docs/architecture.md
+- '**/*.c4'
+core: false
 ---
 
 ## AaC Fence Convention

@@ -163,8 +163,65 @@ def _render_claude_md(home: Path, values: dict[str, str]) -> None:
     claude_md_link.symlink_to(rendered_path)
 
 
+def _load_hook_deliver_set(rules_src: Path) -> frozenset[Path] | None:
+    """Return the set of rule paths (relative to rules_src) with install: hook-deliver.
+
+    Reads rules/_manifest.yaml from the plugin cache.  Returns None when the manifest
+    is missing or unparseable, signalling the caller to fall back to linking all files.
+    """
+    import yaml  # stdlib pyyaml; available in all supported Pythons via Claude Code env
+
+    manifest_path = rules_src / "_manifest.yaml"
+    if not manifest_path.exists():
+        return None
+
+    try:
+        raw = manifest_path.read_text(encoding="utf-8")
+        data = yaml.safe_load(raw)
+        if not isinstance(data, dict) or "rules" not in data:
+            return None
+        hook_deliver: set[Path] = set()
+        for entry in data["rules"]:
+            if isinstance(entry, dict) and entry.get("install") == "hook-deliver":
+                rule_path = entry.get("path", "")
+                # path field is relative to repo root (e.g. "rules/swe/memory-protocol.md")
+                # Strip the leading "rules/" prefix to get path relative to rules_src
+                if rule_path.startswith("rules/"):
+                    hook_deliver.add(Path(rule_path[len("rules/") :]))
+        return frozenset(hook_deliver)
+    except Exception:
+        return None
+
+
+_SKIP_NAMES = frozenset({"README.md", "_manifest.yaml"})
+_REFERENCES_SEGMENT = "references"
+
+
+def _should_skip_rule(rel_path: Path) -> bool:
+    """Return True for files that should never be symlinked as rules.
+
+    Skips README.md, _manifest.yaml, and anything under a references/ directory.
+    Matches the filter applied by lib/install_shared.sh link_rules().
+    """
+    if rel_path.name in _SKIP_NAMES:
+        return True
+    return _REFERENCES_SEGMENT in rel_path.parts
+
+
 def _link_rules(home: Path) -> None:
-    """Symlink ~/.claude/rules/ entries from the plugin cache rules directory."""
+    """Symlink ~/.claude/rules/ entries from the plugin cache rules directory.
+
+    Switches from directory-level to per-file symlinking so that manifest-based
+    filtering (install: hook-deliver) can exclude individual rule files.
+    Rules with install: hook-deliver are delivered by inject_rules.py at session
+    start instead; symlinking them here would defeat the blacklist mechanism.
+
+    Fall-back: if the manifest is missing or unparseable, all .md files are
+    linked (preserves backward compatibility with pre-manifest installs).
+
+    Idempotency: stale symlinks that now map to hook-deliver files are removed
+    so a re-install cleans up entries from previous installs.
+    """
     plugin_cache = home / _PLUGIN_CACHE_SUBPATH
     rules_src = plugin_cache / "rules"
     rules_dest = home / ".claude" / "rules"
@@ -174,11 +231,28 @@ def _link_rules(home: Path) -> None:
 
     rules_dest.mkdir(parents=True, exist_ok=True)
 
-    for item in rules_src.iterdir():
-        dest_item = rules_dest / item.name
-        if dest_item.is_symlink():
-            dest_item.unlink()
-        dest_item.symlink_to(item)
+    hook_deliver = _load_hook_deliver_set(rules_src)
+    # None means manifest missing/unparseable → link everything (backward compat)
+    manifest_available = hook_deliver is not None
+
+    for rule_file in sorted(rules_src.rglob("*.md")):
+        rel = rule_file.relative_to(rules_src)
+        if _should_skip_rule(rel):
+            continue
+
+        dest_file = rules_dest / rel
+        dest_file.parent.mkdir(parents=True, exist_ok=True)
+
+        if manifest_available and rel in hook_deliver:
+            # This file is now hook-delivered — remove any stale symlink from
+            # a previous install that linked it directly
+            if dest_file.is_symlink():
+                dest_file.unlink()
+            continue
+
+        if dest_file.is_symlink():
+            dest_file.unlink()
+        dest_file.symlink_to(rule_file)
 
 
 def _link_scripts(home: Path) -> None:

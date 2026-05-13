@@ -1,10 +1,11 @@
 ---
 paths:
-  - ".github/**/*.md"
-  - "commands/*pr*.md"
-  - "commands/*merge*.md"
-  - "commands/release.md"
-  - "rules/swe/vcs/git-conventions.md"
+- .github/**/*.md
+- commands/*pr*.md
+- commands/*merge*.md
+- commands/release.md
+- rules/swe/vcs/git-conventions.md
+core: false
 ---
 
 ## PR Conventions

@@ -1,7 +1,8 @@
 ---
 paths:
-  - "**/README.md"
-  - "**/README_DEV.md"
+- '**/README.md'
+- '**/README_DEV.md'
+core: false
 ---
 
 ## README Writing Style

@@ -1,9 +1,10 @@
 ---
 paths:
-  - "dashboard_app/**"
-  - "**/doc_manifest.yaml"
-  - "dashboard_app/**/*.ts"
-  - "dashboard_app/**/*.tsx"
+- dashboard_app/**
+- '**/doc_manifest.yaml'
+- dashboard_app/**/*.ts
+- dashboard_app/**/*.tsx
+core: false
 ---
 
 ## HTML Output Conventions

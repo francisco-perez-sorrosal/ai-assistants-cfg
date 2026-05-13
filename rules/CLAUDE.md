@@ -1,3 +1,9 @@
+---
+core: true
+load: always_on
+install: symlink
+---
+
 # Rules
 
 Contextual domain knowledge files loaded automatically based on relevance. Rules encode constraints and conventions — they are declarative, not procedural.

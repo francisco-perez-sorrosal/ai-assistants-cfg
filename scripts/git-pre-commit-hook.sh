@@ -158,4 +158,41 @@ EOF
     fi
 fi
 
+# ---------------------------------------------------------------------------
+# Block E: Rules manifest drift
+# ---------------------------------------------------------------------------
+
+# Trigger when rules/_manifest.yaml or any rules/**/*.md is staged.
+# Catches cases where a rule's frontmatter was edited (e.g., core: or
+# install: changed) without regenerating the manifest, or where the manifest
+# was edited by hand instead of via the generator.
+# Fix: python3 scripts/regenerate_rules_manifest.py
+STAGED_RULES="$(git diff --cached --name-only --diff-filter=ACMR \
+    | grep -E '^rules/(_manifest\.yaml|.*\.md)$' \
+    || true)"
+
+if [ -n "$STAGED_RULES" ]; then
+    MANIFEST_SCRIPT="$REPO_ROOT/scripts/regenerate_rules_manifest.py"
+    if [ ! -f "$MANIFEST_SCRIPT" ]; then
+        echo "info: regenerate_rules_manifest.py not found — skipping Block E manifest-drift gate"
+    else
+        if ! python3 "$MANIFEST_SCRIPT" --check; then
+            cat >&2 <<'EOF'
+
+error: rules manifest drift detected.
+
+  rules/_manifest.yaml is out of sync with the current rule frontmatter.
+  The manifest is auto-generated — never edit it by hand.
+
+  To fix:
+    1. Run: python3 scripts/regenerate_rules_manifest.py
+    2. Re-stage rules/_manifest.yaml and re-commit
+
+  Bypass (risky): git commit --no-verify
+EOF
+            exit 1
+        fi
+    fi
+fi
+
 exit 0

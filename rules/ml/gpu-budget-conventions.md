@@ -1,15 +1,16 @@
 ---
 paths:
-  - "program.md"
-  - "runs/**"
-  - "experiments/**"
-  - "train.py"
-  - "prepare.py"
-  - "neo_cloud_backend.yaml"
-  - ".ai-state/gpu_budget.yaml"
-  - ".ai-work/**/SYSTEMS_PLAN.md"
-  - ".ai-work/**/WIP.md"
-  - ".ai-work/**/IMPLEMENTATION_PLAN.md"
+- program.md
+- runs/**
+- experiments/**
+- train.py
+- prepare.py
+- neo_cloud_backend.yaml
+- .ai-state/gpu_budget.yaml
+- .ai-work/**/SYSTEMS_PLAN.md
+- .ai-work/**/WIP.md
+- .ai-work/**/IMPLEMENTATION_PLAN.md
+core: false
 ---
 
 ## GPU Budget Conventions

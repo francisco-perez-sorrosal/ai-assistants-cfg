@@ -1,3 +1,9 @@
+---
+core: true
+load: always_on
+install: symlink
+---
+
 ## Agent Intermediate Documents
 
 Agent documents live in two locations based on their lifecycle:

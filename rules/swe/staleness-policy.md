@@ -1,6 +1,7 @@
 ---
 paths:
-  - "skills/**/SKILL.md"
+- skills/**/SKILL.md
+core: false
 ---
 
 ## Staleness Policy

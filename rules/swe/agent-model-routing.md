@@ -1,6 +1,9 @@
 ---
 codex:
   portability: claude_only
+core: false
+load: always_on
+install: hook-deliver
 ---
 
 ## Agent Model Routing

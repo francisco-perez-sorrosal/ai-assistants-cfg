@@ -1,15 +1,16 @@
 ---
 paths:
-  - "tests/**"
-  - "test_*"
-  - "*_test.*"
-  - "*_spec.*"
-  - "**/*_test.py"
-  - "**/test_*.py"
-  - "**/*.test.ts"
-  - "**/*.test.js"
-  - "**/*.spec.ts"
-  - "**/*.spec.js"
+- tests/**
+- test_*
+- '*_test.*'
+- '*_spec.*'
+- '**/*_test.py'
+- '**/test_*.py'
+- '**/*.test.ts'
+- '**/*.test.js'
+- '**/*.spec.ts'
+- '**/*.spec.js'
+core: false
 ---
 
 ## Testing Conventions

@@ -1,14 +1,15 @@
 ---
 paths:
-  - "program.md"
-  - "runs/**"
-  - "experiments/**"
-  - "train.py"
-  - "prepare.py"
-  - "TRAINING_RESULTS.md"
-  - ".ai-work/**/SYSTEMS_PLAN.md"
-  - ".ai-work/**/WIP.md"
-  - ".ai-work/**/VERIFICATION_REPORT.md"
+- program.md
+- runs/**
+- experiments/**
+- train.py
+- prepare.py
+- TRAINING_RESULTS.md
+- .ai-work/**/SYSTEMS_PLAN.md
+- .ai-work/**/WIP.md
+- .ai-work/**/VERIFICATION_REPORT.md
+core: false
 ---
 
 ## Eval-Driven Verification

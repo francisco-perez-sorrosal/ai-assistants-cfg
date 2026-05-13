@@ -1,3 +1,9 @@
+---
+core: true
+load: always_on
+install: symlink
+---
+
 ## SWE Agent Coordination Protocol
 
 Conventions for when and how to use the available software agents -- autonomous subprocesses that run in separate context windows.

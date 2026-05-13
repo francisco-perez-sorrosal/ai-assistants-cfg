@@ -1,10 +1,11 @@
 ---
 paths:
-  - rules/**
-  - skills/**
-  - agents/**
-  - commands/**
-  - claude/config/**
+- rules/**
+- skills/**
+- agents/**
+- commands/**
+- claude/config/**
+core: false
 ---
 
 ## Shipped Artifact Isolation

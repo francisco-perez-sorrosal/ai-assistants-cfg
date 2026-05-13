@@ -1,3 +1,8 @@
+---
+core: false
+load: always_on
+install: hook-deliver
+---
 ## Git Conventions
 
 See also: [`pr-conventions.md`](pr-conventions.md) for PR workflow, merge policy, and the `.ai-state/` safety contract at PR time (path-scoped; loads when editing PR-adjacent surfaces).
