@@ -1,0 +1,390 @@
+.grid-two,
+.grid-three,
+.metrics-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.grid-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.artifact-card,
+.metric-card,
+.section-card,
+.empty-state {
+  padding: var(--space-5);
+}
+
+.artifact-card h3,
+.section-card h3,
+.empty-state h2,
+.metric-card h3 {
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  margin: 0 0 0.75rem;
+}
+
+.artifact-meta {
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+
+.markdown-surface {
+  color: var(--text);
+  line-height: var(--leading-body);
+}
+
+.markdown-surface h1,
+.markdown-surface h2,
+.markdown-surface h3 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  margin-top: 1.4rem;
+}
+
+/* Heading anchor links — visually hidden until the parent heading is hovered
+   or the anchor itself receives focus. Keyboard-reachable. */
+.heading-anchor {
+  color: var(--color-text-faint);
+  margin-left: 0.4ch;
+  opacity: 0;
+  text-decoration: none;
+}
+
+.markdown-surface h1:hover .heading-anchor,
+.markdown-surface h2:hover .heading-anchor,
+.markdown-surface h3:hover .heading-anchor,
+.heading-anchor:focus-visible {
+  opacity: 1;
+}
+
+.markdown-surface pre,
+.code-block {
+  background: var(--color-overlay-dark);
+  border-radius: var(--radius-md);
+  color: var(--color-overlay-dark-text);
+  font-family: var(--font-mono), monospace;
+  overflow-x: auto;
+  padding: var(--space-4);
+}
+
+.markdown-surface table,
+.table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.markdown-surface th,
+.markdown-surface td,
+.table th,
+.table td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.7rem 0.55rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-surface code {
+  font-family: var(--font-mono), monospace;
+}
+
+.svg-frame {
+  background: var(--color-surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-height: 16rem;
+  overflow: auto;
+  padding: var(--space-3);
+}
+
+.status-list,
+.surface-list,
+.event-list,
+.artifact-list {
+  display: grid;
+  gap: 0.55rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.status-row,
+.surface-row,
+.event-row {
+  background: var(--color-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem var(--space-4);
+}
+
+.status-row strong,
+.surface-row strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.metric-card .metric-value {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  margin: 0.25rem 0 0.45rem;
+}
+
+.pill-note {
+  background: var(--color-surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  font-size: var(--text-sm);
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.danger-note {
+  color: var(--danger);
+}
+
+details summary {
+  cursor: pointer;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+}
+
+.metrics-page {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.metrics-toolbar,
+.metrics-subsection {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.metrics-toolbar__control {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.metrics-toolbar__control span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.metrics-toolbar select {
+  appearance: none;
+  background: var(--color-surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font: inherit;
+  padding: 0.8rem var(--space-4);
+}
+
+.metrics-summary-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.metric-summary-card {
+  background: var(--color-surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  display: grid;
+  gap: 0.7rem;
+  padding: 1.1rem;
+  position: relative;
+}
+
+.metric-summary-card::before {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  content: "";
+  height: 0.35rem;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.metric-summary-card.accent-size::before {
+  background: var(--info);
+}
+
+.metric-summary-card.accent-activity::before {
+  background: var(--warning);
+}
+
+.metric-summary-card.accent-quality::before {
+  background: var(--accent);
+}
+
+.metric-summary-card.accent-risk::before {
+  background: var(--danger);
+}
+
+.metric-summary-card__header {
+  align-items: start;
+  display: flex;
+  gap: 0.8rem;
+  justify-content: space-between;
+}
+
+.metric-summary-card__header div {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.metric-summary-card__header p {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.metric-summary-card__tone {
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  white-space: nowrap;
+}
+
+.metric-summary-card__tone--good {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.metric-summary-card__tone--bad {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.metric-summary-card__tone--steady {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.metric-summary-card__tone--neutral {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.metric-summary-card__value {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+
+.metric-summary-card__footer {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.metrics-subsection__heading,
+.metric-trend-card__header {
+  align-items: start;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.metric-trend-card__header h3,
+.metrics-subsection__heading h3 {
+  margin-bottom: 0.35rem;
+}
+
+.metric-trend-card {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.metric-trend-card__hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: flex-end;
+}
+
+.trend-chart {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.trend-chart svg {
+  background: var(--color-surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  width: 100%;
+}
+
+.trend-chart__grid {
+  stroke: var(--color-border);
+  stroke-dasharray: 4 8;
+}
+
+.trend-chart__axis {
+  fill: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+}
+
+.trend-chart__point {
+  stroke: var(--color-surface-1);
+  stroke-width: 2px;
+}
+
+.trend-chart__point.is-current {
+  stroke: var(--text);
+  stroke-width: 2.5px;
+}
+
+.trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 0.9rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trend-legend__item {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.trend-legend__swatch {
+  border-radius: var(--radius-full);
+  display: inline-block;
+  height: 0.75rem;
+  width: 0.75rem;
+}
+

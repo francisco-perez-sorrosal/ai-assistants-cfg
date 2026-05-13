@@ -1,0 +1,712 @@
+/* ─── Chrome: Chip ─────────────────────────────────────────────────────────── */
+.chip {
+  background: var(--color-accent-subtle);
+  border-radius: var(--radius-full);
+  color: var(--color-accent);
+  display: inline-flex;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  padding: var(--space-1) var(--space-2);
+}
+
+.chip--default,
+.chip--neutral {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.chip--status-accepted {
+  background: var(--color-success-subtle);
+  color: var(--status-accepted);
+}
+
+.chip--status-superseded {
+  background: var(--color-surface-2);
+  color: var(--status-superseded);
+}
+
+.chip--status-proposed {
+  background: var(--color-warn-subtle);
+  color: var(--status-proposed);
+}
+
+.chip--status-reaffirmation {
+  background: var(--color-accent-subtle);
+  color: var(--status-reaffirmation);
+}
+
+.chip--grade-a {
+  background: var(--color-success-subtle);
+  color: var(--grade-a);
+}
+
+.chip--grade-b {
+  background: var(--color-info-subtle);
+  color: var(--grade-b);
+}
+
+.chip--grade-c {
+  background: var(--color-warn-subtle);
+  color: var(--grade-c);
+}
+
+.chip--grade-d {
+  background: var(--color-danger-subtle);
+  color: var(--grade-d);
+}
+
+/* ─── Chrome: Tabs ─────────────────────────────────────────────────────────── */
+.tabs {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.tabs__list {
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.tabs__tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: var(--space-2) var(--space-3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tabs__tab {
+    transition:
+      color var(--duration-micro) var(--ease-out),
+      border-color var(--duration-micro) var(--ease-out);
+  }
+}
+
+.tabs__tab:hover,
+.tabs__tab:focus-visible {
+  color: var(--color-text);
+}
+
+.tabs__tab.is-active {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.tabs__panel {
+  outline: none;
+}
+
+.tabs__panel[hidden] {
+  display: none;
+}
+
+/* ─── Chrome: ErrorState ───────────────────────────────────────────────────── */
+.error-state {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  justify-content: center;
+  padding: var(--space-8);
+  text-align: center;
+}
+
+/* Page variant: fills viewport (full-page error boundary). */
+.error-state--page {
+  min-height: 100vh;
+}
+
+/* Inline variant: compact, no viewport fill; fits inside a card or section. */
+.error-state--inline {
+  min-height: unset;
+  padding: var(--space-4) var(--space-5);
+}
+
+.error-page {
+  min-height: 100vh;
+}
+
+.error-state__title {
+  margin: 0;
+}
+
+.error-state__message {
+  color: var(--color-text-muted);
+  margin: 0;
+  max-width: 40rem;
+}
+
+.error-state__hint {
+  background: var(--color-danger-subtle);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-sm);
+  margin: 0;
+  max-width: 40rem;
+  padding: var(--space-3) var(--space-4);
+}
+
+.error-state__retry {
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-on-accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  padding: var(--space-2) var(--space-5);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .error-state__retry {
+    transition: opacity var(--duration-micro) var(--ease-out);
+  }
+}
+
+.error-state__retry:hover {
+  opacity: 0.85;
+}
+
+/* ─── EducationalPopover ───────────────────────────────────────────────────── */
+/* Open state is driven by React state (not CSS :hover/:focus-within) so that
+   Escape-to-dismiss, focus-open, and aria-expanded all work correctly. */
+.educational-popover {
+  display: inline-flex;
+  position: relative;
+}
+
+.educational-popover__trigger {
+  /* Button reset — appearance is our own; browser defaults removed. */
+  align-items: center;
+  background: var(--color-surface-3);
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--color-text-faint);
+  cursor: help;
+  display: inline-flex;
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  /* WCAG 2.2 AA: touch target ≥ 24×24 CSS px. */
+  justify-content: center;
+  min-height: 24px;
+  min-width: 24px;
+  padding: 0;
+  user-select: none;
+}
+
+.educational-popover__panel {
+  background: var(--color-overlay-dark);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
+  color: var(--color-overlay-dark-text);
+  display: grid;
+  gap: var(--space-2);
+  left: 50%;
+  max-width: 18rem;
+  padding: var(--space-3) var(--space-4);
+  /* pointer-events: auto — the link inside must be reachable. */
+  pointer-events: auto;
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  transform: translateX(-50%);
+  z-index: var(--z-popover);
+}
+
+/* Hidden via the `hidden` HTML attribute; transition applies only when visible. */
+.educational-popover__panel[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .educational-popover__panel {
+    animation: popover-enter var(--duration-micro) var(--ease-out) both;
+  }
+
+  @keyframes popover-enter {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(var(--space-2));
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+}
+
+.educational-popover__title {
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.educational-popover__body {
+  color: var(--color-overlay-dark-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.educational-popover__link {
+  color: var(--color-accent-border);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ─── ArtifactCard collapsible ─────────────────────────────────────────────── */
+.artifact-card--collapsible details {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.artifact-card__summary {
+  cursor: pointer;
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.artifact-card__summary::-webkit-details-marker {
+  display: none;
+}
+
+.artifact-card__title {
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+
+.artifact-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.artifact-card__body {
+  color: var(--color-text);
+  line-height: var(--leading-body);
+}
+
+.artifact-card__footer {
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  padding-top: var(--space-3);
+}
+
+/* ─── MetadataChips ────────────────────────────────────────────────────────── */
+.metadata-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  overflow-wrap: anywhere;
+}
+
+.metadata-chips__summary {
+  color: var(--color-text-muted);
+  flex-basis: 100%;
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+/* ─── EmptyState producer hint ─────────────────────────────────────────────── */
+.empty-state__producer {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.empty-state__producer-path {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-xs);
+}
+
+.status-row--collector {
+  align-items: center;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.status-row--collector div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.collector-status {
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  text-transform: lowercase;
+}
+
+.collector-status--available {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.collector-status--unavailable,
+.collector-status--error,
+.collector-status--timeout {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.collector-status--not_applicable {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.collector-status--unknown {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.metrics-raw {
+  background: var(--color-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) 1.1rem;
+}
+
+.metrics-raw > summary {
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  padding: 0;
+}
+
+.metrics-raw__body {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.metrics-raw__section-heading {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}
+
+.metrics-raw__note {
+  font-style: italic;
+}
+
+/* ─── KPI tiles (replace metric-summary-card) ───────────────────────────────── */
+
+.kpi-tile {
+  background: var(--color-surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  position: relative;
+  /* 2px tone-colored top accent */
+  border-top: 2px solid var(--kpi-accent-color, var(--color-border));
+}
+
+.kpi-tile__header {
+  align-items: start;
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.kpi-tile__label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.kpi-tile__tone {
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  padding: 0.15rem 0.45rem;
+  white-space: nowrap;
+}
+
+.kpi-tile__tone--good {
+  background: var(--color-success-subtle);
+  color: var(--color-success-text);
+}
+
+.kpi-tile__tone--bad {
+  background: var(--color-danger-subtle);
+  color: var(--color-danger-text);
+}
+
+.kpi-tile__tone--steady {
+  background: var(--color-warn-subtle);
+  color: var(--color-warn-text);
+}
+
+.kpi-tile__tone--neutral {
+  background: var(--color-info-subtle);
+  color: var(--color-info-text);
+}
+
+.kpi-tile__value {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+
+.kpi-tile__sparkline {
+  /* Compact sparkline slot — no extra margin */
+  margin: 0;
+  overflow: hidden;
+}
+
+.kpi-tile__footer {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ─── Metrics health strip ───────────────────────────────────────────────────── */
+
+.metrics-health-strip {
+  background: var(--color-surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+}
+
+.health-strip__headline {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.health-strip__label {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.health-strip__degraded-note {
+  color: var(--color-warn-text);
+  font-size: var(--text-sm);
+}
+
+.health-strip__arrows {
+  color: var(--color-text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--text-sm);
+  gap: var(--space-1) var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.health-strip__arrow--good { color: var(--color-success-text); }
+.health-strip__arrow--bad  { color: var(--color-danger-text); }
+.health-strip__arrow--steady { color: var(--color-warn-text); }
+.health-strip__arrow--neutral { color: var(--color-text-muted); }
+
+.health-strip__controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.health-strip__selector {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.health-strip__selector-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+.health-strip__selector select {
+  appearance: none;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-3);
+}
+
+.health-strip__compare-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  font: inherit;
+  font-size: var(--text-sm);
+  opacity: 0.5;
+  padding: var(--space-1) var(--space-3);
+}
+
+.health-strip__compare-btn:not(:disabled) {
+  cursor: pointer;
+  opacity: 1;
+}
+
+.health-strip__pending {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* ─── Hotspot score sparkbar ─────────────────────────────────────────────────── */
+
+.hotspot-score-bar {
+  display: inline-block;
+  position: relative;
+  /* Add subtle bar background proportional to score */
+}
+
+.hotspot-score-bar::after {
+  background: var(--color-danger-subtle);
+  bottom: -1px;
+  content: "";
+  left: 0;
+  position: absolute;
+  top: -1px;
+  width: var(--hotspot-score-pct, 0%);
+  z-index: -1;
+}
+
+/* ─── Show-all button ────────────────────────────────────────────────────────── */
+
+.hotspot-show-all-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hotspot-show-all-btn {
+    transition: background var(--duration-micro) var(--ease-out);
+  }
+  .hotspot-show-all-btn:hover {
+    background: var(--color-accent-subtle);
+  }
+}
+
+/* ─── Collector chips ────────────────────────────────────────────────────────── */
+
+.collector-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.collector-chip {
+  align-items: center;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  font-size: var(--text-xs);
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+}
+
+.collector-chip--degraded {
+  background: var(--color-danger-subtle);
+  border-color: var(--color-danger-border);
+  color: var(--color-danger-text);
+}
+
+.collector-chip__icon {
+  font-size: var(--text-xs);
+}
+
+.collector-chip__name {
+  font-weight: var(--weight-semibold);
+}
+
+.collector-chip__detail {
+  color: var(--color-text-muted);
+}
+
+.collector-chip--degraded .collector-chip__detail {
+  color: var(--color-danger-text);
+}
+
+/* ─── Trend chart — Tufte cleanup ────────────────────────────────────────────── */
+
+/* Remove the svg border/background that was adding chartjunk */
+.trend-chart svg {
+  background: none;
+  border: none;
+}
+
+/* Keep the tooltip styles */
+.trend-chart__tooltip {
+  background: var(--color-overlay-dark);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-popover);
+  color: var(--color-overlay-dark-text);
+  font-size: var(--text-xs);
+  padding: var(--space-2) var(--space-3);
+}
+
+.trend-chart__tooltip-label {
+  color: var(--color-overlay-dark-muted);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-1);
+}
+
+.trend-chart__tooltip-entry {
+  margin: 0;
+}
+
+.trend-chart__tooltip-name {
+  opacity: 0.85;
+}
+
+.trend-chart__tooltip-value {
+  font-weight: var(--weight-semibold);
+}
+
+/* ─── Metrics collectors section ─────────────────────────────────────────────── */
+
+.metrics-collectors {
+  display: grid;
+  gap: var(--space-3);
+}
