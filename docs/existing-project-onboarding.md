@@ -56,7 +56,7 @@ If `AskUserQuestion` is unavailable (headless invocation, tool error), the gates
 | 3 | **`.gitattributes` + merge drivers** — append entries; register Python merge drivers via `git config` | `.gitattributes`, `.git/config` | yes (line + git config check) |
 | 4 | **Git hooks** — install pre-commit (id-citation discipline) + post-merge (ADR finalize, tech-debt dedupe, squash-safety) | `.git/hooks/pre-commit`, `.git/hooks/post-merge` | yes (symlink target check) |
 | 5 | **`.claude/settings.json` toggles** — multi-select: enable memory MCP injection, memory gate, memory MCP, observability | `.claude/settings.json` | yes (key presence check) |
-| 6 | **`CLAUDE.md` blocks** — idempotently append Agent Pipeline + Compaction Guidance + Behavioral Contract | `CLAUDE.md` | yes (per-block heading detection) |
+| 6 | **`CLAUDE.md` blocks** — idempotently append Agent Pipeline + Compaction Guidance + Behavioral Contract + Praxion Process + Working in this project | `CLAUDE.md` | yes (per-block heading detection) |
 | 7 | **Companion CLIs** — print install commands for `chub`, `scc`, `uv` if missing and stack-relevant | none (advisory) | yes (always advisory) |
 | **8** | **Architecture baseline (opt-in, default-yes)** — delegate to `systems-architect` in baseline mode → produces `.ai-state/DESIGN.md` + `docs/architecture.md` (+ optional ADR draft) | `.ai-state/DESIGN.md`, `docs/architecture.md` | yes (skip if either doc exists OR user picks Skip at Gate 8) |
 | **8b** | **AaC tier install (opt-in, default-skip)** — fence-region examples in architecture docs, `fitness/` scaffold, golden-rule pre-commit block, `architecture.yml` CI workflow, `docs/diagrams/` stub | architecture docs (fence regions), `fitness/`, `.git/hooks/pre-commit` (block), `.github/workflows/architecture.yml`, `docs/diagrams/` | yes (per-sub-step predicates; user picks `Skip AaC` by default) |
@@ -164,13 +164,17 @@ If `.claude/settings.json` already has other top-level keys (`permissions`, `mod
 
 ### Phase 6 — `CLAUDE.md` blocks
 
-Three independent appends, each guarded by heading detection:
+Five independent appends, each guarded by heading detection:
 
 - `## Agent Pipeline` — describes the 5-stage pipeline (researcher → systems-architect → implementation-planner → implementer + test-engineer → verifier), independent audits via `sentinel`, and the PoC-to-production journey. Self-contained — no cross-references to Praxion-internal docs that don't exist in your project.
 - `## Compaction Guidance` — what to preserve when the conversation compacts (active task slug, current WIP step, acceptance criteria, modified files).
 - `## Behavioral Contract` — Surface Assumptions / Register Objection / Stay Surgical / Simplicity First.
+- `## Praxion Process` — apply the tier-driven pipeline for non-trivial work; carry the behavioral contract into every delegation prompt; the orchestrator names the task slug + deliverables + contract on each delegation.
+- `## Working in this project` — your verification command sequence (typecheck → test → lint → build), your 3–5 most frequent operations, and the "when corrected, propose a durable rule" habit. Phase 6 fills the project-specific placeholders from your config (`pyproject.toml`, `package.json`, the test gate, the README); a value it can't determine is left as a `# TODO:` for you.
 
 If `CLAUDE.md` doesn't exist, the command instructs you to run `/init` first (which analyzes your codebase and produces a tailored `CLAUDE.md`), then re-run `/onboard-project` to append the blocks. The command never authors `CLAUDE.md` itself — `/init` is better at that.
+
+**Keep `CLAUDE.md` lean.** The official guideline is **under 200 lines per `CLAUDE.md` file** — longer files consume more context and reduce adherence (`CLAUDE.md` is delivered as context, not enforced config). A project `CLAUDE.md` past ~150 lines is a smell: relocate detail to path-scoped rules (`.claude/rules/*.md` with `paths:` frontmatter) or skills, and keep the top-level file an *index* that points at them. For calibration — e.g., HumanLayer's published `CLAUDE.md` runs ~57 lines; well-tuned team files land around 80–100; ones past ~200 tend to bloat. The five Praxion blocks above add roughly 40 lines combined, so budget the rest of your file accordingly.
 
 ### Phase 7 — Companion CLIs (advisory)
 

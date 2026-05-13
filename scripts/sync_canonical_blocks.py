@@ -91,6 +91,7 @@ BLOCKS: dict[str, BlockSpec] = {
     "compaction-guidance": BlockSpec(consumers=_ONBOARDING_PAIR),
     "behavioral-contract": BlockSpec(consumers=_ONBOARDING_PAIR),
     "praxion-process": BlockSpec(consumers=_ONBOARDING_PAIR),
+    "project-essentials": BlockSpec(consumers=_ONBOARDING_PAIR),
     "commit-process": BlockSpec(
         consumers=_COMMIT_PAIR,
         fence_opener=COMMENT_FENCE_OPENER,

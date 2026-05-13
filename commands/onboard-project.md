@@ -25,7 +25,8 @@ Onboard the **current existing** project to work cleanly with the Praxion plugin
 16. §Compaction Guidance Block
 17. §Behavioral Contract Block
 18. §Praxion Process Block
-19. §Idempotency Predicates — per-phase contracts
+19. §Project Essentials Block
+20. §Idempotency Predicates — per-phase contracts
 
 ## §Pre-flight
 
@@ -117,7 +118,7 @@ The default §Flow runs end-to-end without pause. To let users *learn* the model
 | 3 | 3 | `Phase 3 of 9: I add merge-driver entries to .gitattributes and run 'git config' to register Python-based semantic merge drivers for .ai-state/memory.json and .ai-state/observations.jsonl. Without these, concurrent edits get corrupted by line-based merge. Continue?` |
 | 4 | 4 | `Phase 4 of 9: I install four git hooks — pre-commit (id-citation discipline) and three finalize hooks (post-merge, post-commit, post-checkout) all sharing one multiplexed dispatcher. The trio guarantees that draft ADRs landing on main via any path — ff merge, direct commit, rebase, fresh clone, branch reset — eventually promote to stable dec-NNN. Symlinks resolve to the plugin scripts so updates flow automatically. Continue?` |
 | 5 | 5 | (Multi-select on PRAXION_DISABLE_* toggles — see §Phase 5 for option text) |
-| 6 | 6 | `Phase 6 of 9: I append four blocks to CLAUDE.md — the Agent Pipeline (how to use Praxion's subagents), Compaction Guidance (what to preserve when the conversation compacts), Behavioral Contract reminder, and Praxion Process (the tier-driven pipeline principle + rule-inheritance obligation). Each block is idempotent via heading detection. Continue?` |
+| 6 | 6 | `Phase 6 of 9: I append five blocks to CLAUDE.md — the Agent Pipeline (how to use Praxion's subagents), Compaction Guidance (what to preserve when the conversation compacts), Behavioral Contract reminder, Praxion Process (the tier-driven pipeline principle + rule-inheritance obligation), and Working in this project (your verification commands + frequent operations + how corrections become durable rules — I fill the project-specific bits from your config). Each block is idempotent via heading detection. Continue?` |
 | 7 | 7 | `Phase 7 of 9: I check whether chub (external API docs), scc (SLOC counter), and uv (Python tooling) are installed. I won't install anything — I'll print one-line install commands you can run later if useful. Continue?` |
 | 8 | 8 | (Three-option pick — see §Phase 8 for the exact AskUserQuestion form. Default is `Run baseline now`. Headline: `Phase 8 of 9: Architecture baseline. I delegate to systems-architect in baseline mode to read your codebase and produce .ai-state/DESIGN.md (architect-facing, design-target) + docs/architecture.md (developer-facing, navigation guide). These docs become the architectural anchor for every future feature pipeline. Takes ~5–15 minutes for a medium project. Skip if you'd rather wait for your first feature pipeline to produce them. Pick:`) |
 | 8b | 8b | (Three-option pick — see §Phase 8b for the exact AskUserQuestion form. Default is `Skip AaC`. Headline: `Phase 8b: AaC tier install. I can install the Architecture-as-Code surfaces for this project: fence-region examples in your architecture docs, fitness/ scaffold for architectural fitness tests, a golden-rule pre-commit block, a .github/workflows/architecture.yml CI workflow, and a docs/diagrams/ directory stub. All five installs are idempotent — re-running is safe. The AaC convention requires the i-am plugin to be installed for enforcement to fire. Sentinel-only surfaces (traceability convention, sentinel AC dimension) need no per-project install. Pick:`) |
@@ -323,12 +324,13 @@ If `.claude/settings.json` already exists with other keys (e.g., `permissions`, 
 
 ## §Phase 6 — `CLAUDE.md` Praxion blocks
 
-**Predicate.** Four independent heading checks:
+**Predicate.** Five independent heading checks:
 
 - `## Agent Pipeline` heading present → skip the Agent Pipeline append
 - `## Compaction Guidance` heading present → skip the Compaction Guidance append
 - `## Behavioral Contract` heading present → skip the Behavioral Contract append
 - `## Praxion Process` heading present → skip the Praxion Process append
+- `## Working in this project` heading present → skip the Project Essentials append
 
 **Action.**
 
@@ -339,8 +341,15 @@ If `.claude/settings.json` already exists with other keys (e.g., `permissions`, 
    - The §Compaction Guidance Block verbatim
    - The §Behavioral Contract Block verbatim
    - The §Praxion Process Block verbatim
+   - The §Project Essentials Block verbatim
 
    Append at the end of the file with one blank line separating from preceding content.
+
+3. **Fill the §Project Essentials Block placeholders** (skip this step whenever step 2's predicate skipped the Project Essentials append — the block is already present and presumably already filled). Inspect the project's config (`pyproject.toml`, `package.json`, `Cargo.toml`, `go.mod`, `Makefile`, CI workflows, the README) and:
+   - replace `<typecheck command>` / `<test command>` / `<lint command>` / `<build command>` with the project's actual commands — omit a numbered step (and renumber) when the project has no such command; never invent one;
+   - replace `<list 3–5 of this project's most common task intents>` with a ≤5-bullet list of what an agent is most often asked to do here, derived from the codebase shape and the README.
+
+   If a value is genuinely undeterminable, leave the placeholder with an inline `# TODO:` note so the user fills it.
 
 ## §Phase 7 — Companion CLIs (advisory)
 
@@ -693,7 +702,7 @@ Phase 9 verification handoff lists every staged file across all phases — Phase
      Phase 3: .gitattributes (appended 2 lines), git config (2 merge drivers registered)
      Phase 4: .git/hooks/pre-commit (new), .git/hooks/{post-merge,post-commit,post-checkout} (symlinks)
      Phase 5: .claude/settings.json (4 PRAXION_DISABLE_* env vars)
-     Phase 6: CLAUDE.md (appended Agent Pipeline + Compaction + Behavioral Contract + Praxion Process blocks)
+     Phase 6: CLAUDE.md (appended Agent Pipeline + Compaction + Behavioral Contract + Praxion Process + Working-in-this-project blocks)
      Phase 7: companion CLIs — chub missing (install: ...), scc missing (install: ...)
      Phase 8: architecture baseline produced — .ai-state/DESIGN.md + docs/architecture.md (+ N ADR draft(s))
      Phase 8b: AaC tier — fence seed, fitness/, Block D, architecture.yml, docs/diagrams/ (or skipped per sub-step)
@@ -780,6 +789,33 @@ Apply Praxion's tier-driven pipeline for non-trivial work. Use the tier selector
 **Orchestrator obligation.** Every delegation prompt must name the task slug, expected deliverables, and the behavioral contract (Surface Assumptions · Register Objection · Stay Surgical · Simplicity First).
 ```
 
+## §Project Essentials Block
+
+<!-- canonical-source: claude/canonical-blocks/project-essentials.md — edit the canonical file, then run: python3 scripts/sync_canonical_blocks.py --write -->
+
+```markdown
+## Working in this project
+
+This `CLAUDE.md` is the **index**; `docs/` and the skills it points to are the **library** — read the index, follow the links the task needs. When I correct you, propose a durable rule for review (a memory entry, a `CLAUDE.md` or rule edit, or a skill note) so the correction outlasts this session.
+
+### Verification
+
+After every change, run these in order — fix at each step before moving on:
+
+1. `<typecheck command>`
+2. `<test command>`
+3. `<lint command>`
+4. `<build command>`
+
+### Frequent operations
+
+You'll most often be asked to:
+
+- `<list 3–5 of this project's most common task intents>`
+```
+
+The fenced content above is a **template** — `/onboard-project` Phase 6 appends it and then fills the `<placeholders>` from the project's config (see §Phase 6 Action step 3); `/new-project` fills them at scaffold time. The fence is kept byte-identical to `claude/canonical-blocks/project-essentials.md` by `scripts/sync_canonical_blocks.py`; the `<placeholders>` are intentional and must survive the sync.
+
 ## §Idempotency Predicates — per-phase contracts
 
 | Phase | Predicate (skip if true) |
@@ -789,7 +825,7 @@ Apply Praxion's tier-driven pipeline for non-trivial work. Use the tier selector
 | 3 | `grep -qF '.ai-state/memory.json merge=memory-json' .gitattributes` AND `git config --get merge.memory-json.driver` returns a value containing `i-am` AND same for `observations-jsonl` |
 | 4 | `readlink .git/hooks/pre-commit` resolves to a Praxion-shipped file (or the file is a script containing `check_id_citation_discipline`) AND each of `readlink .git/hooks/{post-merge,post-commit,post-checkout}` resolves to a path containing `/i-am/` (target ending in `git-finalize-hook.sh`, or the legacy `git-post-merge-hook.sh` for the post-merge slot only) |
 | 5 | All four `PRAXION_DISABLE_*` keys present under `.env` in `.claude/settings.json` (any value) |
-| 6 | `grep -q '^## Agent Pipeline$' CLAUDE.md` (per block — checked individually for the four blocks; `grep -q '^## Praxion Process$' CLAUDE.md` for the Praxion Process block) |
+| 6 | `grep -q '^## <heading>$' CLAUDE.md` per block — checked individually for each of the five: `## Agent Pipeline`, `## Compaction Guidance`, `## Behavioral Contract`, `## Praxion Process`, `## Working in this project` |
 | 7 | None — phase 7 is advisory and always runs |
 | 8 | `test -e .ai-state/DESIGN.md` OR `test -e docs/architecture.md` (skip phase if either doc exists — covers re-runs and greenfield-followed-by-onboard); also skipped if the user picks `Skip` at Gate 8 |
 | 8b | User picks `Skip AaC` (or `Run all rest`) at Gate 8b — skips entire phase. Per-sub-step: 8b.1 — arch doc contains `aac:generated` or `aac:authored`; 8b.2 — `test -d fitness/`; 8b.3 — `grep -q 'check_aac_golden_rule\|Block D' .git/hooks/pre-commit`; 8b.4 — `test -e .github/workflows/architecture.yml`; 8b.5 — `test -d docs/diagrams/` |

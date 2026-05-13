@@ -3,7 +3,7 @@ description: Scaffold a greenfield Claude-ready Python project and onboard it to
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion, Task, mcp__chub__*]
 ---
 
-Onboard the current (freshly scaffolded) directory. Ask one question first, show the user *how* Praxion is driven (orchestrator + subagents), frame the build as a pipeline task so they watch the orchestrator in action, then — once the codebase exists — run `/init`, append the three Praxion blocks (Agent Pipeline + Compaction Guidance + Behavioral Contract) idempotently, generate a per-run trail map, and hand off to `/onboard-project` (which applies the remaining surfaces — git hooks, merge drivers, `.ai-state/` skeleton, `.claude/settings.json` toggles) before the user runs `/co` to commit. **Greenfield and existing-project paths converge on the same end state**: this command is the existing-project counterpart of `/onboard-project`'s Phase 6 ("CLAUDE.md blocks"); both produce byte-identical CLAUDE.md sections.
+Onboard the current (freshly scaffolded) directory. Ask one question first, show the user *how* Praxion is driven (orchestrator + subagents), frame the build as a pipeline task so they watch the orchestrator in action, then — once the codebase exists — run `/init`, append the five Praxion blocks (Agent Pipeline + Compaction Guidance + Behavioral Contract + Praxion Process + Working in this project) idempotently, generate a per-run trail map, and hand off to `/onboard-project` (which applies the remaining surfaces — git hooks, merge drivers, `.ai-state/` skeleton, `.claude/settings.json` toggles) before the user runs `/co` to commit. **Greenfield and existing-project paths converge on the same end state**: this command is the existing-project counterpart of `/onboard-project`'s Phase 6 ("CLAUDE.md blocks"); both produce byte-identical CLAUDE.md sections.
 
 ## Sections
 
@@ -17,7 +17,7 @@ Onboard the current (freshly scaffolded) directory. Ask one question first, show
 8. §Custom App — Pipeline Framing — how the same shape adapts when the user describes their own app
 9. §Default App Spec — file inventory + invariants the pipeline must satisfy
 10. §SDK smoke check — the import probe and doc-staleness recovery
-11. §Init idempotency — per-block predicates for the three CLAUDE.md appends
+11. §Init idempotency — per-block predicates for the five CLAUDE.md appends
 12. §Mushi Doc Spec — the nine ordered sections
 13. §Five-to-Seven Lessons — L1–L7 "Put this in Claude" canonical ladder
 14. §Prereq Behaviors — `uv` missing, `ANTHROPIC_API_KEY` unset
@@ -25,8 +25,9 @@ Onboard the current (freshly scaffolded) directory. Ask one question first, show
 16. §Compaction Guidance Block — verbatim source (mirror of `/onboard-project`)
 17. §Behavioral Contract Block — verbatim source (mirror of `/onboard-project`)
 18. §Praxion Process Block — verbatim source (mirror of `/onboard-project`)
-19. §AaC Scaffolding Sub-flow — five per-project AaC surfaces (default ON; opt-out via `--no-aac` / `PRAXION_NEW_PROJECT_NO_AAC=1`)
-20. §Idempotency Predicates — per-Flow-phase contracts
+19. §Project Essentials Block — verbatim source (mirror of `/onboard-project`)
+20. §AaC Scaffolding Sub-flow — five per-project AaC surfaces (default ON; opt-out via `--no-aac` / `PRAXION_NEW_PROJECT_NO_AAC=1`)
+21. §Idempotency Predicates — per-Flow-phase contracts
 
 ## §Guard
 
@@ -79,7 +80,7 @@ When the guard passes, follow these steps in order. Each step is a contract — 
 
 9. **Invoke `/init` NOW.** First, fire **GATE 6** per §Phase Gates. Then invoke `/init` — the codebase exists and reflects the user's choice, so `/init`'s CLAUDE.md describes reality. Do not author CLAUDE.md by hand.
 
-10. **Append the four Praxion blocks idempotently.** Per §Init idempotency, check `CLAUDE.md` for each of four headings independently — `## Agent Pipeline`, `## Compaction Guidance`, `## Behavioral Contract`, `## Praxion Process`. For each missing heading, append the corresponding block verbatim from §Agent Pipeline Block, §Compaction Guidance Block, §Behavioral Contract Block, §Praxion Process Block respectively. Each block is guarded by its own predicate; one missing block does not force re-appending the others. **Smooth-integration contract:** if all four append, `/onboard-project`'s Phase 6 will be a complete no-op when the user runs it next.
+10. **Append the five Praxion blocks idempotently.** Per §Init idempotency, check `CLAUDE.md` for each of five headings independently — `## Agent Pipeline`, `## Compaction Guidance`, `## Behavioral Contract`, `## Praxion Process`, `## Working in this project`. For each missing heading, append the corresponding block verbatim from §Agent Pipeline Block, §Compaction Guidance Block, §Behavioral Contract Block, §Praxion Process Block, §Project Essentials Block respectively. Each block is guarded by its own predicate; one missing block does not force re-appending the others. **After appending the §Project Essentials Block**, fill its `<placeholders>` from the just-scaffolded codebase — `<typecheck command>` / `<test command>` / `<lint command>` / `<build command>` from `pyproject.toml` / `package.json` / the test gate, `<list 3–5 of this project's most common task intents>` from the seed app's purpose; leave a `# TODO:` for anything undeterminable; renumber the Verification list if a step is omitted. **Smooth-integration contract:** if all five append, `/onboard-project`'s Phase 6 will be a complete no-op when the user runs it next.
 
 11. **Generate the mushi doc LAST.** First, fire **GATE 7** per §Phase Gates. Then generate the mushi doc — file anchors (§Mushi Doc Spec) must be computed against the final on-disk state, so this step follows everything that writes source code.
 
@@ -99,7 +100,7 @@ Mirror of `/onboard-project`'s §Flow contracts table — what each Phase produc
 | 4 | Execute Standard-tier pipeline (researcher → architect → planner → implementer ∥ test-engineer → verifier) | None — produces feature artifacts each run |
 | 4f | AaC scaffolding sub-flow (fence seed, `fitness/`, Block D hook append, `architecture.yml`, `docs/diagrams/`) — default ON; skipped if `# AaC scaffolding: false` in bootstrap context | Per §Idempotency Predicates — five independent per-surface predicates; skip entire sub-flow when opt-out signal present |
 | 5 | SDK smoke check + test gate (`uv sync && uv run pytest -q`) + Python `.gitignore` block | Per §Idempotency Predicates: Python block detected by `# Python` header |
-| 6 | `/init` (if `CLAUDE.md` missing) + idempotent append of four blocks | Per §Init idempotency — four independent heading-detection predicates |
+| 6 | `/init` (if `CLAUDE.md` missing) + idempotent append of five blocks | Per §Init idempotency — five independent heading-detection predicates |
 | 7 | Generate the per-run mushi doc | None — file is regenerated each run by design |
 | 8 | Stage scaffold + print exit handoff (recommends `/onboard-project` then `/co`) | None — terminal phase |
 
@@ -135,7 +136,7 @@ The seed onboarding is the densest pedagogical moment in a Praxion user's whole 
 | 4d | step 5d (implementer + test-engineer) | `Pipeline step 4 of 5: implementer + test-engineer running concurrently on disjoint file sets. Writes src/agent/, src/web/, and tests/ — real code lands in your project tree. Watch your editor's file tree refresh as files appear. Continue?` |
 | 4e | step 5e (verifier) | `Pipeline step 5 of 5: verifier. Checks the three §Default App acceptance criteria — agent→web import isolation, SAFE_COMMANDS shape, pytest green. Compact-seed output is a one-paragraph in-chat report; the formal VERIFICATION_REPORT.md is reserved for full-tier features. Continue?` |
 | 5 | step 6 (SDK smoke check) | `Phase 5 of 7: I verify the Claude Agent SDK import surface (chub docs sometimes drift from the installed package), run the test suite via uv, and lock down the .gitignore Python block. Continue?` |
-| 6 | step 9 (/init) | `Phase 6 of 7: I run /init so CLAUDE.md describes the code that ACTUALLY exists (not what I imagined), then idempotently append four Praxion blocks — Agent Pipeline (how to delegate), Compaction Guidance (what to preserve when chat compacts), Behavioral Contract (Surface Assumptions / Register Objection / Stay Surgical / Simplicity First), and Praxion Process (tier-driven pipeline principle + rule-inheritance obligation). Each is guarded by its own heading-detection predicate. Continue?` |
+| 6 | step 9 (/init) | `Phase 6 of 7: I run /init so CLAUDE.md describes the code that ACTUALLY exists (not what I imagined), then idempotently append five Praxion blocks — Agent Pipeline (how to delegate), Compaction Guidance (what to preserve when chat compacts), Behavioral Contract (Surface Assumptions / Register Objection / Stay Surgical / Simplicity First), Praxion Process (tier-driven pipeline principle + rule-inheritance obligation), and Working in this project (verification commands + frequent operations + corrections-become-rules — I fill the project-specific bits from the scaffold). Each is guarded by its own heading-detection predicate. Continue?` |
 | 7 | step 11 (mushi doc) | `Phase 7 of 7: I generate onboarding_for_mushi_busy_ppl.md — your project-specific map with a happy-path Mermaid diagram, file inventory, lesson ladder, and PoC-to-production journey. Continue?` |
 
 **Don't paraphrase the headlines.** Copy each cell verbatim into the `question` field — they're sized to teach the user *why* each phase exists, not just *what* it does, and the wording was chosen so the seven gates form a coherent narrative across the run.
@@ -270,20 +271,20 @@ Never copy symbol names from this file into generated code — this file deliber
 
 ## §Init idempotency
 
-`/new-project` appends **four** blocks to `CLAUDE.md`: §Agent Pipeline Block, §Compaction Guidance Block, §Behavioral Contract Block, §Praxion Process Block. Each is guarded by an independent heading-detection predicate so re-runs are no-ops per block.
+`/new-project` appends **five** blocks to `CLAUDE.md`: §Agent Pipeline Block, §Compaction Guidance Block, §Behavioral Contract Block, §Praxion Process Block, §Project Essentials Block. Each is guarded by an independent heading-detection predicate so re-runs are no-ops per block.
 
-For each of the four blocks, before appending:
+For each of the five blocks, before appending:
 
 ```
 grep -q '^## <BLOCK_HEADING>$' CLAUDE.md
 ```
 
-…where `<BLOCK_HEADING>` is `Agent Pipeline`, `Compaction Guidance`, `Behavioral Contract`, or `Praxion Process` respectively.
+…where `<BLOCK_HEADING>` is `Agent Pipeline`, `Compaction Guidance`, `Behavioral Contract`, `Praxion Process`, or `Working in this project` respectively.
 
 - Exit `0` (match found) → block already exists; skip the append.
 - Exit non-zero → append the block verbatim from its §-named source section.
 
-These predicates mirror `/onboard-project`'s §Phase 6 byte-for-byte. Re-running either command — or running both — never duplicates a section. If `/new-project` lands all four blocks during greenfield, `/onboard-project`'s Phase 6 becomes a complete no-op (every per-block predicate hits) — the smooth-integration contract.
+These predicates mirror `/onboard-project`'s §Phase 6 byte-for-byte. Re-running either command — or running both — never duplicates a section. If `/new-project` lands all five blocks during greenfield, `/onboard-project`'s Phase 6 becomes a complete no-op (every per-block predicate hits) — the smooth-integration contract.
 
 ## §Mushi Doc Spec
 
@@ -530,12 +531,13 @@ Per-phase predicates that govern §Flow steps. Re-running `/new-project` on a di
 | 10b (Compaction Guidance append) | `grep -q '^## Compaction Guidance$' CLAUDE.md` |
 | 10c (Behavioral Contract append) | `grep -q '^## Behavioral Contract$' CLAUDE.md` |
 | 10d (Praxion Process append) | `grep -q '^## Praxion Process$' CLAUDE.md` |
+| 10e (Working-in-this-project append) | `grep -q '^## Working in this project$' CLAUDE.md` |
 
 Other §Flow steps (1–7, 9, 11–13) are not idempotent in the strict sense because the seed pipeline (researcher → architect → planner → implementer + test-engineer → verifier) produces new artifacts each run. The §Guard at flow-start refuses to run on a non-greenfield directory, so re-invocation is rare; if it does happen, the user gets a Guard abort and is directed to `/onboard-project` instead.
 
 **Smooth integration contract.** When `/new-project` finishes successfully and the user runs `/onboard-project` next (per the exit handoff recommendation), three phases of `/onboard-project` are complete no-ops because the seed pipeline already produced their outputs:
 
-- **`/onboard-project` Phase 6 (CLAUDE.md blocks)** — all four predicates hit (Agent Pipeline, Compaction Guidance, Behavioral Contract, and Praxion Process are present from this command's Flow step 10).
+- **`/onboard-project` Phase 6 (CLAUDE.md blocks)** — all five predicates hit (Agent Pipeline, Compaction Guidance, Behavioral Contract, Praxion Process, and Working in this project are present from this command's Flow step 10).
 - **`/onboard-project` Phase 8 (Architecture Baseline)** — the predicate `test -e .ai-state/DESIGN.md` hits because the seed pipeline's `systems-architect` (gate 4b) already produced both `.ai-state/DESIGN.md` and `docs/architecture.md`. Re-running the architect would overwrite a real-content baseline with another real-content baseline; the predicate prevents that.
 - **`/onboard-project` Phase 8b (AaC scaffolding)** — when AaC was not opted out of (the default), all five sub-step predicates hit (`fitness/` exists, Block D is present, `architecture.yml` exists, fence markers are in `ARCHITECTURE.md`, `docs/diagrams/.gitkeep` exists). The `/onboard-project --with-aac` path becomes a clean no-op.
 
@@ -576,3 +578,30 @@ Apply Praxion's tier-driven pipeline for non-trivial work. Use the tier selector
 
 **Orchestrator obligation.** Every delegation prompt must name the task slug, expected deliverables, and the behavioral contract (Surface Assumptions · Register Objection · Stay Surgical · Simplicity First).
 ```
+
+## §Project Essentials Block
+
+<!-- canonical-source: claude/canonical-blocks/project-essentials.md — edit the canonical file, then run: python3 scripts/sync_canonical_blocks.py --write -->
+
+```markdown
+## Working in this project
+
+This `CLAUDE.md` is the **index**; `docs/` and the skills it points to are the **library** — read the index, follow the links the task needs. When I correct you, propose a durable rule for review (a memory entry, a `CLAUDE.md` or rule edit, or a skill note) so the correction outlasts this session.
+
+### Verification
+
+After every change, run these in order — fix at each step before moving on:
+
+1. `<typecheck command>`
+2. `<test command>`
+3. `<lint command>`
+4. `<build command>`
+
+### Frequent operations
+
+You'll most often be asked to:
+
+- `<list 3–5 of this project's most common task intents>`
+```
+
+The fenced content above is a **template** — `/new-project` Flow step 10 appends it and fills the `<placeholders>` from the just-scaffolded codebase; `/onboard-project` Phase 6 does the same for existing projects. The fence is kept byte-identical to `claude/canonical-blocks/project-essentials.md` by `scripts/sync_canonical_blocks.py`; the `<placeholders>` are intentional and must survive the sync.

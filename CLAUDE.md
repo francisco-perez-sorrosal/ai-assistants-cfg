@@ -24,6 +24,16 @@ The operational infrastructure for the development philosophy in `~/.claude/CLAU
 - `cd dashboard_app && ./node_modules/.bin/next build` — dashboard production build
 - `scripts/praxion-dashboard start /path/to/project` — launch the read-only dashboard for a target project
 
+## Frequent operations
+
+What you'll most often be asked to do in this repo:
+
+- **Craft or modify a component** (skill / rule / agent / command / hook) — load the matching `*-crafting` skill first, then run that skill's validator.
+- **Update content shipped into managed projects** — edit `claude/canonical-blocks/<slug>.md`, run `python3 scripts/sync_canonical_blocks.py --write`, mirror the change in `commands/onboard-project.md` + `commands/new-project.md` (the sync-check is in *Build / test / lint* above).
+- **Run an audit or roadmap pass** — `/sentinel` (coherence), `/project-metrics` (health), `/roadmap` (audit→roadmap), or execute an item from `.ai-state/ROADMAP.md`.
+- **Work on the dashboard** — `dashboard_app/` (Next.js runtime over `.ai-state/`); its test + build commands are in *Build / test / lint* above.
+- **Add or refine docs** — long-form Diátaxis-shaped docs under `docs/` (index: `docs/README.md`); component catalogs in `agents/README.md` / `skills/README.md` / `commands/README.md` / `rules/README.md`.
+
 ## Repository layout
 
 | Path | Purpose |
