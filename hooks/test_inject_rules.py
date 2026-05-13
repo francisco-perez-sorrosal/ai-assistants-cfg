@@ -579,14 +579,15 @@ def test_stderr_summary_line_matches_expected_format(
 
     result = _run_hook(plugin_root, project_dir)
     assert result.returncode == 0, f"Hook failed. stderr: {result.stderr!r}"
-    # Pattern: [inject_rules] Loaded <N> core rules; injected <M>/<T> blacklistable rules (suppressed: <list or 'none'>)
+    # Pattern: [inject_rules] Loaded <N> core rules; injected <M>/<T> hook-deliver rules (suppressed: ...); symlink suppressions via claudeMdExcludes: ...
     pattern = re.compile(
-        r"\[inject_rules\]\s+Loaded\s+\d+\s+core\s+rules\s*;\s+injected\s+\d+/\d+\s+blacklistable\s+rules",
+        r"\[inject_rules\]\s+Loaded\s+\d+\s+core\s+rules\s*;\s+"
+        r"injected\s+\d+/\d+\s+hook-deliver\s+rules",
         re.IGNORECASE,
     )
     assert pattern.search(result.stderr), (
         "stderr must contain a summary line matching: "
-        r"[inject_rules] Loaded N core rules; injected M/T blacklistable rules ..."
+        r"[inject_rules] Loaded N core rules; injected M/T hook-deliver rules ..."
         f"\nActual stderr: {result.stderr!r}"
     )
 
@@ -630,4 +631,144 @@ def test_injection_order_follows_manifest_order(
     assert routing_pos < git_pos, (
         "agent-model-routing must appear before vcs/git-conventions in manifest order. "
         f"Positions: routing={routing_pos}, git={git_pos}"
+    )
+
+
+# ===========================================================================
+# Test 12: disable: [ml/*] → settings.json gets claudeMdExcludes for symlinked rules
+# ===========================================================================
+
+
+def test_disabling_symlink_rules_writes_claudemd_excludes(
+    plugin_root: Path, project_dir: Path
+) -> None:
+    """Disabling install:symlink rules (ml/*) materializes claudeMdExcludes glob patterns in .claude/settings.json."""
+    _write_project_config(project_dir, "version: 1\ndisable:\n  - ml/*\n")
+    result = _run_hook(plugin_root, project_dir)
+    assert result.returncode == 0, (
+        f"Hook must exit 0 when disabling symlinked rules. stderr: {result.stderr!r}"
+    )
+
+    settings_path = project_dir / ".claude" / "settings.json"
+    assert settings_path.exists(), (
+        "settings.json must be created when symlinked rules are disabled. "
+        f"stderr: {result.stderr!r}"
+    )
+
+    settings = json.loads(settings_path.read_text(encoding="utf-8"))
+    excludes = settings.get("claudeMdExcludes", [])
+    expected = sorted(
+        [
+            "**/.claude/rules/ml/eval-driven-verification.md",
+            "**/.claude/rules/ml/experiment-tracking-conventions.md",
+            "**/.claude/rules/ml/gpu-budget-conventions.md",
+        ]
+    )
+    assert sorted(excludes) == expected, (
+        f"claudeMdExcludes must contain the three ml/* glob patterns. Got: {excludes!r}"
+    )
+
+
+# ===========================================================================
+# Test 13: pre-existing user-managed claudeMdExcludes entries are preserved
+# ===========================================================================
+
+
+def test_user_managed_claudemd_excludes_preserved(
+    plugin_root: Path, project_dir: Path
+) -> None:
+    """Entries not starting with **/.claude/rules/ must survive reconciliation."""
+    dot_claude = project_dir / ".claude"
+    dot_claude.mkdir(exist_ok=True)
+    settings_path = dot_claude / "settings.json"
+    user_entries = [
+        "**/monorepo/CLAUDE.md",
+        "/home/user/other-team/.claude/rules/**",
+    ]
+    settings_path.write_text(
+        json.dumps({"claudeMdExcludes": list(user_entries)}, indent=2),
+        encoding="utf-8",
+    )
+
+    _write_project_config(project_dir, "version: 1\ndisable:\n  - ml/*\n")
+    result = _run_hook(plugin_root, project_dir)
+    assert result.returncode == 0, f"Hook failed. stderr: {result.stderr!r}"
+
+    settings = json.loads(settings_path.read_text(encoding="utf-8"))
+    excludes = settings.get("claudeMdExcludes", [])
+    for entry in user_entries:
+        assert entry in excludes, (
+            f"User-managed entry {entry!r} must be preserved across reconciliation. "
+            f"Got: {excludes!r}"
+        )
+    # Praxion-managed entries also present.
+    assert "**/.claude/rules/ml/eval-driven-verification.md" in excludes, (
+        f"Praxion-managed exclusion must be added. Got: {excludes!r}"
+    )
+
+
+# ===========================================================================
+# Test 14: idempotent reconciliation — second run with same YAML does not rewrite
+# ===========================================================================
+
+
+def test_reconciliation_is_idempotent(plugin_root: Path, project_dir: Path) -> None:
+    """A second SessionStart with unchanged YAML leaves settings.json mtime unchanged."""
+    _write_project_config(project_dir, "version: 1\ndisable:\n  - ml/*\n")
+
+    # First run: creates settings.json with claudeMdExcludes.
+    first = _run_hook(plugin_root, project_dir)
+    assert first.returncode == 0, f"First run failed. stderr: {first.stderr!r}"
+    settings_path = project_dir / ".claude" / "settings.json"
+    assert settings_path.exists(), "First run must create settings.json"
+    mtime_before = settings_path.stat().st_mtime_ns
+
+    # Second run with identical YAML: must not rewrite the file.
+    second = _run_hook(plugin_root, project_dir)
+    assert second.returncode == 0, f"Second run failed. stderr: {second.stderr!r}"
+    mtime_after = settings_path.stat().st_mtime_ns
+
+    assert mtime_before == mtime_after, (
+        "settings.json must not be rewritten when reconciliation would produce "
+        f"identical content. Before={mtime_before}, after={mtime_after}"
+    )
+
+
+# ===========================================================================
+# Test 15: no praxion-rules.yaml → existing settings.json is left untouched
+# ===========================================================================
+
+
+def test_no_yaml_leaves_existing_settings_untouched(
+    plugin_root: Path, project_dir: Path
+) -> None:
+    """Without praxion-rules.yaml, the hook must not create or modify settings.json."""
+    dot_claude = project_dir / ".claude"
+    dot_claude.mkdir()
+    settings_path = dot_claude / "settings.json"
+    initial_content = (
+        json.dumps(
+            {
+                "claudeMdExcludes": ["**/monorepo/CLAUDE.md"],
+                "someOtherSetting": True,
+            },
+            indent=2,
+        )
+        + "\n"
+    )
+    settings_path.write_text(initial_content, encoding="utf-8")
+    mtime_before = settings_path.stat().st_mtime_ns
+
+    result = _run_hook(plugin_root, project_dir)
+    assert result.returncode == 0, f"Hook failed. stderr: {result.stderr!r}"
+
+    mtime_after = settings_path.stat().st_mtime_ns
+    assert mtime_before == mtime_after, (
+        "settings.json must not be modified when no praxion-rules.yaml exists. "
+        f"Before={mtime_before}, after={mtime_after}"
+    )
+    final_content = settings_path.read_text(encoding="utf-8")
+    assert final_content == initial_content, (
+        "settings.json content must be byte-identical when no YAML config exists. "
+        f"Before: {initial_content!r}\nAfter: {final_content!r}"
     )

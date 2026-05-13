@@ -1,18 +1,33 @@
 #!/usr/bin/env python3
-"""SessionStart hook: inject hook-delivered rules into additionalContext.
+"""SessionStart hook: apply the per-project Praxion rules blacklist.
 
-Reads rules/_manifest.yaml to determine which rules use hook-deliver
-installation, reads an optional per-project .claude/praxion-rules.yaml
-blacklist, and injects the non-suppressed rule bodies as additionalContext.
+Reads `rules/_manifest.yaml` to determine each rule's delivery type
+(`install: hook-deliver` vs `install: symlink`), reads the optional
+per-project `.claude/praxion-rules.yaml` blacklist, and applies the
+disable list through two complementary mechanisms:
 
-Core rules (core: true in manifest) are never suppressible — any attempt
-to disable them produces a stderr warning and is silently ignored.
+1. `install: hook-deliver` rules — suppressed by filtering them out of
+   the `additionalContext` payload returned to Claude Code at SessionStart.
+
+2. `install: symlink` rules (path-scoped rules plus any always-on rules
+   delivered via global symlinks in `~/.claude/rules/`) — suppressed by
+   reconciling glob patterns into `claudeMdExcludes` in the project's
+   `.claude/settings.json`. Patterns use the portable shape
+   `**/.claude/rules/<id>.md` so they match the user's absolute install
+   path on any machine. Praxion-managed entries (identified by their
+   `**/.claude/rules/` prefix) are recomputed every SessionStart;
+   non-Praxion entries in `claudeMdExcludes` are preserved untouched.
+
+Core rules (core: true in manifest) are never suppressible by either
+mechanism — any attempt produces a stderr warning and is ignored.
 
 Behavior contract:
 - Fail-open: any internal error exits 0 with no output; never block SessionStart.
 - Kill-switch: PRAXION_DISABLE_RULE_INJECTION=1 disables injection entirely.
-- Backward-compatible: no project config → all hook-deliver rules injected (AC-01).
-- Schema-guarded: version > 1 in project config → log warning and inject all.
+- Backward-compatible: no project config → all rules loaded (no exclusions).
+- Schema-guarded: version > 1 in project config → log warning and load all.
+- Idempotent: settings.json is rewritten only when its `claudeMdExcludes`
+  would actually change; otherwise no write happens.
 """
 
 from __future__ import annotations
@@ -42,6 +57,11 @@ _INJECT_HEADER = "## Praxion Rules (auto-injected)\n\n"
 
 # Frontmatter delimiter pattern for stripping YAML blocks from rule files.
 _FRONTMATTER_RE = re.compile(r"^---\s*\n.*?\n---\s*\n", re.DOTALL)
+
+# Glob-pattern prefix Praxion uses for claudeMdExcludes entries it manages.
+# Any entry starting with this prefix is recomputed on every SessionStart;
+# any entry not starting with it is preserved as a user-managed exclusion.
+_PRAXION_EXCLUSION_PREFIX = "**/.claude/rules/"
 
 
 # -- Frontmatter stripping -----------------------------------------------------
@@ -149,6 +169,102 @@ def _filter_core_rules(disable_set: set[str], rules: list[dict]) -> set[str]:
             file=sys.stderr,
         )
     return disable_set - core_ids
+
+
+# -- Symlink-rule exclusions via claudeMdExcludes -----------------------------
+
+
+def _compute_symlink_exclusions(disable_set: set[str], rules: list[dict]) -> list[str]:
+    """Compute portable claudeMdExcludes glob patterns for symlinked rules.
+
+    For each rule_id in disable_set whose install type is `symlink`, produce
+    a glob pattern of the form `**/.claude/rules/<id>.md` that matches the
+    rule's installed symlink path on any user's machine — irrespective of
+    home-directory layout.
+
+    Hook-deliver rules are filtered separately (additionalContext path) and
+    are not included here.
+
+    Returns a sorted list (deterministic order for idempotent settings writes).
+    """
+    rule_by_id = {r["id"]: r for r in rules if "id" in r}
+    patterns: list[str] = []
+    for rule_id in disable_set:
+        rule = rule_by_id.get(rule_id)
+        if rule is None:
+            continue
+        if rule.get("install") != "symlink":
+            continue
+        patterns.append(f"{_PRAXION_EXCLUSION_PREFIX}{rule_id}.md")
+    return sorted(patterns)
+
+
+def _apply_symlink_exclusions(cwd: Path, exclusions: list[str]) -> None:
+    """Reconcile Praxion-managed claudeMdExcludes in <cwd>/.claude/settings.json.
+
+    Reads the project's settings.json, replaces any existing entries whose
+    pattern starts with `**/.claude/rules/` (Praxion-managed) with the new
+    `exclusions` list, and preserves all other entries (user-managed). Skips
+    the write when claudeMdExcludes would not actually change (idempotency).
+
+    Fail-open: any exception is logged to stderr and swallowed — settings
+    reconciliation is auxiliary and must never break SessionStart.
+    """
+    try:
+        settings_path = cwd / ".claude" / "settings.json"
+        existing: dict = {}
+        if settings_path.exists():
+            try:
+                existing = json.loads(settings_path.read_text(encoding="utf-8"))
+                if not isinstance(existing, dict):
+                    existing = {}
+            except (json.JSONDecodeError, OSError) as exc:
+                print(
+                    f"[inject_rules] WARNING: could not parse {settings_path}:"
+                    f" {exc}; skipping claudeMdExcludes reconciliation",
+                    file=sys.stderr,
+                )
+                return
+
+        current = existing.get("claudeMdExcludes", [])
+        if not isinstance(current, list):
+            current = []
+
+        preserved = [
+            entry
+            for entry in current
+            if not (
+                isinstance(entry, str) and entry.startswith(_PRAXION_EXCLUSION_PREFIX)
+            )
+        ]
+        reconciled = preserved + exclusions
+
+        if reconciled == current:
+            return  # Idempotent: nothing to write.
+
+        if reconciled:
+            existing["claudeMdExcludes"] = reconciled
+        else:
+            # Empty after reconciliation — remove the key entirely so the file
+            # stays minimal when no exclusions apply.
+            existing.pop("claudeMdExcludes", None)
+
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        settings_path.write_text(
+            json.dumps(existing, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        print(
+            f"[inject_rules] Reconciled claudeMdExcludes in {settings_path}:"
+            f" {len(exclusions)} Praxion-managed,"
+            f" {len(preserved)} user-managed preserved",
+            file=sys.stderr,
+        )
+    except Exception as exc:
+        print(
+            f"[inject_rules] claudeMdExcludes reconciliation skipped: {exc}",
+            file=sys.stderr,
+        )
 
 
 # -- Rule body reading ---------------------------------------------------------
@@ -297,6 +413,13 @@ def main() -> None:
     # Remove core rules from disable set; warn for each attempted suppression.
     disable_set = _filter_core_rules(disable_set, rules)
 
+    # Reconcile claudeMdExcludes in .claude/settings.json with the symlinked
+    # rules in the disable set. Hook-deliver rules are handled below via the
+    # additionalContext filter; the two mechanisms together give the YAML
+    # uniform reach across all install types.
+    symlink_exclusions = _compute_symlink_exclusions(disable_set, rules)
+    _apply_symlink_exclusions(cwd, symlink_exclusions)
+
     # Build inject set: hook-deliver rules that are not suppressed.
     inject_rules = [
         r
@@ -304,7 +427,10 @@ def main() -> None:
         if r.get("install") == "hook-deliver" and r.get("id") not in disable_set
     ]
     hook_deliver_rules = [r for r in rules if r.get("install") == "hook-deliver"]
-    suppressed_ids = [r["id"] for r in hook_deliver_rules if r.get("id") in disable_set]
+    suppressed_hd_ids = [
+        r["id"] for r in hook_deliver_rules if r.get("id") in disable_set
+    ]
+    symlink_suppressed_ids = sorted(set(disable_set) - set(suppressed_hd_ids))
 
     core_count = sum(1 for r in rules if r.get("core") is True)
 
@@ -318,11 +444,17 @@ def main() -> None:
     # Emit observability summary to stderr.
     injected_count = len(inject_rules)
     total_hook_deliver = len(hook_deliver_rules)
-    suppressed_str = ", ".join(sorted(suppressed_ids)) if suppressed_ids else "none"
+    hd_suppressed_str = (
+        ", ".join(sorted(suppressed_hd_ids)) if suppressed_hd_ids else "none"
+    )
+    sym_suppressed_str = (
+        ", ".join(symlink_suppressed_ids) if symlink_suppressed_ids else "none"
+    )
     print(
-        f"[inject_rules] Loaded {core_count} core rules; "
-        f"injected {injected_count}/{total_hook_deliver} blacklistable rules "
-        f"(suppressed: {suppressed_str})",
+        f"[inject_rules] Loaded {core_count} core rules;"
+        f" injected {injected_count}/{total_hook_deliver} hook-deliver rules"
+        f" (suppressed: {hd_suppressed_str});"
+        f" symlink suppressions via claudeMdExcludes: {sym_suppressed_str}",
         file=sys.stderr,
     )
 
