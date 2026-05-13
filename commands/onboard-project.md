@@ -322,6 +322,19 @@ Checked options write the corresponding `PRAXION_DISABLE_*` to `"0"`.
 
 If `.claude/settings.json` already exists with other keys (e.g., `permissions`, `model`), merge `env` non-destructively — preserve all existing top-level keys and pre-existing `env.*` entries.
 
+### Optional: Rule Blacklist Configuration
+
+Praxion rules are now categorized into core (always-loaded, non-disableable) and blacklistable (always-loaded by default, but suppressible per-project). To customize which rules your project inherits, create an optional `.claude/praxion-rules.yaml` file:
+
+```yaml
+version: 1
+disable:
+  - swe/memory-protocol    # Example: disable if your team uses different memory strategy
+  - ml/*                   # Example: disable entire category
+```
+
+See [`docs/rules-taxonomy.md`](../../docs/rules-taxonomy.md) for the complete reference on rule categories, token accounting, and blacklist configuration. A project with no `.claude/praxion-rules.yaml` loads all rules identically to the current behavior — backward compatible, opt-out default. For a template, see [`.claude/praxion-rules.yaml.example`](../../.claude/praxion-rules.yaml.example).
+
 ## §Phase 6 — `CLAUDE.md` Praxion blocks
 
 **Predicate.** Five independent heading checks:

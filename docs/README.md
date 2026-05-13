@@ -35,6 +35,7 @@ Authoritative tables and schemas. Look up, don't read sequentially.
 - [Architecture](architecture.md) — code-verified Praxion architecture (paths, components, dependencies)
 - [Architecture diagrams](architecture-diagrams.md) — LikeC4 view catalog and regen workflow
 - [Spec-driven development](spec-driven-development.md) — REQ ID conventions, traceability protocol, sentinel checks
+- [Rules Taxonomy](rules-taxonomy.md) — rule categories (core, blacklistable, path-scoped), per-project blacklist configuration, token accounting
 - [Metrics schema](metrics/README.md) — `/project-metrics` JSON output schema and field reference
 
 ## Concepts — mental models (the why)

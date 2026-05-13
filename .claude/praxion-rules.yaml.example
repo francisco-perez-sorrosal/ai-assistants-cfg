@@ -1,0 +1,26 @@
+# Praxion Per-Project Rules Configuration
+#
+# This file lets you reduce token cost by disabling Praxion rules for
+# projects that don't need them all. Disabled rules are removed from
+# SessionStart context, lowering always-loaded tokens.
+#
+# Core rules CANNOT be disabled. Attempting to disable one (e.g.,
+# agent-behavioral-contract) emits a warning at SessionStart and the
+# rule remains loaded. See rules/_manifest.yaml for the full manifest
+# or run: praxion-rules list
+
+# List of Praxion rules to disable for this project.
+# Rules must be referenced by their ID (filename without .md, with
+# directory prefix where applicable).
+disable:
+  # Example: disable Memory MCP rule
+  # - memory-protocol
+
+  # Example: disable all ML-domain rules (not an ML project)
+  # - ml/*
+
+  # Example: disable a specific writing/documentation rule
+  # - writing/diagram-conventions
+
+# Schema version. Currently 1. Bumped on breaking config changes.
+version: 1
