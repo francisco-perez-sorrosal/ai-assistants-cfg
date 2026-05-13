@@ -118,7 +118,7 @@ Design the architecture by working through these questions:
 2. **Where does it live?** — which layer, module, or service owns the new functionality
 3. **How does it connect?** — interfaces, data flow, integration points with existing code
 4. **What patterns apply?** — leverage existing patterns in the codebase; introduce new ones only when justified
-5. **What are the alternatives?** — if `RESEARCH_FINDINGS.md` includes a comparative analysis, evaluate the options against the acceptance criteria and codebase constraints
+5. **What are the alternatives?** — if `RESEARCH_FINDINGS.md` includes a comparative analysis, evaluate the options against the acceptance criteria and codebase constraints. Note that `RESEARCH_FINDINGS.md` may *also* carry a separate `## Continuous Improvement Signals` section — those are project-scope, forward-feeding signals (an incumbent library appears worth replacing later), not task-scope alternatives. Acknowledge them here, but resolve them in Phase 7 (Trade-off Analysis) where the switch-now / defer / dismiss decision is captured
 
 **Design principles:**
 
@@ -180,6 +180,14 @@ Skip this phase entirely when no prior spec was identified in Phase 1 (greenfiel
 For every significant design decision, make the trade-offs explicit:
 
 **Tech-debt ledger awareness (permission, not obligation).** Read `.ai-state/TECH_DEBT_LEDGER.md`, filter by `owner-role = systems-architect` and `location` overlapping the design scope you are analyzing, and address items where natural to the current task by updating `status` (to `resolved` with `resolved-by`, or `in-flight`); leave out-of-scope items at `status = open` — do not delete. Non-action is a valid outcome. Schema and field constraints live in [rules/swe/agent-intermediate-documents.md](../rules/swe/agent-intermediate-documents.md) under `TECH_DEBT_LEDGER.md`.
+
+**Continuous Improvement Signals (obligation when present).** When `RESEARCH_FINDINGS.md` includes a `## Continuous Improvement Signals` section, you **must** resolve every signal it carries. For each one, record an explicit disposition in `SYSTEMS_PLAN.md` (and, when load-bearing, in an ADR fragment under `.ai-state/decisions/drafts/`):
+
+- **switch-now** — incorporate the change into the current task's design; document why deferring would cost more than acting now, and add the migration to the implementation plan
+- **defer-with-rationale** — keep the incumbent in this task; document the criteria that would justify a future switch (a perf threshold, an ecosystem milestone, a maintenance event). A deferred signal is the canonical input for a `.ai-state/TECH_DEBT_LEDGER.md` row, which the verifier / sentinel / orchestrator will file from your documented rationale (you are a ledger *consumer*, not a *writer* — see writer policy in [rules/swe/agent-intermediate-documents.md](../rules/swe/agent-intermediate-documents.md))
+- **dismiss-with-rationale** — state why the signal does not apply (e.g., the candidate library's claim does not hold under the project's actual constraints, the comparison axes the researcher used are not the axes the project cares about). Dismissal is legitimate but must be reasoned
+
+Silent dismissal is a behavioral-contract violation (Register Objection): if you disagree with the researcher's signal, state the disagreement with a reason. The continuous-improvement loop closes only when each surfaced signal has a recorded disposition.
 
 > When the activation gate fires (see [design-synthesis.md — When to Activate](../skills/software-planning/references/design-synthesis.md#when-to-activate)), run the lens sweep and the convergence check in that reference before writing the Decision block below. Record an **Activation:** line in the ADR body (either the fired outcome or `no — <reason>`) per the [ADR obligation](../skills/software-planning/references/design-synthesis.md#adr-obligation).
 
