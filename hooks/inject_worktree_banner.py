@@ -36,6 +36,7 @@ Scope notes:
 from __future__ import annotations
 
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -43,6 +44,7 @@ from pathlib import Path
 
 from _hook_utils import is_disabled
 
+logger = logging.getLogger(__name__)
 DISABLE_FLAG = "PRAXION_DISABLE_WORKTREE_BANNER"
 SUBPROCESS_TIMEOUT_SECONDS = 3
 
@@ -100,11 +102,16 @@ def _main_checkout_root(cwd: Path) -> Path | None:
 
 
 def _build_banner(worktree_root: Path, main_root: Path | None) -> str:
-    """Render the worktree-orientation banner injected into the agent's context."""
+    """Render the worktree-orientation banner injected into the agent's context.
+
+    Also detects ``VERIFIER_FINDINGS.md`` under ``.ai-work/*/`` and appends a
+    rework-affordance note when found (fail-open: any detection error is logged
+    and the banner is returned without the note).
+    """
     canonical = (
         f"`{main_root}`" if main_root else "the main checkout (run `git worktree list`)"
     )
-    return (
+    banner = (
         "## Worktree session (auto-injected)\n\n"
         f"⚠️ You are operating **inside a git worktree** at "
         f"`{worktree_root}`. The canonical checkout is {canonical} -- **do not "
@@ -116,6 +123,19 @@ def _build_banner(worktree_root: Path, main_root: Path | None) -> str:
         f"reconciled into the base branch at `/merge-worktree` (see `{_LIFECYCLE_REF}`).\n"
         "- Run `pwd` if you're unsure which checkout you're in."
     )
+    try:
+        findings_paths = list(worktree_root.glob(".ai-work/*/VERIFIER_FINDINGS.md"))
+        if findings_paths:
+            rework_note = (
+                "\n- **Rework worktree detected** "
+                "(`VERIFIER_FINDINGS.md` found). "
+                "Run `/resume-rework` to dispatch the appropriate agent."
+            )
+            banner += rework_note
+    except Exception as exc:
+        logger.warning("rework affordance detection failed: %s", exc)
+        # fail-open: banner returned without rework note
+    return banner
 
 
 def _emit(context: str) -> None:

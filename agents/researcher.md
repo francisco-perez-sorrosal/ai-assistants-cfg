@@ -204,7 +204,7 @@ Distill all findings into `RESEARCH_FINDINGS.md`:
 
 *(Include only when Hat-2 research surfaced a library, framework, or approach that appears strictly better than what the project currently uses for the same capability, but the current task does not require switching. Omit the section entirely if there are no such signals.)*
 
-This section is forward-feeding: it does not change what is built in the current task. It surfaces an opportunity for the systems-architect to weigh against the project's broader trajectory. The architect's options are: **switch-now** (incorporate into this task's design), **defer-with-rationale** (document why later is correct; a deferred signal becomes eligible for a tech-debt-ledger row via the verifier / sentinel / orchestrator path), or **dismiss-with-rationale** (state why the signal does not apply).
+This section is forward-feeding: it does not change what is built in the current task. It surfaces an opportunity for the systems-architect to weigh against the project's broader trajectory. See [disposition vocabulary](../skills/software-planning/references/disposition-vocabulary.md) for the three options.
 
 For each signal, use this shape:
 

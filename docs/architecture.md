@@ -167,3 +167,28 @@ No edits to the trunk schema, the sentinel TT01–TT05 wording, the closure sema
 - **Lightweight tier**: the protocol does NOT activate at Lightweight tier. Lightweight tasks run today's default test command. If a Lightweight task grows beyond 3 files, escalate to Standard rather than half-engaging the topology.
 
 For the design rationale behind any of the above, see [`.ai-state/DESIGN.md` §9](../.ai-state/DESIGN.md#9-test-topology).
+
+## 10. Verifier Rework Loop
+
+<!-- OWNER: implementer (as-built) | LAST UPDATED: 2026-05-14 — Step 24 Group H, verifier-rework-loop pipeline -->
+<!-- Only Built components appear here. For the Designed-phase narrative and data-flow diagrams,
+     see .ai-state/DESIGN.md §3 (Verifier rework loop row) and §5 (Verifier Rework Loop sub-section). -->
+
+Automated self-healing loop that replaces today's manual user action after a failed verification. When the verifier's `VERIFICATION_REPORT.md` contains FAIL/WARN findings, Phase 12.5 clusters them into rework rows and emits a `REWORK_MANIFEST.md`. The main agent reads the manifest, spawns one rework worktree per row via `EnterWorktree`, and writes a `VERIFIER_FINDINGS.md` into each worktree. The user opens a fresh session in the rework worktree, where the SessionStart banner hook surfaces the `/resume-rework` command. That command auto-discovers the findings file and dispatches `systems-architect` (always first, per routing invariant); for implementation-class clusters the architect's `SYSTEMS_PLAN.md` feeds the standard pipeline. Subagent isolation is enforced by `hooks/worktree_guard.py` and verified by the controlled-test harness before GA.
+
+| Component | File | Role |
+|-----------|------|------|
+| Verifier Phase 12.5 | `agents/verifier.md` (lines 317–448) | Cluster FAIL/WARN findings; emit `REWORK_MANIFEST.md` with stable `rw-<8-char-hash>` row IDs |
+| Manifest helper module | `scripts/rework_manifest.py` | Pure functions: `compute_row_id`, `parse_json_blocks`, `render_table_from_rows` |
+| Architect Phase 1 intake adapter | `agents/systems-architect.md` (line 47) | One sentence: accept `VERIFIER_FINDINGS.md` as primary intake when no `RESEARCH_FINDINGS.md` exists |
+| Planner Phase 1 intake adapter | `agents/implementation-planner.md` (line 45) | One sentence: same intake contract as the architect, preserving `SYSTEMS_PLAN.md`-required invariant |
+| `/resume-rework` command | `commands/resume-rework.md` | Fresh-session entry point; cwd-driven auto-discovery of `VERIFIER_FINDINGS.md`; validates schema + manifest-match; dispatches `systems-architect` |
+| Banner affordance | `hooks/inject_worktree_banner.py` (lines 107–138) | SessionStart hook detects `VERIFIER_FINDINGS.md` under `.ai-work/*/`; appends two-line `/resume-rework` hint to the worktree banner |
+| Subagent isolation test harness | `hooks/test_worktree_guard_subagent.py` + `hooks/MANUAL_VERIFICATION.md` | td-034 SHIP GATE — controlled-test Path A + manual-fallback Path B |
+| Disposition vocabulary | `skills/software-planning/references/disposition-vocabulary.md` | Shared reference for `switch-now` / `defer-with-rationale` / `dismiss-with-rationale`; cited by verifier, researcher, architect, and `/resume-rework` |
+
+**Data flow:** verifier Phase 12.5 emits `REWORK_MANIFEST.md` → main agent reads manifest, calls `EnterWorktree` per row, writes `VERIFIER_FINDINGS.md` into each rework worktree, and flips linked `td-NNN` rows from `open` to `in-flight` → user opens a fresh Claude Code session inside the rework worktree → `inject_worktree_banner.py` appends the `/resume-rework` hint → user runs `/resume-rework` → command validates the findings file and dispatches `systems-architect` with absolute paths → architect produces `SYSTEMS_PLAN.md` (reading `VERIFIER_FINDINGS.md` as primary intake) → implementation-planner decomposes into steps → implementer + test-engineer execute → verifier re-runs on the parent task slug to confirm clean → `/merge-worktree` promotes the fix and `scripts/finalize_tech_debt_ledger.py` migrates `td-NNN` to resolved.
+
+**Last verified against code:** 2026-05-14
+
+**Built:** all components above resolve to files on disk; subagent-isolation manual verification pending per `hooks/MANUAL_VERIFICATION.md` before GA.

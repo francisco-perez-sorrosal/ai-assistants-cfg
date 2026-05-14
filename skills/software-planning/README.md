@@ -19,8 +19,9 @@ Load explicitly with `software-planning` or reference the three-document model. 
 | File | Purpose |
 |------|---------|
 | `SKILL.md` | Core skill: three-document model, step sizing, testing guidance, commit discipline, gotchas, workflow |
-| `references/document-templates.md` | IMPLEMENTATION_PLAN.md, WIP.md, LEARNINGS.md templates |
 | `references/decomposition-guide.md` | Feature breakdown, anti-patterns, step sizing heuristics |
+| `references/disposition-vocabulary.md` | Rework disposition classification — vocabulary for grouping verification findings into coherent rework clusters and tier suggestions |
+| `references/document-templates.md` | IMPLEMENTATION_PLAN.md, WIP.md, LEARNINGS.md templates |
 | `references/agent-pipeline-details.md` | Agent boundary discipline, parallel execution, interaction reporting |
 | `references/coordination-details.md` | Pipeline worktree lifecycle, BDD/TDD execution, batched improvement, context-engineer shadowing, doc-engineer parallel execution, fragment files |
 | `references/adr-authoring-protocols.md` | ADR file creation, index regeneration, supersession protocol |

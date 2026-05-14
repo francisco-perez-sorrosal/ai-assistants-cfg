@@ -184,3 +184,72 @@ class TestBannerRendering:
         text = banner._build_banner(Path("/wt/feature"), None)
         assert "/wt/feature" in text
         assert "git worktree list" in text
+
+
+class TestReworkAffordance:
+    """Banner must append a rework note iff VERIFIER_FINDINGS.md is present."""
+
+    def test_appends_rework_paragraph_when_findings_present(
+        self, tmp_path: Path
+    ) -> None:
+        # Arrange: a worktree root with a VERIFIER_FINDINGS.md under .ai-work/<slug>/
+        findings = tmp_path / ".ai-work" / "fix-auth" / "VERIFIER_FINDINGS.md"
+        findings.parent.mkdir(parents=True)
+        findings.write_text("# Rework\n", encoding="utf-8")
+
+        # Act: build the banner for this worktree
+        text = banner._build_banner(tmp_path, Path("/repo/main"))
+
+        # Assert: the rework note is present with expected content
+        assert "VERIFIER_FINDINGS.md" in text, "Banner must name the findings file"
+        assert "/resume-rework" in text, "Banner must name the /resume-rework command"
+
+    def test_no_change_when_findings_absent(self, tmp_path: Path) -> None:
+        # Arrange: a worktree root with NO VERIFIER_FINDINGS.md anywhere
+        (tmp_path / ".ai-work").mkdir()
+
+        # Act
+        text = banner._build_banner(tmp_path, Path("/repo/main"))
+
+        # Assert: neither the findings file name nor the resume command appear
+        assert "VERIFIER_FINDINGS.md" not in text
+        assert "/resume-rework" not in text
+
+    def test_fail_open_on_glob_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Arrange: make Path.glob raise unconditionally
+        original_glob = Path.glob
+
+        def _raising_glob(self: Path, pattern: str):  # noqa: ANN001
+            if pattern == ".ai-work/*/VERIFIER_FINDINGS.md":
+                raise OSError("simulated glob failure")
+            return original_glob(self, pattern)
+
+        monkeypatch.setattr(Path, "glob", _raising_glob)
+
+        # Act: _build_banner must not propagate the exception
+        text = banner._build_banner(tmp_path, Path("/repo/main"))
+
+        # Assert: returns a banner (fail-open) without the rework note
+        assert text, "Banner must be returned even when glob raises"
+        assert "/resume-rework" not in text
+
+    def test_opt_out_still_suppresses_all(self, linked_worktree: Path) -> None:
+        # Arrange: a real linked worktree WITH a VERIFIER_FINDINGS.md
+        findings = linked_worktree / ".ai-work" / "fix-auth" / "VERIFIER_FINDINGS.md"
+        findings.parent.mkdir(parents=True)
+        findings.write_text("# Rework\n", encoding="utf-8")
+
+        # Act: run the hook with the opt-out flag set
+        result = _run_hook(
+            {"cwd": str(linked_worktree)},
+            linked_worktree,
+            extra_env={banner.DISABLE_FLAG: "1"},
+        )
+
+        # Assert: no output at all — rework note is included in the suppression
+        assert result.returncode == 0
+        assert result.stdout.strip() == "", (
+            "Opt-out must suppress the entire banner including the rework note"
+        )

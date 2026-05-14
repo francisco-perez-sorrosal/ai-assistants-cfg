@@ -42,7 +42,7 @@ Work through these phases in order. Complete each phase before moving to the nex
 
 Determine what you have to work with. The **task slug** (provided in your prompt as `Task slug: <slug>`) scopes all `.ai-work/` paths to `.ai-work/<task-slug>/`. Use this path for all reads and writes.
 
-1. **Check for SYSTEMS_PLAN.md** — read the architectural sections (Goal, Acceptance Criteria, Architecture, Risk Assessment)
+1. **Check for SYSTEMS_PLAN.md** — read the architectural sections (Goal, Acceptance Criteria, Architecture, Risk Assessment). If `VERIFIER_FINDINGS.md` is present in `.ai-work/<task-slug>/` and no `RESEARCH_FINDINGS.md` exists, read it as the primary task-intake document — its `## Problem`, `## Scope`, and `## Success Criteria` sections fill the same role.
 2. **Check for SPEC_DELTA.md** — if present, read the spec delta for brownfield context. Modified requirements indicate targeted refactoring-then-implementation steps. Removed requirements indicate explicit cleanup steps with dead code/test removal. Added requirements follow normal step decomposition. Note any staleness warnings for verification substeps.
 3. **Check for RESEARCH_FINDINGS.md** — read for codebase context and technical details
 4. **Check for CONTEXT_REVIEW.md** — if present, read the accumulated context engineering review (research-stage and architecture-stage sections) for artifact dependency ordering, placement recommendations, and spec compliance notes

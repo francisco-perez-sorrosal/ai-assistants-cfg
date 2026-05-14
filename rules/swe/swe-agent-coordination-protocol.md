@@ -83,7 +83,7 @@ Outputs use path prefixes to signal lifecycle: `.ai-work/<slug>/` = ephemeral (d
 
 When delegating to an agent, the main agent **must** include the per-agent deliverables in the prompt. The subagent's system prompt contains full instructions, but the main agent's prompt determines priority and scope.
 
-The full per-agent checklists for systems-architect, implementation-planner, implementer, and verifier — including conditional clauses (`if deployment in scope`, `if structural`, `if tests`) — are the authoritative source at [`coordination-details.md § Delegation Checklists`](../../skills/software-planning/references/coordination-details.md#delegation-checklists). Sentinel `EC06` validates that the condensed block in `claude/config/CLAUDE.md` stays byte-equivalent with that section.
+The full per-agent checklists for systems-architect, implementation-planner, implementer, and verifier — including conditional clauses (`if deployment in scope`, `if structural`, `if tests`) — are the authoritative source at [`coordination-details.md § Delegation Checklists`](../../skills/software-planning/references/coordination-details.md#delegation-checklists). Sentinel `EC06` validates that the condensed block in `claude/config/CLAUDE.md` stays byte-equivalent with that section. When `REWORK_MANIFEST.md` is produced, the main agent is responsible for spawning rework worktrees before invoking cleanup.
 
 ### Proactive Agent Usage
 
@@ -124,6 +124,7 @@ Agents communicate through shared documents, not direct invocation. The pipeline
 | Sentinel | Independent of pipeline; reports (`SENTINEL_REPORT_*.md`) public to any agent or user |
 | Doc-engineer parallel | When the planner assigns it to the parallel group: concurrent with implementer / test-engineer on disjoint files; also at pipeline checkpoints |
 | Interface-designer shadowing + challenge loop | When an interface surface is in scope: parallel to researcher + systems-architect; forward-only `INTERFACE_DESIGN.md` with one orchestrator-mediated loop-back when `## Architecture Challenges` is populated |
+| Verifier rework loop | When `REWORK_MANIFEST.md` is present in `.ai-work/<slug>/`, main agent creates a rework worktree per row via `EnterWorktree`, writes `VERIFIER_FINDINGS.md` inside, flips `td-NNN` rows to `in-flight`, and surfaces `/resume-rework` to the user. See `commands/resume-rework.md` for the fresh-session dispatch path. |
 
 ### Agent Selection Criteria
 

@@ -44,7 +44,7 @@ Work through these phases in order. Complete each phase before moving to the nex
 
 Determine what you have to work with. The **task slug** (provided in your prompt as `Task slug: <slug>`) scopes all `.ai-work/` paths to `.ai-work/<task-slug>/`. Use this path for all reads and writes.
 
-1. **Check for RESEARCH_FINDINGS.md** — if it exists, read it thoroughly. This is your primary information source.
+1. **Check for RESEARCH_FINDINGS.md** — if it exists, read it thoroughly. This is your primary information source. If `VERIFIER_FINDINGS.md` is present in `.ai-work/<task-slug>/` and no `RESEARCH_FINDINGS.md` exists, read it as the primary task-intake document — its `## Problem`, `## Scope`, and `## Success Criteria` sections fill the same role.
 2. **Check for CONTEXT_REVIEW.md** — if present, read the `## Research Stage Review` section for context artifact inventory, health assessment, and artifact placement recommendations. Factor these into your architectural decisions when the task involves context artifacts.
 3. **Check for existing SYSTEMS_PLAN.md** — you may be refining an existing architecture, not starting fresh.
 4. **Clarify the goal** — restate it in one sentence. If ambiguous, state your interpretation and ask for confirmation.
@@ -183,9 +183,7 @@ For every significant design decision, make the trade-offs explicit:
 
 **Continuous Improvement Signals (obligation when present).** When `RESEARCH_FINDINGS.md` includes a `## Continuous Improvement Signals` section, you **must** resolve every signal it carries. For each one, record an explicit disposition in `SYSTEMS_PLAN.md` (and, when load-bearing, in an ADR fragment under `.ai-state/decisions/drafts/`):
 
-- **switch-now** — incorporate the change into the current task's design; document why deferring would cost more than acting now, and add the migration to the implementation plan
-- **defer-with-rationale** — keep the incumbent in this task; document the criteria that would justify a future switch (a perf threshold, an ecosystem milestone, a maintenance event). A deferred signal is the canonical input for a `.ai-state/TECH_DEBT_LEDGER.md` row, which the verifier / sentinel / orchestrator will file from your documented rationale (you are a ledger *consumer*, not a *writer* — see writer policy in [rules/swe/agent-intermediate-documents.md](../rules/swe/agent-intermediate-documents.md))
-- **dismiss-with-rationale** — state why the signal does not apply (e.g., the candidate library's claim does not hold under the project's actual constraints, the comparison axes the researcher used are not the axes the project cares about). Dismissal is legitimate but must be reasoned
+See [disposition vocabulary](../skills/software-planning/references/disposition-vocabulary.md) for the three options.
 
 Silent dismissal is a behavioral-contract violation (Register Objection): if you disagree with the researcher's signal, state the disagreement with a reason. The continuous-improvement loop closes only when each surfaced signal has a recorded disposition.
 
