@@ -43,30 +43,13 @@ EXPECTED_CORE_IDS = frozenset(
 
 # Blacklistable always-loaded rules in canonical injection order.
 # This order drives additionalContext concatenation in inject_rules.py.
+# Any rule whose frontmatter declares `install: hook-deliver` MUST appear in
+# this list — _validate_hook_deliver_coverage() enforces this at check time.
 HOOK_DELIVER_ORDER = [
     "swe/memory-protocol",
     "swe/agent-model-routing",
     "swe/vcs/git-conventions",
 ]
-
-# Category aliases for glob-based blacklisting at hook time.
-CATEGORIES: dict[str, list[str]] = {
-    "ml": [
-        "ml/eval-driven-verification",
-        "ml/experiment-tracking-conventions",
-        "ml/gpu-budget-conventions",
-    ],
-    "writing": [
-        "writing/aac-dac-conventions",
-        "writing/diagram-conventions",
-        "writing/html-output-conventions",
-        "writing/readme-style",
-    ],
-    "vcs": [
-        "swe/vcs/git-conventions",
-        "swe/vcs/pr-conventions",
-    ],
-}
 
 MANIFEST_HEADER = (
     "# AUTO-GENERATED. Do not edit by hand.\n"
@@ -135,6 +118,29 @@ def _validate_core_rules(records: list[dict[str, Any]]) -> list[str]:
     return errors
 
 
+def _validate_hook_deliver_coverage(records: list[dict[str, Any]]) -> list[str]:
+    """Verify every install: hook-deliver rule appears in HOOK_DELIVER_ORDER.
+
+    Catches the footgun where a new hook-deliver rule is added without updating
+    the canonical injection-order list — without this check, the new rule
+    would fall through to the path-scoped section of the manifest and lose
+    its stable injection position.
+    """
+    declared = {
+        r["id"] for r in records if r.get("install") == "hook-deliver" and "id" in r
+    }
+    ordered = set(HOOK_DELIVER_ORDER)
+    missing = declared - ordered
+    if not missing:
+        return []
+    return [
+        f"ERROR: hook-deliver rule '{rid}' is not in HOOK_DELIVER_ORDER in"
+        f" scripts/regenerate_rules_manifest.py. Add it in the desired"
+        f" injection position (manifest order drives additionalContext order)."
+        for rid in sorted(missing)
+    ]
+
+
 def _ordered_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Return records in canonical manifest order:
     1. Core rules (alphabetical by id)
@@ -152,12 +158,17 @@ def _ordered_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _render_doc(records: list[dict[str, Any]], include_timestamp: bool) -> str:
-    """Serialize manifest records to YAML string."""
+    """Serialize manifest records to YAML string.
+
+    Schema: {version, generated_at?, rules}. The `categories` block was
+    removed (it was written but consumed nowhere — inject_rules.py uses
+    fnmatch directly on user patterns, so `ml/*`, `writing/*`, `swe/vcs/*`
+    work without a categories alias table).
+    """
     doc: dict[str, Any] = {"version": 1}
     if include_timestamp:
         doc["generated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     doc["rules"] = _ordered_records(records)
-    doc["categories"] = CATEGORIES
     buf = io.StringIO()
     yaml.dump(doc, buf, sort_keys=False, default_flow_style=False, allow_unicode=True)
     return buf.getvalue()
@@ -172,10 +183,17 @@ def _stable_body(content: str) -> str:
     )
 
 
+def _all_validation_errors(records: list[dict[str, Any]]) -> list[str]:
+    """Aggregate every structural validation that must pass before the manifest
+    is considered well-formed. Runs all validators so the user sees every
+    error at once rather than discovering them one-at-a-time."""
+    return _validate_core_rules(records) + _validate_hook_deliver_coverage(records)
+
+
 def run_generate() -> int:
     """Regenerate rules/_manifest.yaml and write to disk."""
     records = _collect_rules()
-    if errors := _validate_core_rules(records):
+    if errors := _all_validation_errors(records):
         for err in errors:
             print(err, file=sys.stderr)
         return 1
@@ -190,7 +208,7 @@ def run_generate() -> int:
 def run_check() -> int:
     """Compare generated manifest with on-disk manifest. Exit 1 on drift."""
     records = _collect_rules()
-    if errors := _validate_core_rules(records):
+    if errors := _all_validation_errors(records):
         for err in errors:
             print(err, file=sys.stderr)
         return 1

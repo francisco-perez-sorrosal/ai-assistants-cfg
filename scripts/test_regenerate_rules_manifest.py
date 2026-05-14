@@ -468,6 +468,82 @@ def test_merged_frontmatter_codex_and_core_produces_hook_deliver(
 
 
 # ---------------------------------------------------------------------------
+# Hook-deliver coverage validator: every install: hook-deliver rule must be
+# in HOOK_DELIVER_ORDER, otherwise a new rule would silently fall through to
+# the path-scoped alphabetical block in the manifest.
+# ---------------------------------------------------------------------------
+
+
+def test_hook_deliver_rule_missing_from_order_list_fails_generation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """A new hook-deliver rule that is NOT listed in HOOK_DELIVER_ORDER must
+    cause the generator to fail with a helpful error — protecting against
+    the footgun where a new always-on rule lands without a stable injection
+    position."""
+    rules_dir = tmp_path / "rules"
+    manifest_path = rules_dir / "_manifest.yaml"
+
+    # Minimal valid tree (5 core rules + 3 known hook-deliver rules) PLUS
+    # one new hook-deliver rule that is NOT in HOOK_DELIVER_ORDER.
+    _seed(
+        rules_dir,
+        {
+            "CLAUDE.md": _CORE_FRONTMATTER + "# Rules\n",
+            "swe": {
+                "adr-conventions.md": _CORE_FRONTMATTER + "## ADR\n",
+                "agent-behavioral-contract.md": _CORE_FRONTMATTER + "## Contract\n",
+                "agent-intermediate-documents.md": _CORE_FRONTMATTER
+                + "## IntermediateDocs\n",
+                "swe-agent-coordination-protocol.md": _CORE_FRONTMATTER
+                + "## CoordProtocol\n",
+                "memory-protocol.md": _HOOK_DELIVER_FRONTMATTER + "## Memory\n",
+                "agent-model-routing.md": _HOOK_DELIVER_FRONTMATTER + "## Routing\n",
+                "vcs": {
+                    "git-conventions.md": _HOOK_DELIVER_FRONTMATTER + "## Git\n",
+                },
+                # New hook-deliver rule, not in HOOK_DELIVER_ORDER:
+                "newly-added-rule.md": _HOOK_DELIVER_FRONTMATTER + "## NewRule\n",
+            },
+        },
+    )
+
+    mod = _patched_module(monkeypatch, rules_dir, manifest_path)
+    exit_code = mod.run_generate()
+    assert exit_code == 1, (
+        "Generator must fail when a hook-deliver rule is missing from"
+        " HOOK_DELIVER_ORDER. Got exit code 0 — the footgun would slip through."
+    )
+
+
+def test_no_categories_block_in_generated_manifest(
+    monkeypatch: pytest.MonkeyPatch,
+    minimal_rules_tree: tuple[Path, Path],
+) -> None:
+    """The dead `categories:` block must not appear in the generated manifest.
+
+    inject_rules.py uses fnmatch directly on user patterns (e.g., `ml/*`),
+    so a categories alias table is not consumed anywhere — removing it
+    eliminates dead config.
+    """
+    rules_dir, manifest_path = minimal_rules_tree
+    mod = _patched_module(monkeypatch, rules_dir, manifest_path)
+    assert mod.run_generate() == 0
+
+    text = manifest_path.read_text(encoding="utf-8")
+    assert "categories:" not in text, (
+        "The dead `categories:` block must be removed from the manifest."
+        f" Manifest body:\n{text}"
+    )
+    # Sanity: confirm the parsed dict has no such key either.
+    parsed = yaml.safe_load(text)
+    assert "categories" not in parsed, (
+        f"Parsed manifest must not contain a 'categories' key. Got keys: {list(parsed.keys())!r}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Subprocess smoke-test: CLI --check exit-code contract
 # ---------------------------------------------------------------------------
 

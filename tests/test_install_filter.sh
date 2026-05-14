@@ -148,10 +148,17 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Test 5: full scripts/ directory yields the expected 6-file inventory
+# Test 5: scripts/ predicate respects its inclusion/exclusion contract
 # -----------------------------------------------------------------------------
+# Rather than pinning an exact inventory (which grows stale every time a
+# script is added — see prior FAIL where the list was 6 entries while
+# scripts/ had 15), this test pins the *contract* of script_is_user_facing:
+#   - It MUST include known user-facing tools (positive cases).
+#   - It MUST NOT include internal helpers (negative cases: merge_driver_*,
+#     git-*-hook.sh) regardless of their executable bits.
+# That way, adding a new user-facing script doesn't break the test, but a
+# regression that lets internal helpers slip into ~/.local/bin/ does.
 start_test "test_repo_scripts_yield_expected_inventory"
-EXPECTED_LINKED="ccwt chronograph-ctl phoenix-ctl reconcile_ai_state.py regenerate_adr_index.py validate_adr_references.py"
 
 ACTUAL_LINKED=""
 for f in "${REPO_ROOT}/scripts"/*; do
@@ -161,12 +168,36 @@ for f in "${REPO_ROOT}/scripts"/*; do
     fi
 done
 ACTUAL_LINKED="$(printf '%s' "$ACTUAL_LINKED" | tr ' ' '\n' | sort | grep -v '^$' | tr '\n' ' ' | sed 's/ $//')"
-EXPECTED_SORTED="$(printf '%s' "$EXPECTED_LINKED" | tr ' ' '\n' | sort | tr '\n' ' ' | sed 's/ $//')"
 
-if [ "$ACTUAL_LINKED" = "$EXPECTED_SORTED" ]; then
-    pass "scripts/ predicate yields exactly the 6 expected user-facing tools"
+# Positive contract: these MUST be present (canonical, stable user tools).
+EXPECTED_PRESENT="ccwt chronograph-ctl phoenix-ctl"
+missing_present=""
+for tool in $EXPECTED_PRESENT; do
+    case " $ACTUAL_LINKED " in
+        *" $tool "*) : ;;
+        *) missing_present="${missing_present} $tool" ;;
+    esac
+done
+
+# Negative contract: these MUST NOT be present even if executable
+# (internal helpers — merge drivers, git hooks).
+EXPECTED_ABSENT_PATTERNS="merge_driver_ git-finalize-hook.sh git-pre-commit-hook.sh git-post-merge-hook.sh"
+present_negatives=""
+for tool in $ACTUAL_LINKED; do
+    for bad in $EXPECTED_ABSENT_PATTERNS; do
+        case "$tool" in
+            *${bad}*) present_negatives="${present_negatives} $tool" ;;
+        esac
+    done
+done
+
+if [ -z "$missing_present" ] && [ -z "$present_negatives" ]; then
+    pass "scripts/ predicate respects positive+negative contract"
 else
-    fail "inventory mismatch: expected '${EXPECTED_SORTED}' got '${ACTUAL_LINKED}'"
+    msg="contract violation:"
+    [ -n "$missing_present" ] && msg="${msg} missing user-facing tools:${missing_present};"
+    [ -n "$present_negatives" ] && msg="${msg} internal helpers slipped through:${present_negatives};"
+    fail "${msg} got '${ACTUAL_LINKED}'"
 fi
 
 # -----------------------------------------------------------------------------

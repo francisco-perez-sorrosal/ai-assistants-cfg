@@ -35,6 +35,17 @@ Behavior contract:
 - Schema-guarded: version > 1 in project config → log warning and load all.
 - Idempotent: settings.json is rewritten only when its `claudeMdExcludes`
   would actually change; otherwise no write happens.
+- Auto-template: when Praxion is active in a project but neither
+  `.claude/praxion-rules.yaml` nor `.claude/praxion-rules.yaml.example`
+  exists, the shipped template is copied to `.claude/praxion-rules.yaml.example`
+  so projects discover the mechanism without manual `cp`. Idempotent.
+
+Visibility of misuse (turned silent no-ops into stderr warnings):
+- `disable:` provided as a scalar (not a list) → warning, treated as empty.
+- A pattern in `disable:` matching zero rule IDs → warning per pattern (typo guard).
+- `version:` field with non-int value → warning, coerced to 1.
+- `.claude/settings.json` malformed JSON → louder warning naming the
+  consequence (reconciliation skipped, disable list not applied).
 """
 
 from __future__ import annotations
@@ -84,10 +95,16 @@ def _strip_frontmatter(text: str) -> str:
 
 
 def _load_yaml(text: str) -> Any:
-    """Parse YAML text; raises on malformed input."""
+    """Parse YAML text; raises on malformed input.
+
+    PyYAML is a hard dependency of Praxion (declared in plugin requirements).
+    If it is genuinely absent, this raises RuntimeError and the caller treats
+    the failure as fail-open (skip injection, exit 0). No stdlib fallback —
+    a partial YAML parser would mis-handle the manifest and silently corrupt
+    the disable contract, which is worse than not running.
+    """
     if yaml is not None:
         return yaml.safe_load(text)
-    # Minimal fallback: not used in production (PyYAML is always present in Praxion)
     raise RuntimeError("PyYAML not available")
 
 
@@ -149,14 +166,27 @@ def _load_project_config(cwd: Path) -> dict | None:
 # -- Glob resolution -----------------------------------------------------------
 
 
-def _resolve_disable_globs(patterns: list[str], all_rule_ids: list[str]) -> set[str]:
-    """Expand glob patterns against all manifest rule IDs using fnmatch."""
+def _resolve_disable_globs(
+    patterns: list[str], all_rule_ids: list[str]
+) -> tuple[set[str], list[str]]:
+    """Expand glob patterns against all manifest rule IDs using fnmatch.
+
+    Returns a tuple of (disabled_ids, unmatched_patterns).
+    `unmatched_patterns` is the subset of `patterns` that matched zero rule IDs,
+    preserved in input order. The caller logs a warning per unmatched pattern so
+    typos like `disable: [my/tpyo-rule]` are visible rather than silent no-ops.
+    """
     disabled: set[str] = set()
+    unmatched: list[str] = []
     for pattern in patterns:
+        matched_any = False
         for rule_id in all_rule_ids:
             if fnmatch.fnmatch(rule_id, pattern):
                 disabled.add(rule_id)
-    return disabled
+                matched_any = True
+        if not matched_any:
+            unmatched.append(pattern)
+    return disabled, unmatched
 
 
 # -- Core protection -----------------------------------------------------------
@@ -241,7 +271,10 @@ def _apply_symlink_exclusions(cwd: Path, exclusions: list[str]) -> None:
             except (json.JSONDecodeError, OSError) as exc:
                 print(
                     f"[inject_rules] WARNING: could not parse {settings_path}:"
-                    f" {exc}; skipping claudeMdExcludes reconciliation",
+                    f" {exc}. Praxion-managed claudeMdExcludes reconciliation"
+                    " skipped — the YAML disable list will NOT be applied until"
+                    " the JSON is fixed. Validate with: python3 -c"
+                    " 'import json,sys; json.load(open(sys.argv[1]))' .claude/settings.json",
                     file=sys.stderr,
                 )
                 return
@@ -270,8 +303,12 @@ def _apply_symlink_exclusions(cwd: Path, exclusions: list[str]) -> None:
             existing.pop("claudeMdExcludes", None)
 
         settings_path.parent.mkdir(parents=True, exist_ok=True)
+        # sort_keys=False preserves the user's existing top-level key ordering;
+        # claudeMdExcludes itself is already deterministically sorted in
+        # _compute_symlink_exclusions, so the file content is still stable
+        # across runs without alphabetizing unrelated user-managed keys.
         settings_path.write_text(
-            json.dumps(existing, indent=2, sort_keys=True) + "\n",
+            json.dumps(existing, indent=2, sort_keys=False) + "\n",
             encoding="utf-8",
         )
         print(
@@ -404,9 +441,16 @@ def main() -> None:
     try:
         project_cfg = _load_project_config(cwd)
         if project_cfg is not None:
-            version = project_cfg.get("version", 1)
-            if not isinstance(version, int):
+            raw_version = project_cfg.get("version", 1)
+            if not isinstance(raw_version, int):
+                print(
+                    f"[inject_rules] WARNING: 'version:' field has non-integer"
+                    f" value {raw_version!r}; coercing to 1. Expected: 'version: 1'.",
+                    file=sys.stderr,
+                )
                 version = 1
+            else:
+                version = raw_version
             if version > SUPPORTED_SCHEMA_VERSION:
                 print(
                     f"[inject_rules] Schema version {version} is not supported by "
@@ -417,9 +461,22 @@ def main() -> None:
                 disable_patterns = []
             else:
                 raw_disable = project_cfg.get("disable", [])
-                disable_patterns = (
-                    list(raw_disable) if isinstance(raw_disable, list) else []
-                )
+                if isinstance(raw_disable, list):
+                    disable_patterns = list(raw_disable)
+                elif "disable" in project_cfg:
+                    # Present but malformed: scalar, dict, or null. Silent
+                    # coercion would mask a typo (e.g., `disable: ml/*` instead
+                    # of `disable: [ml/*]`), so surface it explicitly.
+                    print(
+                        f"[inject_rules] WARNING: 'disable:' must be a YAML list,"
+                        f" got {type(raw_disable).__name__}: {raw_disable!r}."
+                        " Treating as empty. Use the list form:"
+                        " 'disable:\\n  - rule/id'",
+                        file=sys.stderr,
+                    )
+                    disable_patterns = []
+                else:
+                    disable_patterns = []
     except ValueError as exc:
         print(
             f"[inject_rules] WARNING: {exc}; injecting all rules (fail open)",
@@ -427,8 +484,18 @@ def main() -> None:
         )
         disable_patterns = []
 
-    # Resolve glob patterns (e.g., ml/*) to concrete rule IDs.
-    disable_set = _resolve_disable_globs(disable_patterns, all_rule_ids)
+    # Resolve glob patterns (e.g., ml/*) to concrete rule IDs. Warn for any
+    # pattern that matched zero rules — catches typos like `disable: [my/tpyo]`.
+    disable_set, unmatched_patterns = _resolve_disable_globs(
+        disable_patterns, all_rule_ids
+    )
+    for pattern in unmatched_patterns:
+        print(
+            f"[inject_rules] WARNING: disable pattern {pattern!r} matched no"
+            " rule in rules/_manifest.yaml — typo? Run `python3"
+            " scripts/regenerate_rules_manifest.py` to see valid IDs.",
+            file=sys.stderr,
+        )
 
     # Remove core rules from disable set; warn for each attempted suppression.
     disable_set = _filter_core_rules(disable_set, rules)

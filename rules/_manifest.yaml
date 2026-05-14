@@ -3,7 +3,7 @@
 #
 # Schema version: 1
 version: 1
-generated_at: '2026-05-13T20:33:34Z'
+generated_at: '2026-05-14T04:36:51Z'
 rules:
 - id: CLAUDE
   path: rules/CLAUDE.md
@@ -248,16 +248,3 @@ rules:
   paths:
   - '**/README.md'
   - '**/README_DEV.md'
-categories:
-  ml:
-  - ml/eval-driven-verification
-  - ml/experiment-tracking-conventions
-  - ml/gpu-budget-conventions
-  writing:
-  - writing/aac-dac-conventions
-  - writing/diagram-conventions
-  - writing/html-output-conventions
-  - writing/readme-style
-  vcs:
-  - swe/vcs/git-conventions
-  - swe/vcs/pr-conventions

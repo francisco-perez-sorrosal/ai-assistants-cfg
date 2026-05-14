@@ -1,4 +1,10 @@
 {
+  "claudeMdExcludes": [
+    "**/.claude/rules/ml/eval-driven-verification.md",
+    "**/.claude/rules/ml/experiment-tracking-conventions.md",
+    "**/.claude/rules/ml/gpu-budget-conventions.md",
+    "**/.claude/rules/swe/memory-protocol.md"
+  ],
   "env": {
     "PRAXION_DISABLE_MEMORY_GATE": "1",
     "PRAXION_DISABLE_MEMORY_INJECTION": "1",

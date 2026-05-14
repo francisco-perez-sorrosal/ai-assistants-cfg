@@ -7,6 +7,16 @@ audience: developer
 
 Every Praxion-onboarded project inherits a curated set of rules: coding style, behavioral contract, agent coordination protocol, ADR conventions, and more. Some are always-loaded (cost tokens on every session); others load only when their trigger paths are read. This guide explains how rules are categorized, how the per-project disable mechanism reaches each category, and how to measure the cost of your choices.
 
+## Token-Savings Ceiling (Read This First)
+
+**The maximum baseline token reduction this mechanism can deliver is the sum of the *hook-deliver* rule sizes — currently ~5,100 tokens across three rules** (`swe/memory-protocol`, `swe/agent-model-routing`, `swe/vcs/git-conventions`). Everything else in the disable list is a *policy guarantee*, not a token saver:
+
+- **Core rules** (`core: true`, ~15,900 tokens) are non-disableable. They load unconditionally — listing them in `disable:` emits a warning and changes nothing.
+- **Path-scoped rules** (13 rules) are already lazy: they cost **zero tokens at SessionStart** regardless of the disable list. Adding them to `disable:` produces a *declarative* guarantee that they will never load — useful in projects where a generically-named trigger file could appear (`prepare.py` in a non-ML project) — but yields no baseline savings.
+- **Hook-deliver rules** are the only group whose disable status moves tokens.
+
+If your goal is to shrink the always-loaded surface beyond the ~5k-token hook-deliver ceiling, the lever is **not** the YAML — it is the `core: true/false` classification in `rules/_manifest.yaml`, or splitting bulky always-on rules into thin always-on summaries plus on-demand reference files under `skills/<name>/references/`. The YAML mechanism is a per-project filter over the rules already available; the `core` classification is the architectural decision about *which* rules are available at all.
+
 ## Two-Channel Delivery, One Disable List
 
 Praxion delivers rules through two channels. The per-project `.claude/praxion-rules.yaml` disable list reaches **both** — different mechanism under the hood, single YAML interface.
@@ -48,7 +58,7 @@ Three rules ship at SessionStart and contribute to the always-loaded token basel
 
 ### 3. Path-Scoped Rules (disableable, declarative-only — zero baseline cost)
 
-Fourteen rules load only when their `paths:` frontmatter matches a `Read` target. They cost **zero tokens at SessionStart** regardless of whether they appear in the YAML disable list.
+Thirteen rules load only when their `paths:` frontmatter matches a `Read` target. They cost **zero tokens at SessionStart** regardless of whether they appear in the YAML disable list. Disabling them yields no SessionStart token savings — the value is the **declarative guarantee** that the rule never applies in this project, even if a generically-named trigger file (e.g., `prepare.py` in a non-ML project) appears later.
 
 | Category | Rule ID(s) | Activation pattern | Purpose |
 |----------|------------|-------------------|---------|
@@ -168,16 +178,25 @@ This skips the `inject_rules.py` hook entirely. Effects:
 When a session starts, the `inject_rules.py` hook logs a summary line to stderr:
 
 ```
-[inject_rules] Loaded 5 core rules; injected 3/3 hook-deliver rules (suppressed: none); symlink suppressions via claudeMdExcludes: none
+[inject_rules] Loaded 5 core rules; injected 3/3 hook-deliver rules (suppressed: none); claudeMdExcludes entries: none
 ```
 
 With suppressions active (e.g., `disable: [ml/*, swe/memory-protocol]`):
 
 ```
-[inject_rules] Loaded 5 core rules; injected 2/3 hook-deliver rules (suppressed: swe/memory-protocol); symlink suppressions via claudeMdExcludes: ml/eval-driven-verification, ml/experiment-tracking-conventions, ml/gpu-budget-conventions
+[inject_rules] Loaded 5 core rules; injected 2/3 hook-deliver rules (suppressed: swe/memory-protocol); claudeMdExcludes entries: ml/eval-driven-verification, ml/experiment-tracking-conventions, ml/gpu-budget-conventions, swe/memory-protocol
 ```
 
-This confirms which rules were loaded, which hook-deliver rules were filtered, and which symlink rules were added to `claudeMdExcludes` for the session.
+This confirms which rules were loaded, which hook-deliver rules were filtered, and which rules were added to `claudeMdExcludes` for the session. Note: the disabled hook-deliver rule (`swe/memory-protocol`) appears in *both* the `suppressed:` list and the `claudeMdExcludes entries:` list — the latter is defense-in-depth against stale symlinks (see [`hooks/inject_rules.py`](../hooks/inject_rules.py) `_compute_symlink_exclusions` docstring).
+
+### Misuse warnings
+
+The hook surfaces several previously-silent misuses as stderr warnings, so a config typo can't masquerade as working configuration:
+
+- **`disable:` as scalar instead of list** — `disable: ml/*` (without the `- `) was previously coerced to empty silently. Now emits: `WARNING: 'disable:' must be a YAML list, got str: 'ml/*'. Treating as empty.`
+- **A pattern matching zero rules** — `disable: [my/typo-rule]` was previously a silent no-op. Now emits: `WARNING: disable pattern 'my/typo-rule' matched no rule in rules/_manifest.yaml — typo?`
+- **Non-integer `version:`** — `version: "1"` was previously coerced to int 1 silently. Now emits: `WARNING: 'version:' field has non-integer value '1'; coercing to 1.`
+- **Malformed `.claude/settings.json`** — was previously a quiet skip. Now emits a louder warning that names the consequence: *"Praxion-managed claudeMdExcludes reconciliation skipped — the YAML disable list will NOT be applied until the JSON is fixed."*
 
 If reconciliation wrote to `settings.json`, a second line appears:
 

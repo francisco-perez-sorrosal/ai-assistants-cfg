@@ -30,33 +30,72 @@
 # entry from this YAML triggers a clean removal of the corresponding
 # `claudeMdExcludes` entry on the next SessionStart.
 #
-# Common disable targets — see `rules/_manifest.yaml` for the complete
-# list and `docs/rules-taxonomy.md` for token accounting:
+# Full enumeration of disableable rules — what `disable:` can actually target.
+# Canonical source: `rules/_manifest.yaml`. Full token accounting and rationale:
+# `docs/rules-taxonomy.md`. Five core rules are NON-disableable (CLAUDE,
+# swe/adr-conventions, swe/agent-behavioral-contract,
+# swe/agent-intermediate-documents, swe/swe-agent-coordination-protocol) —
+# attempting to list them emits a SessionStart warning and they stay loaded.
 #
-#   Hook-deliver rules (always-loaded baseline; disabling reclaims tokens):
-#     - swe/memory-protocol      — Memory MCP protocol (~1.5k tokens)
-#     - swe/agent-model-routing  — Per-agent Claude model tier policy (~2.3k tokens)
-#     - swe/vcs/git-conventions  — Commit/staging/secrets conventions (~1.3k tokens)
+#   Hook-deliver, always-loaded (3 rules — disabling reclaims SessionStart tokens):
+#     - swe/memory-protocol            — Memory MCP protocol (~1.2k tokens)
+#     - swe/agent-model-routing        — Per-agent Claude model tier policy (~1.6k tokens)
+#     - swe/vcs/git-conventions        — Commit/staging/secrets conventions (~1.0k tokens)
 #
-#   Symlinked path-scoped groups (only triggered by matching Reads; disabling
-#   gives the declarative guarantee that the rule never applies here, even if
-#   trigger files are added to the project later):
-#     - ml/*                     — ML training conventions (3 rules)
-#     - writing/*                — Documentation conventions (multiple rules)
-#     - swe/vcs/pr-conventions   — PR-specific conventions
+#   Path-scoped (13 rules — zero baseline cost; disabling is a declarative
+#   guarantee that the rule never applies here, even if a trigger file appears):
+#
+#     SWE (6 rules):
+#       - swe/coding-style                — Language coding conventions (.py/.ts/.go/.rs/etc.)
+#       - swe/id-citation-discipline      — REQ/AC citation discipline in source code
+#       - swe/shipped-artifact-isolation  — Artifact-portability constraint (rules/skills/etc.)
+#       - swe/staleness-policy            — Skill freshness conventions (skills/**/SKILL.md)
+#       - swe/testing-conventions         — Test code patterns and discipline
+#       - swe/vcs/pr-conventions          — PR workflow and merge policy
+#
+#     ML/AI (3 rules):
+#       - ml/eval-driven-verification        — Training plan acceptance criteria
+#       - ml/experiment-tracking-conventions — Experiment tracking tool conventions
+#       - ml/gpu-budget-conventions          — GPU compute budget enforcement
+#
+#     Writing (4 rules):
+#       - writing/aac-dac-conventions     — Architecture-as-Code fence conventions
+#       - writing/diagram-conventions     — Diagram toolchain (Mermaid, LikeC4, D2)
+#       - writing/html-output-conventions — HTML dashboard output rules
+#       - writing/readme-style            — README writing style
+#
+#   Glob shortcuts (fnmatch; `*` crosses `/`):
+#     - ml/*       → all 3 ML rules
+#     - writing/*  → all 4 writing rules
+#     - swe/vcs/*  → swe/vcs/git-conventions + swe/vcs/pr-conventions
+#     - swe/*      → 9 SWE rules (3 hook-deliver + 6 path-scoped); core rules
+#                    emit a warning and stay loaded
 
 # List of rules to disable for this project, by ID (directory-prefixed
 # path without the `.md` extension). fnmatch glob syntax is supported.
+#
+# Praxion (this project) is the META-project that defines training conventions
+# for downstream user projects — it doesn't train models itself. The disable
+# list reflects that: suppress memory-protocol (PRAXION_DISABLE_MEMORY_MCP=1
+# makes it irrelevant here) and declare ML rules out of scope. Other rules
+# (agent-model-routing, git-conventions, writing/*) are kept loaded because
+# Praxion's own pipeline and docs use them.
 disable:
-  # Project sets PRAXION_DISABLE_MEMORY_MCP=1 or has no memory MCP server
-  # - swe/*
+  # Token-saving suppression — recoups ~1.2k always-loaded tokens.
+  # PRAXION_DISABLE_MEMORY_MCP=1 is set in .claude/settings.json, so the
+  # Memory MCP protocol rule has nothing to apply to in this project.
+  - swe/memory-protocol
 
-  # Not an ML project — never load ML training conventions, even if a file
-  # like `prepare.py` or `runs/` appears in the tree for unrelated reasons
-  # - ml/*
+  # Declarative guarantee — zero token savings (ML rules are path-scoped),
+  # but adds claudeMdExcludes entries so they never fire even if a file
+  # like `prepare.py` appears in the tree for unrelated reasons.
+  - ml/*
 
-  # Project uses default model routing only (no multi-tier pipeline)
-  # - swe/agent-model-routing
+  # Other rules are intentionally NOT disabled here:
+  # - swe/agent-model-routing  — Praxion uses the multi-tier pipeline
+  # - swe/vcs/git-conventions  — Praxion follows the canonical git conventions
+  # - writing/*                — Praxion's own docs (READMEs, ARCHITECTURE.md,
+  #                              diagrams) use these conventions
 
 # Schema version. Currently 1. Bumped on breaking config changes.
 version: 1

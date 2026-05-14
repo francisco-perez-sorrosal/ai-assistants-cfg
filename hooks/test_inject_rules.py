@@ -785,6 +785,160 @@ def test_disabling_hook_deliver_rules_also_writes_claudemd_excludes(
     )
 
 
+# ===========================================================================
+# Test 16: disable: as a YAML scalar emits a warning instead of silent no-op
+# ===========================================================================
+
+
+def test_disable_as_scalar_emits_warning_and_treats_as_empty(
+    plugin_root: Path, project_dir: Path
+) -> None:
+    """`disable: ml/*` (scalar) is a common typo for `disable: [ml/*]`.
+
+    The hook must surface this with a stderr warning rather than silently
+    treating the field as empty. Fail-open behavior is preserved: all
+    hook-deliver rules still inject.
+    """
+    _write_project_config(project_dir, "version: 1\ndisable: ml/*\n")
+    result = _run_hook(plugin_root, project_dir)
+    assert result.returncode == 0, (
+        f"Hook must exit 0 even with malformed disable: scalar. stderr: {result.stderr!r}"
+    )
+    stderr_lower = result.stderr.lower()
+    assert "disable" in stderr_lower and "list" in stderr_lower, (
+        f"stderr must warn that 'disable:' should be a list. stderr: {result.stderr!r}"
+    )
+    # Fail-open: all 3 rules still injected.
+    context = _additional_context(result)
+    assert _MEMORY_PROTOCOL_BODY.strip() in context, (
+        "Scalar disable: must fail-open with all rules injected."
+        f" Context: {context[:200]!r}"
+    )
+
+
+# ===========================================================================
+# Test 17: a disable: pattern matching zero rule IDs emits a typo warning
+# ===========================================================================
+
+
+def test_unmatched_disable_pattern_emits_typo_warning(
+    plugin_root: Path, project_dir: Path
+) -> None:
+    """A disable: entry that matches no manifest rule is almost always a typo."""
+    _write_project_config(
+        project_dir,
+        "version: 1\ndisable:\n  - swe/no-such-rule\n  - typo/at-all\n",
+    )
+    result = _run_hook(plugin_root, project_dir)
+    assert result.returncode == 0, (
+        f"Hook must exit 0 with unmatched patterns. stderr: {result.stderr!r}"
+    )
+    # Each unmatched pattern must produce a stderr warning naming it.
+    assert "swe/no-such-rule" in result.stderr, (
+        f"stderr must mention the unmatched pattern. stderr: {result.stderr!r}"
+    )
+    assert "typo/at-all" in result.stderr, (
+        f"stderr must mention each unmatched pattern. stderr: {result.stderr!r}"
+    )
+
+
+# ===========================================================================
+# Test 18: non-integer version: value emits a warning and coerces to 1
+# ===========================================================================
+
+
+def test_non_int_version_emits_warning_and_coerces(
+    plugin_root: Path, project_dir: Path
+) -> None:
+    """`version: "1"` (string) is silently coerced to int 1 — but the hook
+    surfaces the wrong shape with a stderr warning so the user sees it."""
+    _write_project_config(project_dir, 'version: "1"\ndisable: []\n')
+    result = _run_hook(plugin_root, project_dir)
+    assert result.returncode == 0, f"Hook failed. stderr: {result.stderr!r}"
+    stderr_lower = result.stderr.lower()
+    assert "version" in stderr_lower, (
+        f"stderr must mention the version field. stderr: {result.stderr!r}"
+    )
+    # Coerced to 1, so disable list still processed → no unsupported-version warning
+    assert "not supported" not in stderr_lower, (
+        f"Coercion to 1 must not trigger the unsupported-version path."
+        f" stderr: {result.stderr!r}"
+    )
+
+
+# ===========================================================================
+# Test 19: malformed settings.json prints a loud, actionable warning
+# ===========================================================================
+
+
+def test_malformed_settings_json_emits_loud_warning(
+    plugin_root: Path, project_dir: Path
+) -> None:
+    """When .claude/settings.json is invalid JSON, the disable list is silently
+    dropped (Claude Code can't read excludes). The hook must surface this
+    failure with a warning that names the consequence."""
+    dot_claude = project_dir / ".claude"
+    dot_claude.mkdir()
+    (dot_claude / "settings.json").write_text(
+        "{ this is not valid json", encoding="utf-8"
+    )
+
+    _write_project_config(project_dir, "version: 1\ndisable:\n  - ml/*\n")
+    result = _run_hook(plugin_root, project_dir)
+    assert result.returncode == 0, f"Hook failed. stderr: {result.stderr!r}"
+    # The warning must mention BOTH that parsing failed AND that the disable
+    # list will not be applied — earlier versions only said the former, which
+    # silently degraded the contract.
+    assert "could not parse" in result.stderr.lower(), (
+        f"stderr must report the JSON parse failure. stderr: {result.stderr!r}"
+    )
+    assert (
+        "not be applied" in result.stderr.lower() or "skipped" in result.stderr.lower()
+    ), (
+        "stderr must surface the consequence (disable list not applied)."
+        f" stderr: {result.stderr!r}"
+    )
+
+
+# ===========================================================================
+# Test 20: top-level settings.json key ordering is preserved across runs
+# ===========================================================================
+
+
+def test_existing_settings_json_key_ordering_preserved(
+    plugin_root: Path, project_dir: Path
+) -> None:
+    """The hook must not alphabetize user-managed top-level keys in
+    .claude/settings.json. claudeMdExcludes itself is sorted (deterministic
+    output) but unrelated keys keep their original position."""
+    dot_claude = project_dir / ".claude"
+    dot_claude.mkdir()
+    settings_path = dot_claude / "settings.json"
+    # Keys deliberately not in alphabetical order:
+    settings_path.write_text(
+        json.dumps(
+            {"zzz_user_key": "first", "aaa_user_key": "second"},
+            indent=2,
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    _write_project_config(project_dir, "version: 1\ndisable:\n  - ml/*\n")
+
+    result = _run_hook(plugin_root, project_dir)
+    assert result.returncode == 0, f"Hook failed. stderr: {result.stderr!r}"
+
+    final = settings_path.read_text(encoding="utf-8")
+    # zzz must appear BEFORE aaa in the file body because that was the
+    # original insertion order. sort_keys=True would have swapped them.
+    zzz_pos = final.index("zzz_user_key")
+    aaa_pos = final.index("aaa_user_key")
+    assert zzz_pos < aaa_pos, (
+        "User-managed top-level keys must retain insertion order across"
+        f" reconciliation. File:\n{final}"
+    )
+
+
 def test_no_yaml_leaves_existing_settings_untouched(
     plugin_root: Path, project_dir: Path
 ) -> None:
