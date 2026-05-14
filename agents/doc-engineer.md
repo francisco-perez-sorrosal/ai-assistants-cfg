@@ -9,7 +9,7 @@ description: >
   manage context artifacts (CLAUDE.md, skills, rules, commands, agents) -- that
   is the context-engineer's domain.
 tools: Read, Write, Edit, Glob, Grep, Bash
-skills: doc-management
+skills: [doc-management, web-ui-design]
 permissionMode: acceptEdits
 memory: user
 maxTurns: 50
@@ -104,8 +104,9 @@ Apply the readme-style rule conventions to documentation content:
 5. **Structural integrity** -- cross-reference and naming conventions from the readme-style rule
 6. **Content depth** -- documentation depth matches artifact complexity (no over-documentation, no under-documentation)
 7. **Progressive disclosure opportunities** -- for human-facing GitHub-rendered documents (`README.md`, `docs/*.md`, `CONTRIBUTING.md`, `CHANGELOG.md`) only: flag sections > 30 lines that are skippable (troubleshooting, advanced config, verbose examples) as `<details>` candidates; flag missing GitHub Alerts for high-consequence warnings or prerequisites buried in prose; flag inline clarifications that interrupt flow as footnote candidates; flag documents with 4+ sections and no table of contents as anchor-link candidates. Use the `advanced-markdown-patterns` reference in the doc-management skill for decision rules. Do not flag agent-intermediate documents or context artifacts.
+8. **Visual tone and emoji/badge/color discipline** -- for the same human-facing GitHub-rendered scope as item 7: flag decorative emojis on every heading or bullet (selective use only — at most one per heading, one per bullet, never in body prose); flag emoji-only labels and emojis inside agent-intermediate documents or context artifacts; flag vanity badges, badge strips larger than 3–4, badges that are not live links; flag `<span style="color:...">` and any other raw HTML used for color or emphasis; flag marketing-tone prose (multiple exclamations, "🎉", "Awesome!") in technical READMEs; flag color used as the only signal (must pair with text/shape/icon). Use the `advanced-markdown-patterns` reference's *Emojis as Cognitive Anchors* and *Color & Visual Tone* sections for decision rules.
 
-Classify each finding by severity: Critical (blocks correct understanding), Important (degrades documentation quality), Suggested (improves but not urgent). Progressive disclosure findings are always Suggested unless a missing alert conceals a data-loss or security risk (Important).
+Classify each finding by severity: Critical (blocks correct understanding), Important (degrades documentation quality), Suggested (improves but not urgent). Progressive disclosure and visual-tone findings are Suggested by default; promote to Important when a missing alert conceals a data-loss or security risk, or when raw color HTML breaks accessibility (color-blind readers, dark-mode contrast).
 
 ### Phase 6 -- Remediation (6/6)
 
@@ -148,6 +149,8 @@ Classify each finding by severity: Critical (blocks correct understanding), Impo
 5. Apply writing quality improvements only when they fix clear violations (not stylistic preferences)
 6. Apply `<details>`/`<summary>` wrapping to optional-depth sections flagged in Phase 5 (troubleshooting, advanced config, verbose examples) -- only in human-facing GitHub-rendered documents
 7. Add GitHub Alerts (`> [!WARNING]`, `> [!IMPORTANT]`, etc.) for high-consequence warnings or prerequisites flagged in Phase 5 that are buried in prose
+8. Remove decorative emojis (every-heading patterns, emoji-only labels, in-body-prose emojis, emojis in agent-intermediate / context artifacts); preserve selective emojis that act as scannable status or category anchors
+9. Replace raw color HTML (`<span style="color:...">`, hard-coded inline styles) with the appropriate Markdown construct (GitHub Alert, bold, code span); trim oversized or vanity badge strips to 3–4 status-only live-linked badges in a single row under the title
 
 After fixing, list each change with the file path, what changed, and why.
 
@@ -223,6 +226,17 @@ When both agents are invoked, the doc-engineer runs AFTER the context-engineer t
 - After implementation steps outside parallel groups that add, remove, or rename files, the doc-engineer updates affected documentation at pipeline checkpoints
 - The implementer does not update documentation beyond its step scope; the doc-engineer handles cross-cutting documentation changes
 - When `docs/architecture.md` exists, verify it reflects only Built components and all file paths resolve to existing files on disk. This developer guide must stay code-verified -- stale paths or Planned/Designed items indicate a freshness failure
+
+### With the Designer (web-ui-design / interface-designer)
+
+The `web-ui-design` skill is available **on-demand as a consult**, loaded only when the documentation work touches significant visual decisions:
+
+- **HTML share-out artifacts** (`share_out: true` frontmatter) -- non-GitHub readers; load `web-ui-design` for contrast, focus indicators, motion timing, dark-mode safety
+- **`docs/architecture.md`** when it embeds diagrams or visual hierarchies -- diagram colors, node weights, and figure composition are visual-design decisions
+- **`README.md`** with significant badge strips, complex visual TOCs, or screenshots -- composition discipline is a design-canon question
+- **Hand-authored HTML outside `dashboard_app/`** -- consult `web-ui-design` for visual hierarchy, accessibility, and motion before committing
+
+When the design call is **structural** (a new dashboard surface, a new component family, a framework decision, an API/tool error format), this is outside the doc-engineer's boundary -- recommend the `interface-designer` agent through the user or the planner; do not attempt the structural design yourself. The doc-engineer applies the visual canon to existing docs; the interface-designer authors it for new surfaces.
 
 ### With the User
 

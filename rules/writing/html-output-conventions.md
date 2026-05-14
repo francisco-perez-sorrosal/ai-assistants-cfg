@@ -182,6 +182,25 @@ Two operational invariants apply to every dashboard surface:
 
 This is the same single-author-per-surface discipline already enforced for MD docs (per `rules/writing/readme-style.md`) — extended to the HTML layer.
 
+### Visual Style Defers to `web-ui-design`
+
+This rule covers HTML *architecture* (Markdown-as-source-of-truth, no JS in committed HTML, server-only data access, renderer registry). It does **not** define visual style — color palette, typography scale, spacing rhythm, component density, motion timing, dark-mode handling, accessibility bar. Those live in [`skills/web-ui-design/SKILL.md`](../../skills/web-ui-design/SKILL.md) and its references. Authors working in `dashboard_app/` or producing `share_out: true` HTML defer to:
+
+- **Design tokens** in `dashboard_app/src/app/tokens.css` — single source of truth for color, spacing, typography, radii, motion, z-index; never inline `style="..."` or hard-coded color literals
+- **WCAG 2.2 AA** — 4.5:1 text contrast, 3:1 non-text, ≥24px touch targets, focus indicators, `prefers-reduced-motion`, `prefers-color-scheme: dark`
+- **The five UI states** — Default / Loading / Empty / Error / Partial; every surface designs all five (the existing `Runtime Constraints` clause on empty-state degradation is one specific instance)
+- **Motion timing** — 100–200ms micro-interactions, 200–300ms entrances; ease-out for entering, ease-in for leaving; never linear
+- **Emoji and color discipline shared with Markdown** — same rules as [`skills/doc-management/references/advanced-markdown-patterns.md`](../../skills/doc-management/references/advanced-markdown-patterns.md) (*Emojis as Cognitive Anchors* and *Color & Visual Tone*): selective emoji use, no color-as-sole-signal, calm-not-exclamatory tone. The HTML render must respect the visual vocabulary of the Markdown source it's rendering.
+
+**When to invoke which expertise:**
+
+| Question | Where to look |
+|---|---|
+| Where does this rendering live in the architecture? (server vs client, MD vs HTML, dashboard vs share-out) | This rule |
+| What should this look like? (palette, type scale, motion, accessibility) | `web-ui-design` skill |
+| Structural design of a *new* dashboard surface, component family, or framework choice | `interface-designer` agent |
+| Visual review of an *existing* dashboard surface or share-out | `doc-engineer` (loads `web-ui-design` on-demand) |
+
 ### Integration with `diagram-conventions.md`
 
 The diagram source/render separation already established in [`diagram-conventions.md`](diagram-conventions.md) composes cleanly. For committed Markdown and HTML artifacts, SVG renders are embedded as `<img>` tags. When the dashboard server renders SVGs inline for interactive surfaces (e.g., `DiagramFrame`, `DecisionGraph`), the SVG source path still follows the `diagrams/<name>/rendered/<name>.svg` convention — only the delivery mechanism changes (route-served or inline-injected vs. `<img>` tag). The committed Markdown source never changes.

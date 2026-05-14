@@ -44,6 +44,8 @@ Does not define documentation conventions -- defines how to apply them.
 - **doc-management skill** (this file): defines HOW to author, validate, and maintain documentation
 - **doc-engineer agent**: autonomous subprocess that uses this skill for documentation quality management
 - **code-review skill**: after a code review identifies added, removed, or renamed files, use this skill to update affected documentation
+- **web-ui-design skill** (consult on-demand): provides the visual design canon — color/contrast, hierarchy, accessibility (WCAG 2.2 AA), motion, design tokens — that this skill defers to when documentation work touches significant visuals: HTML share-out artifacts (`share_out: true`), diagram-heavy `docs/architecture.md`, complex badge composition. Not loaded for plain Markdown maintenance.
+- **interface-designer agent** (recommend, do not invoke): when the work is structural — a new dashboard surface, a new component family, a framework decision — recommend the `interface-designer` agent through the user. The doc-engineer applies the visual canon; the interface-designer authors it for new surfaces.
 
 ## Core Principles
 
@@ -256,6 +258,8 @@ Before completing documentation work:
 - [ ] Examples are provided where the reader needs process knowledge
 - [ ] Optional-depth sections in GitHub-rendered docs use `<details>`/`<summary>` where cognitive load is high (see advanced-markdown-patterns reference)
 - [ ] High-consequence warnings or prerequisites use GitHub Alerts rather than buried prose (see advanced-markdown-patterns reference)
+- [ ] Emoji use is selective (status anchors, category markers in long lists) — no decorative emojis on every heading/bullet, none in body prose, none in agent-intermediate or context artifacts (see advanced-markdown-patterns: *Emojis as Cognitive Anchors*)
+- [ ] Color and badges follow visual-tone conventions: 3–4 status badges max under the title (live-linked), no `<span style="color:...">` or raw color HTML, no color-as-sole-signal. For HTML share-outs and diagram-heavy docs, consult `web-ui-design` (see advanced-markdown-patterns: *Color & Visual Tone*)
 
 **Freshness**
 
