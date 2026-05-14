@@ -45,6 +45,15 @@ link_rules() {
 
     mkdir -p "$rules_target_dir"
 
+    # Idempotent reconciliation: remove stale symlinks left by prior installs
+    # before re-linking. Handles the upgrade path when a rule's install type
+    # flipped from `symlink` to `hook-deliver`, or when a rule was renamed or
+    # dropped from the manifest. Without this, Claude Code keeps loading the
+    # dangling links as user-scope memory files even when the YAML blacklist
+    # filters them at hook time. Fail-safe: bails out if the manifest cannot
+    # be parsed, so a transient parse error never deletes live links.
+    sweep_stale_rule_symlinks "$rules_source_dir" "$rules_target_dir"
+
     # Build the set of rule paths to skip during symlinking.
     # Rules with install: hook-deliver are NOT symlinked — they are injected
     # at session start by hooks/inject_rules.py, which reads the same manifest
@@ -89,4 +98,75 @@ PYEOF
         ln -sf "$rule_file" "${rules_target_dir}/${rel_path}"
         LINK_RULES_COUNT=$((LINK_RULES_COUNT + 1))
     done < <(find "$rules_source_dir" -name '*.md' -type f | sort)
+}
+
+# Sweep <rules_target_dir> for symlinks that:
+#   - point into <rules_source_dir> (Praxion-managed), AND
+#   - are NOT in the current manifest as `install: symlink`.
+#
+# Removes them and prunes empty subdirectories left behind. External symlinks
+# (target outside <rules_source_dir>) are left untouched — mirror of
+# sweep_stale_script_symlinks for ~/.local/bin/. Idempotent; safe to call
+# every install.
+#
+# Fail-safe: if the manifest cannot be parsed, this function exits without
+# removing anything, so an installer error never deletes live symlinks.
+#
+# Arguments:
+#   $1 — rules_source_dir: absolute path to the repo's rules/ directory
+#   $2 — rules_target_dir: absolute path to the destination rules directory
+sweep_stale_rule_symlinks() {
+    local rules_source_dir="$1"
+    local rules_target_dir="$2"
+    [ -d "$rules_target_dir" ] || return 0
+    [ -d "$rules_source_dir" ] || return 0
+
+    local manifest_file="${rules_source_dir}/_manifest.yaml"
+    [ -f "$manifest_file" ] || return 0
+
+    local keep_paths rc
+    keep_paths=$(python3 - "$manifest_file" <<'PYEOF' 2>/dev/null
+import sys
+try:
+    import yaml
+    with open(sys.argv[1]) as f:
+        m = yaml.safe_load(f) or {}
+    for r in m.get("rules", []):
+        if r.get("install") == "symlink":
+            p = r.get("path", "")
+            if p.startswith("rules/"):
+                print(p[len("rules/"):])
+except Exception:
+    sys.exit(1)
+PYEOF
+)
+    rc=$?
+    # Fail-safe: a parse error must NOT trigger an empty whitelist (which
+    # would delete every Praxion-managed symlink). Bail out instead.
+    if [ "$rc" -ne 0 ]; then
+        return 0
+    fi
+
+    local link target rel_to_source removed=0
+    while IFS= read -r link; do
+        [ -L "$link" ] || continue
+        target="$(readlink "$link")"
+        # Only consider absolute symlinks pointing into the source rules dir;
+        # leave external links alone.
+        case "$target" in
+            "$rules_source_dir"/*) rel_to_source="${target#"$rules_source_dir"/}" ;;
+            *) continue ;;
+        esac
+        # Keep if the rule is still in the manifest as install: symlink.
+        if [ -n "$keep_paths" ] && echo "$keep_paths" | grep -qxF "$rel_to_source"; then
+            continue
+        fi
+        rm "$link"
+        removed=$((removed + 1))
+    done < <(find "$rules_target_dir" -type l 2>/dev/null)
+
+    # Tidy up empty subdirs (e.g., vcs/ after both its rules went hook-deliver).
+    find "$rules_target_dir" -mindepth 1 -type d -empty -delete 2>/dev/null || true
+
+    SWEEP_STALE_RULE_SYMLINKS_REMOVED="$removed"
 }

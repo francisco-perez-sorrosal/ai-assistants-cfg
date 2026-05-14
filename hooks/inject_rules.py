@@ -9,7 +9,7 @@ disable list through two complementary mechanisms:
 1. `install: hook-deliver` rules — suppressed by filtering them out of
    the `additionalContext` payload returned to Claude Code at SessionStart.
 
-2. `install: symlink` rules (path-scoped rules plus any always-on rules
+2. `install: symlink` rules (path-scoped rules plus always-on rules
    delivered via global symlinks in `~/.claude/rules/`) — suppressed by
    reconciling glob patterns into `claudeMdExcludes` in the project's
    `.claude/settings.json`. Patterns use the portable shape
@@ -17,6 +17,13 @@ disable list through two complementary mechanisms:
    path on any machine. Praxion-managed entries (identified by their
    `**/.claude/rules/` prefix) are recomputed every SessionStart;
    non-Praxion entries in `claudeMdExcludes` are preserved untouched.
+
+Defense-in-depth: the `claudeMdExcludes` mechanism (#2) also covers
+`install: hook-deliver` rules in the disable set, so a stale symlink left
+in `~/.claude/rules/` by a prior install (e.g., when a rule's install
+type flipped from `symlink` to `hook-deliver`) cannot bypass the
+blacklist. The structural fix lives in the installer's
+`sweep_stale_rule_symlinks` step; this is the runtime safety net.
 
 Core rules (core: true in manifest) are never suppressible by either
 mechanism — any attempt produces a stderr warning and is ignored.
@@ -175,15 +182,26 @@ def _filter_core_rules(disable_set: set[str], rules: list[dict]) -> set[str]:
 
 
 def _compute_symlink_exclusions(disable_set: set[str], rules: list[dict]) -> list[str]:
-    """Compute portable claudeMdExcludes glob patterns for symlinked rules.
+    """Compute portable claudeMdExcludes glob patterns for disabled rules.
 
-    For each rule_id in disable_set whose install type is `symlink`, produce
-    a glob pattern of the form `**/.claude/rules/<id>.md` that matches the
-    rule's installed symlink path on any user's machine — irrespective of
-    home-directory layout.
+    For each non-core rule_id in disable_set, produce a glob pattern of the
+    form `**/.claude/rules/<id>.md` that matches the rule's installed symlink
+    path on any user's machine — irrespective of home-directory layout.
 
-    Hook-deliver rules are filtered separately (additionalContext path) and
-    are not included here.
+    Both `install: symlink` and `install: hook-deliver` rules are covered:
+
+    - For `install: symlink` rules, the exclusion is the primary suppression
+      mechanism (Claude Code loads them as user-scope memory files via the
+      symlink tree).
+    - For `install: hook-deliver` rules, the additionalContext filter is the
+      primary mechanism; the exclusion here is **defense-in-depth** against
+      stale symlinks left by prior installs (when a rule's install type
+      flipped from `symlink` to `hook-deliver` and the old symlink was never
+      pruned). The `sweep_stale_rule_symlinks` step in the installer is the
+      structural fix; this exclusion is the runtime safety net.
+
+    Core rules are not included — they are non-disableable by design and are
+    filtered out of `disable_set` upstream (`_filter_core_rules`).
 
     Returns a sorted list (deterministic order for idempotent settings writes).
     """
@@ -193,7 +211,9 @@ def _compute_symlink_exclusions(disable_set: set[str], rules: list[dict]) -> lis
         rule = rule_by_id.get(rule_id)
         if rule is None:
             continue
-        if rule.get("install") != "symlink":
+        # Skip core rules defensively — they should already be filtered out
+        # upstream, but this guard makes the function safe to call directly.
+        if rule.get("core") is True:
             continue
         patterns.append(f"{_PRAXION_EXCLUSION_PREFIX}{rule_id}.md")
     return sorted(patterns)
@@ -430,7 +450,9 @@ def main() -> None:
     suppressed_hd_ids = [
         r["id"] for r in hook_deliver_rules if r.get("id") in disable_set
     ]
-    symlink_suppressed_ids = sorted(set(disable_set) - set(suppressed_hd_ids))
+    # claudeMdExcludes now covers every non-core disabled rule regardless of
+    # install type (defense-in-depth — see _compute_symlink_exclusions).
+    exclusion_ids = sorted(disable_set)
 
     core_count = sum(1 for r in rules if r.get("core") is True)
 
@@ -447,14 +469,12 @@ def main() -> None:
     hd_suppressed_str = (
         ", ".join(sorted(suppressed_hd_ids)) if suppressed_hd_ids else "none"
     )
-    sym_suppressed_str = (
-        ", ".join(symlink_suppressed_ids) if symlink_suppressed_ids else "none"
-    )
+    exclusion_str = ", ".join(exclusion_ids) if exclusion_ids else "none"
     print(
         f"[inject_rules] Loaded {core_count} core rules;"
         f" injected {injected_count}/{total_hook_deliver} hook-deliver rules"
         f" (suppressed: {hd_suppressed_str});"
-        f" symlink suppressions via claudeMdExcludes: {sym_suppressed_str}",
+        f" claudeMdExcludes entries: {exclusion_str}",
         file=sys.stderr,
     )
 

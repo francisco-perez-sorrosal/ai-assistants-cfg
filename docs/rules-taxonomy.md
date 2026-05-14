@@ -13,7 +13,7 @@ Praxion delivers rules through two channels. The per-project `.claude/praxion-ru
 
 | Channel | Delivery | Disable mechanism |
 |---------|----------|-------------------|
-| **Hook-deliver** | Body shipped at SessionStart via `additionalContext` JSON from `inject_rules.py` | Filtered out of `additionalContext` when in the YAML disable list |
+| **Hook-deliver** | Body shipped at SessionStart via `additionalContext` JSON from `inject_rules.py` | Filtered out of `additionalContext` when in the YAML disable list; **also** receives a `claudeMdExcludes` entry as defense-in-depth against stale symlinks from a prior install when this rule was an `install: symlink` |
 | **Symlink** | File installed to `~/.claude/rules/<id>.md`; Claude Code's native runtime loads it (unconditionally for always-on rules; on matching `Read` for path-scoped rules) | Portable glob (`**/.claude/rules/<id>.md`) reconciled into `claudeMdExcludes` in `.claude/settings.json`; Claude Code's runtime skips the file |
 
 Together the two mechanisms give the YAML uniform reach: **any rule named in the disable list is guaranteed not to load**. The one exception is core rules (`core: true`) — they remain non-disableable, and attempts to disable them emit a stderr warning.
@@ -101,6 +101,8 @@ disable:
 - **Attempting `disable: [swe/agent-behavioral-contract]`** → stderr warning emitted, rule stays loaded (core protection)
 
 The hook is **idempotent**: it recomputes the derived `claudeMdExcludes` on every SessionStart, replacing only Praxion-managed entries (those whose pattern starts with `**/.claude/rules/`) and preserving any other `claudeMdExcludes` entries you added by hand. Removing an entry from the YAML cleans up the corresponding `claudeMdExcludes` entry on the next session.
+
+**Defense-in-depth against stale symlinks.** Two complementary steps ensure a rule's install-type change can't leak past the blacklist: (1) the installer's `sweep_stale_rule_symlinks` (in `lib/install_shared.sh`) prunes any `~/.claude/rules/` symlink that points into the repo's `rules/` tree but is no longer in the manifest as `install: symlink` — handling the case where a rule flipped from `symlink` to `hook-deliver` and the old link was never removed; (2) the SessionStart hook emits `claudeMdExcludes` entries for hook-deliver rules in the disable set too, so even if a stale link survives the sweep, Claude Code's runtime skips it.
 
 ### Step 3: Measure the Effect
 

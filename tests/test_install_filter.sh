@@ -250,6 +250,148 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# Test 7: sweep_stale_rule_symlinks prunes stale rule symlinks idempotently
+# -----------------------------------------------------------------------------
+# Source the production function under test from lib/install_shared.sh —
+# the file's guard only fails on direct execution, sourcing is permitted.
+# shellcheck source=../lib/install_shared.sh
+source "${REPO_ROOT}/lib/install_shared.sh"
+
+start_test "test_sweep_stale_rule_symlinks_prunes_stale_and_preserves_live"
+
+FAKE_RULES_SOURCE="${TMPDIR}/fake_rules_src"
+FAKE_RULES_TARGET="${TMPDIR}/fake_rules_tgt"
+mkdir -p "${FAKE_RULES_SOURCE}/swe/vcs" "${FAKE_RULES_TARGET}/swe/vcs"
+
+# Real rule files in the source tree.
+printf '# claude\n'           > "${FAKE_RULES_SOURCE}/CLAUDE.md"
+printf '# coding-style\n'     > "${FAKE_RULES_SOURCE}/swe/coding-style.md"
+printf '# memory-protocol\n'  > "${FAKE_RULES_SOURCE}/swe/memory-protocol.md"
+printf '# git-conventions\n'  > "${FAKE_RULES_SOURCE}/swe/vcs/git-conventions.md"
+
+# Manifest pinning current install types — memory-protocol and
+# vcs/git-conventions are NOW hook-deliver (flipped from symlink).
+cat > "${FAKE_RULES_SOURCE}/_manifest.yaml" <<'YAMLEOF'
+version: 1
+rules:
+  - id: CLAUDE
+    path: rules/CLAUDE.md
+    install: symlink
+    core: true
+  - id: swe/coding-style
+    path: rules/swe/coding-style.md
+    install: symlink
+    core: false
+  - id: swe/memory-protocol
+    path: rules/swe/memory-protocol.md
+    install: hook-deliver
+    core: false
+  - id: swe/vcs/git-conventions
+    path: rules/swe/vcs/git-conventions.md
+    install: hook-deliver
+    core: false
+YAMLEOF
+
+# Symlink set that mimics the leftover state from prior installs:
+#   - core CLAUDE.md (still install:symlink — keep)
+#   - swe/coding-style.md (still install:symlink — keep)
+#   - swe/memory-protocol.md (now hook-deliver — STALE)
+#   - swe/vcs/git-conventions.md (now hook-deliver — STALE)
+#   - swe/obsolete.md (target missing, rule absent from manifest — STALE)
+#   - swe/my_personal_rule.md (points OUTSIDE the source tree — keep)
+ln -sf "${FAKE_RULES_SOURCE}/CLAUDE.md"              "${FAKE_RULES_TARGET}/CLAUDE.md"
+ln -sf "${FAKE_RULES_SOURCE}/swe/coding-style.md"    "${FAKE_RULES_TARGET}/swe/coding-style.md"
+ln -sf "${FAKE_RULES_SOURCE}/swe/memory-protocol.md" "${FAKE_RULES_TARGET}/swe/memory-protocol.md"
+ln -sf "${FAKE_RULES_SOURCE}/swe/vcs/git-conventions.md" \
+       "${FAKE_RULES_TARGET}/swe/vcs/git-conventions.md"
+ln -sf "${FAKE_RULES_SOURCE}/swe/obsolete.md"        "${FAKE_RULES_TARGET}/swe/obsolete.md"
+
+EXTERNAL_RULE="${TMPDIR}/external_rule.md"
+printf '# external\n' > "$EXTERNAL_RULE"
+ln -sf "$EXTERNAL_RULE" "${FAKE_RULES_TARGET}/swe/my_personal_rule.md"
+
+# Run the sweep.
+sweep_stale_rule_symlinks "$FAKE_RULES_SOURCE" "$FAKE_RULES_TARGET"
+
+# Live symlinks — must be preserved.
+if [ -L "${FAKE_RULES_TARGET}/CLAUDE.md" ]; then
+    pass "core install:symlink rule kept"
+else
+    fail "core install:symlink rule was removed"
+fi
+
+if [ -L "${FAKE_RULES_TARGET}/swe/coding-style.md" ]; then
+    pass "non-core install:symlink rule kept"
+else
+    fail "non-core install:symlink rule was removed"
+fi
+
+# Stale symlinks — must be gone.
+for stale_path in \
+    "swe/memory-protocol.md" \
+    "swe/vcs/git-conventions.md" \
+    "swe/obsolete.md"; do
+    if [ -L "${FAKE_RULES_TARGET}/${stale_path}" ] || \
+       [ -e "${FAKE_RULES_TARGET}/${stale_path}" ]; then
+        fail "stale symlink '${stale_path}' was not removed"
+    else
+        pass "stale symlink '${stale_path}' removed"
+    fi
+done
+
+# External symlink — must be left alone.
+if [ -L "${FAKE_RULES_TARGET}/swe/my_personal_rule.md" ]; then
+    pass "external symlink left alone"
+else
+    fail "external symlink was removed by sweep"
+fi
+
+# Empty subdir vcs/ should be pruned after both its rules went hook-deliver.
+if [ -d "${FAKE_RULES_TARGET}/swe/vcs" ]; then
+    fail "empty subdir 'swe/vcs' was NOT cleaned up"
+else
+    pass "empty subdir 'swe/vcs' cleaned up"
+fi
+
+# -----------------------------------------------------------------------------
+# Test 8: idempotency — second sweep is a no-op
+# -----------------------------------------------------------------------------
+start_test "test_sweep_stale_rule_symlinks_is_idempotent"
+
+# Capture the post-sweep state.
+BEFORE_SECOND_SWEEP=$(find "$FAKE_RULES_TARGET" \( -type l -o -type d \) | sort)
+
+sweep_stale_rule_symlinks "$FAKE_RULES_SOURCE" "$FAKE_RULES_TARGET"
+
+AFTER_SECOND_SWEEP=$(find "$FAKE_RULES_TARGET" \( -type l -o -type d \) | sort)
+
+if [ "$BEFORE_SECOND_SWEEP" = "$AFTER_SECOND_SWEEP" ]; then
+    pass "second sweep produces identical target tree"
+else
+    fail "second sweep mutated the tree (before='${BEFORE_SECOND_SWEEP}' after='${AFTER_SECOND_SWEEP}')"
+fi
+
+# -----------------------------------------------------------------------------
+# Test 9: missing manifest — sweep is a safe no-op (fail-safe)
+# -----------------------------------------------------------------------------
+start_test "test_sweep_stale_rule_symlinks_bails_on_missing_manifest"
+
+FAKE_NO_MANIFEST_SRC="${TMPDIR}/no_manifest_src"
+FAKE_NO_MANIFEST_TGT="${TMPDIR}/no_manifest_tgt"
+mkdir -p "$FAKE_NO_MANIFEST_SRC" "$FAKE_NO_MANIFEST_TGT"
+printf '# rule\n' > "${FAKE_NO_MANIFEST_SRC}/rule.md"
+ln -sf "${FAKE_NO_MANIFEST_SRC}/rule.md" "${FAKE_NO_MANIFEST_TGT}/rule.md"
+
+# Intentionally NO _manifest.yaml.
+sweep_stale_rule_symlinks "$FAKE_NO_MANIFEST_SRC" "$FAKE_NO_MANIFEST_TGT"
+
+if [ -L "${FAKE_NO_MANIFEST_TGT}/rule.md" ]; then
+    pass "missing manifest → sweep is a no-op (fail-safe)"
+else
+    fail "missing manifest → sweep deleted live symlinks (fail-open regression)"
+fi
+
+# -----------------------------------------------------------------------------
 # Summary
 # -----------------------------------------------------------------------------
 printf "\n---\n"

@@ -11,6 +11,13 @@
 #     `**/.claude/rules/<id>.md`. Claude Code's runtime then skips those
 #     rule files even when a matching `Read` would otherwise trigger them.
 #
+# Defense-in-depth: the `claudeMdExcludes` mechanism also covers
+# `install: hook-deliver` rules in the disable set, so a stale symlink
+# left in `~/.claude/rules/` by a prior install (e.g., when a rule's
+# install type flipped from `symlink` to `hook-deliver`) cannot bypass
+# the blacklist. The structural prune happens in the installer's
+# `sweep_stale_rule_symlinks` step; this is the runtime safety net.
+#
 # Core rules (`core: true`) are non-disableable; attempting to disable
 # one emits a SessionStart warning and the rule remains loaded.
 # Organization-managed-policy rules deployed at platform locations are
@@ -42,7 +49,7 @@
 # path without the `.md` extension). fnmatch glob syntax is supported.
 disable:
   # Project sets PRAXION_DISABLE_MEMORY_MCP=1 or has no memory MCP server
-  # - swe/memory-protocol
+  # - swe/*
 
   # Not an ML project — never load ML training conventions, even if a file
   # like `prepare.py` or `runs/` appears in the tree for unrelated reasons

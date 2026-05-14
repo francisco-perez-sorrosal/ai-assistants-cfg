@@ -739,6 +739,52 @@ def test_reconciliation_is_idempotent(plugin_root: Path, project_dir: Path) -> N
 # ===========================================================================
 
 
+def test_disabling_hook_deliver_rules_also_writes_claudemd_excludes(
+    plugin_root: Path, project_dir: Path
+) -> None:
+    """Hook-deliver rules in the disable set also get claudeMdExcludes entries.
+
+    Defense-in-depth: even though `install: hook-deliver` rules are primarily
+    suppressed by filtering them out of `additionalContext`, the hook also
+    emits `**/.claude/rules/<id>.md` exclusion globs for them. This neutralizes
+    stale symlinks left by prior installs (when a rule's install type flipped
+    from `symlink` to `hook-deliver`) — without this, Claude Code would keep
+    loading the dangling links as user-scope memory files.
+    """
+    _write_project_config(
+        project_dir,
+        "version: 1\ndisable:\n"
+        "  - swe/memory-protocol\n"
+        "  - swe/agent-model-routing\n"
+        "  - swe/vcs/git-conventions\n",
+    )
+    result = _run_hook(plugin_root, project_dir)
+    assert result.returncode == 0, (
+        f"Hook must exit 0 when disabling hook-deliver rules. stderr: {result.stderr!r}"
+    )
+
+    settings_path = project_dir / ".claude" / "settings.json"
+    assert settings_path.exists(), (
+        "settings.json must be created when hook-deliver rules are disabled, "
+        "so a stale symlink for those rules cannot bypass the blacklist. "
+        f"stderr: {result.stderr!r}"
+    )
+
+    settings = json.loads(settings_path.read_text(encoding="utf-8"))
+    excludes = settings.get("claudeMdExcludes", [])
+    expected = sorted(
+        [
+            "**/.claude/rules/swe/memory-protocol.md",
+            "**/.claude/rules/swe/agent-model-routing.md",
+            "**/.claude/rules/swe/vcs/git-conventions.md",
+        ]
+    )
+    assert sorted(excludes) == expected, (
+        f"claudeMdExcludes must include exclusion globs for hook-deliver rules "
+        f"(defense-in-depth against stale symlinks). Got: {excludes!r}"
+    )
+
+
 def test_no_yaml_leaves_existing_settings_untouched(
     plugin_root: Path, project_dir: Path
 ) -> None:
