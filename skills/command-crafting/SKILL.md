@@ -191,6 +191,7 @@ Provide a summary of changes.
 - **Overloaded commands** -- slash commands work best for focused tasks; use Skills for complex workflows
 - **Untested arguments** -- `$ARGUMENTS` might be empty; test and handle missing values gracefully
 - **Inlining rule knowledge** -- if conventions or constraints already exist in a rule file, don't copy them into the command; rules load automatically by semantic relevance when the command executes
+- **Command discovery is session-start-only.** Claude Code scans the plugin's `commands/` directory (per `plugin.json`'s `commands:` glob) once at session startup and caches the result for the session's lifetime. A new command file dropped in mid-session — or installed via `bash install.sh` against a running session — is invisible until a fresh session start. Symptom: typing `/my-new-command` reports "unknown command" even though the file is at the right path with valid frontmatter. There is no `/plugins reload`-style hot-reload mechanism in current Claude Code — exit and restart the session to pick up new commands.
 
 ## Permission Management
 

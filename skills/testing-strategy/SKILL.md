@@ -34,6 +34,14 @@ Future language references (e.g., `references/typescript-testing.md`, `reference
 - **Sleep in tests.** `time.sleep()` and wall-clock waits make tests slow and non-deterministic. Use time-freezing libraries, explicit event waits, or polling with short timeouts instead.
 - **Ignoring the project's package manager.** When a project uses a package or environment manager (pixi, uv, pnpm, yarn, etc.), run tests through it (e.g., `pixi run pytest`, `uv run pytest`, `pnpm exec vitest`) to ensure the correct virtual environment and dependencies are active. Detect the runner from lockfiles and config (`pixi.toml`, `uv.lock`, `pnpm-lock.yaml`, etc.) before invoking tests. If no runner is detected, invoking the test tool directly is fine.
 
+## BDD: RED and GREEN Anchors
+
+When writing tests for a BDD step (test-first), pair the canonical RED test (the behavioral predicate that turns GREEN when production code lands) with one or more **GREEN anchors** — tests that validate adjacent invariants which *already hold* and *must continue to hold* after the production code lands. Typical anchors: fail-open contracts (a hook returns gracefully on exception), opt-out mechanisms (an env var suppresses a feature), frontmatter or schema preservation (YAML structure intact after edits), absence behavior (the feature is correctly silent when not triggered).
+
+Purpose: the RED gives a forward signal that turns GREEN on landing; the anchors give a regression guard that flips RED if the implementer strips an invariant while landing the feature. Without anchors, the implementer can silently regress an invariant (strip frontmatter, swallow a load-bearing exception) and only discover it after merge.
+
+Non-obvious because the natural default is to write only the assertion for the feature under test. Deliberate choice required: ask "what existing properties must remain true after this lands?" and write each as a separate test. Anchors typically outnumber RED tests when the production code is small and the surrounding contracts are rich.
+
 ## Test Strategy Selection
 
 Choose the test type that matches the scope of the behavior under test. Default to unit tests; escalate only when behavior lives in the interaction between components.
