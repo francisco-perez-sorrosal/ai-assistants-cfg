@@ -1,7 +1,7 @@
 ---
-id: dec-draft-aa2cbabc
+id: dec-183
 title: LikeC4 feedback-loop modeling — multiple focused views, tagged edges, document-substrate handoffs
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-14
 summary: Model the Praxion agent pipeline's two feedback loops (CIS forward, Rework backward) as tag-classified edges over a per-agent, per-document graph projected through multiple focused LikeC4 views rather than a single omnibus diagram; keep agent-to-agent communication routed through .ai-work/ document elements to match the coordination protocol's "agents communicate through shared documents, not direct invocation" rule.
