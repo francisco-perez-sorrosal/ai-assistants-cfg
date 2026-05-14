@@ -1,10 +1,10 @@
 ---
-id: dec-draft-d012c144
+id: dec-182
 title: Disposition-vocabulary step is Group A prerequisite; Groups B-H depend on shared reference
-status: proposed
+status: accepted
 category: implementation
 date: 2026-05-14
-summary: The disposition-vocabulary file (dec-draft-1469273f) is created in Group A before any agent edits or command creation, because researcher.md, systems-architect.md, agents/verifier.md, and commands/resume-rework.md all cite the shared reference. Sequencing it first prevents dangling pointers at any commit boundary.
+summary: The disposition-vocabulary file (dec-179) is created in Group A before any agent edits or command creation, because researcher.md, systems-architect.md, agents/verifier.md, and commands/resume-rework.md all cite the shared reference. Sequencing it first prevents dangling pointers at any commit boundary.
 tags: [implementation, step-ordering, disposition-vocabulary, dependency]
 made_by: agent
 agent_type: implementation-planner
@@ -16,7 +16,7 @@ affected_files:
   - agents/systems-architect.md
   - agents/verifier.md
   - commands/resume-rework.md
-re_affirms: dec-draft-1469273f
+re_affirms: dec-179
 ---
 
 ## Context

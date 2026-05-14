@@ -1,7 +1,7 @@
 ---
-id: dec-draft-3b9f6ba0
+id: dec-174
 title: REWORK_MANIFEST.md uses a markdown table with one fenced JSON block per row
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-14
 summary: Verifier writes REWORK_MANIFEST.md as a human-scannable markdown table plus per-row fenced JSON blocks (one block per worktree), giving the main agent a parseable structured contract without sacrificing human review.

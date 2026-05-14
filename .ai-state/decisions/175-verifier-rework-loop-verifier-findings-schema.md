@@ -1,7 +1,7 @@
 ---
-id: dec-draft-9fabb0e1
+id: dec-175
 title: VERIFIER_FINDINGS.md is a self-contained problem statement consumed by stock systems-architect / implementation-planner
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-14
 summary: VERIFIER_FINDINGS.md carries a fixed-section markdown schema (Problem / Scope / Evidence / Success Criteria / Ledger Links / Suggested Tier / Provenance) that the receiving agent reads as if it were any other task-intake document — no rework-specific dispatching logic in agents/.

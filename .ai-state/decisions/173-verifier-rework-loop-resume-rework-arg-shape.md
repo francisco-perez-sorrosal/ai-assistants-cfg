@@ -1,7 +1,7 @@
 ---
-id: dec-draft-2aac723d
+id: dec-173
 title: /resume-rework takes no positional argument; reads VERIFIER_FINDINGS.md from cwd
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-14
 summary: /resume-rework is a no-positional-arg slash command that reads VERIFIER_FINDINGS.md from the current worktree's root, with an explicit --findings <path> escape hatch and --dry-run / --help levels per clig.dev.

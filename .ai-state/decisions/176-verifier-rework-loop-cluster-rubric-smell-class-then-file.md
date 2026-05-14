@@ -1,7 +1,7 @@
 ---
-id: dec-draft-ded4fd86
+id: dec-176
 title: Verifier clusters findings by smell-class first, then file-locality within a class
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-14
 summary: Verifier Phase 12.5 groups findings into rework rows by (a) smell-class (architecture vs. implementation) and (b) overlapping location file-sets within a class. Findings spanning both classes become two rows; the architect re-clusters during Phase 1 if needed.
@@ -19,7 +19,7 @@ affected_files:
 The verifier emits one `REWORK_MANIFEST.md` row per finding cluster, each cluster spawning one rework worktree. The cluster boundary determines:
 
 - How many worktrees fire per pipeline (one cluster = one worktree = one user-facing fresh-session action).
-- Which findings the dispatched agent (per `dec-draft-b3b1abda`, the architect first) sees in its `VERIFIER_FINDINGS.md`.
+- Which findings the dispatched agent (per `dec-178`, the architect first) sees in its `VERIFIER_FINDINGS.md`.
 - The blast radius of the worktree: a tight cluster touches few files; a loose cluster touches many.
 
 The verifier emits findings tagged with smell-class metadata (`[INTERFACE-DESIGN-MISMATCH]`, `[BLOAT]`, `[NON-SURGICAL]`, `[SCOPE-CREEP]`, `[UNSURFACED-ASSUMPTION]`, `[MISSING-OBJECTION]`, `[DEAD-CODE-UNREMOVED]`, severity-only Phase 5 convention findings, etc.) and each finding has a `location` (file path + optional line range).
@@ -116,7 +116,7 @@ Cons: a single root-cause issue surfacing as both architecture and implementatio
 
 - Deterministic rubric: same finding set produces same cluster set across runs.
 - Test surface is bounded: per-class file-overlap clustering is small-set logic, easy to unit-test.
-- The smell-class boundary aligns with the routing-through-architect decision (`dec-draft-b3b1abda`) — even though every rework goes through the architect, the manifest's `class` field still informs the user about expected downstream agent involvement.
+- The smell-class boundary aligns with the routing-through-architect decision (`dec-178`) — even though every rework goes through the architect, the manifest's `class` field still informs the user about expected downstream agent involvement.
 - Each rework worktree's scope is small (file-locality bounded), which keeps the worktree's blast radius narrow.
 
 **Negative:**
@@ -125,7 +125,7 @@ Cons: a single root-cause issue surfacing as both architecture and implementatio
 
 **Mitigation:**
 
-- The architect on Phase 1 sees both worktrees' findings (via the parent's snapshotted `VERIFICATION_REPORT.md` per `dec-draft-d70b274f`) and can recommend consolidating to the user.
+- The architect on Phase 1 sees both worktrees' findings (via the parent's snapshotted `VERIFICATION_REPORT.md` per `dec-177`) and can recommend consolidating to the user.
 - A future enhancement could add a `multi-class` cluster type; the rubric is reversible.
 
 ## Open Item

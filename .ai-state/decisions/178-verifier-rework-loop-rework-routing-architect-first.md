@@ -1,7 +1,7 @@
 ---
-id: dec-draft-b3b1abda
+id: dec-178
 title: All rework worktrees route through systems-architect first
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-14
 summary: Every REWORK_MANIFEST.md row dispatches systems-architect first (regardless of class); implementation-class reworks then chain to implementation-planner via the existing self-healing-loop contract — preserves planner's input-shape invariant and avoids any internal planner change.
@@ -13,7 +13,7 @@ pipeline_tier: standard
 affected_files:
   - agents/verifier.md
   - commands/resume-rework.md
-re_affirms: dec-draft-9fabb0e1
+re_affirms: dec-175
 ---
 
 ## Context
@@ -22,7 +22,7 @@ When the verifier emits a `REWORK_MANIFEST.md`, each row carries a `class` field
 
 The complication is that `implementation-planner` Phase 1 explicitly requires `SYSTEMS_PLAN.md` as primary input: "If `SYSTEMS_PLAN.md` does not exist or lacks architecture sections, recommend invoking the systems-architect agent first." (agents/implementation-planner.md). A rework worktree carrying only `VERIFIER_FINDINGS.md` violates this invariant. Two ways to resolve:
 
-- **Option A (split-routing)** — Patch the planner to accept `VERIFIER_FINDINGS.md` as primary input when `SYSTEMS_PLAN.md` is absent. Adds a rework-specific branch in the planner. Violates the load-bearing hypothesis of `dec-draft-9fabb0e1` (no internal agent change beyond one sentence).
+- **Option A (split-routing)** — Patch the planner to accept `VERIFIER_FINDINGS.md` as primary input when `SYSTEMS_PLAN.md` is absent. Adds a rework-specific branch in the planner. Violates the load-bearing hypothesis of `dec-175` (no internal agent change beyond one sentence).
 - **Option B (architect-always-first)** — Spawn the architect first on every rework; the architect produces a small `SYSTEMS_PLAN.md`; the planner then runs as usual (for implementation-class clusters) reading the architect's output. No planner change beyond one Phase 1 sentence — and that sentence is only effective via the architect's output, which is the file the planner already expects.
 
 The decision drives the manifest's `target_agent` field semantics, the `/resume-rework` dispatch logic, and the load-bearing hypothesis the interface-designer's existing draft assumes.
@@ -47,7 +47,7 @@ Concretely:
 
 Pros: shorter critical path for trivial implementation-reworks (planner runs immediately without architect overhead); matches the user's original framing.
 
-Cons: requires patching `agents/implementation-planner.md` Phase 1 to accept `VERIFIER_FINDINGS.md` as primary input when `SYSTEMS_PLAN.md` is absent (an internal-logic branch, not a one-sentence addition); breaks the load-bearing hypothesis of `dec-draft-9fabb0e1`; introduces a "verifier classified wrong → planner gets wrong-shape file" failure mode; the verifier's classification becomes load-bearing rather than advisory.
+Cons: requires patching `agents/implementation-planner.md` Phase 1 to accept `VERIFIER_FINDINGS.md` as primary input when `SYSTEMS_PLAN.md` is absent (an internal-logic branch, not a one-sentence addition); breaks the load-bearing hypothesis of `dec-175`; introduces a "verifier classified wrong → planner gets wrong-shape file" failure mode; the verifier's classification becomes load-bearing rather than advisory.
 
 Rejected.
 
@@ -71,7 +71,7 @@ Rejected.
 
 **Positive:**
 
-- `agents/implementation-planner.md` requires only the one-sentence addition documented in `dec-draft-9fabb0e1` — and that addition is effectively only exercised when an architect step is somehow skipped (e.g., the user runs `/resume-rework` and the architect step fails before producing a plan; the planner's existing fallback message tells the user to re-invoke the architect first).
+- `agents/implementation-planner.md` requires only the one-sentence addition documented in `dec-175` — and that addition is effectively only exercised when an architect step is somehow skipped (e.g., the user runs `/resume-rework` and the architect step fails before producing a plan; the planner's existing fallback message tells the user to re-invoke the architect first).
 - The verifier's smell classification is downgraded from load-bearing to advisory — failure modes from mis-classification are contained.
 - The manifest's `class` field becomes user-facing context, not orchestrator-routing logic — easier to reason about.
 - The re-run gate (Decision 8 in `SYSTEMS_PLAN.md`) is simpler: after rework merges to main, the user re-invokes the verifier on the parent task slug; the verifier sees the corrective work and updates `td-NNN` rows.
@@ -88,4 +88,4 @@ Rejected.
 
 ## Prior Decision
 
-This ADR re-affirms `dec-draft-9fabb0e1` (verifier-findings schema as self-contained problem statement). That draft did not specify routing; this draft fills that gap and confirms the load-bearing hypothesis remains valid: no internal change to receiving agents beyond one Phase 1 sentence each.
+This ADR re-affirms `dec-175` (verifier-findings schema as self-contained problem statement). That draft did not specify routing; this draft fills that gap and confirms the load-bearing hypothesis remains valid: no internal change to receiving agents beyond one Phase 1 sentence each.

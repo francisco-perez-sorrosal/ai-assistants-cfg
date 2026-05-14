@@ -1,7 +1,7 @@
 ---
-id: dec-draft-d70b274f
+id: dec-177
 title: REWORK_MANIFEST.md is ephemeral alongside VERIFICATION_REPORT.md; parent cleanup deferred; VERIFICATION_REPORT.md snapshotted into each rework worktree
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-14
 summary: REWORK_MANIFEST.md lives in .ai-work/<parent-task-slug>/ (ephemeral, same lifecycle as VERIFICATION_REPORT.md). Parent pipeline cleanup is gated on rework-worktree completion. At worktree creation, the parent's VERIFICATION_REPORT.md is snapshotted into the rework worktree's .ai-work/<rework-slug>/ for provenance survival.

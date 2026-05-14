@@ -1,7 +1,7 @@
 ---
-id: dec-draft-4dc602ce
+id: dec-181
 title: TECH_DEBT_LEDGER rework-worktree linkage via notes-field suffix; main agent owns the in-flight status flip
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-14
 summary: Encode the rework worktree name in the existing `notes` field with stable suffix `// in-flight via rework worktree <name>` (no schema change). The main agent (orchestrator) is the writer that flips status from open to in-flight when creating a rework worktree, per ledger writer policy.
@@ -84,7 +84,7 @@ Cons: orchestrator writes are intentionally rare per ledger policy (verifier/sen
 
 Pros: keeps the orchestrator out of the ledger.
 
-Cons: requires the dispatched agent to know about the parent's ledger entries; bleeds context across worktree boundaries; the architect/planner Phase 1 would need new logic — violating the load-bearing hypothesis of `dec-draft-9fabb0e1`.
+Cons: requires the dispatched agent to know about the parent's ledger entries; bleeds context across worktree boundaries; the architect/planner Phase 1 would need new logic — violating the load-bearing hypothesis of `dec-175`.
 
 Rejected.
 

@@ -1,7 +1,7 @@
 ---
-id: dec-draft-1469273f
+id: dec-179
 title: CIS and rework-loop share a disposition vocabulary defined once in a skill reference
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-14
 summary: Define switch-now / defer-with-rationale / dismiss-with-rationale once in skills/software-planning/references/disposition-vocabulary.md; both the CIS feature (researcher, architect) and the rework loop (manifest, /resume-rework, verifier) cite the shared reference rather than redefining the terms.
