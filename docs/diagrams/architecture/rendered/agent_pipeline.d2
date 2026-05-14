@@ -1,0 +1,86 @@
+direction: down
+
+PraxionOrchestrationOrchestrator: {
+  label: "Main Agent (Orchestrator)"
+}
+PraxionOrchestrationPipeline: {
+  label: "Agent Pipeline"
+
+  Promethean: {
+    label: "Promethean"
+  }
+  Researcher: {
+    label: "Researcher"
+  }
+  Architect: {
+    label: "Systems Architect"
+  }
+  Planner: {
+    label: "Implementation Planner"
+  }
+  Implementer: {
+    label: "Implementer"
+  }
+  Test_engineer: {
+    label: "Test Engineer"
+  }
+  Doc_engineer: {
+    label: "Doc Engineer"
+  }
+  Verifier: {
+    label: "Verifier"
+  }
+}
+PraxionOrchestrationDoc_idea: {
+  label: "IDEA_PROPOSAL.md"
+}
+PraxionOrchestrationDoc_research: {
+  label: "RESEARCH_FINDINGS.md"
+}
+PraxionOrchestrationDoc_systems: {
+  label: "SYSTEMS_PLAN.md"
+}
+PraxionOrchestrationDoc_impl_plan: {
+  label: "IMPLEMENTATION_PLAN.md"
+}
+PraxionOrchestrationDoc_learnings: {
+  label: "LEARNINGS.md"
+}
+PraxionOrchestrationDoc_test: {
+  label: "TEST_RESULTS.md"
+}
+PraxionOrchestrationDoc_wip: {
+  label: "WIP.md"
+}
+PraxionOrchestrationDoc_verify: {
+  label: "VERIFICATION_REPORT.md"
+}
+
+PraxionOrchestrationOrchestrator -> PraxionOrchestrationPipeline.Promethean: "dispatches"
+PraxionOrchestrationOrchestrator -> PraxionOrchestrationPipeline.Researcher: "dispatches"
+PraxionOrchestrationOrchestrator -> PraxionOrchestrationPipeline.Architect: "dispatches"
+PraxionOrchestrationOrchestrator -> PraxionOrchestrationPipeline.Planner: "dispatches"
+PraxionOrchestrationOrchestrator -> PraxionOrchestrationPipeline.Implementer: "dispatches"
+PraxionOrchestrationOrchestrator -> PraxionOrchestrationPipeline.Test_engineer: "dispatches"
+PraxionOrchestrationOrchestrator -> PraxionOrchestrationPipeline.Doc_engineer: "dispatches"
+PraxionOrchestrationOrchestrator -> PraxionOrchestrationPipeline.Verifier: "dispatches"
+PraxionOrchestrationPipeline.Promethean -> PraxionOrchestrationDoc_idea: "writes"
+PraxionOrchestrationDoc_idea -> PraxionOrchestrationPipeline.Researcher: "reads"
+PraxionOrchestrationPipeline.Researcher -> PraxionOrchestrationDoc_research: "[...]"
+PraxionOrchestrationDoc_research -> PraxionOrchestrationPipeline.Architect: "[...]"
+PraxionOrchestrationPipeline.Architect -> PraxionOrchestrationDoc_systems: "[...]"
+PraxionOrchestrationDoc_systems -> PraxionOrchestrationPipeline.Planner: "reads"
+PraxionOrchestrationPipeline.Planner -> PraxionOrchestrationDoc_impl_plan: "writes"
+PraxionOrchestrationDoc_impl_plan -> PraxionOrchestrationPipeline.Implementer: "reads"
+PraxionOrchestrationDoc_impl_plan -> PraxionOrchestrationPipeline.Test_engineer: "reads"
+PraxionOrchestrationDoc_impl_plan -> PraxionOrchestrationPipeline.Doc_engineer: "reads"
+PraxionOrchestrationPipeline.Planner -> PraxionOrchestrationDoc_wip: "writes"
+PraxionOrchestrationPipeline.Implementer -> PraxionOrchestrationDoc_wip: "updates"
+PraxionOrchestrationPipeline.Doc_engineer -> PraxionOrchestrationDoc_wip: "updates"
+PraxionOrchestrationDoc_wip -> PraxionOrchestrationPipeline.Verifier: "reads"
+PraxionOrchestrationPipeline.Implementer -> PraxionOrchestrationDoc_test: "writes"
+PraxionOrchestrationPipeline.Test_engineer -> PraxionOrchestrationDoc_test: "writes"
+PraxionOrchestrationDoc_test -> PraxionOrchestrationPipeline.Verifier: "reads"
+PraxionOrchestrationPipeline.Verifier -> PraxionOrchestrationDoc_verify: "writes"
+PraxionOrchestrationPipeline.Planner -> PraxionOrchestrationDoc_learnings: "writes (pipeline-end)"
+PraxionOrchestrationPipeline.Implementer -> PraxionOrchestrationDoc_learnings: "writes"

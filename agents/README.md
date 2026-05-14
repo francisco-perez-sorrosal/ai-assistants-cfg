@@ -32,6 +32,28 @@ Fifteen agents that collaborate on software development tasks, each with a dedic
 
 For a step-by-step tutorial showing how to drive the pipeline from ideation to verification, see [docs/getting-started.md](../docs/getting-started.md).
 
+### Loop Participation
+
+The forward pipeline (promethean → researcher → architect → planner → implementer/test-engineer/doc-engineer → verifier) is no longer a straight line — two feedback edges close it into a graph. The **CIS loop** is forward-feeding (researcher surfaces opportunity → architect dispositions); the **rework loop** is backward-feeding (verifier emits manifest → main agent spawns rework worktree → architect-first dispatch). Both share a single disposition vocabulary defined in [`skills/software-planning/references/disposition-vocabulary.md`](../skills/software-planning/references/disposition-vocabulary.md). For full loop semantics, data flows, and diagrams see [`docs/architecture.md` §10](../docs/architecture.md#10-pipeline-feedback-loops).
+
+| Agent | Forward pipeline role | Loop participation |
+|-------|----------------------|---------------------|
+| `promethean` | Project-state ideation | — |
+| `researcher` | Codebase + external research | **Sources CIS** — Hat 2 obligation surfaces strictly-better libraries/frameworks into `RESEARCH_FINDINGS.md § Continuous Improvement Signals` |
+| `systems-architect` | Trade-off analysis, design | **Dispositions CIS** (Phase 7 — `switch-now` / `defer-with-rationale` / `dismiss-with-rationale`); **always-first on rework** — `/resume-rework` routes here so every rework cluster produces a `SYSTEMS_PLAN.md` the planner can consume (preserves the planner's input-shape invariant for implementation-class clusters) |
+| `implementation-planner` | Step decomposition, supervision | Consumes architect's `SYSTEMS_PLAN.md` for implementation-class rework clusters |
+| `context-engineer` | Context-artifact domain expertise | Shadows researcher + architect stages when context artifacts are touched |
+| `interface-designer` | Interface-layer design specialist | Shadows researcher + architect stages when interface surface is in scope; orchestrator-mediated **challenge loop** with architect via `## Architecture Challenges` |
+| `implementer` | Step execution with self-review | — |
+| `test-engineer` | Dedicated testing | — |
+| `doc-engineer` | Documentation quality | Parallel with implementer + test-engineer on planner-assigned doc steps |
+| `verifier` | Quality gate against acceptance criteria | **Initiates rework loop** — Phase 12.5 clusters FAIL/WARN findings into `REWORK_MANIFEST.md` rows |
+| `architect-validator` | Per-PR structural validator (code↔DSL↔ADR) | Independent — not in any pipeline edge |
+| `sentinel` | Read-only ecosystem auditor | Independent — not in any pipeline edge |
+| `skill-genesis` | Learning harvester | Post-pipeline — consumes `LEARNINGS.md` and `VERIFICATION_REPORT.md` after closure |
+| `cicd-engineer` | CI/CD pipeline authoring | Forward pipeline only; no loop participation |
+| `roadmap-cartographer` | Project audit-to-roadmap synthesis | Independent — on-demand via `/roadmap` |
+
 ## How Agents Work
 
 Agents are **delegated, not invoked**. Claude decides when to spawn an agent based on the task at hand and the agent's `description` field. Unlike skills and commands, agents don't have a `/slash-command` syntax.

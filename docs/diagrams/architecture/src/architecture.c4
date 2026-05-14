@@ -1,27 +1,45 @@
 /**
  * Praxion Architecture — LikeC4 source model
  *
- * Two views:
- *   context    — L0 System Context: Praxion + external actors (boundary view)
- *   components — L1 Components: internals grouped by architectural layer
+ * Six projected views:
+ *   context              — L0 System Context: Praxion + external actors (boundary view)
+ *   components           — L1 Components: internals grouped by architectural layer
+ *   agent_pipeline       — L2 Forward agent pipeline (linear shape)
+ *   feedback_loops       — L2 Pipeline + two feedback loops (bidirectional shape)
+ *   cis_loop_detail      — L2 Continuous Improvement Signals loop (forward-feeding)
+ *   rework_loop_detail   — L2 Verifier rework loop (backward-feeding)
  *
  * Layer structure (R1):
  *   Knowledge Layer      — Skills, Rules, Commands, Agents (authored definitions)
- *   Orchestration Layer  — Agent Pipeline (runtime), Hooks, .ai-work/
+ *   Orchestration Layer  — Agent Pipeline (runtime, with per-agent elements), Hooks, .ai-work/
  *   Persistence Layer    — Memory MCP, Chronograph MCP, .ai-state/
  *   Tooling              — Installers, Scripts, Versioning
  *
- * Dual representation of Agents: the authored Markdown family (knowledge.agents)
- * lives alongside skills/rules/commands as a deployable knowledge surface; the
- * runtime, spawned-subprocess side (orchestration.pipeline) lives in the
- * orchestration layer where execution, ephemeral state, and lifecycle wiring
- * cohere. The two are linked by knowledge.agents -> orchestration.pipeline
- * "spawns". See ADR (dec-draft-…) "Architecture C4 dual-agent representation".
+ * Dual representation of Agents (R2): the authored Markdown family
+ * (knowledge.agents) lives alongside skills/rules/commands as a deployable
+ * knowledge surface; the runtime, spawned-subprocess side (orchestration.pipeline
+ * and its per-agent children) lives in the orchestration layer where execution,
+ * ephemeral state, and lifecycle wiring cohere. The two are linked by
+ * knowledge.agents -> orchestration.pipeline "spawns".
+ *
+ * Feedback-loop edges (R3): the pipeline carries two named feedback loops and
+ * one local challenge loop. Each loop's edges are tagged so views can project
+ * just that loop in isolation:
+ *   - forward         — primary forward flow (promethean -> verifier)
+ *   - cis_loop        — Continuous Improvement Signals (researcher -> architect)
+ *   - rework_loop     — Verifier rework (verifier -> orchestrator -> architect)
+ *   - challenge_loop  — Interface-designer architecture challenges (one round)
+ *
+ * Document handoff edges (R4): pipeline-document reads/writes are modeled as
+ * agent <-> .ai-work edges rather than agent <-> agent direct calls, matching
+ * the "agents communicate through shared documents, not direct invocation"
+ * contract from rules/swe/swe-agent-coordination-protocol.md.
  *
  * Regen:
- *   likec4 gen d2 docs/diagrams/ -o docs/diagrams/architecture/
- *   d2 docs/diagrams/architecture/context.d2    docs/diagrams/architecture/context.svg
- *   d2 docs/diagrams/architecture/components.d2 docs/diagrams/architecture/components.svg
+ *   likec4 export d2 docs/diagrams/architecture/src/architecture.c4 -o docs/diagrams/architecture/rendered/
+ *   for v in context components agent_pipeline feedback_loops cis_loop_detail rework_loop_detail; do
+ *     d2 docs/diagrams/architecture/rendered/$v.d2 docs/diagrams/architecture/rendered/$v.svg
+ *   done
  *
  * DSL reference: https://likec4.dev/llms-full.txt
  */
@@ -30,6 +48,14 @@ specification {
   element system
   element external
   element component
+  element agent
+  element document
+
+  tag forward
+  tag cis_loop
+  tag rework_loop
+  tag challenge_loop
+  tag artifact
 }
 
 model {
@@ -52,24 +78,63 @@ model {
       agents   = component "Agents"         { description "Authored subprocess specifications" }
     }
 
-    // Orchestration Layer: runtime execution and ephemeral state
+    // Orchestration Layer: runtime execution and ephemeral state.
+    // Individual agents are first-class elements so pipeline views can address them.
     orchestration = component "Orchestration Layer" {
-      pipeline = component "Agent Pipeline" { description "Spawned subprocesses (runtime instances)" }
-      hooks    = component "Hooks"          { description "Lifecycle enforcement" }
-      aiwork   = component ".ai-work/"      { description "Ephemeral pipeline docs" }
+
+      orchestrator = agent "Main Agent (Orchestrator)" {
+        description "Tier selector, task-slug propagator, rework-worktree spawner, subagent dispatcher"
+      }
+
+      pipeline = component "Agent Pipeline" {
+        description "Spawned subprocesses (runtime instances)"
+
+        promethean       = agent "Promethean"       { description "Feature-level ideation" }
+        researcher       = agent "Researcher"       { description "Hat 1 codebase + Hat 2 external research; surfaces CIS" }
+        architect        = agent "Systems Architect" { description "Trade-off analysis; CIS disposition; rework first-stop" }
+        interface_des    = agent "Interface Designer" { description "Interface-layer peer sub-architect" }
+        context_eng      = agent "Context Engineer" { description "Context artifact domain expert (shadow)" }
+        planner          = agent "Implementation Planner" { description "Step decomposition; supervises step execution" }
+        implementer      = agent "Implementer"      { description "Executes implementation steps" }
+        test_engineer    = agent "Test Engineer"    { description "Test design and execution" }
+        doc_engineer     = agent "Doc Engineer"     { description "Documentation quality" }
+        verifier         = agent "Verifier"         { description "Acceptance + rework manifest emitter (Phase 12.5)" }
+        sentinel         = agent "Sentinel"         { description "Read-only ecosystem auditor (independent)" }
+        arch_validator   = agent "Architect Validator" { description "Per-PR DSL <-> code <-> ADR triangle check" }
+        skill_genesis    = agent "Skill Genesis"    { description "Learning triage; artifact proposal" }
+      }
+
+      hooks    = component "Hooks"          { description "Lifecycle enforcement (worktree_guard, inject_worktree_banner, send_event)" }
+      aiwork   = component ".ai-work/"      { description "Ephemeral pipeline docs (task-slug scoped)" }
+
+      // Pipeline documents — first-class elements so handoff edges are addressable.
+      doc_idea        = document "IDEA_PROPOSAL.md"        { description "promethean output" }
+      doc_research    = document "RESEARCH_FINDINGS.md"    { description "researcher output; carries CIS section" }
+      doc_systems     = document "SYSTEMS_PLAN.md"         { description "architect output; carries dispositions" }
+      doc_interface   = document "INTERFACE_DESIGN.md"     { description "interface-designer output; carries Architecture Challenges" }
+      doc_context     = document "CONTEXT_REVIEW.md"       { description "context-engineer cumulative review" }
+      doc_impl_plan   = document "IMPLEMENTATION_PLAN.md"  { description "planner output" }
+      doc_wip         = document "WIP.md"                  { description "step state" }
+      doc_learnings   = document "LEARNINGS.md"            { description "in-flight knowledge" }
+      doc_test        = document "TEST_RESULTS.md"         { description "test-run handoff" }
+      doc_verify      = document "VERIFICATION_REPORT.md"  { description "verifier output" }
+      doc_rework      = document "REWORK_MANIFEST.md"      { description "verifier Phase 12.5 output; per-row fenced JSON authoritative" }
+      doc_findings    = document "VERIFIER_FINDINGS.md"    { description "orchestrator writes one per rework worktree" }
     }
 
     // Persistence Layer: durable intelligence and observability
     persistence = component "Persistence Layer" {
       memory      = component "Memory MCP"      { description "Curated + observations" }
       chronograph = component "Chronograph MCP" { description "OTel relay" }
-      aistate     = component ".ai-state/"      { description "ADRs, specs, reports" }
+      aistate     = component ".ai-state/"      { description "ADRs, specs, sentinel reports, tech-debt ledger" }
+      adrs        = component "ADR Fragments"   { description ".ai-state/decisions/drafts/ — finalized at merge-to-main" }
+      tdl         = component "Tech-Debt Ledger" { description ".ai-state/TECH_DEBT_LEDGER.md (+ RESOLVED)" }
     }
 
     // Tooling: deployment and release automation
     tooling = component "Tooling" {
       installers = component "Installers"   { description "3 targets" }
-      scripts    = component "Scripts"      { description "Worktrees, merge, Phoenix" }
+      scripts    = component "Scripts"      { description "Worktrees, merge, Phoenix, finalize" }
       versioning = component "Versioning"   { description "Commitizen" }
     }
 
@@ -79,19 +144,97 @@ model {
     knowledge.rules       -> orchestration.pipeline "constrains"
     knowledge.commands    -> orchestration.pipeline "triggers"
     knowledge.agents      -> orchestration.pipeline "spawns"
-    // Orchestration internal
-    orchestration.hooks    -> orchestration.pipeline "enforces"
-    orchestration.hooks    -> persistence.chronograph "emits events"
-    orchestration.hooks    -> persistence.memory "injects context"
-    orchestration.pipeline -> orchestration.aiwork "reads/writes"
-    orchestration.pipeline -> persistence.aistate "persists"
-    persistence.memory     -> persistence.aistate "reads/writes"
+
+    // Orchestration internal — orchestrator dispatches pipeline agents
+    orchestration.orchestrator -> orchestration.pipeline.promethean    "dispatches"
+    orchestration.orchestrator -> orchestration.pipeline.researcher    "dispatches"
+    orchestration.orchestrator -> orchestration.pipeline.architect     "dispatches"
+    orchestration.orchestrator -> orchestration.pipeline.interface_des "dispatches"
+    orchestration.orchestrator -> orchestration.pipeline.context_eng   "dispatches (shadow)"
+    orchestration.orchestrator -> orchestration.pipeline.planner       "dispatches"
+    orchestration.orchestrator -> orchestration.pipeline.implementer   "dispatches"
+    orchestration.orchestrator -> orchestration.pipeline.test_engineer "dispatches"
+    orchestration.orchestrator -> orchestration.pipeline.doc_engineer  "dispatches"
+    orchestration.orchestrator -> orchestration.pipeline.verifier      "dispatches"
+    orchestration.orchestrator -> orchestration.pipeline.sentinel      "dispatches (independent)"
+    orchestration.orchestrator -> orchestration.pipeline.arch_validator "dispatches (per-PR)"
+    orchestration.orchestrator -> orchestration.pipeline.skill_genesis "dispatches (post-pipeline)"
+
+    // Forward pipeline — agent reads/writes against pipeline documents
+    orchestration.pipeline.promethean -> orchestration.doc_idea        "writes" { #forward }
+    orchestration.doc_idea            -> orchestration.pipeline.researcher "reads" { #forward }
+    orchestration.pipeline.researcher -> orchestration.doc_research    "writes" { #forward }
+    orchestration.doc_research        -> orchestration.pipeline.architect "reads" { #forward }
+    orchestration.pipeline.architect  -> orchestration.doc_systems     "writes" { #forward }
+    orchestration.doc_systems         -> orchestration.pipeline.planner "reads" { #forward }
+    orchestration.pipeline.planner    -> orchestration.doc_impl_plan   "writes" { #forward }
+    orchestration.pipeline.planner    -> orchestration.doc_wip         "writes" { #forward }
+    orchestration.doc_impl_plan       -> orchestration.pipeline.implementer "reads" { #forward }
+    orchestration.doc_impl_plan       -> orchestration.pipeline.test_engineer "reads" { #forward }
+    orchestration.doc_impl_plan       -> orchestration.pipeline.doc_engineer  "reads" { #forward }
+    orchestration.pipeline.implementer   -> orchestration.doc_wip       "updates" { #forward }
+    orchestration.pipeline.implementer   -> orchestration.doc_test      "writes" { #forward }
+    orchestration.pipeline.test_engineer -> orchestration.doc_test      "writes" { #forward }
+    orchestration.pipeline.doc_engineer  -> orchestration.doc_wip       "updates" { #forward }
+    orchestration.doc_wip              -> orchestration.pipeline.verifier "reads" { #forward }
+    orchestration.doc_test             -> orchestration.pipeline.verifier "reads" { #forward }
+    orchestration.pipeline.verifier    -> orchestration.doc_verify     "writes" { #forward }
+
+    // Interface-designer shadow + challenge loop (one round, orchestrator-mediated)
+    orchestration.pipeline.interface_des -> orchestration.doc_interface  "writes" { #challenge_loop }
+    orchestration.doc_interface          -> orchestration.pipeline.architect "reads challenges" { #challenge_loop }
+    orchestration.pipeline.architect     -> orchestration.doc_interface  "revises per architect re-eval" { #challenge_loop }
+
+    // Context-engineer shadow (cumulative single-writer)
+    orchestration.pipeline.context_eng   -> orchestration.doc_context    "writes (cumulative)"
+
+    // Forward learnings + spec persistence
+    orchestration.pipeline.implementer -> orchestration.doc_learnings "writes" { #forward }
+    orchestration.pipeline.planner     -> orchestration.doc_learnings "writes (pipeline-end)" { #forward }
+
+    // ── CIS Loop (forward-feeding: researcher Hat 2 -> architect disposition) ───
+    orchestration.pipeline.researcher -> orchestration.doc_research "surfaces CIS section" { #cis_loop }
+    orchestration.doc_research        -> orchestration.pipeline.architect "reads CIS in Phase 7" { #cis_loop }
+    orchestration.pipeline.architect  -> orchestration.doc_systems  "records disposition per signal" { #cis_loop }
+    orchestration.pipeline.architect  -> persistence.adrs           "writes ADR fragment when load-bearing" { #cis_loop }
+    // defer-with-rationale becomes a tech-debt-ledger row written by verifier/sentinel/orchestrator
+    orchestration.pipeline.verifier   -> persistence.tdl            "files row from deferred CIS" { #cis_loop }
+    orchestration.pipeline.sentinel   -> persistence.tdl            "files row from deferred CIS" { #cis_loop }
+    orchestration.orchestrator        -> persistence.tdl            "files row from deferred CIS" { #cis_loop }
+
+    // ── Rework Loop (backward-feeding: verifier Phase 12.5 -> architect re-pipeline) ───
+    orchestration.pipeline.verifier   -> orchestration.doc_rework "emits Phase 12.5" { #rework_loop }
+    orchestration.doc_rework          -> orchestration.orchestrator "reads manifest" { #rework_loop }
+    orchestration.orchestrator        -> tooling.scripts "spawns rework worktree per row (EnterWorktree)" { #rework_loop }
+    orchestration.orchestrator        -> orchestration.doc_findings "writes one VERIFIER_FINDINGS.md per worktree" { #rework_loop }
+    orchestration.orchestrator        -> persistence.tdl "flips linked td-NNN rows to in-flight" { #rework_loop }
+    orchestration.doc_findings        -> knowledge.commands "auto-discovered by /resume-rework" { #rework_loop }
+    knowledge.commands                -> orchestration.pipeline.architect "dispatches systems-architect (always-first)" { #rework_loop }
+    orchestration.pipeline.architect  -> orchestration.doc_systems "re-enters pipeline at SYSTEMS_PLAN" { #rework_loop }
+    orchestration.hooks               -> orchestration.doc_findings "inject_worktree_banner surfaces affordance" { #rework_loop }
+
+    // Validator + skill-genesis side-channels (post-pipeline)
+    orchestration.pipeline.arch_validator -> persistence.tdl "files drift rows"
+    orchestration.pipeline.skill_genesis  -> orchestration.doc_learnings "reads at pipeline-end"
+
+    // Orchestration internal — hooks + handoff substrate
+    orchestration.hooks    -> orchestration.pipeline      "enforces"
+    orchestration.hooks    -> persistence.chronograph     "emits events (HTTP)"
+    orchestration.hooks    -> persistence.memory          "injects context"
+    orchestration.pipeline -> orchestration.aiwork        "reads/writes documents"
+    orchestration.pipeline -> persistence.aistate         "persists artifacts"
+    orchestration.pipeline -> persistence.adrs            "writes ADR fragments"
+    persistence.memory     -> persistence.aistate         "reads/writes"
+    persistence.adrs       -> persistence.aistate         "finalized at merge-to-main"
+
     // Tooling: installers deploy the authored knowledge surface (definitions on disk),
     // not the runtime (which is spawned per-task by the host).
     tooling.installers  -> knowledge.skills   "deploys"
     tooling.installers  -> knowledge.rules    "deploys"
     tooling.installers  -> knowledge.commands "deploys"
     tooling.installers  -> knowledge.agents   "deploys"
+    tooling.scripts     -> persistence.adrs   "finalize_adrs.py promotes drafts to dec-NNN"
+    tooling.scripts     -> persistence.tdl    "finalize_tech_debt_ledger.py reconciles"
   }
 
   // ── Cross-boundary Relationships ─────────────────────────────────────────
@@ -124,8 +267,117 @@ views {
       praxion,
       praxion.knowledge, praxion.orchestration, praxion.persistence, praxion.tooling,
       praxion.knowledge.skills, praxion.knowledge.rules, praxion.knowledge.commands, praxion.knowledge.agents,
-      praxion.orchestration.pipeline, praxion.orchestration.hooks, praxion.orchestration.aiwork,
+      praxion.orchestration.pipeline, praxion.orchestration.hooks, praxion.orchestration.aiwork, praxion.orchestration.orchestrator,
       praxion.persistence.memory, praxion.persistence.chronograph, praxion.persistence.aistate,
+      praxion.persistence.adrs, praxion.persistence.tdl,
       praxion.tooling.installers, praxion.tooling.scripts, praxion.tooling.versioning
+  }
+
+  // L2 — Agent Pipeline (forward shape only).
+  // The linear flow promethean -> researcher -> architect -> planner -> (implementer ∥ test ∥ doc) -> verifier,
+  // expressed as agent <-> .ai-work/ document handoffs. Feedback edges are excluded for clarity.
+  view agent_pipeline {
+    title "Agent Pipeline — Forward Flow (L2)"
+    description "Forward-flow agent pipeline with document handoffs through .ai-work/<task-slug>/. Feedback loops are projected separately."
+
+    include
+      praxion.orchestration.orchestrator,
+      praxion.orchestration.pipeline,
+      praxion.orchestration.pipeline.promethean,
+      praxion.orchestration.pipeline.researcher,
+      praxion.orchestration.pipeline.architect,
+      praxion.orchestration.pipeline.planner,
+      praxion.orchestration.pipeline.implementer,
+      praxion.orchestration.pipeline.test_engineer,
+      praxion.orchestration.pipeline.doc_engineer,
+      praxion.orchestration.pipeline.verifier,
+      praxion.orchestration.doc_idea,
+      praxion.orchestration.doc_research,
+      praxion.orchestration.doc_systems,
+      praxion.orchestration.doc_impl_plan,
+      praxion.orchestration.doc_wip,
+      praxion.orchestration.doc_test,
+      praxion.orchestration.doc_verify,
+      praxion.orchestration.doc_learnings
+
+    exclude
+      element.tag = #cis_loop,
+      element.tag = #rework_loop,
+      element.tag = #challenge_loop
+  }
+
+  // L2 — Feedback Loops overlay.
+  // Pipeline + the two named feedback loops (CIS forward, Rework backward) + the
+  // local interface-designer challenge loop. Bidirectional shape must be visually obvious.
+  view feedback_loops {
+    title "Pipeline Feedback Loops (L2)"
+    description "Forward pipeline plus the CIS (researcher to architect, forward-feeding), Rework (verifier to architect, backward-feeding), and interface-designer challenge loops"
+
+    include
+      praxion.orchestration.orchestrator,
+      praxion.orchestration.pipeline,
+      praxion.orchestration.pipeline.promethean,
+      praxion.orchestration.pipeline.researcher,
+      praxion.orchestration.pipeline.architect,
+      praxion.orchestration.pipeline.interface_des,
+      praxion.orchestration.pipeline.planner,
+      praxion.orchestration.pipeline.implementer,
+      praxion.orchestration.pipeline.test_engineer,
+      praxion.orchestration.pipeline.doc_engineer,
+      praxion.orchestration.pipeline.verifier,
+      praxion.orchestration.doc_research,
+      praxion.orchestration.doc_systems,
+      praxion.orchestration.doc_interface,
+      praxion.orchestration.doc_impl_plan,
+      praxion.orchestration.doc_verify,
+      praxion.orchestration.doc_rework,
+      praxion.orchestration.doc_findings,
+      praxion.knowledge.commands,
+      praxion.persistence.adrs,
+      praxion.persistence.tdl
+  }
+
+  // L2 — Continuous Improvement Signals (CIS) loop detail.
+  // Forward-feeding: researcher Hat 2 surfaces strict-improvement candidates;
+  // architect dispositions are recorded in SYSTEMS_PLAN.md (and ADR fragments when load-bearing);
+  // deferred dispositions feed the tech-debt ledger.
+  view cis_loop_detail {
+    title "CIS Loop Detail — Forward-Feeding (L2)"
+    description "Continuous Improvement Signals: researcher Hat 2 surfaces strict-improvement candidates; architect dispositions are switch-now / defer-with-rationale / dismiss-with-rationale; deferred signals seed tech-debt-ledger rows"
+
+    include
+      praxion.orchestration.pipeline.researcher,
+      praxion.orchestration.pipeline.architect,
+      praxion.orchestration.pipeline.verifier,
+      praxion.orchestration.pipeline.sentinel,
+      praxion.orchestration.orchestrator,
+      praxion.orchestration.doc_research,
+      praxion.orchestration.doc_systems,
+      praxion.persistence.adrs,
+      praxion.persistence.tdl
+  }
+
+  // L2 — Verifier rework loop detail.
+  // Backward-feeding: verifier Phase 12.5 emits REWORK_MANIFEST; orchestrator spawns
+  // a rework worktree per row, writes VERIFIER_FINDINGS.md, flips td-NNN rows to in-flight;
+  // a fresh Claude Code session in the worktree surfaces /resume-rework, which dispatches
+  // systems-architect always-first; the architect re-enters the pipeline at SYSTEMS_PLAN.md.
+  view rework_loop_detail {
+    title "Rework Loop Detail — Backward-Feeding (L2)"
+    description "Verifier Phase 12.5 -> REWORK_MANIFEST.md -> orchestrator -> rework worktrees -> /resume-rework -> systems-architect (always-first) -> re-pipeline; subagent isolation enforced by worktree_guard"
+
+    include
+      praxion.orchestration.pipeline.verifier,
+      praxion.orchestration.orchestrator,
+      praxion.orchestration.pipeline.architect,
+      praxion.orchestration.pipeline.planner,
+      praxion.orchestration.hooks,
+      praxion.orchestration.doc_verify,
+      praxion.orchestration.doc_rework,
+      praxion.orchestration.doc_findings,
+      praxion.orchestration.doc_systems,
+      praxion.knowledge.commands,
+      praxion.persistence.tdl,
+      praxion.tooling.scripts
   }
 }

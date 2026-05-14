@@ -38,6 +38,9 @@ Praxion: {
     Hooks: {
       label: "Hooks"
     }
+    Orchestrator: {
+      label: "Main Agent (Orchestrator)"
+    }
     Pipeline: {
       label: "Agent Pipeline"
     }
@@ -53,6 +56,12 @@ Praxion: {
     }
     Chronograph: {
       label: "Chronograph MCP"
+    }
+    Adrs: {
+      label: "ADR Fragments"
+    }
+    Tdl: {
+      label: "Tech-Debt Ledger"
     }
     Aistate: {
       label: ".ai-state/"
@@ -83,16 +92,24 @@ Praxion.Knowledge.Rules -> Praxion.Orchestration.Pipeline: "constrains"
 Praxion.Knowledge.Commands -> Praxion.Orchestration.Pipeline: "triggers"
 Praxion.Knowledge.Agents -> Praxion.Orchestration.Pipeline: "spawns"
 Praxion.Orchestration.Hooks -> Praxion.Orchestration.Pipeline: "enforces"
-Praxion.Orchestration.Pipeline -> Praxion.Orchestration.Aiwork: "reads/writes"
+Praxion.Orchestration.Pipeline -> Praxion.Orchestration.Aiwork: "reads/writes documents"
+Praxion.Orchestration.Orchestrator -> Praxion.Orchestration.Pipeline: "[...]"
 Praxion.Orchestration.Hooks -> Praxion.Persistence.Memory: "injects context"
-Praxion.Orchestration.Hooks -> Praxion.Persistence.Chronograph: "emits events"
+Praxion.Orchestration.Hooks -> Praxion.Persistence.Chronograph: "emits events (HTTP)"
 Praxion.Persistence.Chronograph -> Arize_phoenix: "streams via OTLP"
-Praxion.Orchestration.Pipeline -> Praxion.Persistence.Aistate: "persists"
+Praxion.Orchestration.Pipeline -> Praxion.Persistence.Aistate: "persists artifacts"
 Praxion.Persistence.Memory -> Praxion.Persistence.Aistate: "reads/writes"
+Praxion.Orchestration.Pipeline -> Praxion.Persistence.Adrs: "writes ADR fragments"
+Praxion.Persistence.Adrs -> Praxion.Persistence.Aistate: "finalized at merge-to-main"
+Praxion.Orchestration.Pipeline -> Praxion.Persistence.Tdl: "[...]"
+Praxion.Orchestration.Orchestrator -> Praxion.Persistence.Tdl: "[...]"
 Praxion.Tooling.Installers -> Praxion.Knowledge.Skills: "deploys"
 Praxion.Tooling.Installers -> Praxion.Knowledge.Rules: "deploys"
 Praxion.Tooling.Installers -> Praxion.Knowledge.Commands: "deploys"
 Praxion.Tooling.Installers -> Praxion.Knowledge.Agents: "deploys"
+Praxion.Orchestration.Orchestrator -> Praxion.Tooling.Scripts: "spawns rework worktree per row \n(EnterWorktree)"
+Praxion.Tooling.Scripts -> Praxion.Persistence.Adrs: "finalize_adrs.py promotes drafts to \ndec-NNN"
+Praxion.Tooling.Scripts -> Praxion.Persistence.Tdl: "finalize_tech_debt_ledger.py reconciles"
 Developer -> Praxion: "develops"
 Claude_code -> Praxion: "executes agents"
 Claude_desktop -> Praxion: "loads skills"

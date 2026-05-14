@@ -168,13 +168,36 @@ No edits to the trunk schema, the sentinel TT01–TT05 wording, the closure sema
 
 For the design rationale behind any of the above, see [`.ai-state/DESIGN.md` §9](../.ai-state/DESIGN.md#9-test-topology).
 
-## 10. Verifier Rework Loop
+## 10. Pipeline Feedback Loops
+
+<!-- OWNER: doc-engineer (verification), systems-architect (loop semantics) | LAST UPDATED: 2026-05-14 — pipeline-loops-docs pipeline -->
+
+Praxion's agent pipeline is no longer linear. Two feedback edges close the forward flow into a graph:
+
+- **Forward-feeding (CIS)** — the researcher's Hat 2 surfaces a strictly-better library or framework and writes it into `RESEARCH_FINDINGS.md § Continuous Improvement Signals`; the systems-architect dispositions each signal during Phase 7 trade-off analysis. See [§10.2](#102-continuous-improvement-signals-cis-loop).
+- **Backward-feeding (Rework)** — the verifier's Phase 12.5 clusters FAIL/WARN findings into `REWORK_MANIFEST.md` rows; the main agent spawns rework worktrees and `/resume-rework` dispatches `systems-architect` (always first per the routing invariant). See [§10.1](#101-verifier-rework-loop).
+
+Both loops share a single disposition vocabulary — `switch-now` / `defer-with-rationale` / `dismiss-with-rationale` — defined in [`skills/software-planning/references/disposition-vocabulary.md`](../skills/software-planning/references/disposition-vocabulary.md) and consumed by both surfaces ([`dec-179`](../.ai-state/decisions/179-verifier-rework-loop-shared-disposition-vocabulary.md)).
+
+<!-- aac:generated source=docs/diagrams/architecture/src/architecture.c4 view=agent_pipeline last-regen=2026-05-14 -->
+![Agent Pipeline (L2) — forward flow from promethean through researcher, systems-architect, implementation-planner, parallel implementer / test-engineer / doc-engineer, and verifier; sentinel and architect-validator branch off as independent audits](diagrams/architecture/rendered/agent_pipeline.svg)
+<!-- aac:end -->
+
+<!-- aac:generated source=docs/diagrams/architecture/src/architecture.c4 view=feedback_loops last-regen=2026-05-14 -->
+![Pipeline Feedback Loops (L2) — CIS forward edge (researcher → systems-architect) overlaid with the Rework backward edge (verifier → main agent → /resume-rework → systems-architect); both share the disposition vocabulary](diagrams/architecture/rendered/feedback_loops.svg)
+<!-- aac:end -->
+
+### 10.1 Verifier Rework Loop
 
 <!-- OWNER: implementer (as-built) | LAST UPDATED: 2026-05-14 — Step 24 Group H, verifier-rework-loop pipeline -->
 <!-- Only Built components appear here. For the Designed-phase narrative and data-flow diagrams,
      see .ai-state/DESIGN.md §3 (Verifier rework loop row) and §5 (Verifier Rework Loop sub-section). -->
 
 Automated self-healing loop that replaces today's manual user action after a failed verification. When the verifier's `VERIFICATION_REPORT.md` contains FAIL/WARN findings, Phase 12.5 clusters them into rework rows and emits a `REWORK_MANIFEST.md`. The main agent reads the manifest, spawns one rework worktree per row via `EnterWorktree`, and writes a `VERIFIER_FINDINGS.md` into each worktree. The user opens a fresh session in the rework worktree, where the SessionStart banner hook surfaces the `/resume-rework` command. That command auto-discovers the findings file and dispatches `systems-architect` (always first, per routing invariant); for implementation-class clusters the architect's `SYSTEMS_PLAN.md` feeds the standard pipeline. Subagent isolation is enforced by `hooks/worktree_guard.py` and verified by the controlled-test harness before GA.
+
+<!-- aac:generated source=docs/diagrams/architecture/src/architecture.c4 view=rework_loop_detail last-regen=2026-05-14 -->
+![Rework Loop Detail (L2) — verifier Phase 12.5 emits REWORK_MANIFEST.md, main agent spawns per-row worktrees via EnterWorktree, /resume-rework dispatches systems-architect (always-first), and the standard pipeline runs to closure with td-NNN status migrating open → in-flight → resolved](diagrams/architecture/rendered/rework_loop_detail.svg)
+<!-- aac:end -->
 
 | Component | File | Role |
 |-----------|------|------|
@@ -192,3 +215,31 @@ Automated self-healing loop that replaces today's manual user action after a fai
 **Last verified against code:** 2026-05-14
 
 **Built:** all components above resolve to files on disk; subagent-isolation manual verification pending per `hooks/MANUAL_VERIFICATION.md` before GA.
+
+### 10.2 Continuous Improvement Signals (CIS) Loop
+
+<!-- OWNER: doc-engineer (verification), systems-architect (loop semantics) | LAST UPDATED: 2026-05-14 — pipeline-loops-docs pipeline -->
+<!-- Only Built components appear here. CIS is forward-feeding: it adds an edge from the
+     researcher stage to the systems-architect stage that does not change what is built in
+     the current task. The disposition vocabulary is shared with the rework loop (§10.1)
+     so the ecosystem speaks with one voice across forward and backward flows. -->
+
+Forward-feeding loop that turns ecosystem opportunity into recorded architectural intent. During Phase 3 external research the researcher wears **Hat 2** — a continuous-improvement obligation to surface a library, framework, or approach that appears strictly better than the incumbent for the same capability, **even when the current task does not require switching**. Each such opportunity becomes a row in `RESEARCH_FINDINGS.md § Continuous Improvement Signals` with explicit criteria and trade-offs. The systems-architect reads that section during Phase 7 (Trade-off Analysis) and **must** record an explicit disposition for every surfaced signal — `switch-now`, `defer-with-rationale`, or `dismiss-with-rationale` — in `SYSTEMS_PLAN.md` (and, for load-bearing decisions, in an ADR fragment under `.ai-state/decisions/drafts/`). Silent dismissal is a behavioral-contract violation. A `defer-with-rationale` disposition is the canonical input for a future `.ai-state/TECH_DEBT_LEDGER.md` row, filed by the verifier, sentinel, orchestrator, or architect-validator from the documented rationale.
+
+<!-- aac:generated source=docs/diagrams/architecture/src/architecture.c4 view=cis_loop_detail last-regen=2026-05-14 -->
+![CIS Loop Detail (L2) — researcher Hat 2 writes Continuous Improvement Signals into RESEARCH_FINDINGS.md, systems-architect Phase 7 dispositions each signal as switch-now / defer-with-rationale / dismiss-with-rationale, and deferred signals become eligible inputs for tech-debt-ledger rows filed by verifier or sentinel](diagrams/architecture/rendered/cis_loop_detail.svg)
+<!-- aac:end -->
+
+| Component | File | Role |
+|-----------|------|------|
+| Researcher Hat 2 obligation | `agents/researcher.md` (lines 44–52, 101, 133) | Hat 2 — External Researcher; mandatory modern library/framework survey when selection is in scope; current-stack contrast that escalates to CIS when one or more candidates appear strictly better |
+| `## Continuous Improvement Signals` section | `agents/researcher.md` (lines 203–220) | Authored into `RESEARCH_FINDINGS.md`; included only when Hat-2 research surfaced strictly-better candidates; bar is "strict improvement on multiple criteria the project demonstrably cares about, with trade-offs honestly stated" |
+| Architect Phase 7 disposition obligation | `agents/systems-architect.md` (lines 121, 184–188) | Phase 5 alternatives evaluation acknowledges CIS signals; Phase 7 trade-off analysis resolves them with an explicit disposition; silent dismissal flagged as Register Objection violation |
+| Disposition vocabulary | `skills/software-planning/references/disposition-vocabulary.md` | Shared reference for `switch-now` / `defer-with-rationale` / `dismiss-with-rationale`; one vocabulary across CIS (forward) and rework (backward) surfaces |
+| Tech-debt ledger eligibility | `.ai-state/TECH_DEBT_LEDGER.md` + `skills/software-planning/references/tech-debt-ledger.md` | Deferred CIS dispositions are the canonical input for `defer-with-rationale` debt rows; ledger writers (verifier, sentinel, orchestrator, architect-validator) file from the recorded rationale |
+
+**Data flow:** researcher Phase 3 external research surfaces a strictly-better library/framework via Hat 2 → researcher Phase 4 comparative-analysis grades the incumbent against modern candidates on equal axes → researcher Phase 5 emits `## Continuous Improvement Signals` into `RESEARCH_FINDINGS.md` (one row per signal: candidate name, current-stack incumbent, evaluation axes, recommendation framing) → architect Phase 5 acknowledges signals in alternatives evaluation, deferring resolution to Phase 7 → architect Phase 7 (Trade-off Analysis) records a disposition for each signal in `SYSTEMS_PLAN.md`; load-bearing dispositions also land in an ADR fragment under `.ai-state/decisions/drafts/` → for `switch-now`, the migration work is added to the implementation plan; for `defer-with-rationale`, the architect documents the future-switch criteria and the signal becomes eligible for a tech-debt-ledger row; for `dismiss-with-rationale`, the architect states the reason the comparison does not hold under the project's constraints.
+
+**Last verified against code:** 2026-05-14
+
+**Built:** all components above resolve to files on disk; CIS semantics canonical in the researcher and systems-architect agent definitions, with the shared disposition vocabulary in [`disposition-vocabulary.md`](../skills/software-planning/references/disposition-vocabulary.md) ([`dec-179`](../.ai-state/decisions/179-verifier-rework-loop-shared-disposition-vocabulary.md)).

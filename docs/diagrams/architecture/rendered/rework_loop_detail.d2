@@ -1,0 +1,76 @@
+direction: down
+
+PraxionOrchestration: {
+  label: "Orchestration Layer"
+
+  Orchestrator: {
+    label: "Main Agent (Orchestrator)"
+  }
+  Hooks: {
+    label: "Hooks"
+  }
+  Doc_findings: {
+    label: "VERIFIER_FINDINGS.md"
+  }
+  Pipeline: {
+    label: "Agent Pipeline"
+
+    Verifier: {
+      label: "Verifier"
+    }
+    Architect: {
+      label: "Systems Architect"
+    }
+    Planner: {
+      label: "Implementation Planner"
+    }
+  }
+  Doc_verify: {
+    label: "VERIFICATION_REPORT.md"
+  }
+  Doc_rework: {
+    label: "REWORK_MANIFEST.md"
+  }
+  Doc_systems: {
+    label: "SYSTEMS_PLAN.md"
+  }
+}
+PraxionTooling: {
+  label: "Tooling"
+
+  Scripts: {
+    label: "Scripts"
+  }
+}
+PraxionKnowledge: {
+  label: "Knowledge Layer"
+
+  Commands: {
+    label: "Commands"
+  }
+}
+PraxionPersistence: {
+  label: "Persistence Layer"
+
+  Tdl: {
+    label: "Tech-Debt Ledger"
+  }
+}
+
+PraxionOrchestration.Orchestrator -> PraxionOrchestration.Pipeline.Verifier: "dispatches"
+PraxionOrchestration.Orchestrator -> PraxionOrchestration.Pipeline.Architect: "dispatches"
+PraxionOrchestration.Orchestrator -> PraxionOrchestration.Pipeline.Planner: "dispatches"
+PraxionOrchestration.Pipeline.Verifier -> PraxionOrchestration.Doc_verify: "writes"
+PraxionOrchestration.Pipeline.Verifier -> PraxionOrchestration.Doc_rework: "emits Phase 12.5"
+PraxionOrchestration.Doc_rework -> PraxionOrchestration.Orchestrator: "reads manifest"
+PraxionOrchestration.Orchestrator -> PraxionOrchestration.Doc_findings: "writes one VERIFIER_FINDINGS.md per \nworktree"
+PraxionOrchestration.Hooks -> PraxionOrchestration.Doc_findings: "inject_worktree_banner surfaces \naffordance"
+PraxionOrchestration.Pipeline.Architect -> PraxionOrchestration.Doc_systems: "[...]"
+PraxionOrchestration.Doc_systems -> PraxionOrchestration.Pipeline.Planner: "reads"
+PraxionOrchestration.Doc_findings -> PraxionKnowledge.Commands: "auto-discovered by /resume-rework"
+PraxionKnowledge.Commands -> PraxionOrchestration.Pipeline.Architect: "dispatches systems-architect \n(always-first)"
+PraxionOrchestration.Pipeline.Verifier -> PraxionPersistence.Tdl: "files row from deferred CIS"
+PraxionOrchestration.Orchestrator -> PraxionPersistence.Tdl: "[...]"
+PraxionOrchestration.Orchestrator -> PraxionTooling.Scripts: "spawns rework worktree per row \n(EnterWorktree)"
+PraxionTooling.Scripts -> PraxionPersistence.Tdl: "finalize_tech_debt_ledger.py reconciles"
+PraxionOrchestration.Hooks -> PraxionOrchestration.Pipeline: "enforces"

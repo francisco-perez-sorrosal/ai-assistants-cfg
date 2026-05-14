@@ -1,0 +1,53 @@
+direction: down
+
+PraxionOrchestration: {
+  label: "Orchestration Layer"
+
+  Orchestrator: {
+    label: "Main Agent (Orchestrator)"
+  }
+  Pipeline: {
+    label: "Agent Pipeline"
+
+    Researcher: {
+      label: "Researcher"
+    }
+    Verifier: {
+      label: "Verifier"
+    }
+    Sentinel: {
+      label: "Sentinel"
+    }
+    Architect: {
+      label: "Systems Architect"
+    }
+  }
+  Doc_research: {
+    label: "RESEARCH_FINDINGS.md"
+  }
+  Doc_systems: {
+    label: "SYSTEMS_PLAN.md"
+  }
+}
+PraxionPersistence: {
+  label: "Persistence Layer"
+
+  Adrs: {
+    label: "ADR Fragments"
+  }
+  Tdl: {
+    label: "Tech-Debt Ledger"
+  }
+}
+
+PraxionOrchestration.Orchestrator -> PraxionOrchestration.Pipeline.Researcher: "dispatches"
+PraxionOrchestration.Orchestrator -> PraxionOrchestration.Pipeline.Architect: "dispatches"
+PraxionOrchestration.Orchestrator -> PraxionOrchestration.Pipeline.Verifier: "dispatches"
+PraxionOrchestration.Orchestrator -> PraxionOrchestration.Pipeline.Sentinel: "dispatches (independent)"
+PraxionOrchestration.Pipeline.Researcher -> PraxionOrchestration.Doc_research: "[...]"
+PraxionOrchestration.Doc_research -> PraxionOrchestration.Pipeline.Architect: "[...]"
+PraxionOrchestration.Pipeline.Architect -> PraxionOrchestration.Doc_systems: "[...]"
+PraxionOrchestration.Pipeline.Architect -> PraxionPersistence.Adrs: "writes ADR fragment when load-bearing"
+PraxionOrchestration.Pipeline.Verifier -> PraxionPersistence.Tdl: "files row from deferred CIS"
+PraxionOrchestration.Pipeline.Sentinel -> PraxionPersistence.Tdl: "files row from deferred CIS"
+PraxionOrchestration.Orchestrator -> PraxionPersistence.Tdl: "[...]"
