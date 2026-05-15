@@ -1,0 +1,462 @@
+#!/usr/bin/env bash
+# dispatch-reworks — fan out /resume-rework into all rework worktrees
+#
+# Reads REWORK_MANIFEST.md (auto-discovered from the project root or passed via
+# --manifest), parses rows via scripts/rework_manifest.py:parse_json_blocks(),
+# and dispatches one rework session per row.
+#
+# Usage:
+#   dispatch-reworks [--bg | --terminals] [--dry-run] [--manifest <path>]
+#   dispatch-reworks --help
+#
+# Two dispatch modes (mutually exclusive):
+#   --bg          Run each rework as a headless claude --bg session (default).
+#   --terminals   Open one external terminal window per rework worktree with
+#                 /resume-rework pre-filled; user presses Enter to start each.
+#
+# Note: --bg starts N parallel sessions, each consuming API quota.
+#       Budget accordingly for large manifests (N > 3).
+
+set -eo pipefail
+
+# --- Constants ---------------------------------------------------------------
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+REWORK_MARKERS_DIR="${HOME}/.claude/rework_sessions"
+
+EXIT_SUCCESS=0
+EXIT_GENERAL=1
+EXIT_MISUSE=2
+EXIT_MANIFEST_NOT_FOUND=3
+EXIT_MANIFEST_EMPTY=4
+EXIT_HANDLER_NOT_REGISTERED=5
+
+# --- Helpers -----------------------------------------------------------------
+
+die() {
+    local code="$1"
+    shift
+    printf "dispatch-reworks: %s\n" "$*" >&2
+    exit "$code"
+}
+
+show_usage() {
+    cat <<'EOF'
+Usage: dispatch-reworks [--bg | --terminals] [--dry-run] [--manifest <path>]
+       dispatch-reworks --help
+
+Fan out /resume-rework into all rework worktrees from REWORK_MANIFEST.md.
+
+OPTIONS
+  --bg                  Start each rework as a headless background session via
+                        claude --bg (default mode when neither flag is given).
+  --terminals           Open one terminal window per worktree with /resume-rework
+                        pre-filled; press Enter in each window to start.
+  --dry-run             Print the dispatch plan; exit 0 without firing.
+  --manifest <path>     Explicit path to REWORK_MANIFEST.md (skip auto-discovery).
+  --help, -h            Show this help.
+
+MODES
+  --bg (default)
+    Sessions run silently in the background.  Each session is named "rework: <name>".
+    Monitor with:  claude agents --cwd <project-root>
+    Inspect logs:  claude logs <id>
+    Stop a session: claude stop <id>
+    Note: N sessions consume API quota ~N× faster; budget accordingly for N > 3.
+
+  --terminals
+    Opens N external terminal windows (your default emulator) via the claude-cli://
+    URI handler.  Requires claude-cli:// to be registered — run claude interactively
+    at least once if the handler is not found.  The user presses Enter in each
+    window to start the session.
+
+EXIT CODES
+  0   Success — sessions dispatched (or --dry-run completed cleanly).
+  1   General failure.
+  2   Misuse — bad flags or ambiguous manifest (multiple candidates found).
+  3   REWORK_MANIFEST.md not found.  Run the verifier first or pass --manifest.
+  4   Manifest has no rows.  A clean verifier run; nothing to dispatch.
+  5   claude-cli:// handler not registered (--terminals only).
+
+EXAMPLES
+  # Preview the dispatch plan without firing
+  dispatch-reworks --dry-run
+
+  # Default: fan out as background sessions
+  dispatch-reworks
+
+  # Visible terminal windows instead of background sessions
+  dispatch-reworks --terminals
+
+  # Specify an explicit manifest file
+  dispatch-reworks --bg --manifest .ai-work/my-task/REWORK_MANIFEST.md
+EOF
+    exit "${EXIT_SUCCESS}"
+}
+
+# --- Argument parsing --------------------------------------------------------
+
+MODE="bg"
+DRY_RUN=false
+MANIFEST_PATH=""
+FLAG_BG=false
+FLAG_TERMINALS=false
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --help|-h)
+            show_usage
+            ;;
+        --bg)
+            FLAG_BG=true
+            MODE="bg"
+            ;;
+        --terminals)
+            FLAG_TERMINALS=true
+            MODE="terminals"
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            ;;
+        --manifest)
+            [ -z "${2:-}" ] && die "$EXIT_MISUSE" "--manifest requires a path argument."
+            MANIFEST_PATH="$2"
+            shift
+            ;;
+        --manifest=*)
+            MANIFEST_PATH="${1#--manifest=}"
+            ;;
+        -*)
+            die "$EXIT_MISUSE" "Unknown option: $1. Use --help for usage."
+            ;;
+        *)
+            die "$EXIT_MISUSE" "Unexpected argument: $1. Use --help for usage."
+            ;;
+    esac
+    shift
+done
+
+# Mutual exclusion: --bg and --terminals cannot both be set.
+if "$FLAG_BG" && "$FLAG_TERMINALS"; then
+    die "$EXIT_MISUSE" "--bg and --terminals are mutually exclusive. Choose one mode."
+fi
+
+# --- Manifest discovery ------------------------------------------------------
+
+discover_manifest() {
+    local project_root
+    project_root="$(git rev-parse --show-toplevel 2>/dev/null)" \
+        || die "$EXIT_GENERAL" "Not inside a git repository. Run from the project root."
+
+    local candidates
+    candidates="$(find "$project_root" -name "REWORK_MANIFEST.md" -maxdepth 4 -type f 2>/dev/null)"
+
+    local count
+    count="$(printf "%s" "$candidates" | grep -c . 2>/dev/null || true)"
+
+    if [ "$count" -eq 0 ]; then
+        printf "Cannot dispatch reworks: REWORK_MANIFEST.md not found.\n" >&2
+        printf "Searched: %s (maxdepth 4, 0 matches).\n" "$project_root" >&2
+        printf "To fix: run the verifier to produce a manifest, or pass --manifest <path>.\n" >&2
+        exit "$EXIT_MANIFEST_NOT_FOUND"
+    fi
+
+    if [ "$count" -gt 1 ]; then
+        printf "Ambiguous manifest: multiple REWORK_MANIFEST.md files found:\n" >&2
+        printf "%s\n" "$candidates" | sed 's/^/  /' >&2
+        printf "To fix: pass --manifest <path> to choose one explicitly.\n" >&2
+        exit "$EXIT_MISUSE"
+    fi
+
+    printf "%s" "$candidates"
+}
+
+if [ -n "$MANIFEST_PATH" ]; then
+    [ -f "$MANIFEST_PATH" ] || {
+        printf "Cannot dispatch reworks: manifest not found at %s.\n" "$MANIFEST_PATH" >&2
+        printf "To fix: verify the path or omit --manifest to use auto-discovery.\n" >&2
+        exit "$EXIT_MANIFEST_NOT_FOUND"
+    }
+else
+    MANIFEST_PATH="$(discover_manifest)"
+fi
+
+printf "Found manifest: %s\n" "$MANIFEST_PATH"
+
+# --- Manifest parsing --------------------------------------------------------
+#
+# Calls parse_json_blocks() from scripts/rework_manifest.py via python3 -c.
+# Output: one "worktree_name\tabs_path" line per row (TAB-separated).
+# Empty result → exit 4.
+
+parse_manifest() {
+    local manifest_path="$1"
+    python3 -c "
+import sys, json, os
+sys.path.insert(0, '$SCRIPT_DIR')
+from rework_manifest import parse_json_blocks
+text = open(sys.argv[1]).read()
+rows = parse_json_blocks(text)
+if not rows:
+    sys.exit(4)
+project_root = sys.argv[2]
+for r in rows:
+    name = r.get('worktree_name', '')
+    abs_path = os.path.join(project_root, '.claude', 'worktrees', name)
+    print(name + '\t' + abs_path)
+" "$manifest_path" "$PROJECT_ROOT"
+}
+
+# PROJECT_ROOT: the main worktree root (where .claude/worktrees/ lives).
+# When running from a linked worktree, git rev-parse --show-toplevel returns
+# the worktree path, not the main checkout.  Use `git worktree list` to find
+# the main worktree (first line).
+PROJECT_ROOT="$(git worktree list --porcelain 2>/dev/null | awk '/^worktree / { print $2; exit }')" \
+    || die "$EXIT_GENERAL" "Not inside a git repository. Run from the project root."
+[ -n "$PROJECT_ROOT" ] \
+    || die "$EXIT_GENERAL" "Could not determine main worktree root via git worktree list."
+
+# Parse manifest rows into a temp variable (TAB-separated name<TAB>abs_path lines).
+# set -e is active; capture exit code explicitly before it unwinds the shell.
+ROWS=""
+parse_manifest_exit=0
+ROWS="$(parse_manifest "$MANIFEST_PATH")" || parse_manifest_exit=$?
+
+if [ "$parse_manifest_exit" -eq 4 ]; then
+    printf "dispatch-reworks: manifest has no rows — nothing to dispatch.\n" >&2
+    printf "A clean verifier run produces an empty manifest. This is expected when all reworks are complete.\n" >&2
+    exit "$EXIT_MANIFEST_EMPTY"
+elif [ "$parse_manifest_exit" -ne 0 ]; then
+    die "$EXIT_GENERAL" "Failed to parse manifest: $MANIFEST_PATH"
+fi
+
+if [ -z "$ROWS" ]; then
+    printf "dispatch-reworks: manifest has no rows — nothing to dispatch.\n" >&2
+    exit "$EXIT_MANIFEST_EMPTY"
+fi
+
+# --- Worktree existence check + row list -------------------------------------
+#
+# For each parsed row: verify the worktree directory exists.
+# Missing worktree → warn to stderr and skip (do not abort).
+# Valid rows accumulate in VALID_ROWS as "name\tabs_path" lines.
+
+VALID_ROWS=""
+while IFS=$'\t' read -r WT_NAME WT_PATH; do
+    [ -z "$WT_NAME" ] && continue
+    if [ ! -d "$WT_PATH" ]; then
+        printf "dispatch-reworks: warning: worktree directory not found for '%s' (%s) — skipping.\n" \
+            "$WT_NAME" "$WT_PATH" >&2
+        continue
+    fi
+    VALID_ROWS="${VALID_ROWS}${WT_NAME}	${WT_PATH}
+"
+done <<EOF
+$ROWS
+EOF
+
+if [ -z "$VALID_ROWS" ]; then
+    die "$EXIT_GENERAL" "No valid worktree directories found. Check .claude/worktrees/ exists and manifest rows are correct."
+fi
+
+# --- URL encoding helper -----------------------------------------------------
+
+url_encode() {
+    python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$1"
+}
+
+# --- Dry-run output ----------------------------------------------------------
+#
+# Prints the dispatch plan without firing anything; exits 0.
+
+if "$DRY_RUN"; then
+    while IFS=$'\t' read -r WT_NAME WT_PATH; do
+        [ -z "$WT_NAME" ] && continue
+        if [ "$MODE" = "bg" ]; then
+            printf "would dispatch: bg · %s · cd %s && claude --bg \"/resume-rework\" --name \"rework: %s\"\n" \
+                "$WT_NAME" "$WT_PATH" "$WT_NAME"
+        else
+            ENC_CWD="$(url_encode "$WT_PATH")"
+            printf "would dispatch: terminals · %s · open \"claude-cli://open?cwd=%s&q=%%2Fresume-rework\"\n" \
+                "$WT_NAME" "$ENC_CWD"
+        fi
+    done <<EOF
+$VALID_ROWS
+EOF
+    exit "${EXIT_SUCCESS}"
+fi
+
+# --- Live dispatch functions (filled in Steps 4–5) ---------------------------
+
+dispatch_bg() {
+    # Fire one headless claude --bg session per valid row.
+    #
+    # Each session is launched via a subshell that changes cwd to the worktree
+    # before calling claude --bg.  This is required because claude --bg has no
+    # --cwd flag — it inherits the working directory from the spawning process.
+    #
+    # Session ID is extracted from the "backgrounded · <id>" line emitted by
+    # claude --bg.  The ID is 8 hex characters; locale-safe extraction via awk
+    # handles the multi-byte middle-dot (UTF-8 \xc2\xb7) cleanly.
+    #
+    # Individual dispatch failures are reported on stderr and skipped; the loop
+    # continues to remaining rows.  Final exit code is non-zero only if EVERY
+    # row failed.
+    local dispatched=0
+    local failed=0
+
+    # Accumulate per-session summary lines for the closing block.
+    local summary_lines=""
+
+    while IFS=$'\t' read -r WT_NAME WT_PATH; do
+        [ -z "$WT_NAME" ] && continue
+
+        local bg_output
+        local dispatch_exit=0
+        bg_output="$(cd "$WT_PATH" && claude --bg "/resume-rework" --name "rework: $WT_NAME" 2>&1)" \
+            || dispatch_exit=$?
+
+        if [ "$dispatch_exit" -ne 0 ]; then
+            printf "dispatch-reworks: warning: dispatch failed for '%s' (exit %d):\n" \
+                "$WT_NAME" "$dispatch_exit" >&2
+            printf "%s\n" "$bg_output" | sed 's/^/  /' >&2
+            printf "  To retry: cd %s && claude --bg \"/resume-rework\" --name \"rework: %s\"\n" \
+                "$WT_PATH" "$WT_NAME" >&2
+            failed=$((failed + 1))
+            continue
+        fi
+
+        # Extract the session ID from the "backgrounded · <id>" line.
+        # The middle dot (·) is a multi-byte UTF-8 character that grep -oE handles
+        # inconsistently across locales.  Extracting the last field ($NF) on the
+        # "backgrounded" line is locale-safe and handles any future format changes.
+        local session_id
+        session_id="$(printf "%s" "$bg_output" | grep 'backgrounded' | awk '{print $NF}' || true)"
+
+        if [ -z "$session_id" ]; then
+            # claude --bg output format may have changed; fall back to "unknown".
+            session_id="unknown"
+            printf "dispatch-reworks: warning: could not extract session ID for '%s'. Raw output:\n" \
+                "$WT_NAME" >&2
+            printf "%s\n" "$bg_output" | sed 's/^/  /' >&2
+        fi
+
+        # Write a marker file so the notification hook can correlate the Stop
+        # event (which carries session_id but NOT the --name) back to this
+        # rework worktree.  Marker filename = short session ID; content = the
+        # worktree slug (for the notification message).  The hook deletes the
+        # marker after firing.  See LEARNINGS.md for the design rationale.
+        if [ "$session_id" != "unknown" ]; then
+            mkdir -p "$REWORK_MARKERS_DIR" 2>/dev/null \
+                && printf "%s" "$WT_NAME" > "${REWORK_MARKERS_DIR}/${session_id}" 2>/dev/null \
+                || printf "dispatch-reworks: warning: failed to write marker for session '%s' (notification may not fire).\n" \
+                    "$session_id" >&2
+        fi
+
+        dispatched=$((dispatched + 1))
+        summary_lines="${summary_lines}  rework: ${WT_NAME} → id ${session_id}
+    peek:   claude logs ${session_id}
+    cancel: claude stop ${session_id}
+"
+    done <<EOF
+$VALID_ROWS
+EOF
+
+    if [ "$dispatched" -eq 0 ]; then
+        printf "dispatch-reworks: all dispatches failed (%d row(s) attempted).\n" "$failed" >&2
+        printf "Check the warnings above for per-row error details.\n" >&2
+        exit "$EXIT_GENERAL"
+    fi
+
+    printf "\nDispatched %d rework session(s):\n" "$dispatched"
+    printf "%s" "$summary_lines"
+    if [ "$failed" -gt 0 ]; then
+        printf "\n  (%d row(s) failed — see warnings above)\n" "$failed"
+    fi
+    printf "\nTo monitor all sessions in one view: open a fresh Cursor terminal pane and run \`claude agents\`.\n"
+    printf "macOS notifications will fire when each session completes (via the osascript Stop hook).\n"
+}
+
+check_claude_cli_handler() {
+    # Verify that the claude-cli:// URI handler is registered with macOS LaunchServices.
+    # Exits EXIT_HANDLER_NOT_REGISTERED with a clear what/why/how-to-fix message if not.
+    #
+    # Implementation note: lsregister -dump produces ~340K lines to stderr; piping directly
+    # into grep under `set -o pipefail` causes SIGPIPE when grep closes the read end early
+    # (grep found a match and exits 0, breaking the pipe).  The fix: capture to a temp file
+    # first, then grep the file.  The temp file is removed in all exit paths.
+    local tmp_dump
+    tmp_dump="$(mktemp)" || die "$EXIT_GENERAL" "Could not create temp file for lsregister check."
+    "$LSREGISTER" -dump > "$tmp_dump" 2>&1 || true
+    if ! grep -q "claude-cli:" "$tmp_dump"; then
+        rm -f "$tmp_dump"
+        printf "dispatch-reworks: claude-cli:// URI handler is not registered.\n" >&2
+        printf "Why: the handler is registered by Claude Code the first time it runs interactively.\n" >&2
+        printf "To fix: open a terminal and run 'claude' once interactively, then retry.\n" >&2
+        printf "Alternative: use '--bg' mode, which does not require the URI handler.\n" >&2
+        exit "$EXIT_HANDLER_NOT_REGISTERED"
+    fi
+    rm -f "$tmp_dump"
+}
+
+dispatch_terminals() {
+    # Open one external terminal window per valid row via the claude-cli:// URI handler.
+    #
+    # Pre-flight: verify the handler is registered; exit EXIT_HANDLER_NOT_REGISTERED if not.
+    # Per row: URL-encode the worktree path, construct the URI, and invoke `open`.
+    # A 0.3s sleep between invocations prevents race conditions on terminal-emulator startup.
+    # Individual open failures are reported on stderr; the loop continues to remaining rows.
+    # Final exit code is non-zero only if EVERY row failed.
+    check_claude_cli_handler
+
+    local dispatched=0
+    local failed=0
+    local summary_lines=""
+
+    while IFS=$'\t' read -r WT_NAME WT_PATH; do
+        [ -z "$WT_NAME" ] && continue
+
+        local enc_cwd
+        enc_cwd="$(url_encode "$WT_PATH")"
+        local url="claude-cli://open?cwd=${enc_cwd}&q=%2Fresume-rework"
+
+        local open_exit=0
+        open "$url" 2>/dev/null || open_exit=$?
+
+        if [ "$open_exit" -ne 0 ]; then
+            printf "dispatch-reworks: warning: 'open' failed for '%s' (exit %d).\n" \
+                "$WT_NAME" "$open_exit" >&2
+            printf "  To retry manually: open \"%s\"\n" "$url" >&2
+            failed=$((failed + 1))
+            continue
+        fi
+
+        dispatched=$((dispatched + 1))
+        summary_lines="${summary_lines}  rework: ${WT_NAME}  →  ${WT_PATH}
+"
+        sleep 0.3
+    done <<EOF
+$VALID_ROWS
+EOF
+
+    if [ "$dispatched" -eq 0 ]; then
+        printf "dispatch-reworks: all terminal opens failed (%d row(s) attempted).\n" "$failed" >&2
+        printf "Check the warnings above for per-row error details.\n" >&2
+        exit "$EXIT_GENERAL"
+    fi
+
+    printf "\nOpened %d terminal window(s) for rework dispatch:\n" "$dispatched"
+    printf "%s" "$summary_lines"
+    if [ "$failed" -gt 0 ]; then
+        printf "\n  (%d row(s) failed — see warnings above)\n" "$failed"
+    fi
+    printf "\nPress Enter in each terminal to start the rework session.\n"
+}
+
+# Invoke the appropriate dispatch function.
+if [ "$MODE" = "bg" ]; then
+    dispatch_bg
+else
+    dispatch_terminals
+fi

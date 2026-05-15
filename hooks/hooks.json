@@ -83,6 +83,12 @@
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/capture_session.py 2>/dev/null",
             "timeout": 5,
             "async": true
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/notify_bg_session_state.py",
+            "timeout": 5,
+            "async": true
           }
         ]
       }
