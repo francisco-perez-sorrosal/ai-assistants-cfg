@@ -39,6 +39,8 @@ Reusable slash commands for AI coding assistants. Each `.md` file becomes a `/co
 | `/run-experiment` | Dispatch an ML training experiment, validate compute budget, stream metrics, write `TRAINING_RESULTS.md` |
 | `/save-changes` | Save current working changes to project memory with secret filtering |
 | `/sdd-coverage` | Report spec-to-test and spec-to-code coverage for REQ IDs |
+| `/skill-genesis` | Run the skill-genesis agent to autonomously harvest patterns from accumulated learnings (LEARNINGS.md, verification reports, memory entries, sentinel findings, ADRs); write a timestamped report to `.ai-state/skill_genesis_reports/` for later disposition via `/skill-genesis-review` |
+| `/skill-genesis-review` | Disposition pending proposals from a skill-genesis report — batch multi-select presentation, append-only disposition log, execute approved memory entries, surface delegation handoffs |
 | `/star-repo` | Star the Praxion repo on GitHub |
 | `/test` | Auto-detect test framework and run tests |
 

@@ -23,7 +23,6 @@ Agent documents live in two locations based on their lifecycle:
       INTERFACE_DESIGN.md
       SYSTEMS_PLAN.md
       SPEC_DELTA.md
-      SKILL_GENESIS_REPORT.md
       IMPLEMENTATION_PLAN.md
       WIP.md
       LEARNINGS.md
@@ -83,6 +82,9 @@ This scoping prevents collisions when multiple pipelines or multiple instances o
     sentinel_reports/
       SENTINEL_REPORT_*.md
       SENTINEL_LOG.md
+    skill_genesis_reports/
+      SKILL_GENESIS_REPORT_*.md
+      SKILL_GENESIS_LOG.md
     metrics_reports/
       METRICS_REPORT_*.{md,json}
       METRICS_LOG.md
@@ -102,6 +104,7 @@ Per-artifact inventory (the directory tree above is the canonical list; `TECH_DE
 |---|---|---|
 | `idea_ledgers/IDEA_LEDGER_*.md` | promethean | Timestamped; each run carries forward all prior entries (sentinel baseline, implemented/pending/discarded ideas, future paths). |
 | `sentinel_reports/SENTINEL_REPORT_*.md` + `SENTINEL_LOG.md` | sentinel | Timestamped audit reports + an append-only run-summary table (timestamp, report file, health grade, finding counts, coherence grade), co-located. |
+| `skill_genesis_reports/SKILL_GENESIS_REPORT_*.md` + `SKILL_GENESIS_LOG.md` | skill-genesis (writes both); `/skill-genesis-review` (updates report frontmatter + Disposition Log; updates log Review Status column) | Per-run report + append-only run log; frozen aggregate-block column contract; co-located. |
 | `metrics_reports/METRICS_REPORT_*.{md,json}` + `METRICS_LOG.md` | `/project-metrics` | Per-run JSON+MD report pairs + an append-only aggregate row per run, co-located. |
 | `token_budgeting/TOKEN_BUDGETING_*.md` | — (no active producer) | Historical token-budget audits; retained for history. |
 | `specs/SPEC_<name>_YYYY-MM-DD.md` | implementation-planner | Archived behavioral spec + traceability matrix; created at end-of-feature for medium/large tasks. |
@@ -124,12 +127,12 @@ Full schema (14 fields + `dedup_key`), owner-role heuristic, lifecycle conventio
 
 | Tier | Location | Documents | Lifetime |
 |------|----------|-----------|----------|
-| Ephemeral | `.ai-work/<task-slug>/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `CONTEXT_REVIEW.md`, `INTERFACE_DESIGN.md`, `SYSTEMS_PLAN.md`, `SPEC_DELTA.md`, `SKILL_GENESIS_REPORT.md`, `VERIFICATION_REPORT.md`, `REWORK_MANIFEST.md`, `PROGRESS.md` | Single pipeline run — delete after downstream consumption (merge `VERIFICATION_REPORT.md` patterns into `LEARNINGS.md` first). `INTERFACE_DESIGN.md` is the interface-designer's pipeline-mode output (interface architecture, framework decisions, UI/UX + API/tool sketches, trade-offs, `## Architecture Challenges` section); consumed by planner, implementer, and verifier. `REWORK_MANIFEST.md` — writer: verifier (Phase 12.5); reader: main agent; cleanup gated on rework completion. |
+| Ephemeral | `.ai-work/<task-slug>/` | `IDEA_PROPOSAL.md`, `RESEARCH_FINDINGS.md`, `CONTEXT_REVIEW.md`, `INTERFACE_DESIGN.md`, `SYSTEMS_PLAN.md`, `SPEC_DELTA.md`, `VERIFICATION_REPORT.md`, `REWORK_MANIFEST.md`, `PROGRESS.md` | Single pipeline run — delete after downstream consumption (merge `VERIFICATION_REPORT.md` patterns into `LEARNINGS.md` first). `INTERFACE_DESIGN.md` is the interface-designer's pipeline-mode output (interface architecture, framework decisions, UI/UX + API/tool sketches, trade-offs, `## Architecture Challenges` section); consumed by planner, implementer, and verifier. `REWORK_MANIFEST.md` — writer: verifier (Phase 12.5); reader: main agent; cleanup gated on rework completion. |
 | Ephemeral | `.ai-work/<rework-slug>/` | `VERIFIER_FINDINGS.md` — writer: main agent; reader: `/resume-rework` + spawned session | Worktree-local ephemeral. |
 | Ephemeral | `.ai-work/<task-slug>/` | `TEST_RESULTS.md` — implementer (or test-engineer) test-run handoff artifact (canonical schema in `skills/software-planning/references/agent-pipeline-details.md`) | Single pipeline run — merge into `VERIFICATION_REPORT.md`, then delete |
 | Ephemeral | `.ai-work/<task-slug>/` | `traceability.yml` — REQ-to-test/implementation mapping (canonical source of truth during the pipeline; rendered into the archived SPEC's matrix at feature end per [`id-citation-discipline.md`](id-citation-discipline.md)) | Single pipeline run — rendered into archived SPEC matrix, then deleted with `.ai-work/` |
 | Session-persistent | `.ai-work/<task-slug>/` | `IMPLEMENTATION_PLAN.md`, `WIP.md`, `LEARNINGS.md` | Across sessions — merge learnings into permanent locations at feature end |
-| Permanent | `.ai-state/` | `idea_ledgers/IDEA_LEDGER_*.md`, `sentinel_reports/{SENTINEL_REPORT_*.md, SENTINEL_LOG.md}`, `metrics_reports/{METRICS_REPORT_*.{md,json}, METRICS_LOG.md}`, `specs/SPEC_*.md`, `calibration_log.md`, `decisions/<NNN>-<slug>.md`, `SYSTEM_DEPLOYMENT.md`, `ARCHITECTURE.md`, `TEST_TOPOLOGY.md`, `TECH_DEBT_LEDGER.md` (active) + `TECH_DEBT_RESOLVED.md` (terminal) | Project lifetime — committed to git, timestamped per run or living document |
+| Permanent | `.ai-state/` | `idea_ledgers/IDEA_LEDGER_*.md`, `sentinel_reports/{SENTINEL_REPORT_*.md, SENTINEL_LOG.md}`, `skill_genesis_reports/{SKILL_GENESIS_REPORT_*.md, SKILL_GENESIS_LOG.md}`, `metrics_reports/{METRICS_REPORT_*.{md,json}, METRICS_LOG.md}`, `specs/SPEC_*.md`, `calibration_log.md`, `decisions/<NNN>-<slug>.md`, `SYSTEM_DEPLOYMENT.md`, `ARCHITECTURE.md`, `TEST_TOPOLOGY.md`, `TECH_DEBT_LEDGER.md` (active) + `TECH_DEBT_RESOLVED.md` (terminal) | Project lifetime — committed to git, timestamped per run or living document |
 | Permanent | `docs/` | `architecture.md` | Project lifetime — committed to git, derived from `.ai-state/DESIGN.md`, maintained by pipeline agents |
 
 ### Version Control and Cleanup

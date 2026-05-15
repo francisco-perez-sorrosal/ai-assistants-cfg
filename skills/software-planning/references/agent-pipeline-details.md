@@ -31,7 +31,7 @@ When an agent encounters work outside its boundary, it flags the need and recomm
 | Post-implementation quality review | `verifier` |
 | Documentation scope assessment, post-implementation doc updates, cross-reference fixes | `doc-engineer` |
 | Feature-level ideation from project state | `promethean` |
-| Post-pipeline learning harvest or 3+ accumulated LEARNINGS.md entries | `skill-genesis` |
+| On-demand learning harvest (`/skill-genesis`) or disposition pending proposals (`/skill-genesis-review`); user-invoked only, never pipeline-spawned | `skill-genesis` (autonomous report writer) + `/skill-genesis-review` command |
 
 ## Parallel Execution
 

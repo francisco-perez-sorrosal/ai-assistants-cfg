@@ -36,7 +36,7 @@ Aliases only (`opus`/`sonnet`/`haiku`); pin full IDs at spawn time only when ver
 | `researcher` | M | `sonnet` | Default; modes route up or down |
 | `cicd-engineer` | M | `sonnet` | Pipeline design, security review |
 | `sentinel` | M | `sonnet` | Mechanical scan + 10-dimension judgment |
-| `skill-genesis` | M | `sonnet` | Triage, dedup, interactive proposals |
+| `skill-genesis` | M | `sonnet` | Triage, dedup, autonomous report writing |
 | `doc-engineer` | L | `haiku` | Mechanical doc verification, pattern writing |
 
 ### Principles
