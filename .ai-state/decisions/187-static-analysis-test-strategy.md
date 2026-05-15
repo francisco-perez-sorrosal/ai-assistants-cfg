@@ -1,7 +1,7 @@
 ---
-id: dec-draft-95fc1a73
+id: dec-187
 title: "Skill-genesis inversion: static-analysis test strategy for Markdown agent definitions"
-status: proposed
+status: accepted
 category: implementation
 date: "2026-05-15"
 summary: "Tests for the skill-genesis inversion validate YAML frontmatter and grep patterns (static analysis), not runtime agent behavior — matching the testing approach used for other Markdown-based agent definitions in Praxion."
@@ -16,7 +16,7 @@ affected_files:
   - commands/skill-genesis-review.md
   - tests/test_skill_genesis_agent.py
   - tests/test_skill_genesis_review.py
-re_affirms: dec-draft-1495b1f2
+re_affirms: dec-186
 ---
 
 ## Context

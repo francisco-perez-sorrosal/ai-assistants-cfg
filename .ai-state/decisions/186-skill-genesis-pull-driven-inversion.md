@@ -1,7 +1,7 @@
 ---
-id: dec-draft-1495b1f2
+id: dec-186
 title: "Skill-genesis: pull-driven autonomous-report inversion with deferred disposition via /skill-genesis-review"
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-05-15
 summary: "Invert skill-genesis from interactive end-of-pipeline blocker to autonomous background report writer; user dispositions via new /skill-genesis-review batch multi-select command; auto-fire trigger removed."
