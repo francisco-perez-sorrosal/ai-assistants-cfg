@@ -1,0 +1,30 @@
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant O as Orchestrator session
+    participant V as Verifier (subagent)
+    participant D as scripts/dispatch-reworks
+    participant B as claude --bg sessions
+    participant T as External terminals
+    participant M as claude agents (fresh pane)
+
+    V->>O: emits REWORK_MANIFEST.md
+    O->>O: EnterWorktree creates N rework worktrees
+    O-->>U: prints dispatch instruction
+
+    alt --bg (default, headless)
+        U->>D: scripts/dispatch-reworks
+        D->>B: claude --bg /resume-rework (N times)
+        Note right of B: marker per session at ~/.claude/rework_sessions/SHORT_ID
+        D-->>U: N session IDs and claude logs hints
+        U->>M: open fresh Cursor pane, run claude agents
+        M-->>U: unified live state of N reworks
+        B-->>U: macOS notification on Stop (osascript hook)
+    else --terminals (visible)
+        U->>D: scripts/dispatch-reworks --terminals
+        D->>T: open claude-cli:// links (N times)
+        T-->>U: terminal windows with /resume-rework pre-filled
+        U->>T: press Enter in each window
+    end
+
+    B->>O: reworks complete, merge back and re-verify

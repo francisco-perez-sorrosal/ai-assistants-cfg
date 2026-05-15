@@ -509,6 +509,27 @@ After modifying the plugin manifest or adding new components, update the install
 claude plugin install i-am@bit-agora --scope user   # Or install directly from the marketplace
 ```
 
+### Local-edit testing workaround
+
+`./install.sh code` performs a marketplace fetch — local file edits in the worktree do not propagate to the installed plugin cache. When iterating on files Claude Code resolves through `${CLAUDE_PLUGIN_ROOT}` (hook scripts, `hooks/hooks.json`, plugin-cache-resolved commands), copy edited files directly into the cache:
+
+```bash
+# Example: a notification-hook edit
+cp hooks/notify_bg_session_state.py ~/.claude/plugins/cache/bit-agora/i-am/0.2.0/hooks/
+
+# Example: a hooks.json registration change
+cp hooks/hooks.json ~/.claude/plugins/cache/bit-agora/i-am/0.2.0/
+
+# Verify the cache copy matches the worktree
+diff hooks/notify_bg_session_state.py ~/.claude/plugins/cache/bit-agora/i-am/0.2.0/hooks/notify_bg_session_state.py
+```
+
+The version in the cache path (`0.2.0/`) comes from `.claude-plugin/plugin.json`. After a plugin version bump, the cache directory name changes — re-run `./install.sh code` once, then resume the `cp` workflow against the new version directory.
+
+Scripts invoked from the worktree directly (e.g., `scripts/dispatch-reworks`) do not need this — they run from the worktree's own path. Only files Claude Code resolves through the installed plugin cache need the copy.
+
+This is a documented workaround tracked as `td-036` in `.ai-state/TECH_DEBT_LEDGER.md`. A first-class `bash install.sh --dev-link` mode is the long-term resolution.
+
 ### Verifying changes
 
 - `./install.sh --check` — confirms all symlinks, plugin, hooks, and permissions are healthy
