@@ -48,6 +48,16 @@
       "env": {
         "MEMORY_FILE": ".ai-state/memory.json"
       }
+    },
+    "likec4": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@likec4/mcp"
+      ],
+      "env": {
+        "LIKEC4_WORKSPACE": "docs/diagrams/"
+      }
     }
   },
   "skills": ["./skills/"],
