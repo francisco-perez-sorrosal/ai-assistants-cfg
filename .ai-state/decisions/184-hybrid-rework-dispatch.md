@@ -1,7 +1,7 @@
 ---
-id: dec-draft-88106752
+id: dec-184
 title: "Hybrid rework dispatch — headless --bg default, opt-in --terminals visible, single script + notification hook"
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-14
 summary: "Ship scripts/dispatch-reworks with two mutually-exclusive modes (--bg default, --terminals opt-in) plus a notification hook to close the headless-mode discovery loop; slash-command wrapper for symmetry with future deferred-manifest consumers."

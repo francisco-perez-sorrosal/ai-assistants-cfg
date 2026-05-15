@@ -1,7 +1,7 @@
 ---
-id: dec-draft-82645f34
+id: dec-185
 title: "Tests-after approach for I/O-heavy shell dispatch script; TDD pairing reserved for pure-logic steps"
-status: proposed
+status: accepted
 category: implementation
 date: 2026-05-14
 summary: "For scripts/dispatch-reworks (bash + external process I/O), use tests-after with --dry-run as the unit-test affordance; apply test-engineer pairing only to the two pure-logic steps (manifest parsing, arg shaping)."
@@ -20,7 +20,7 @@ affected_files:
 
 ## Context
 
-The hybrid rework dispatch plan (dec-draft-88106752) decomposes into a bash script
+The hybrid rework dispatch plan (dec-184) decomposes into a bash script
 (`scripts/dispatch-reworks`) that fans out `claude --bg` or `claude-cli://` calls per
 rework row, and a Python hook (`hooks/notify_bg_session_state.py`) that fires macOS
 notifications on session state changes.
