@@ -2,17 +2,14 @@
 name: neo-cloud-abstraction
 description: >
   Backend abstraction layer for ML training job dispatch in Praxion ML/AI projects.
-  Defines the mode-invariant training_job_descriptor schema and 8 lifecycle operations
-  (create, start, status, log_stream, cancel, artifact_fetch, list, pricing_query)
-  shared by all three backends: local subprocess (operational modes A and B), SkyPilot
-  default-remote (mode C; 20+ providers), and RunPod direct adapter (mode C opt-in).
-  The descriptor has NO mode field and NO backend field — co-location is a backend
-  implementation detail. Use when configuring a compute backend for a Praxion ML project,
-  when dispatching a training run via /run-experiment, when reading or writing
-  training_job_descriptor YAML, when debugging backend dispatch errors, when evaluating
-  which backend to use (local vs SkyPilot vs RunPod direct), when the user mentions
-  neo_cloud_backend.yaml, subprocess training, SkyPilot, RunPod, or GPU cloud dispatch.
-  Activate alongside ml-training and llm-training-eval for full training pipeline work.
+  Defines the mode-invariant training_job_descriptor schema and lifecycle operations
+  shared by three backends: local subprocess, SkyPilot default-remote (20+ providers),
+  and RunPod direct adapter. Use when configuring a compute backend, dispatching a
+  training run via /run-experiment, reading or writing training_job_descriptor YAML or
+  neo_cloud_backend.yaml, debugging backend dispatch errors, choosing between local vs
+  SkyPilot vs RunPod, or when the user mentions subprocess training, SkyPilot, RunPod,
+  or GPU cloud dispatch. Activate alongside ml-training and llm-training-eval for full
+  training pipeline work.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 compatibility: Claude Code
 staleness_sensitive_sections:
