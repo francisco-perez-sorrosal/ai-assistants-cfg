@@ -36,6 +36,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
@@ -95,6 +96,10 @@ EXEMPT_EXACT_PATHS = frozenset(
     {
         "scripts/check_id_citation_discipline.py",
         "scripts/check_shipped_artifact_isolation.py",
+        # Test fixtures for the detectors themselves necessarily contain the
+        # forbidden patterns as test inputs — same self-referential exemption
+        # logic as the detector scripts above.
+        "tests/test_check_id_citation_discipline.py",
     }
 )
 
@@ -171,6 +176,34 @@ PATTERNS: tuple[tuple[str, re.Pattern[str], str], ...] = (
 )
 
 
+_SHEBANG_INTERPRETERS = ("bash", "sh", "zsh", "dash", "ksh")
+_SHEBANG_PATTERNS = tuple(
+    re.compile(rf"\b{shell}\b") for shell in _SHEBANG_INTERPRETERS
+)
+
+
+def is_bash_shebang(path: Path) -> bool:
+    """Return True if `path`'s first line is a bash/sh-family shebang.
+
+    Extensionless executable scripts (e.g., `scripts/dispatch-reworks`) escape
+    the extension-based corpus selection. Shebang detection brings them back
+    into scope so id-citation violations in bash scripts are not silently
+    skipped on commit.
+    """
+    try:
+        with path.open("rb") as f:
+            first_line = f.readline(256)
+    except OSError:
+        return False
+    try:
+        text = first_line.decode("ascii", errors="strict")
+    except UnicodeDecodeError:
+        return False
+    if not text.startswith("#!"):
+        return False
+    return any(pattern.search(text) for pattern in _SHEBANG_PATTERNS)
+
+
 def is_excluded_path(path: Path) -> bool:
     path_str = str(path).replace("\\", "/")
     return any(fragment in path_str for fragment in EXCLUDED_PATH_FRAGMENTS)
@@ -201,6 +234,27 @@ def iter_code_files(repo_root: Path) -> list[Path]:
             if is_exempt_by_path(rel) or is_excluded_path(path):
                 continue
             files.append(path)
+
+    # Second pass: extensionless executable shell scripts identified by shebang.
+    # Heuristic: only executable files are scanned in full-repo mode to keep
+    # false positives down (most extensionless text files are not scripts).
+    seen = {f.resolve() for f in files}
+    for path in repo_root.rglob("*"):
+        if not path.is_file() or path.suffix:
+            continue
+        if path.resolve() in seen:
+            continue
+        try:
+            rel = path.relative_to(repo_root)
+        except ValueError:
+            continue
+        if is_exempt_by_path(rel) or is_excluded_path(path):
+            continue
+        if not os.access(path, os.X_OK):
+            continue
+        if not is_bash_shebang(path):
+            continue
+        files.append(path)
     return files
 
 
@@ -230,7 +284,11 @@ def filter_files(explicit_files: list[Path], repo_root: Path) -> list[Path]:
         )
         if not abs_path.is_file():
             continue
-        if abs_path.suffix not in CODE_EXTENSIONS:
+        # Accept recognized code extensions OR extensionless files with a
+        # bash/sh-family shebang. Explicit user-passed paths (e.g., from
+        # pre-commit's staged-files list) override the executable-bit
+        # heuristic used in full-repo scans.
+        if abs_path.suffix not in CODE_EXTENSIONS and not is_bash_shebang(abs_path):
             continue
         try:
             rel = abs_path.relative_to(repo_root)
