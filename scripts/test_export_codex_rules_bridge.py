@@ -2,12 +2,26 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import subprocess
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXPORTER_PATH = REPO_ROOT / "codex" / "config" / "export-codex-rules-bridge.py"
+
+
+def _hermetic_env() -> dict[str, str]:
+    """Subprocess env with ambient Praxion kill-switches stripped.
+
+    The codex hook wrappers copy ``os.environ`` before dispatching. Without
+    this, an ambient ``PRAXION_DISABLE_*`` flag set in the developer session
+    (Praxion itself sets ``PRAXION_DISABLE_MEMORY_MCP=1`` in
+    ``.claude/settings.json``) leaks into the hook under test and silently
+    flips its behavior. Tests control disable flags via the project settings
+    overlay, never via inherited env -- so the test env must not carry them.
+    """
+    return {k: v for k, v in os.environ.items() if not k.startswith("PRAXION_")}
 
 
 def load_exporter():
@@ -28,6 +42,7 @@ def run_hook(path: Path, payload: dict[str, object]) -> dict[str, object]:
         text=True,
         capture_output=True,
         check=False,
+        env=_hermetic_env(),
     )
     assert result.returncode == 0, result.stderr or result.stdout
     return json.loads(result.stdout) if result.stdout.strip() else {}
@@ -45,6 +60,7 @@ def run_hook_result(
         capture_output=True,
         check=False,
         cwd=cwd,
+        env=_hermetic_env(),
     )
 
 
