@@ -1,0 +1,18 @@
+graph LR
+    USER(("user\ndeclares\nentry"))
+
+    USER -.->|"ideate"| P[promethean]
+    USER -.->|"research"| R[researcher]
+    USER -.->|"design"| SA[systems-architect]
+    USER -.->|"plan & build"| IP[implementation-planner]
+    USER -.->|"fix / implement"| I[implementer]
+
+    P --> R
+    R --> SA
+    SA --> IP
+    IP --> I
+    IP --> TE[test-engineer]
+    I --> V["verifier\n(default-on, skippable)"]
+    TE --> V
+
+    V -. "free mid-task movement\n(any stage, any direction)" .-> SA

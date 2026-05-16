@@ -251,7 +251,7 @@ Forward-feeding loop that turns ecosystem opportunity into recorded architectura
 
 ## 11. Hackathon Mode
 
-<!-- OWNER: implementer (as-built) | LAST UPDATED: 2026-05-15 — hackathon-mode pipeline Step 14 -->
+<!-- OWNER: implementer (as-built) | LAST UPDATED: 2026-05-15 — hackathon-mode pipeline Step 14; diagram added by doc-engineer -->
 <!-- Only Built components appear here — every path was verified with `test -e` before listing.
      For the design-target rationale (four-channel activation, independence guarantee), see
      .ai-state/DESIGN.md §3 (Hackathon Mode row). -->
@@ -261,6 +261,8 @@ Forward-feeding loop that turns ecosystem opportunity into recorded architectura
 Hackathon mode is a project-scoped, opt-in **second process path**. When a project sets `PRAXION_HACKATHON_MODE=1`, the 5-tier Direct/Lightweight/Standard/Full/Spike selector is replaced by the **Hackathon Spine** — a fixed-order, variable-membership pipeline (`promethean → researcher → systems-architect → implementation-planner → (implementer ∥ test-engineer) → verifier`) the user enters at a natural-language-inferred entry point, moves around in freely, and exits. With the env var unset, every agent, hook, and rule behaves byte-identically to the pre-hackathon baseline.
 
 The mode activates through **four channels**: the `PRAXION_HACKATHON_MODE=1` env var (runtime source of truth for hooks), the `## Hackathon Mode` CLAUDE.md block (instruction text every agent reads each session — the spine definition), the `praxion-rules.yaml` hackathon preset (suppresses three non-core rules), and the `praxion-hackathon` wrapper script (launch-time skill-surface trim). For the design rationale, see [`.ai-state/DESIGN.md` §3](../.ai-state/DESIGN.md#3-components) (Hackathon Mode row) and [`dec-draft-ef6b8065`](../.ai-state/decisions/drafts/20260515-2028-fperezsorrosal-worktree-hackathon-mode-design-hackathon-mode-activation-and-tier-integration.md).
+
+![Hackathon Spine — user declares an entry point (ideate → promethean, research → researcher, design → systems-architect, plan & build → implementation-planner, fix / implement → implementer); everything upstream of the entry point is skipped; the spine runs left-to-right through the selected stage onward; implementer and test-engineer run in parallel; the verifier is the default-on tail (skippable only on explicit user request); free mid-task movement between any stages is user-driven at any time](diagrams/hackathon-spine/rendered/hackathon-spine.svg)
 
 | Component | File | Role |
 |-----------|------|------|
@@ -276,4 +278,4 @@ The mode activates through **four channels**: the `PRAXION_HACKATHON_MODE=1` env
 
 **Last verified against code:** 2026-05-15 — every path above confirmed present on disk with `test -e`.
 
-**Built:** all components above resolve to files on disk. *Recommended follow-up: a Hackathon Spine pipeline diagram (per `rules/writing/diagram-conventions.md`) would aid navigation of §11 — not allocated to this pipeline's plan.*
+**Built:** all components above resolve to files on disk.
