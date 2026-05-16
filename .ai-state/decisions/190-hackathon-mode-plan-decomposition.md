@@ -1,7 +1,7 @@
 ---
-id: dec-draft-da975828
+id: dec-190
 title: Hackathon mode — implementation plan decomposition decisions
-status: proposed
+status: accepted
 category: implementation
 date: 2026-05-15
 summary: Three implementation-planner decisions for the hackathon-mode Standard-tier pipeline: (1) 18 ACs as sufficient acceptance basis without a formal behavioral spec; (2) canonical block before BLOCKS registration before consumer embeds ordering; (3) Phase 5b renumbering as its own dedicated step.
@@ -16,14 +16,14 @@ affected_files:
   - commands/onboard-project.md
   - commands/new-project.md
   - tests/test_hackathon_mode.py
-re_affirms: dec-draft-ef6b8065
+re_affirms: dec-189
 ---
 
 ## Context
 
 The `hackathon-mode` Standard-tier pipeline reached the implementation-planner stage with a
 `SYSTEMS_PLAN.md` (v4, 1,080 lines) containing 18 Acceptance Criteria and a single load-bearing
-ADR fragment (`dec-draft-ef6b8065`). Three implementation-planning decisions required resolution
+ADR fragment (`dec-189`). Three implementation-planning decisions required resolution
 before the 15-step decomposition could be produced.
 
 ## Decision
@@ -119,7 +119,7 @@ Do Phase 5b content + renumbering as a single step.
 
 ## Prior Decision
 
-This ADR re-affirms `dec-draft-ef6b8065` (the architecture decision). The implementation
+This ADR re-affirms `dec-189` (the architecture decision). The implementation
 decomposition decisions here are implementation-layer — they do not modify the architectural
-decisions captured in the architect's ADR. `re_affirms: dec-draft-ef6b8065` signals that the
+decisions captured in the architect's ADR. `re_affirms: dec-189` signals that the
 planner reviewed the architectural ADR and found it sound; no supersession.

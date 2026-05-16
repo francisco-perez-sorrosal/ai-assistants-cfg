@@ -1,7 +1,7 @@
 ---
-id: dec-draft-ef6b8065
+id: dec-189
 title: Hackathon mode — flexible-entry Hackathon Spine, activation, and process integration
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-15
 summary: Hackathon mode replaces the 5-tier selector with a flexible-entry Hackathon Spine (fixed-order pipeline promethean -> researcher -> systems-architect -> implementation-planner -> implementer parallel test-engineer -> verifier) the user enters at a natural-language-inferred entry point, moves around in freely, and exits; everything upstream of the entry point is skipped, the verifier runs by default but is skippable, the auto-classifier is removed, and the safety net is skipped-rigor transparency (every skip and movement recorded in PROGRESS.md) rather than construction-guaranteed rigor. Activates through a four-channel signal (env var + CLAUDE.md block + praxion-rules preset + a praxion-hackathon CLI wrapper), keeps discovery full-strength while relaxing only delivery ceremony, and bundles the test-first relaxation into the same single switch.
@@ -419,7 +419,7 @@ decides whether to loop.
 ## Prior Decision
 
 This v4 ADR **supersedes the v3 mechanism within the same draft** — the fragment id
-`dec-draft-ef6b8065` is retained across revisions because the decision is the same
+`dec-189` is retained across revisions because the decision is the same
 *decision* (how hackathon mode is activated and integrated), re-resolved. v2 chose a
 *tier-bias toward Lightweight* (self-contradictory — it removed the architect and planner);
 v3 replaced it with a *fixed named Hackathon Pipeline behind a 2-path auto-classifier*; v4
