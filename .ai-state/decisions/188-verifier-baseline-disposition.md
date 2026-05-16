@@ -1,7 +1,7 @@
 ---
-id: dec-draft-ee2acf5d
+id: dec-188
 title: Verifier dispositions every failing test against a captured baseline
-status: proposed
+status: accepted
 category: behavioral
 date: 2026-05-15
 summary: The verifier classifies each failing test as regression or pre-existing against a planner-captured baseline; an undisposed "pre-existing" label is a report-completeness FAIL.
