@@ -18,6 +18,7 @@ For the design rationale, see [Design decision](#design-decision). For the slash
 - [Prereqs](#prereqs)
 - [How to run it](#how-to-run-it)
 - [Expected prompt flow](#expected-prompt-flow)
+- [Hackathon mode: a worked example](#hackathon-mode-a-worked-example)
 - [What gets created](#what-gets-created)
 - [Troubleshooting](#troubleshooting)
 - [Design decision](#design-decision)
@@ -127,6 +128,37 @@ Claude: Generated onboarding_for_mushi_busy_ppl.md (trail map for busy people).
         both apply rules/swe/vcs/git-conventions.md automatically, so you don't
         hand-craft commit messages.
 ```
+
+## Hackathon mode: a worked example
+
+Passing [`--hackathon`](#how-to-run-it) onboards the project into hackathon mode — delivery ceremony is relaxed for proof-of-concept speed. Here is the full create-to-first-task arc for a Python PoC.
+
+**1 — Scaffold and seed:**
+
+```bash
+new-project url-shortener-poc --hackathon
+```
+
+The seed pipeline runs normally (researcher → systems-architect → implementation-planner → implementer ∥ test-engineer → verifier) to produce the first codebase. Because `--hackathon` was passed, the chained `/onboard-project` auto-enables **Phase 5b**, which writes the six hackathon artifacts: `PRAXION_HACKATHON_MODE=1` in `.claude/settings.json`, the `## Hackathon Mode` block in `CLAUDE.md`, the `.claude/praxion-rules.yaml` preset, and the launch trio `scripts/praxion-hackathon` + `.claude/hackathon-directive.md` + `.claude/hackathon-settings.json`.
+
+**2 — Work through the wrapper:**
+
+```bash
+cd url-shortener-poc
+./scripts/praxion-hackathon
+```
+
+The wrapper launches Claude with the skill surface trimmed and the hackathon directive appended; the prompt carries a `[hackathon]` marker. You no longer pick a process tier — you describe what you need in plain English, and the orchestrator enters the **Hackathon Spine** at the stage it infers:
+
+| You say… | Spine enters at… |
+|---|---|
+| "Ideate a few options for link-expiry" | `promethean` |
+| "I have the approach — plan and build the redirect endpoint" | `implementation-planner` |
+| "Fix the off-by-one in the base62 encoder" | `implementer` |
+
+Stages upstream of the entry point are skipped, and you can move between stages mid-task ("actually, research the rate-limit options first"). The verifier still runs by default — say "skip verification" to opt out. SDD specs and ADR fragments stay off unless you ask for them. The behavioral contract is never relaxed.
+
+**3 — Graduate out** when the PoC becomes a real project: set `PRAXION_HACKATHON_MODE=0`, delete the `## Hackathon Mode` block from `CLAUDE.md`, and remove the `praxion-rules.yaml` preset — the full 5-tier process resumes with no state loss. Full contract: [Architecture Guide §11](architecture.md#11-hackathon-mode).
 
 ## What gets created
 
