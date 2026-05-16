@@ -75,6 +75,8 @@ Praxion manages three project archetypes through one shared pipeline:
 - **Agentic-AI apps** — agents-as-products; activated by `agentic-sdks`, `agent-evals`, `mcp-crafting`, `communicating-agents`.
 - **ML/AI training** — pre-training projects with compute budgets, eval thresholds, and experiment loops; activated by `ml-training`, `llm-training-eval`, `neo-cloud-abstraction`, `experiment-tracking`. Run `/run-experiment` to dispatch a training run, `/check-experiment` to poll one. See the [ML/AI Training Onramp](docs/ml-training-onramp.md).
 
+Orthogonal to the archetypes, **hackathon mode** is a project-scoped opt-in that replaces the 5-tier process selector with a flexible-entry **Hackathon Spine**: a fixed-order pipeline you enter at any stage by describing what you need in natural language, move around in freely mid-task, and exit. Test/SDD/ADR ceremony is relaxed for proof-of-concept work; the behavioral contract and the verifier remain. Enabled via `/onboard-project` Phase 5b or `/new-project --hackathon`; day-to-day launch is `scripts/praxion-hackathon`. Component map: [Architecture Guide §11](docs/architecture.md#11-hackathon-mode).
+
 ## Guiding Principles
 
 Five durable principles shape how Praxion evolves, extending the global philosophy in `~/.claude/CLAUDE.md`.

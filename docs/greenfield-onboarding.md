@@ -48,6 +48,12 @@ Optional second positional `[target-dir]` (defaults to `$PWD`) controls where `<
 new-project my-app ~/code        # creates ~/code/my-app/
 ```
 
+Pass `--hackathon` to start the project in hackathon mode from day one — it auto-enables `/onboard-project` Phase 5b, writing the six hackathon artifacts (`PRAXION_HACKATHON_MODE=1` env var, `## Hackathon Mode` CLAUDE.md block, `praxion-rules.yaml` preset, `scripts/praxion-hackathon` wrapper, `.claude/hackathon-directive.md`, `.claude/hackathon-settings.json`):
+
+```bash
+new-project my-app --hackathon
+```
+
 Optional `PRAXION_NEW_PROJECT_EDITOR` env var picks the surface the scaffold opens in so you can watch `.ai-work/` and `.ai-state/` populate as the pipeline runs. Values: `auto` (default — Cursor if present, else VS Code), `cursor`, `code`, `claude-desktop`, `none`. The `claude-desktop` value launches `Claude.app` and copies the project path to the clipboard — Anthropic does not ship a documented CLI flag or URL scheme to point the desktop app at a folder, so you click **Select folder** and paste. macOS only today.
 
 ```bash

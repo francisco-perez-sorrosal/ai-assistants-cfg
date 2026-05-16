@@ -194,6 +194,8 @@ Not every task needs the full pipeline. Match pipeline depth to task complexity:
 
 The pipeline scales proportionally. A one-line bug fix doesn't need twelve agents.
 
+**PoC / hackathon work?** Hackathon mode replaces this table with a natural-language entry point: describe what you need and the orchestrator infers the starting stage, with free mid-task movement and relaxed test/SDD/ADR ceremony. Enable it at project setup via `/onboard-project` Phase 5b or `new_project.sh <name> --hackathon`. See [Architecture Guide §11](architecture.md#11-hackathon-mode) and `commands/onboard-project.md` § Phase 5b for the full contract.
+
 ## Resuming Work
 
 The pipeline supports multi-session work. If you close Claude and return later:
