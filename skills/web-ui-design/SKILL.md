@@ -9,10 +9,9 @@ description: >
   reviewing web UI, design systems, tokens, component ergonomics, UI framework
   selection, or auditing React/Next.js for quality and accessibility. Do NOT use for
   CLI/terminal (tui-design) or API/tools (api-design-craft, agentic-interface-design).
-metadata:
-  staleness_sensitive_sections:
-    - "WCAG 2.2 AA — The Numbers (last-verified: 2026-05-12, review threshold: 120 days)"
-    - "RAIL Model (last-verified: 2026-05-12, review threshold: 120 days)"
+staleness_sensitive_sections:
+  - "WCAG 2.2 AA — The Numbers"
+  - "RAIL Model"
 ---
 
 # Web UI Design
@@ -67,7 +66,8 @@ Use 4px as the atomic spacing unit. All spacing values must be multiples of 4. T
 
 ---
 
-## WCAG 2.2 AA — The Numbers <!-- last-verified: 2026-05-12 -->
+## WCAG 2.2 AA — The Numbers
+<!-- last-verified: 2026-05-12 -->
 
 The current standard (released October 2023):
 
@@ -143,7 +143,8 @@ Every data surface must define and design all five states. Missing a state means
 
 ---
 
-## Motion Timing + Perceived Performance <!-- last-verified: 2026-05-12 -->
+## Motion Timing + Perceived Performance
+<!-- last-verified: 2026-05-12 -->
 
 ### Animation Timing
 
@@ -164,7 +165,8 @@ Every data surface must define and design all five states. Missing a state means
 
 "If in doubt, leave it out."
 
-### RAIL Model <!-- last-verified: 2026-05-12 -->
+### RAIL Model
+<!-- last-verified: 2026-05-12 -->
 
 | Phase | Target | Notes |
 |-------|--------|-------|
