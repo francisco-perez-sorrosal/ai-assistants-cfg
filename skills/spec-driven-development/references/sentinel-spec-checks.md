@@ -14,7 +14,7 @@ When multiple spec files exist, the sentinel samples a representative subset con
 
 | ID | Tp | Rule | Pass |
 |----|----|------|------|
-| SH01 | A | Persistent specs reference files that exist | All file paths in specs resolve |
+| SH01 | A | Persistent specs reference files that exist | Live file references (matrix + Requirements) resolve; change-narration prose excluded |
 | SH02 | A | Persistent specs have traceability matrices | `## Traceability` section present and non-empty |
 | SH03 | L | Spec requirements still reflected in code | Key behavioral claims match current implementation |
 | SH04 | L | Traceability matrix has no UNTESTED entries | All requirements have at least one test |
@@ -25,9 +25,13 @@ When multiple spec files exist, the sentinel samples a representative subset con
 
 ### SH01 -- File Path Resolution (Auto)
 
-Extract all file paths referenced in `Implementation` column cells of the traceability matrix and any paths in the Requirements section. Resolve each path relative to the project root. A path that does not resolve to an existing file is a FAIL.
+Extract file paths referenced in `Implementation` column cells of the traceability matrix and any paths in the Requirements section. Resolve each path relative to the project root. A path that does not resolve to an existing file is a FAIL.
 
-**Common failures**: renamed or deleted source files after spec archival, paths using old module structure after a refactoring.
+**Scope -- live references only.** SH01 checks the traceability matrix `Implementation` column and the Requirements section. Do NOT flag file paths that appear only in narrative prose -- feature-summary text, "files created / modified / deleted in this pipeline" lists, or migration arrows (`old/path -> new/path`). An archived spec legitimately records the files its own pipeline created, moved, or deleted; a path that fails to resolve *because the spec's pipeline deleted or migrated it* is accurate history, not a broken reference. Flagging it pressures an edit that would falsify the archived record. Resolve-checking applies only where the spec cites a path as a current, live implementation or requirement reference.
+
+**Common failures**: a renamed or deleted source file still cited as a live `Implementation` reference after a refactoring; paths using an old module structure.
+
+**Not a failure**: a deleted or migrated path that appears only in the spec's own change-narration prose (e.g. a line reading "Deleted in this pipeline: `<path>`", or an `old -> new` migration arrow).
 
 ### SH02 -- Traceability Matrix Presence (Auto)
 

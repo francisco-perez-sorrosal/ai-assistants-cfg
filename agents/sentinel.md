@@ -216,7 +216,7 @@ Requires `.ai-state/specs/` directory with spec files. Skip with a note when no 
 
 | ID | Tp | Rule | Pass |
 |----|----|------|------|
-| SH01 | A | Persistent specs reference files that exist | All file paths in specs resolve |
+| SH01 | A | Persistent specs reference files that exist | Live file references (matrix + Requirements) resolve; change-narration prose excluded |
 | SH02 | A | Persistent specs have traceability matrices | `## Traceability` section present and non-empty |
 | SH03 | L | Spec requirements still reflected in code | Key behavioral claims in spec match current implementation |
 | SH04 | L | Traceability matrix has no UNTESTED entries | All requirements have at least one test |
