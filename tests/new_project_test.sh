@@ -9,6 +9,9 @@
 # T5: missing git -> exit 5
 # T6: target exists & non-empty -> exit 6, no mutation
 # T7: happy path -- scaffold + pre-flight + exec claude
+# T8: --hackathon flag -> '# Hackathon mode: true' trailer in seed prompt
+# T9: no --hackathon -> '# Hackathon mode: false' trailer (opt-in default)
+# T10: PRAXION_NEW_PROJECT_HACKATHON=1 -> '# Hackathon mode: true' trailer
 #
 # Run from repo root:
 #   bash tests/new_project_test.sh
@@ -228,6 +231,66 @@ EOF
     pass "T7: happy path scaffolds .git/.claude/.gitignore and execs claude correctly"
 }
 
+# --hackathon is opt-in: the flag must produce a '# Hackathon mode: true'
+# trailer in the seed prompt so the seeded /new-project can detect it. The
+# claude stub captures every arg (including the multi-line seed prompt) into
+# stub.log, so the trailer is grep-able there.
+t8_hackathon_flag_sets_trailer_true() {
+    local s stub_log
+    s="$(make_sandbox)"
+    run_script "$s" hk-app "$s/target" --hackathon
+    stub_log="$s/stub.log"
+    if [ "$LAST_EXIT" -ne 0 ]; then
+        fail "T8: --hackathon expected exit=0; got exit=$LAST_EXIT, stderr=$(cat "$LAST_ERR")"
+        return
+    fi
+    if [ -f "$stub_log" ] && grep -q '# Hackathon mode: true' "$stub_log"; then
+        pass "T8: --hackathon emits '# Hackathon mode: true' trailer in the seed prompt"
+    else
+        fail "T8: expected '# Hackathon mode: true' in seed prompt; log=$(cat "$stub_log" 2>/dev/null)"
+    fi
+}
+
+# The default run (no --hackathon) must produce '# Hackathon mode: false' --
+# hackathon is opt-in, so a regular project is never silently in hackathon mode.
+t9_no_hackathon_flag_sets_trailer_false() {
+    local s stub_log
+    s="$(make_sandbox)"
+    run_script "$s" plain-app "$s/target"
+    stub_log="$s/stub.log"
+    if [ "$LAST_EXIT" -ne 0 ]; then
+        fail "T9: default run expected exit=0; got exit=$LAST_EXIT, stderr=$(cat "$LAST_ERR")"
+        return
+    fi
+    if [ -f "$stub_log" ] && grep -q '# Hackathon mode: false' "$stub_log"; then
+        pass "T9: default run emits '# Hackathon mode: false' trailer (hackathon is opt-in)"
+    else
+        fail "T9: expected '# Hackathon mode: false' in seed prompt; log=$(cat "$stub_log" 2>/dev/null)"
+    fi
+}
+
+# PRAXION_NEW_PROJECT_HACKATHON=1 is the env-var equivalent of the --hackathon
+# flag (mirrors PRAXION_NEW_PROJECT_NO_AAC) -- with no flag passed, it must also
+# produce the '# Hackathon mode: true' trailer. The env var is unset right after
+# the run so it never leaks into later tests.
+t10_hackathon_env_var_sets_trailer_true() {
+    local s stub_log
+    s="$(make_sandbox)"
+    export PRAXION_NEW_PROJECT_HACKATHON=1
+    run_script "$s" env-app "$s/target"
+    unset PRAXION_NEW_PROJECT_HACKATHON
+    stub_log="$s/stub.log"
+    if [ "$LAST_EXIT" -ne 0 ]; then
+        fail "T10: PRAXION_NEW_PROJECT_HACKATHON=1 expected exit=0; got exit=$LAST_EXIT, stderr=$(cat "$LAST_ERR")"
+        return
+    fi
+    if [ -f "$stub_log" ] && grep -q '# Hackathon mode: true' "$stub_log"; then
+        pass "T10: PRAXION_NEW_PROJECT_HACKATHON=1 emits '# Hackathon mode: true' trailer (no flag)"
+    else
+        fail "T10: expected '# Hackathon mode: true' in seed prompt; log=$(cat "$stub_log" 2>/dev/null)"
+    fi
+}
+
 main() {
     if [ ! -f "$SCRIPT_UNDER_TEST" ]; then
         printf 'SETUP FAIL: script under test not found at %s\n' "$SCRIPT_UNDER_TEST" >&2
@@ -240,13 +303,16 @@ main() {
     t5_missing_git_exit_5
     t6_target_exists_nonempty_exit_6
     t7_happy_path_full_scaffold
+    t8_hackathon_flag_sets_trailer_true
+    t9_no_hackathon_flag_sets_trailer_false
+    t10_hackathon_env_var_sets_trailer_true
 
     printf '\n--- summary: %d passed, %d failed ---\n' "$PASS_COUNT" "$FAIL_COUNT"
     if [ "$FAIL_COUNT" -eq 0 ]; then
-        printf '=== T1–T7 passed ===\n'
+        printf '=== T1–T10 passed ===\n'
         exit 0
     fi
-    printf '=== %d of 7 failed ===\n' "$FAIL_COUNT" >&2
+    printf '=== %d of 10 failed ===\n' "$FAIL_COUNT" >&2
     exit 1
 }
 

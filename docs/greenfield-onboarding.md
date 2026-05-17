@@ -49,11 +49,13 @@ Optional second positional `[target-dir]` (defaults to `$PWD`) controls where `<
 new-project my-app ~/code        # creates ~/code/my-app/
 ```
 
-Pass `--hackathon` to start the project in hackathon mode from day one — it auto-enables `/onboard-project` Phase 5b, writing the six hackathon artifacts (`PRAXION_HACKATHON_MODE=1` env var, `## Hackathon Mode` CLAUDE.md block, `praxion-rules.yaml` preset, `scripts/praxion-hackathon` wrapper, `.claude/hackathon-directive.md`, `.claude/hackathon-settings.json`):
+Pass `--hackathon` to start the project in hackathon mode from day one. The flag rides a `# Hackathon mode: true` trailer from `new_project.sh` into the seeded `/new-project` run: `/new-project` appends the `## Hackathon Mode` CLAUDE.md block, then recommends `/onboard-project --hackathon` in its exit handoff so that command's Phase 5b installs the remaining five hackathon artifacts (`PRAXION_HACKATHON_MODE=1` env var, `praxion-rules.yaml` preset, `scripts/praxion-hackathon` wrapper, `.claude/hackathon-directive.md`, `.claude/hackathon-settings.json`) without prompting — six in total:
 
 ```bash
 new-project my-app --hackathon
 ```
+
+Headless or IDE-launch contexts can set `PRAXION_NEW_PROJECT_HACKATHON=1` instead of passing the flag — it is equivalent to `--hackathon`.
 
 Optional `PRAXION_NEW_PROJECT_EDITOR` env var picks the surface the scaffold opens in so you can watch `.ai-work/` and `.ai-state/` populate as the pipeline runs. Values: `auto` (default — Cursor if present, else VS Code), `cursor`, `code`, `claude-desktop`, `none`. The `claude-desktop` value launches `Claude.app` and copies the project path to the clipboard — Anthropic does not ship a documented CLI flag or URL scheme to point the desktop app at a folder, so you click **Select folder** and paste. macOS only today.
 
@@ -139,7 +141,7 @@ Passing [`--hackathon`](#how-to-run-it) onboards the project into hackathon mode
 new-project url-shortener-poc --hackathon
 ```
 
-The seed pipeline runs normally (researcher → systems-architect → implementation-planner → implementer ∥ test-engineer → verifier) to produce the first codebase. Because `--hackathon` was passed, the chained `/onboard-project` auto-enables **Phase 5b**, which writes the six hackathon artifacts: `PRAXION_HACKATHON_MODE=1` in `.claude/settings.json`, the `## Hackathon Mode` block in `CLAUDE.md`, the `.claude/praxion-rules.yaml` preset, and the launch trio `scripts/praxion-hackathon` + `.claude/hackathon-directive.md` + `.claude/hackathon-settings.json`.
+The seed pipeline runs normally (researcher → systems-architect → implementation-planner → implementer ∥ test-engineer → verifier) to produce the first codebase. Because `--hackathon` was passed, `/new-project` appends the `## Hackathon Mode` block to `CLAUDE.md`, and its exit handoff recommends `/onboard-project --hackathon`. Running that recommended command auto-enables **Phase 5b**, which writes the five remaining hackathon artifacts — so the project ends up with all six: `PRAXION_HACKATHON_MODE=1` in `.claude/settings.json`, the `## Hackathon Mode` block in `CLAUDE.md`, the `.claude/praxion-rules.yaml` preset, and the launch trio `scripts/praxion-hackathon` + `.claude/hackathon-directive.md` + `.claude/hackathon-settings.json`.
 
 **2 — Work through the wrapper:**
 
