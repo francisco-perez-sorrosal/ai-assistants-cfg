@@ -10,17 +10,23 @@ The Methodology (`~/.claude/CLAUDE.md`) defines the flow of work; the contract d
 
 ### 1. Surface Assumptions
 
-**Definition**: Before acting on a request, name every assumption you depend on. If an assumption could flip the right answer, surface it before proceeding.
+**Definition**: State your interpretation of a task at the start, and surface every gap-filling assumption as you make it — at intake and as new assumptions arise mid-work. This is *unconditional*: enumerate even when nothing feels ambiguous, because a plausible default never *feels* like ambiguity — enumerating is what drags a silently-resolved default into the light.
 
-**When to apply**: Requirements ambiguous; spec leaves an edge case unstated; two prior decisions appear to conflict; task admits multiple interpretations.
+**When to apply**: Every task intake, and again whenever the work forces a new assumption. Not gated on perceived ambiguity.
 
-**Self-test**: Can I name every fact I'm relying on? If the opposite were true, would my plan change?
+**Intake ritual**: (1) Restate your interpretation of the task. (2) Enumerate the assumptions you make to fill unspecified gaps. (3) Self-challenge the load-bearing ones — for each, ask "if this were wrong, would the artifact be wrong?" Record load-bearing assumptions in `LEARNINGS.md` as they are taken (not batched at end-of-task) so the orchestrator can compose transition digests.
 
-**Handles**: If multiple interpretations exist, present them — don't pick one silently. If something is unclear, stop, name what's confusing, and ask before proceeding.
+**Constraints — default to the happy path**: Do not interrogate the user across a checklist of constraint dimensions. For an unspecified constraint, assume the happy path and proceed; raise a *targeted* question only when something genuinely smells — e.g. a function calling an external API on every request that may need a rate limiter. Judgment, not a form.
 
-**Example**: A step says "retry on failure." State: "Assuming failure means HTTP 5xx only; backoff capped at 3 attempts; retries do not apply to non-idempotent operations." Ask before proceeding if an assumption is load-bearing.
+**When to pause**: State assumptions and proceed by default. Pause before acting only when a surfaced assumption is *load-bearing and hard to reverse*, or the ambiguity could produce the wrong artifact — most often for systems and implementation plans.
 
-**Philosophy anchor**: `~/.claude/CLAUDE.md` Methodology §Understand — "Close the gap between what you assume and what is actually true."
+**Self-test**: Can I name every fact I'm relying on? If the opposite were true, would my plan change? Did I enumerate even the assumptions that felt obvious?
+
+**Handles**: If multiple interpretations exist, present them — don't pick one silently. After enumerating, challenge your own list rather than just stating it.
+
+**Example**: A step says "retry on failure." State all three gap-filling assumptions unconditionally: "failure means HTTP 5xx only; backoff capped at 3 attempts; retries do not apply to non-idempotent operations." The non-idempotent one is load-bearing — self-challenge it, and pause if a wrong guess there is expensive to reverse.
+
+**Philosophy anchor**: `~/.claude/CLAUDE.md` Methodology §Understand — "Close the gap between what you assume and what is actually true." This is the Conversation discipline's intake moment.
 
 ### 2. Register Objection
 
