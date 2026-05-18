@@ -15,6 +15,10 @@
  *   Persistence Layer    — Memory MCP, Chronograph MCP, .ai-state/
  *   Tooling              — Installers, Scripts, Versioning
  *
+ * Rendering: the six views above regenerate to ../rendered/*.{d2,svg} via
+ * scripts/diagram-regen-hook.sh; the Architecture CI workflow re-runs that
+ * regeneration and fails if the committed renders drift from this source.
+ *
  * Dual representation of Agents (R2): the authored Markdown family
  * (knowledge.agents) lives alongside skills/rules/commands as a deployable
  * knowledge surface; the runtime, spawned-subprocess side (orchestration.pipeline
