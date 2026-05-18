@@ -218,7 +218,7 @@ Operational depth for the **Conversation Checkpoints** summarized in `rules/swe/
 - **Load-bearing steps** — a step that took an assumption which is load-bearing and hard to reverse pauses on completion, even mid-phase.
 - **Not** intra-phase agent handoffs — `implementer ∥ test-engineer` and `doc-engineer` parallel work are tight loops working as designed; pausing there interrupts them for no gain.
 
-Per-step assumptions are logged quietly in `LEARNINGS.md` (the `### Assumptions & Constraints Taken` section); the *loud pause* is reserved for the points above, so each pause stays meaningful (anti-pause-fatigue).
+Per-step assumptions are logged quietly in `LEARNINGS.md` (the `## Assumptions & Constraints Taken` section); the *loud pause* is reserved for the points above, so each pause stays meaningful (anti-pause-fatigue).
 
 ### The digest
 
