@@ -1,0 +1,130 @@
+# CI Autofix — reacts to a failed CI workflow on `main` and opens a fix PR.
+#
+# Trigger: the `workflow_run` event fires when a watched workflow finishes.
+# The job gates on `conclusion == failure` AND `head_branch == main`, then runs
+# an agent that reads the failure logs, diagnoses the root cause, and opens a
+# pull request with a candidate fix.
+#
+# Why a PR and never a push to main:
+#   - a direct commit to main would re-trigger the very workflow that failed —
+#     and a wrong "fix" would loop indefinitely;
+#   - a PR routes the fix through the existing Test/Architecture checks and a
+#     human merge gate.
+#
+# Loop prevention:
+#   - this workflow is NOT in its own `workflows:` watch list;
+#   - autofix PRs use the `ci-autofix/` branch prefix; PR runs have
+#     `head_branch != main`, so the `if:` below never reacts to them;
+#   - the dedup step skips when an autofix PR is already open.
+#
+# Prerequisites:
+#   ANTHROPIC_API_KEY — repository secret (already powers claude.yml,
+#   claude-code-review.yml, architecture.yml).
+#   The Claude GitHub app (github.com/apps/claude) must be installed so the
+#   agent authenticates as the app — PRs it opens then trigger CI and
+#   self-validate. `id-token: write` enables the OIDC exchange.
+#
+# KNOWN UNVERIFIED ASSUMPTION: claude-code-action@v1 is documented to work with
+# "any GitHub event", but it explicitly rejects `push` ("Unsupported event
+# type: push"). Whether it accepts `workflow_run` is not confirmed by the docs.
+# If the agent step fails with "Unsupported event type: workflow_run", split
+# this into a tiny `workflow_run`-triggered job that re-dispatches via
+# `repository_dispatch` (a confirmed-supported event) to a second job.
+
+name: CI Autofix
+
+on:
+  workflow_run:
+    workflows: ["Test", "Architecture"]
+    types: [completed]
+
+permissions: {}  # least-privilege; the job below adds only what it needs
+
+concurrency:
+  # Serialize autofix runs so two agents never race to open conflicting PRs.
+  group: ci-autofix
+  cancel-in-progress: false
+
+jobs:
+  autofix:
+    # Only real failures on main; PR runs (head_branch = ci-autofix/*) are
+    # excluded by the head_branch check, which also prevents self-triggering.
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write       # create the ci-autofix/ branch
+      pull-requests: write  # open the fix PR
+      actions: read         # read the failed run's logs (gh run view --log-failed)
+      id-token: write       # OIDC — lets claude-code-action auth as the Claude app
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Set up uv (manages Python 3.13)
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57  # v8.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Skip if an autofix PR is already open
+        id: dedup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          open_autofix=$(gh pr list --state open --json headRefName \
+            --jq '[.[] | select(.headRefName | startswith("ci-autofix/"))] | length')
+          echo "open_autofix=${open_autofix}" >> "$GITHUB_OUTPUT"
+          if [ "${open_autofix}" != "0" ]; then
+            echo "::notice::An autofix PR is already open; skipping diagnosis."
+          fi
+
+      - name: Diagnose failure and open a fix PR
+        if: steps.dedup.outputs.open_autofix == '0'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            A CI workflow failed on the `main` branch of
+            ${{ github.repository }}. Diagnose the root cause and open a pull
+            request with the smallest candidate fix.
+
+            Failed workflow : ${{ github.event.workflow_run.name }}
+            Run ID          : ${{ github.event.workflow_run.id }}
+            Run URL         : ${{ github.event.workflow_run.html_url }}
+            Head SHA        : ${{ github.event.workflow_run.head_sha }}
+
+            Steps:
+            1. Read the failure logs:
+               `gh run view ${{ github.event.workflow_run.id }} --log-failed`
+            2. Identify the root cause. Distinguish a real defect (source code,
+               config, workflow YAML, unpinned-tool drift, a stale dependency)
+               from an infrastructure flake (runner timeout, network blip).
+            3. If it is a flake with no code fix: do NOT open a PR — open a
+               GitHub issue summarizing the transient failure and stop.
+            4. If it is a real defect: create a branch `ci-autofix/<short-slug>`
+               off `main`, make the SMALLEST change that fixes the failure, and
+               commit it. Touch only what the fix requires.
+            5. Verify the fix locally where feasible (run the failing test /
+               command). Note in the PR body what you verified.
+            6. Open a pull request from that branch to `main`:
+               - Title: `fix(ci): <one-line summary> [${{ github.event.workflow_run.name }}]`
+               - Body: root-cause analysis, the failed run URL, what the fix
+                 changes, and the verification you ran.
+               - If the fix is uncertain or needs human judgement, open it as a
+                 DRAFT PR and say why in the body.
+            7. NEVER push to `main` directly. NEVER modify unrelated files.
+
+            Follow the repository's CLAUDE.md and git conventions (imperative
+            mood, `<type>: <subject>`, no AI authorship lines in the commit
+            message). Stay surgical: minimal scope, minimal blast radius.
+          claude_args: |
+            --plugin-dir .
+            --model opus
+            --max-turns 30
+            --allowedTools "Read,Glob,Grep,Edit,Write,Bash"
