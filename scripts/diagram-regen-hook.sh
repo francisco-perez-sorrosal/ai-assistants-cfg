@@ -67,8 +67,13 @@ fi
 generate_format() {
     local src="$1"   # path to <name>.c4
     local fmt="$2"   # format: d2 | mermaid | png | ...
-    local out_dir="${src%.c4}"     # strip .c4 suffix → output directory name
     local workspace="${src%/*}"    # parent directory → LikeC4 workspace (likec4 gen takes a dir, not a file)
+    # Renders go to the sibling rendered/ directory — the committed render
+    # location. Source lives at <diagram>/src/<name>.c4, so rendered/ is the
+    # parent of the source workspace. Writing anywhere else leaves committed
+    # renders stale and the CI drift check (architecture.yml) red.
+    local out_dir
+    out_dir="$(dirname "${workspace}")/rendered"
 
     echo "[diagram-regen] Generating ${fmt} from ${src} → ${out_dir}/" >&2
 

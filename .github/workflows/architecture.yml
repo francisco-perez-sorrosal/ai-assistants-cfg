@@ -81,7 +81,12 @@ jobs:
           python-version: "3.13"
 
       - name: Install likec4
-        run: npm install -g @likec4/cli
+        # Pinned to the maintained `likec4` package. The org-scoped
+        # `@likec4/cli` is a frozen pre-1.0 distribution (last release v0.40.0,
+        # 2023) whose CLI lacks the current `gen` command surface — installing
+        # it made this job fail on every run. Pin keeps CI byte-aligned with
+        # the local likec4 used by scripts/diagram-regen-hook.sh.
+        run: npm install -g likec4@1.56.0
 
       - name: Install d2
         run: |
@@ -90,11 +95,17 @@ jobs:
       - name: Regenerate diagrams from source .c4 files
         run: |
           # Find all .c4 files under docs/diagrams/ and regenerate each.
-          # This mirrors what scripts/diagram-regen-hook.sh does for staged
-          # files, but operates over the full tree rather than git index.
+          # Operates over the full tree rather than the git index.
+          #
+          # Output goes to the sibling `rendered/` directory — the committed
+          # render location (e.g. docs/diagrams/architecture/rendered/). The
+          # `.c4` source lives under `<diagram>/src/`, so the rendered dir is
+          # the parent of the source workspace plus `/rendered`. Writing here
+          # is what makes the diff step below meaningful: regenerating into an
+          # untracked path would make `git diff --exit-code` pass vacuously.
           find docs/diagrams -name '*.c4' | while IFS= read -r c4_file; do
             workspace="${c4_file%/*}"
-            out_dir="${c4_file%.c4}"
+            out_dir="$(dirname "${workspace}")/rendered"
             echo "[ci] Regenerating d2 from ${c4_file} → ${out_dir}/"
             likec4 gen d2 "${workspace}" -o "${out_dir}/"
             # Render each generated .d2 to .svg
@@ -153,6 +164,12 @@ jobs:
   # attribute checks still run.
   # ---------------------------------------------------------------------------
   dsl-validate:
+    # PR-only: the architect-validator step uses claude-code-action, whose
+    # event allowlist rejects `push` ("Unsupported event type: push"), and its
+    # prompt needs `github.event.pull_request.number`, which is empty on push.
+    # The mechanical jobs above still run on push to main; this agent gate is
+    # inherently pre-merge.
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
