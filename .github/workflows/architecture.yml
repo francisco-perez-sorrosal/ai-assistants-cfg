@@ -89,8 +89,15 @@ jobs:
         run: npm install -g likec4@1.56.0
 
       - name: Install d2
+        # Pinned: d2 stamps its own version into every rendered SVG
+        # (data-d2-version=...). An unpinned install drifts that string and
+        # fails the diff step below even when the diagrams are identical.
+        # --method standalone forces the release tarball so the binary — and
+        # the version string it stamps — is identical regardless of a runner's
+        # Homebrew state.
         run: |
-          curl -fsSL https://d2lang.com/install.sh | sh -s --
+          curl -fsSL https://d2lang.com/install.sh \
+            | sh -s -- --version v0.7.1 --method standalone
 
       - name: Regenerate diagrams from source .c4 files
         run: |
