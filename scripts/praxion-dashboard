@@ -16,7 +16,15 @@
 #     start --hostname 127.0.0.1 --port <port>
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve BASH_SOURCE through symlinks so the repo root is found even when
+# invoked via a PATH symlink (e.g. ~/.local/bin/praxion-dashboard).
+_source="${BASH_SOURCE[0]}"
+while [ -L "$_source" ]; do
+    _dir="$(cd -P "$(dirname "$_source")" && pwd)"
+    _source="$(readlink "$_source")"
+    [[ "$_source" != /* ]] && _source="$_dir/$_source"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$_source")" && pwd)"
 PRAXION_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 HOME_DIR="$HOME/.praxion-dashboard"
 APP_SOURCE_DIR="$PRAXION_ROOT/dashboard_app"
