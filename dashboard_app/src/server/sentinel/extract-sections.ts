@@ -16,6 +16,7 @@ export type SentinelLogPoint = {
   important: number | null;
   suggested: number | null;
   coherence: string | null;
+  reportFile: string | null;
 };
 
 // Matches a finding section heading: any # depth followed by critical/important/suggested.
@@ -118,6 +119,7 @@ export function extractSections(reportBody: string): SentinelSections {
  *   Health Grade        → grade
  *   Findings (C/I/S)    → critical, important, suggested  (split on "/")
  *   Ecosystem Coherence → coherence
+ *   Report File         → reportFile  (markdown link syntax stripped)
  *
  * Non-numeric or absent cells coerce to null.
  */
@@ -132,9 +134,22 @@ export function parseSentinelLog(logBody: string): SentinelLogPoint[] {
       critical: toNumberCell(c),
       important: toNumberCell(i),
       suggested: toNumberCell(s),
-      coherence: toStringCell(findColumn(row, "Ecosystem Coherence"))
+      coherence: toStringCell(findColumn(row, "Ecosystem Coherence")),
+      reportFile: stripMarkdownLink(toStringCell(findColumn(row, "Report File")))
     };
   });
+}
+
+/**
+ * Reduces an inline markdown link `[text](url)` to its text. Plain cells pass
+ * through unchanged — the Report File column is usually a bare filename.
+ */
+function stripMarkdownLink(cell: string | null): string | null {
+  if (cell === null) {
+    return null;
+  }
+  const match = /^\[([^\]]+)\]\([^)]*\)$/.exec(cell);
+  return match ? (match[1] ?? cell) : cell;
 }
 
 /**

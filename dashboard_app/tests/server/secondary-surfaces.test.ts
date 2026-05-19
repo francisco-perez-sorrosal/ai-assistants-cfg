@@ -86,7 +86,7 @@ describe("secondary dashboard surfaces", () => {
     expect(fallback?.body).toContain("Body content");
   });
 
-  it("loads the latest sentinel report and the history log", async () => {
+  it("loads every sentinel report newest-first and the history log", async () => {
     const root = await createTempProjectRoot("dashboard-sentinel-valid-");
     await seedProjectRoot(root);
     await mkdir(path.join(root, ".ai-state", "sentinel_reports"), { recursive: true });
@@ -106,10 +106,10 @@ describe("secondary dashboard surfaces", () => {
 
     const sentinel = await getSentinelData(root);
 
-    expect(path.basename(sentinel.reports[0] ?? "")).toBe(
-      "SENTINEL_REPORT_2026-05-11_09-00-00.md"
-    );
-    expect(sentinel.latest?.body).toContain("Latest report");
+    expect(sentinel.reports).toHaveLength(2);
+    expect(sentinel.reports[0]?.fileName).toBe("SENTINEL_REPORT_2026-05-11_09-00-00.md");
+    expect(sentinel.reports[0]?.body).toContain("Latest report");
+    expect(sentinel.reports[1]?.fileName).toBe("SENTINEL_REPORT_2026-05-10_09-00-00.md");
     expect(sentinel.log?.body).toContain("History");
   });
 

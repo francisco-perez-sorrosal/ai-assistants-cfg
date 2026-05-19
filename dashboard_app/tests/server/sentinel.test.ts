@@ -146,6 +146,25 @@ describe("parseSentinelLog", () => {
     expect(first?.coherence).toBe("B");
   });
 
+  it("extracts the Report File column as the report join key", () => {
+    const result = parseSentinelLog(FIXTURE_LOG);
+
+    expect(result[0]?.reportFile).toBe("SENTINEL_REPORT_2026-02-08_14-30-00.md");
+    expect(result[2]?.reportFile).toBe("SENTINEL_REPORT_2026-03-20_01-19-06.md");
+  });
+
+  it("strips markdown link syntax from a linked Report File cell", () => {
+    const linkedLog = `
+| Timestamp | Health Grade | Artifacts | Findings (C/I/S) | Ecosystem Coherence | Report File |
+|-----------|--------------|-----------|-------------------|---------------------|-------------|
+| 2026-05-01T00:00:00Z | A | 30 | 0/0/1 | A | [SENTINEL_REPORT_2026-05-01_00-00-00.md](SENTINEL_REPORT_2026-05-01_00-00-00.md) |
+`.trim();
+
+    expect(parseSentinelLog(linkedLog)[0]?.reportFile).toBe(
+      "SENTINEL_REPORT_2026-05-01_00-00-00.md"
+    );
+  });
+
   it("parses a row with non-zero critical count", () => {
     const result = parseSentinelLog(FIXTURE_LOG);
 

@@ -10,38 +10,69 @@ import type { SentinelLogPoint, SentinelSections } from "@/server/sentinel/extra
 
 export type { SentinelLogPoint, SentinelSections };
 
-export async function getSentinelData(projectRoot: string) {
+/**
+ * One fully-loaded sentinel report: its body, parsed finding sections, and the
+ * matching `SENTINEL_LOG.md` row (grade + finding counts) when one exists.
+ */
+export type SentinelReport = {
+  body: string;
+  data: Record<string, unknown>;
+  fileName: string;
+  highlight: SentinelLogPoint | null;
+  path: string;
+  sections: SentinelSections;
+};
+
+export type SentinelData = {
+  log: { body: string } | null;
+  logSeries: SentinelLogPoint[];
+  reports: SentinelReport[];
+};
+
+export async function getSentinelData(projectRoot: string): Promise<SentinelData> {
   const validatedRoot = await validateProjectRoot(projectRoot);
   const reportsRoot = path.join(validatedRoot, ".ai-state", "sentinel_reports");
-  const reportPaths = (await listDirectory(reportsRoot))
-    .filter((entry) => isSentinelReport(entry))
-    .sort((left, right) => right.localeCompare(left))
-    .map((entry) => path.join(reportsRoot, entry));
 
-  const latestFile =
-    reportPaths.length > 0
-      ? await readMarkdown(await assertAllowedArtifactPath(validatedRoot, reportPaths[0] ?? ""))
-      : null;
+  // Newest-first: filenames sort lexically because the timestamp is fixed-width.
+  const reportFileNames = (await listDirectory(reportsRoot))
+    .filter((entry) => isSentinelReport(entry))
+    .sort((left, right) => right.localeCompare(left));
 
   const log = await readMarkdown(
     await assertAllowedArtifactPath(validatedRoot, path.join(reportsRoot, "SENTINEL_LOG.md"))
   );
+  const logSeries = parseSentinelLog(log?.body ?? "");
+  const highlightByFile = new Map<string, SentinelLogPoint>();
+  for (const point of logSeries) {
+    if (point.reportFile !== null) {
+      highlightByFile.set(point.reportFile, point);
+    }
+  }
 
-  const latestSections = latestFile ? extractSections(latestFile.body) : null;
+  const reports = (
+    await Promise.all(
+      reportFileNames.map(async (fileName) => {
+        const file = await readMarkdown(
+          await assertAllowedArtifactPath(validatedRoot, path.join(reportsRoot, fileName))
+        );
+        if (file === null) {
+          return null;
+        }
+        return {
+          body: file.body,
+          data: file.data,
+          fileName,
+          highlight: highlightByFile.get(fileName) ?? null,
+          path: file.path,
+          sections: extractSections(file.body)
+        } satisfies SentinelReport;
+      })
+    )
+  ).filter((report): report is SentinelReport => report !== null);
 
   return {
-    latest: latestFile
-      ? {
-          body: latestFile.body,
-          data: latestFile.data,
-          path: latestFile.path,
-          sections: latestSections
-        }
-      : null,
-    log,
-    logSeries: parseSentinelLog(log?.body ?? ""),
-    reports: await Promise.all(
-      reportPaths.map((reportPath) => assertAllowedArtifactPath(validatedRoot, reportPath))
-    )
+    log: log ? { body: log.body } : null,
+    logSeries,
+    reports
   };
 }

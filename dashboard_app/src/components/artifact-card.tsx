@@ -11,7 +11,7 @@ export function ArtifactCard({
   defaultOpen?: boolean;
   footer?: ReactNode;
   meta?: ReactNode;
-  title: string;
+  title: ReactNode;
 }) {
   return (
     <article className="artifact-card artifact-card--collapsible">

@@ -36,7 +36,9 @@ function countActiveWorkshops(
 function extractLatestGrade(
   sentinelData: Awaited<ReturnType<typeof getSentinelData>>
 ): string | null {
-  if (sentinelData.latest === null) {
+  // reports is newest-first; an empty list means no audit has run yet.
+  const latestReport = sentinelData.reports[0];
+  if (latestReport === undefined) {
     return null;
   }
   // Grade is a single letter (A/B/C/D/F) in the sentinel log series.
@@ -48,7 +50,7 @@ function extractLatestGrade(
     return latestPoint.grade;
   }
   // Fallback: read from latest report frontmatter data field.
-  const grade = sentinelData.latest.data["health_grade"] as string | undefined;
+  const grade = latestReport.data["health_grade"] as string | undefined;
   return typeof grade === "string" && grade.length === 1 ? grade : null;
 }
 

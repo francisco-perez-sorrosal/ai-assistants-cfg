@@ -430,6 +430,74 @@
   color: var(--color-text);
 }
 
+/* Tags dropdown — collapses a long tag list into an open/close panel. */
+.adr-tag-dropdown {
+  flex: 1 1 16rem;
+  min-width: 14rem;
+}
+
+.adr-tag-dropdown__summary {
+  align-items: center;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  font-size: var(--text-sm);
+  justify-content: space-between;
+  list-style: none;
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+}
+
+.adr-tag-dropdown__summary::-webkit-details-marker {
+  display: none;
+}
+
+.adr-tag-dropdown__chevron {
+  border-right: 2px solid var(--color-text-muted);
+  border-bottom: 2px solid var(--color-text-muted);
+  height: 0.5rem;
+  transform: rotate(45deg);
+  width: 0.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .adr-tag-dropdown__chevron {
+    transition: transform var(--duration-micro) var(--ease-out);
+  }
+}
+
+.adr-tag-dropdown[open] .adr-tag-dropdown__chevron {
+  transform: rotate(-135deg);
+}
+
+.adr-tag-dropdown__panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  max-height: 12rem;
+  overflow-y: auto;
+  padding: var(--space-2);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+/* ADR id badge — surfaces the decision number in the card header. */
+.adr-id-badge {
+  background: var(--color-surface-3);
+  border-radius: var(--radius-xs);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  margin-right: var(--space-2);
+  padding: 2px var(--space-2);
+}
+
 .adr-count {
   font-size: var(--text-sm);
 }
@@ -460,6 +528,305 @@
 .sentinel-sections {
   display: grid;
   gap: var(--space-3);
+}
+
+.sentinel-client {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Header strip — selected report highlights + the by-date report selector. */
+.sentinel-strip {
+  align-items: center;
+  background: var(--color-surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+}
+
+.sentinel-strip__highlights {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+}
+
+.sentinel-strip__date {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.sentinel-strip__counts {
+  display: flex;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sentinel-strip__count {
+  align-items: baseline;
+  display: flex;
+  gap: var(--space-1);
+}
+
+.sentinel-strip__count-value {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+}
+
+.sentinel-strip__count-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+}
+
+.sentinel-strip__count--bad .sentinel-strip__count-value {
+  color: var(--color-danger-text);
+}
+
+.sentinel-strip__count--warn .sentinel-strip__count-value {
+  color: var(--color-warn-text);
+}
+
+.sentinel-strip__selector {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.sentinel-strip__selector-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.sentinel-strip__selector select {
+  appearance: none;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-3);
+}
+
+/* ─── Workshops page layout ────────────────────────────────────────────────── */
+.workshops-client {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+/* Workshop selector — a wrapping list; the picked workshop renders full-width below. */
+.workshop-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.workshop-selector__item {
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .workshop-selector__item {
+    transition:
+      border-color var(--duration-micro) var(--ease-out),
+      background var(--duration-micro) var(--ease-out);
+  }
+}
+
+.workshop-selector__item:hover {
+  border-color: var(--color-accent);
+}
+
+.workshop-selector__item--active {
+  background: var(--color-surface-2);
+  border-left-color: var(--color-accent);
+}
+
+.workshop-selector__name {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.workshop-selector__step {
+  font-size: var(--text-xs);
+}
+
+/* Selected workshop — full width, more breathing room than the old 2-col grid. */
+.workshop-panel {
+  background: var(--color-surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+}
+
+.workshop-panel__header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.workshop-artifacts {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Artifact disclosure — click to expand the file content, which is selectable. */
+.workshop-artifact {
+  background: var(--color-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.workshop-artifact__summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+.workshop-artifact__summary::-webkit-details-marker {
+  display: none;
+}
+
+.workshop-artifact__chevron {
+  border-right: 2px solid var(--color-text-muted);
+  border-bottom: 2px solid var(--color-text-muted);
+  flex-shrink: 0;
+  height: 0.45rem;
+  transform: rotate(-45deg);
+  width: 0.45rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .workshop-artifact__chevron {
+    transition: transform var(--duration-micro) var(--ease-out);
+  }
+}
+
+.workshop-artifact[open] .workshop-artifact__chevron {
+  transform: rotate(45deg);
+}
+
+.workshop-artifact__body {
+  border-top: 1px solid var(--border);
+  /* Selectable, scrollable file content — long artifacts stay observable. */
+  max-height: 32rem;
+  overflow: auto;
+  padding: var(--space-3) var(--space-4);
+}
+
+/* ─── Documentation page — groups nav + search ─────────────────────────────── */
+.doc-groups-nav {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.doc-search {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.doc-search__label {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.doc-search__input {
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  width: 100%;
+}
+
+.doc-search__input:focus-visible {
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.doc-search__count {
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.doc-surface-list {
+  display: grid;
+  gap: var(--space-1);
+  list-style: none;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+}
+
+/* Surface link — title plus a distinguishing filename so look-alike
+   surfaces (Idea Ledger, Sentinel Report, …) are tellable apart. */
+.doc-surface-link {
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 1px;
+  padding: var(--space-1) var(--space-2);
+  text-decoration: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .doc-surface-link {
+    transition:
+      background var(--duration-micro) var(--ease-out),
+      border-color var(--duration-micro) var(--ease-out);
+  }
+}
+
+.doc-surface-link:hover {
+  background: var(--color-surface-2);
+}
+
+.doc-surface-link--active {
+  background: var(--color-surface-2);
+  border-color: var(--color-accent);
+}
+
+.doc-surface-link__title {
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.doc-surface-link__path {
+  color: var(--color-text-faint);
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-xs);
 }
 
 /* ─── DiagramFrame ───────────────────────────────────────────────────────────

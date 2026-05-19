@@ -5,12 +5,17 @@ import path from "node:path";
 import {
   CANONICAL_WORKSHOP_ARTIFACTS,
   listDirectoryByMtimeDesc,
-  pathExists
+  readText
 } from "@/server/artifacts/files";
 import { assertAllowedArtifactPath, validateProjectRoot } from "@/server/artifacts/project-root";
 import { readMarkdown } from "@/server/parsers/content";
 import { parseProgressBody, parseWipBody } from "@/server/parsers/workshops";
-import type { WorkshopState } from "@/server/types";
+import type { WorkshopArtifact, WorkshopState } from "@/server/types";
+
+/** Markdown artifacts render through MarkdownSurface; everything else as code. */
+function renderModeFor(name: string): WorkshopArtifact["renderMode"] {
+  return /\.(md|markdown)$/i.test(name) ? "markdown" : "code";
+}
 
 export async function getWorkshopsData(projectRoot: string): Promise<WorkshopState[]> {
   const validatedRoot = await validateProjectRoot(projectRoot);
@@ -33,20 +38,28 @@ export async function getWorkshopsData(projectRoot: string): Promise<WorkshopSta
         ? parseWipBody(wip.body)
         : { currentStep: null, progress: [], status: null };
       const events = progress ? parseProgressBody(progress.body) : [];
-      const artifacts = await Promise.all(
-        CANONICAL_WORKSHOP_ARTIFACTS.map(async (artifact) => {
-          const artifactPath = await assertAllowedArtifactPath(
-            validatedRoot,
-            path.join(workshopRoot, artifact)
-          );
-          return (await pathExists(artifactPath)) ? artifact : null;
-        })
-      );
+
+      // Read each canonical artifact's content so it can be viewed inline.
+      const artifacts = (
+        await Promise.all(
+          CANONICAL_WORKSHOP_ARTIFACTS.map(
+            async (name): Promise<WorkshopArtifact | null> => {
+              const artifactPath = await assertAllowedArtifactPath(
+                validatedRoot,
+                path.join(workshopRoot, name)
+              );
+              const body = await readText(artifactPath);
+              if (body === null) {
+                return null;
+              }
+              return { body, name, renderMode: renderModeFor(name) };
+            }
+          )
+        )
+      ).filter((artifact): artifact is WorkshopArtifact => artifact !== null);
 
       return {
-        artifacts: artifacts.filter(
-          (artifact): artifact is string => artifact !== null
-        ),
+        artifacts,
         currentStep: wipState.currentStep,
         events,
         path: workshopRoot,

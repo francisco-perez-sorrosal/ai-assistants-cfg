@@ -210,8 +210,33 @@ Ship the server reader
       "newer-task",
       "older-task"
     ]);
-    expect(workshops[0]?.artifacts).toEqual(["IMPLEMENTATION_PLAN.md", "WIP.md", "PROGRESS.md"]);
+    expect(workshops[0]?.artifacts.map((artifact) => artifact.name)).toEqual([
+      "IMPLEMENTATION_PLAN.md",
+      "WIP.md",
+      "PROGRESS.md"
+    ]);
     expect(workshops[0]?.status).toContain("[IN-PROGRESS]");
     expect(workshops[0]?.events).toHaveLength(1);
+  });
+
+  it("reads canonical artifact contents with an extension-derived render mode", async () => {
+    const root = await createTempProjectRoot("dashboard-workshops-artifacts-");
+    const workshop = path.join(root, ".ai-work", "content-task");
+
+    await mkdir(path.join(root, ".ai-state"), { recursive: true });
+    await mkdir(workshop, { recursive: true });
+    await writeFile(path.join(workshop, "IMPLEMENTATION_PLAN.md"), "# plan\n\nDetails.\n");
+    await writeFile(path.join(workshop, "traceability.yml"), "req-01: covered\n");
+
+    const workshops = await getWorkshopsData(root);
+    const artifacts = workshops[0]?.artifacts ?? [];
+
+    const plan = artifacts.find((artifact) => artifact.name === "IMPLEMENTATION_PLAN.md");
+    expect(plan?.body).toBe("# plan\n\nDetails.\n");
+    expect(plan?.renderMode).toBe("markdown");
+
+    const trace = artifacts.find((artifact) => artifact.name === "traceability.yml");
+    expect(trace?.body).toBe("req-01: covered\n");
+    expect(trace?.renderMode).toBe("code");
   });
 });

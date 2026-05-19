@@ -1,4 +1,3 @@
-import Link from "next/link";
 import path from "node:path";
 
 import { EmptyState } from "@/components/empty-state";
@@ -9,6 +8,8 @@ import {
   getDocumentationData,
   getDocumentationSurfaceData
 } from "@/server/view-models/documentation";
+
+import { DocGroupsNav } from "./doc-groups-nav";
 
 type DocumentationPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -94,31 +95,11 @@ export default async function DocumentationPage({
       <div className="grid-two">
         <section className="artifact-card">
           <h3>Groups</h3>
-          <ul className="surface-list">
-            {data.groups.map((group) => (
-              <li className="surface-row" key={group.id}>
-                <strong>{group.label}</strong>
-                <span className="muted">
-                  {group.surface_ids.length} surfaces{group.transient ? " · transient" : ""}
-                </span>
-                <ul className="surface-list">
-                  {group.surface_ids.map((surfaceId) => {
-                    const surface = data.surfaces.find((candidate) => candidate.id === surfaceId);
-                    if (!surface) {
-                      return null;
-                    }
-                    return (
-                      <li key={surface.id}>
-                        <Link href={`/documentation?surface=${surface.id}`}>
-                          <span className="pill-note">{surface.title}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </li>
-            ))}
-          </ul>
+          <DocGroupsNav
+            groups={data.groups}
+            surfaces={data.surfaces}
+            selectedSurfaceId={selectedSurface?.id ?? null}
+          />
         </section>
 
         <section className="artifact-card">

@@ -20,8 +20,14 @@ export type WorkshopEvent = {
   timestamp: string;
 };
 
+export type WorkshopArtifact = {
+  body: string | null;
+  name: string;
+  renderMode: "code" | "markdown";
+};
+
 export type WorkshopState = {
-  artifacts: string[];
+  artifacts: WorkshopArtifact[];
   currentStep: string | null;
   events: WorkshopEvent[];
   path: string;

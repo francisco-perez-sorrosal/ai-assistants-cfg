@@ -1,14 +1,11 @@
-import path from "node:path";
-
-import { ArtifactCard } from "@/components/artifact-card";
 import { EducationalPopover } from "@/components/educational-popover";
 import { EmptyState } from "@/components/empty-state";
-import { MarkdownSurface } from "@/components/markdown-surface";
 import { PageShell } from "@/components/page-shell";
 import { getConfig } from "@/lib/config";
 import { getSentinelData } from "@/server/view-models/sentinel";
 import type { SentinelLogPoint } from "@/server/view-models/sentinel";
 
+import { SentinelClient } from "./sentinel-client";
 import { SentinelSparklineClient } from "./sentinel-sparkline-client";
 
 // ─── Grade helpers ────────────────────────────────────────────────────────────
@@ -42,11 +39,6 @@ export default async function SentinelPage() {
   const cfg = getConfig();
   const sentinel = await getSentinelData(cfg.projectRoot);
 
-  const latestReport =
-    sentinel.reports.length > 0
-      ? path.basename(sentinel.reports[0] ?? "")
-      : "None";
-
   const sources = (
     <>
       <p>
@@ -54,18 +46,15 @@ export default async function SentinelPage() {
         the <code>SENTINEL_LOG.md</code> run summary.
       </p>
       <p>
-        Latest report: <code>{latestReport}</code>
+        Reports found: <strong>{sentinel.reports.length}</strong>
       </p>
     </>
   );
 
   return (
-    <PageShell
-      title="Sentinel"
-      sourcesContent={sources}
-    >
+    <PageShell title="Sentinel" sourcesContent={sources}>
       <p className="page-intro__lede muted">
-        Health history and the latest audit rendered from{" "}
+        Health history and per-report audits rendered from{" "}
         <code>.ai-state/sentinel_reports/</code>.{" "}
         <EducationalPopover
           title="Sentinel audits"
@@ -74,7 +63,7 @@ export default async function SentinelPage() {
         />
       </p>
 
-      {sentinel.latest === null ? (
+      {sentinel.reports.length === 0 ? (
         <EmptyState
           title="No sentinel reports found"
           body="Run `/sentinel` in the target project to generate the first ecosystem audit."
@@ -82,7 +71,6 @@ export default async function SentinelPage() {
         />
       ) : (
         <div className="sentinel-body">
-          {/* ── Health grade sparkline ──────────────────────────────────────── */}
           {sentinel.logSeries.length > 0 ? (
             <div className="sentinel-sparkline-row">
               <span className="sentinel-sparkline-label muted">Health grade trend</span>
@@ -92,55 +80,7 @@ export default async function SentinelPage() {
             </div>
           ) : null}
 
-          {/* ── Collapsible finding sections ────────────────────────────────── */}
-          <div className="sentinel-sections">
-            {sentinel.latest.sections !== null ? (
-              <>
-                {sentinel.latest.sections.critical.length > 0 ? (
-                  <ArtifactCard title="Critical" defaultOpen={true}>
-                    <MarkdownSurface body={sentinel.latest.sections.critical} />
-                  </ArtifactCard>
-                ) : null}
-
-                {sentinel.latest.sections.important.length > 0 ? (
-                  <ArtifactCard title="Important">
-                    <MarkdownSurface body={sentinel.latest.sections.important} />
-                  </ArtifactCard>
-                ) : null}
-
-                {sentinel.latest.sections.suggested.length > 0 ? (
-                  <ArtifactCard title="Suggested">
-                    <MarkdownSurface body={sentinel.latest.sections.suggested} />
-                  </ArtifactCard>
-                ) : null}
-
-                {sentinel.latest.sections.rest.trim().length > 0 ? (
-                  <ArtifactCard title="Full report">
-                    <MarkdownSurface body={sentinel.latest.sections.rest} />
-                  </ArtifactCard>
-                ) : null}
-              </>
-            ) : (
-              /* sections parse failed — render full body */
-              <ArtifactCard
-                title={path.basename(sentinel.latest.path)}
-                defaultOpen={true}
-              >
-                <MarkdownSurface body={sentinel.latest.body} />
-              </ArtifactCard>
-            )}
-          </div>
-
-          {/* ── Report history list ─────────────────────────────────────────── */}
-          <ArtifactCard title="Report history">
-            <ul className="surface-list">
-              {sentinel.reports.map((reportPath) => (
-                <li key={reportPath} className="surface-row">
-                  <code>{path.basename(reportPath)}</code>
-                </li>
-              ))}
-            </ul>
-          </ArtifactCard>
+          <SentinelClient reports={sentinel.reports} />
         </div>
       )}
     </PageShell>
