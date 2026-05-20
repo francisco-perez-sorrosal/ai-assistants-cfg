@@ -1,7 +1,7 @@
 ---
-id: dec-draft-754fe078
+id: dec-199
 title: Ship kepano/obsidian-skills via the Claude Code marketplace, not a clone+symlink
-status: proposed
+status: accepted
 category: architectural
 date: 2026-05-20
 summary: Replace the clone+marker+symlink mechanism in dec-197 with `claude plugin marketplace add kepano/obsidian-skills` + `claude plugin install obsidian@obsidian-skills` invoked non-interactively from `scripts/install-obsidian-deps.sh`. Plugin lands at user scope; SKILL.md files are at correct depth; no per-project filesystem mutation.
