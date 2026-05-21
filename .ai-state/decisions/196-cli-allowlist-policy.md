@@ -1,7 +1,8 @@
 ---
 id: dec-196
 title: Obsidian CLI agent allowlist — enforced via .claude/settings.json tool-permission denies + prose policy in CLAUDE.md
-status: accepted
+status: superseded
+superseded_by: dec-200
 category: behavioral
 date: 2026-05-19
 summary: Agents may invoke documented file/search/links/properties/tags/outline/base:query commands; `eval`, plugin lifecycle, theme:set, and `delete --permanent` are denied. Enforcement is mechanical via .claude/settings.json `tool_permissions` deny rules (primary); canonical CLAUDE.md prose block describes the policy so agents see it in-context (secondary). Decision amended at planner stage per user override at the architect→planner phase-transition checkpoint.

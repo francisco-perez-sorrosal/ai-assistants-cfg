@@ -15,10 +15,12 @@
     "deny": [
       "Bash(obsidian delete --permanent*)",
       "Bash(obsidian eval*)",
+      "Bash(obsidian move*)",
       "Bash(obsidian plugin:disable*)",
       "Bash(obsidian plugin:enable*)",
       "Bash(obsidian plugin:install*)",
       "Bash(obsidian plugin:uninstall*)",
+      "Bash(obsidian rename*)",
       "Bash(obsidian theme:install*)",
       "Bash(obsidian theme:set*)"
     ]

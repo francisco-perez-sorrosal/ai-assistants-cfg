@@ -757,7 +757,7 @@ Phase 9 verification handoff lists every staged file across all phases — Phase
 
 ## §Phase 8d — Obsidian Integration (opt-in, default-yes)
 
-**Why this phase exists.** Projects that use Obsidian as a vault inside the repository benefit from three surfaces: a `.gitignore` block that keeps workspace state files out of commits, the `obsidian@obsidian-skills` marketplace plugin (installed at user scope via `./install.sh code`) so agents can navigate the vault, and a `permissions.deny` block in `.claude/settings.json` that mechanically blocks the dangerous `obsidian` CLI subcommands. Without these, an agent can inadvertently commit Obsidian workspace noise, miss vault-navigation tools, or be denied permissions silently without knowing why. Phase 8d verifies all three idempotently.
+**Why this phase exists.** Projects that use Obsidian as a vault inside the repository benefit from four surfaces: a `.gitignore` block that keeps workspace state files out of commits, the `obsidian@obsidian-skills` marketplace plugin (installed at user scope via `./install.sh code`) so agents can navigate the vault, a link-safety config in `.obsidian/app.json` that pins Markdown-form links and disables auto link-rewrite so vault tooling cannot corrupt project-artifact links, and a `permissions.deny` block in `.claude/settings.json` that mechanically blocks the dangerous `obsidian` CLI subcommands. Without these, an agent can inadvertently commit Obsidian workspace noise, miss vault-navigation tools, rewrite project links into wikilink form, or be denied permissions silently without knowing why. Phase 8d verifies all four idempotently.
 
 **Gate 8d — three-option AskUserQuestion.** Use `AskUserQuestion` with `header: "Next?"`, `multiSelect: false`, the Gate 8d headline from the gate map, and these three options:
 
@@ -811,11 +811,27 @@ Skip sub-steps 8d.4–8d.6. Print: `8d.3: obsidian@obsidian-skills not installed
 
 If the plugin is found, print: `8d.3: obsidian@obsidian-skills verified at user scope`.
 
-### Sub-step 8d.4 — `.obsidian/` starter config (v1 no-op)
+### Sub-step 8d.4 — `.obsidian/app.json` link-safety config
 
-**Why this exists.** In v1, writing starter `.obsidian/` config (e.g., `app.json`, `community-plugins.json`) is deferred. Obsidian's plugin ecosystem is volatile and any config we write may conflict with the user's existing vault or community plugin set. The user's own Obsidian app manages `.obsidian/` after the vault opens.
+**Why this exists.** Because the repository doubles as a vault, Obsidian's default link behavior would let vault tooling corrupt project-artifact links. New links default to `[[wikilink]]` form (Praxion uses Markdown `[text](path)` links and ADR id cross-references), and "Automatically update internal links" can rewrite link bodies across files on rename/move. Pinning two keys in `.obsidian/app.json` closes both vectors. Only these two keys are written, merged non-destructively — all other `.obsidian/app.json` keys (and the rest of `.obsidian/`) stay Obsidian-managed. `app.json` is committed (the `.gitignore` block from 8d.1 ignores workspace/cache/appearance/hotkeys, not `app.json`), so every clone inherits the safe defaults.
 
-**Action.** No-op. Print: `8d.4: .obsidian/ starter config — skipped in v1 (Obsidian manages this directory; no agent-written config needed)`.
+**Predicate.** Both keys already set to the safe values:
+```bash
+jq -e '(.useMarkdownLinks == true) and (.alwaysUpdateLinks == false)' \
+  .obsidian/app.json 2>/dev/null
+```
+If exit 0 (both already pinned): skip with notice `8d.4: skipped (.obsidian/app.json link-safety keys already pinned)`.
+
+**Action.** Create `.obsidian/` if absent, then merge the two keys into `.obsidian/app.json` (create `{}` if absent), preserving all existing keys:
+```bash
+mkdir -p .obsidian
+[ -f .obsidian/app.json ] || echo '{}' > .obsidian/app.json
+jq '.useMarkdownLinks = true | .alwaysUpdateLinks = false' \
+  .obsidian/app.json > .obsidian/app.json.tmp && \
+  mv .obsidian/app.json.tmp .obsidian/app.json
+```
+
+Print: `8d.4: .obsidian/app.json link-safety keys pinned (useMarkdownLinks=true, alwaysUpdateLinks=false)`.
 
 ### Sub-step 8d.5 — Append `## Obsidian Integration` block to `CLAUDE.md`
 
@@ -827,17 +843,28 @@ Print: `8d.5: ## Obsidian Integration block appended to CLAUDE.md`.
 
 ### Sub-step 8d.5b — Write `permissions.deny` to `.claude/settings.json`
 
-**Predicate.** Check whether the eval deny entry is already present:
+**Predicate.** Check whether all required deny entries are already present — a subset check, so re-running on a project onboarded under an older (smaller) entry set still adds the missing entries:
 ```bash
-jq '.permissions.deny // [] | map(select(startswith("Bash(obsidian eval"))) | length > 0' \
+jq -e --argjson req '[
+  "Bash(obsidian eval*)",
+  "Bash(obsidian plugin:install*)",
+  "Bash(obsidian plugin:enable*)",
+  "Bash(obsidian plugin:disable*)",
+  "Bash(obsidian plugin:uninstall*)",
+  "Bash(obsidian theme:set*)",
+  "Bash(obsidian theme:install*)",
+  "Bash(obsidian delete --permanent*)",
+  "Bash(obsidian move*)",
+  "Bash(obsidian rename*)"
+]' '($req - (.permissions.deny // [])) | length == 0' \
   .claude/settings.json 2>/dev/null
 ```
-If `true`: skip with notice `8d.5b: skipped (permissions.deny obsidian eval entry already present)`.
+If exit 0 (no required entry missing): skip with notice `8d.5b: skipped (permissions.deny obsidian entries already present)`.
 
 **Action.** Read `.claude/settings.json` (create `{"permissions":{}}` if absent). Merge `permissions.deny` non-destructively:
 - Preserve all existing top-level keys.
 - Preserve the existing `permissions.allow` array.
-- Add the eight deny entries below. If any entry already exists in the deny array, do not duplicate it.
+- Add the ten deny entries below. The `jq` merge is idempotent (`unique` dedupes), so entries already present are not duplicated — and entries missing from an older install are added on re-run.
 
 Deny entries:
 
@@ -849,7 +876,9 @@ Deny entries:
 "Bash(obsidian plugin:uninstall*)",
 "Bash(obsidian theme:set*)",
 "Bash(obsidian theme:install*)",
-"Bash(obsidian delete --permanent*)"
+"Bash(obsidian delete --permanent*)",
+"Bash(obsidian move*)",
+"Bash(obsidian rename*)"
 ```
 
 Use `jq` to perform the merge:
@@ -863,14 +892,16 @@ jq '.permissions.deny = ((.permissions.deny // []) +
    "Bash(obsidian plugin:uninstall*)",
    "Bash(obsidian theme:set*)",
    "Bash(obsidian theme:install*)",
-   "Bash(obsidian delete --permanent*)"]
+   "Bash(obsidian delete --permanent*)",
+   "Bash(obsidian move*)",
+   "Bash(obsidian rename*)"]
   | unique)' .claude/settings.json > .claude/settings.json.tmp && \
   mv .claude/settings.json.tmp .claude/settings.json
 ```
 
 Print: `8d.5b: permissions.deny Obsidian CLI block written to .claude/settings.json`.
 
-**Security note.** The denied subcommands are blocked at the tool-permission layer. `obsidian eval` executes arbitrary JavaScript in the Obsidian renderer (remote code execution risk); the plugin lifecycle commands expose OS-level attack surface; `obsidian delete --permanent` bypasses the trash and is unrecoverable. The `*` wildcard after each subcommand blocks all argument forms. Live end-to-end verification (actually calling a denied subcommand and observing the harness reject it) is deferred to first use in a Claude Code session with this `settings.json` applied.
+**Security note.** Eight of the denied subcommands are blocked for security: `obsidian eval` executes arbitrary JavaScript in the Obsidian renderer (remote code execution risk); the plugin lifecycle commands expose OS-level attack surface; `theme:set`/`theme:install` run theme code with app privileges; `obsidian delete --permanent` bypasses the trash and is unrecoverable. The remaining two — `move` and `rename` — are blocked for **link integrity**, not security: renaming or moving a tracked file through Obsidian can rewrite link bodies across the repo and hides the rename from git. Renames go through `git mv` instead. The `*` wildcard after each subcommand blocks all argument forms. Live end-to-end verification (actually calling a denied subcommand and observing the harness reject it) is deferred to first use in a Claude Code session with this `settings.json` applied.
 
 ### Sub-step 8d.6 — Print summary
 
@@ -879,12 +910,15 @@ Print:
 ```text
 Obsidian integration install complete:
   obsidian@obsidian-skills plugin: verified at user scope (run: claude plugin list | grep obsidian-skills)
+  .obsidian/app.json: link-safety keys pinned (or already present)
   CLAUDE.md: ## Obsidian Integration block appended (or already present)
   .claude/settings.json: permissions.deny Obsidian CLI block written (or already present)
 
 CLI allowlist policy: obsidian file CRUD, search, link analysis, properties, tags, and
 read-only diagnostics are ALLOWED. Dangerous subcommands (eval, plugin lifecycle, theme:set,
-delete --permanent) are DENIED via .claude/settings.json permissions.deny.
+delete --permanent) are DENIED for security; file move/rename are DENIED for link integrity
+(use git mv). Link safety: .obsidian/app.json pins Markdown-form links and disables Obsidian's
+auto link-rewrite, so vault tooling cannot corrupt project-artifact links.
 
 See docs/obsidian-integration.md for installation, configuration, troubleshooting, and the
 full allowlist rationale.
@@ -1199,7 +1233,7 @@ This project is configured for **Obsidian integration**: the vault lives inside 
 
 The `obsidian` CLI is available for file CRUD, search, link analysis, properties, tags, outline, structured queries (`base:query`), templates, and read-only sync/publish diagnostics.
 
-**Allowed subcommands include:** `read`, `create`, `append`, `prepend`, `move`, `rename`, `delete` (without `--permanent`), `search`, `search:context`, `backlinks`, `links`, `unresolved`, `orphans`, `deadends`, `outline`, `tags`, `tag`, `properties`, `base:query`, `daily`, `daily:read`, `daily:append`, `template:read`, `template:insert`, `unique`, `publish:list`, `publish:status`, `sync:status`, `sync:history`, `sync:read`.
+**Allowed subcommands include:** `read`, `create`, `append`, `prepend`, `delete` (without `--permanent`), `search`, `search:context`, `backlinks`, `links`, `unresolved`, `orphans`, `deadends`, `outline`, `tags`, `tag`, `properties`, `base:query`, `daily`, `daily:read`, `daily:append`, `template:read`, `template:insert`, `unique`, `publish:list`, `publish:status`, `sync:status`, `sync:history`, `sync:read`.
 
 **Denied subcommands — blocked at the tool-permission layer:**
 
@@ -1209,8 +1243,18 @@ The `obsidian` CLI is available for file CRUD, search, link analysis, properties
 | `obsidian plugin:install`, `plugin:enable`, `plugin:disable`, `plugin:uninstall` | Plugin lifecycle commands expose OS-level attack surface |
 | `obsidian theme:set`, `theme:install` | Theme code runs with full app privileges |
 | `obsidian delete --permanent` | Bypasses Obsidian's trash; operation is unrecoverable |
+| `obsidian move`, `rename` | Renaming/moving a tracked file through Obsidian can rewrite link bodies across the repo and hides the rename from git. Use `git mv` so git tracks the rename and project link conventions stay intact. |
 
 **Why you may see permission errors:** The denied subcommands above are enforced mechanically via `.claude/settings.json` `permissions.deny` rules written by the onboarding step. If a `Bash(obsidian ...)` call is rejected by the harness, check this list — the subcommand is intentionally blocked, not broken. Use an allowed alternative or ask the user to perform the operation manually.
+
+### Link safety
+
+Because the repository doubles as a vault, Obsidian's default link behavior is pinned so vault tooling cannot corrupt project-artifact links (standard Markdown `[text](path)` links and ADR id cross-references). The onboarding step writes two keys into `.obsidian/app.json` (merged non-destructively, committed so every clone inherits them):
+
+- `useMarkdownLinks: true` — any link Obsidian authors uses Markdown `[text](path)` form, never `[[wikilink]]` (which Praxion's docs and cross-reference validators do not use).
+- `alwaysUpdateLinks: false` — Obsidian never auto-rewrites links across files when a file is renamed or moved.
+
+This is why `move`/`rename` are denied above: file renames go through `git mv`, so git tracks them and no link bodies are silently rewritten.
 
 ### Opt-out
 
@@ -1238,7 +1282,7 @@ This block is installed into the user project's `CLAUDE.md` by Phase 8d sub-step
 | 8 | `test -e .ai-state/DESIGN.md` OR `test -e docs/architecture.md` (skip phase if either doc exists — covers re-runs and greenfield-followed-by-onboard); also skipped if the user picks `Skip` at Gate 8 |
 | 8b | User picks `Skip AaC` (or `Run all rest`) at Gate 8b — skips entire phase. Per-sub-step: 8b.1 — arch doc contains `aac:generated` or `aac:authored`; 8b.2 — `test -d fitness/`; 8b.3 — `grep -q 'check_aac_golden_rule\|Block D' .git/hooks/pre-commit`; 8b.4 — `test -e .github/workflows/architecture.yml`; 8b.5 — `test -d docs/diagrams/` |
 | 8c | No ML signals detected (skip entire phase). User picks `Skip ML scaffold` at Gate 8c — skips entire phase. Per-sub-step: 8c.1 — `test -d .ai-state/experiments/`; 8c.2 — `grep -q '# ML training checkpoints' .gitignore`; 8c.3 — `test -e .ai-state/gpu_budget.yaml`; 8c.4 — `test -e program.md`; 8c.5 — none (always prints) |
-| 8d | User picks `Skip` at Gate 8d — skips entire phase. Per-sub-step: 8d.1 — `grep -q '^# Obsidian$' .gitignore`; 8d.2 — `command -v claude >/dev/null 2>&1` (if absent, skip 8d.3–8d.6); 8d.3 — `claude plugin list 2>/dev/null | grep -q "obsidian@obsidian-skills"` (if absent, skip 8d.4–8d.6); 8d.4 — always no-op in v1; 8d.5 — `grep -q '^## Obsidian Integration$' CLAUDE.md`; 8d.5b — `jq '.permissions.deny // [] | map(select(startswith("Bash(obsidian eval"))) | length > 0' .claude/settings.json` returns `true` |
+| 8d | User picks `Skip` at Gate 8d — skips entire phase. Per-sub-step: 8d.1 — `grep -q '^# Obsidian$' .gitignore`; 8d.2 — `command -v claude >/dev/null 2>&1` (if absent, skip 8d.3–8d.6); 8d.3 — `claude plugin list 2>/dev/null | grep -q "obsidian@obsidian-skills"` (if absent, skip 8d.4–8d.6); 8d.4 — `jq -e '(.useMarkdownLinks == true) and (.alwaysUpdateLinks == false)' .obsidian/app.json` exits 0 (both link-safety keys pinned); 8d.5 — `grep -q '^## Obsidian Integration$' CLAUDE.md`; 8d.5b — all required deny entries present (subset check: `jq -e --argjson req '[...]' '($req - (.permissions.deny // [])) | length == 0' .claude/settings.json`) |
 | 9 | None — terminal phase always runs |
 
 **Re-running the command** on an already-onboarded project should print mostly `skipped (already onboarded)` lines in Phase 9's summary. The only writes on a clean re-run come from Phase 7 (which writes nothing — only prints) and Phase 9 (which only stages changed files). Phase 8 is naturally idempotent — once `.ai-state/DESIGN.md` exists, any subsequent re-run skips. Future *updates* to architecture docs come from feature pipelines (`systems-architect` updates them in Phase 4 of the agent pipeline), not from re-running `/onboard-project`.

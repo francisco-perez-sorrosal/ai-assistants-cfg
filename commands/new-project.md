@@ -12,7 +12,7 @@ Onboard the current (freshly scaffolded) directory. Ask one question first, show
 
 The six-artifact write-set has a **single source of truth — `/onboard-project` Phase 5b** — and this command never re-implements it; it only appends the CLAUDE.md block and propagates the `--hackathon` signal forward in its handoff. Pass `--hackathon` when the user explicitly wants to start this project in hackathon mode from day one.
 
-**Obsidian integration.** Obsidian integration is signaled to this command by a `# Obsidian integration: false` line in the bootstrap context — injected by `new_project.sh --no-obsidian` or `PRAXION_NEW_PROJECT_NO_OBSIDIAN=1` (opt-out; default-on). When the opt-out signal is **absent** (Obsidian enabled), Flow step 5g runs the Phase 8d sub-flow (`.gitignore` Obsidian block, kepano/obsidian-skills marketplace plugin, `CLAUDE.md` Obsidian Integration block, `settings.json` deny entries) and step 10g appends the `## Obsidian Integration` block to `CLAUDE.md`. When the opt-out signal is **present**, both steps are skipped and the command prints: `Obsidian integration skipped (--no-obsidian). Re-enable later via /onboard-project.`
+**Obsidian integration.** Obsidian integration is signaled to this command by a `# Obsidian integration: false` line in the bootstrap context — injected by `new_project.sh --no-obsidian` or `PRAXION_NEW_PROJECT_NO_OBSIDIAN=1` (opt-out; default-on). When the opt-out signal is **absent** (Obsidian enabled), Flow step 5g runs the Phase 8d sub-flow (`.gitignore` Obsidian block, kepano/obsidian-skills marketplace plugin, `.obsidian/app.json` link-safety config, `CLAUDE.md` Obsidian Integration block, `settings.json` deny entries) and step 10g appends the `## Obsidian Integration` block to `CLAUDE.md`. When the opt-out signal is **present**, both steps are skipped and the command prints: `Obsidian integration skipped (--no-obsidian). Re-enable later via /onboard-project.`
 
 ## Sections
 
@@ -541,7 +541,7 @@ This project is configured for **Obsidian integration**: the vault lives inside 
 
 The `obsidian` CLI is available for file CRUD, search, link analysis, properties, tags, outline, structured queries (`base:query`), templates, and read-only sync/publish diagnostics.
 
-**Allowed subcommands include:** `read`, `create`, `append`, `prepend`, `move`, `rename`, `delete` (without `--permanent`), `search`, `search:context`, `backlinks`, `links`, `unresolved`, `orphans`, `deadends`, `outline`, `tags`, `tag`, `properties`, `base:query`, `daily`, `daily:read`, `daily:append`, `template:read`, `template:insert`, `unique`, `publish:list`, `publish:status`, `sync:status`, `sync:history`, `sync:read`.
+**Allowed subcommands include:** `read`, `create`, `append`, `prepend`, `delete` (without `--permanent`), `search`, `search:context`, `backlinks`, `links`, `unresolved`, `orphans`, `deadends`, `outline`, `tags`, `tag`, `properties`, `base:query`, `daily`, `daily:read`, `daily:append`, `template:read`, `template:insert`, `unique`, `publish:list`, `publish:status`, `sync:status`, `sync:history`, `sync:read`.
 
 **Denied subcommands — blocked at the tool-permission layer:**
 
@@ -551,8 +551,18 @@ The `obsidian` CLI is available for file CRUD, search, link analysis, properties
 | `obsidian plugin:install`, `plugin:enable`, `plugin:disable`, `plugin:uninstall` | Plugin lifecycle commands expose OS-level attack surface |
 | `obsidian theme:set`, `theme:install` | Theme code runs with full app privileges |
 | `obsidian delete --permanent` | Bypasses Obsidian's trash; operation is unrecoverable |
+| `obsidian move`, `rename` | Renaming/moving a tracked file through Obsidian can rewrite link bodies across the repo and hides the rename from git. Use `git mv` so git tracks the rename and project link conventions stay intact. |
 
 **Why you may see permission errors:** The denied subcommands above are enforced mechanically via `.claude/settings.json` `permissions.deny` rules written by the onboarding step. If a `Bash(obsidian ...)` call is rejected by the harness, check this list — the subcommand is intentionally blocked, not broken. Use an allowed alternative or ask the user to perform the operation manually.
+
+### Link safety
+
+Because the repository doubles as a vault, Obsidian's default link behavior is pinned so vault tooling cannot corrupt project-artifact links (standard Markdown `[text](path)` links and ADR id cross-references). The onboarding step writes two keys into `.obsidian/app.json` (merged non-destructively, committed so every clone inherits them):
+
+- `useMarkdownLinks: true` — any link Obsidian authors uses Markdown `[text](path)` form, never `[[wikilink]]` (which Praxion's docs and cross-reference validators do not use).
+- `alwaysUpdateLinks: false` — Obsidian never auto-rewrites links across files when a file is renamed or moved.
+
+This is why `move`/`rename` are denied above: file renames go through `git mv`, so git tracks them and no link bodies are silently rewritten.
 
 ### Opt-out
 
@@ -589,9 +599,9 @@ Per-phase predicates that govern §Flow steps. Re-running `/new-project` on a di
 | 5g.1 (Obsidian .gitignore block) | `grep -q '^# Obsidian$' .gitignore` |
 | 5g.2 (obsidian@obsidian-skills plugin install) | No skip predicate — always runs; `claude plugin marketplace add` + `claude plugin install` are idempotent |
 | 5g.3 (obsidian@obsidian-skills plugin) | `claude plugin list 2>/dev/null \| grep -q 'obsidian@obsidian-skills'` |
-| 5g.4 (.obsidian/ starter config) | Always no-op in v1 |
+| 5g.4 (.obsidian/app.json link-safety config) | `jq -e '(.useMarkdownLinks == true) and (.alwaysUpdateLinks == false)' .obsidian/app.json` exits 0 |
 | 5g.5 (## Obsidian Integration CLAUDE.md append) | `grep -q '^## Obsidian Integration$' CLAUDE.md` |
-| 5g.5b (permissions.deny block) | `jq '.permissions.deny // [] \| map(select(startswith("Bash(obsidian eval"))) \| length > 0' .claude/settings.json` returns `true` |
+| 5g.5b (permissions.deny block) | All required `Bash(obsidian …)` deny entries present (subset check — see §Phase 8d sub-step 8d.5b in `/onboard-project`) |
 
 Other §Flow steps (1–7, 9, 11–13) are not idempotent in the strict sense because the seed pipeline (researcher → architect → planner → implementer + test-engineer → verifier) produces new artifacts each run. The §Guard at flow-start refuses to run on a non-greenfield directory, so re-invocation is rare; if it does happen, the user gets a Guard abort and is directed to `/onboard-project` instead.
 
@@ -600,7 +610,7 @@ Other §Flow steps (1–7, 9, 11–13) are not idempotent in the strict sense be
 - **`/onboard-project` Phase 6 (CLAUDE.md blocks)** — all five standard predicates hit (Agent Pipeline, Compaction Guidance, Behavioral Contract, Praxion Process, and Working in this project are present from this command's Flow step 10). When hackathon mode was enabled, the `## Hackathon Mode` block is also present; `/onboard-project --hackathon`'s Phase 5b finds its per-artifact CLAUDE.md-block predicate already satisfied and skips just that artifact while still writing the remaining five (env var, preset, wrapper, directive, settings) — Phase 5b is not skipped wholesale, only its block-append sub-step.
 - **`/onboard-project` Phase 8 (Architecture Baseline)** — the predicate `test -e .ai-state/DESIGN.md` hits because the seed pipeline's `systems-architect` (gate 4b) already produced both `.ai-state/DESIGN.md` and `docs/architecture.md`. Re-running the architect would overwrite a real-content baseline with another real-content baseline; the predicate prevents that.
 - **`/onboard-project` Phase 8b (AaC scaffolding)** — when AaC was not opted out of (the default), all five sub-step predicates hit (`fitness/` exists, Block D is present, `architecture.yml` exists, fence markers are in `ARCHITECTURE.md`, `docs/diagrams/.gitkeep` exists). The `/onboard-project --with-aac` path becomes a clean no-op.
-- **`/onboard-project` Phase 8d (Obsidian integration)** — when Obsidian was not opted out of (the default), all sub-step predicates hit (`.gitignore` Obsidian block present, `obsidian@obsidian-skills` plugin installed at user scope, `## Obsidian Integration` block in `CLAUDE.md`, `permissions.deny` entries present). `/onboard-project`'s Phase 8d becomes a complete no-op.
+- **`/onboard-project` Phase 8d (Obsidian integration)** — when Obsidian was not opted out of (the default), all sub-step predicates hit (`.gitignore` Obsidian block present, `obsidian@obsidian-skills` plugin installed at user scope, `.obsidian/app.json` link-safety keys pinned, `## Obsidian Integration` block in `CLAUDE.md`, `permissions.deny` entries present). `/onboard-project`'s Phase 8d becomes a complete no-op.
 
 The other phases of `/onboard-project` (1, 2, 3, 4, 5, 7, 9) apply the surfaces this command does not — git hooks, merge drivers, `.ai-state/` skeleton (`DECISIONS_INDEX.md`, `TECH_DEBT_LEDGER.md`, `calibration_log.md`), `.gitattributes`, `.claude/settings.json` toggles, companion CLI advisories, and the verification handoff.
 

@@ -55,9 +55,9 @@ When the session reaches Gate 8d, pick `Install Obsidian integration (recommende
 | 8d.1 | Appends the Obsidian per-user-state block to `.gitignore` (workspace files, cache, appearance, hotkeys) |
 | 8d.2 | Verifies `claude` CLI is present on PATH |
 | 8d.3 | Verifies `obsidian@obsidian-skills` marketplace plugin is installed at user scope |
-| 8d.4 | No-op in v1 (`.obsidian/` starter config deferred) |
+| 8d.4 | Pins link-safety keys in `.obsidian/app.json` (`useMarkdownLinks: true`, `alwaysUpdateLinks: false`), merged non-destructively |
 | 8d.5 | Appends `## Obsidian Integration` block to project `CLAUDE.md` |
-| 8d.5b | Writes eight `permissions.deny` entries to `.claude/settings.json` |
+| 8d.5b | Writes ten `permissions.deny` entries to `.claude/settings.json` |
 | 8d.6 | Prints install summary |
 
 **Idempotency.** Re-running `/onboard-project` on a project that already has Phase 8d applied produces zero `git diff` — each sub-step's predicate detects the prior install and skips silently.
@@ -73,11 +73,12 @@ When the session reaches Gate 8d, pick `Install Obsidian integration (recommende
 
 ### After onboarding (manual removal)
 
-No automated uninstall exists for per-project surfaces. Remove three artifacts:
+No automated uninstall exists for per-project surfaces. Remove four artifacts:
 
 - **`.gitignore`** — delete the `# Obsidian` block (six lines starting with `.obsidian/workspace.json`).
+- **`.obsidian/app.json`** — remove the `useMarkdownLinks` and `alwaysUpdateLinks` keys (or delete the file if Obsidian created nothing else in it).
 - **`CLAUDE.md`** — delete the `## Obsidian Integration` section.
-- **`.claude/settings.json`** — remove the eight `Bash(obsidian ...)` entries from `permissions.deny`.
+- **`.claude/settings.json`** — remove the ten `Bash(obsidian ...)` entries from `permissions.deny`.
 
 To remove the machine-level plugin as well:
 
@@ -95,7 +96,7 @@ The `obsidian` CLI shipped with Obsidian 1.12+ exposes approximately 115 subcomm
 
 ### Allowed
 
-File CRUD (`read`, `create`, `append`, `prepend`, `move`, `rename`, `delete` without `--permanent`), search (`search`, `search:context`), link analysis (`backlinks`, `links`, `unresolved`, `orphans`, `deadends`), `outline`, `tags`, `tag`, `properties`, `base:query`, templates (`template:read`, `template:insert`), daily notes (`daily`, `daily:read`, `daily:append`), `unique`, and read-only diagnostics (`publish:list`, `publish:status`, `sync:status`, `sync:history`, `sync:read`).
+File CRUD (`read`, `create`, `append`, `prepend`, `delete` without `--permanent`), search (`search`, `search:context`), link analysis (`backlinks`, `links`, `unresolved`, `orphans`, `deadends`), `outline`, `tags`, `tag`, `properties`, `base:query`, templates (`template:read`, `template:insert`), daily notes (`daily`, `daily:read`, `daily:append`), `unique`, and read-only diagnostics (`publish:list`, `publish:status`, `sync:status`, `sync:history`, `sync:read`).
 
 ### Denied (mechanically enforced)
 
@@ -109,10 +110,26 @@ File CRUD (`read`, `create`, `append`, `prepend`, `move`, `rename`, `delete` wit
 | `obsidian theme:set` | Theme code runs with full app privileges |
 | `obsidian theme:install` | Same as above |
 | `obsidian delete --permanent` | Bypasses Obsidian's trash; operation is unrecoverable |
+| `obsidian move` | Link integrity (not security): moving a tracked file through Obsidian can rewrite link bodies across the repo and hides the move from git — use `git mv` |
+| `obsidian rename` | Link integrity (not security): same as `move` — renames go through `git mv` so git tracks them and link conventions stay intact |
 
 The plugin-lifecycle risk is not theoretical. The [PhantomPulse RAT](https://www.elastic.co/security-labs/phantom-in-the-vault) is a publicly documented instance of malware distributed as an Obsidian plugin — an illustration of why `plugin:install` and `plugin:enable` are blocked at the harness level rather than left to agent discretion.
 
 The in-context rationale for agents (shorter form of this table) lives in the `## Obsidian Integration` block appended to your project's `CLAUDE.md` by Phase 8d.5.
+
+## Link safety
+
+Because the repository doubles as a vault, Obsidian's default link behavior would let vault tooling corrupt project-artifact links — the standard Markdown `[text](path)` links and ADR id cross-references that Praxion's docs and cross-reference validators depend on. Two default behaviors are the risk:
+
+1. **New-link format.** Obsidian's default (`useMarkdownLinks: false`) makes any link it authors a `[[wikilink]]` — a form Praxion does not use and its validators do not resolve.
+2. **Auto link-rewrite.** With "Automatically update internal links" enabled, renaming or moving a file makes Obsidian rewrite link bodies across other files.
+
+Phase 8d closes both, on two layers:
+
+- **`.obsidian/app.json` (sub-step 8d.4)** pins `useMarkdownLinks: true` and `alwaysUpdateLinks: false`, merged non-destructively and committed so every clone inherits them. New links are Markdown-form; Obsidian never auto-rewrites links on rename.
+- **`permissions.deny` (sub-step 8d.5b)** blocks `obsidian move` and `obsidian rename`, so file renames go through `git mv` — git tracks the rename and no link bodies are silently rewritten. This is a backstop independent of the `app.json` setting (a clone whose `app.json` was altered is still protected at the tool-permission layer).
+
+Registering the repository as a vault is otherwise passive — Obsidian does not modify files merely by having the folder in its registry. These two layers constrain the *write path* (link authoring and rename) that is the only way vault tooling could change link bodies.
 
 ## Troubleshooting
 

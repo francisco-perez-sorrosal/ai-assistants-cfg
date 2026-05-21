@@ -10,6 +10,8 @@ made_by: agent
 agent_type: systems-architect
 branch: worktree-obsidian-shape-b-onboarding
 pipeline_tier: standard
+re_affirmed_by:
+  - dec-200
 affected_files:
   - install.sh
   - scripts/install-obsidian-deps.sh
